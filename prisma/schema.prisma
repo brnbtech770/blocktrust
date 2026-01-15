@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  plan          String    @default("TRIAL")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  entities      Entity[]
+}
+
+model Entity {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  legalName       String
+  siret           String   @unique
+  email           String
+  website         String?
+  description     String?
+  kycStatus       String   @default("PENDING")
+  validationLevel String   @default("BRONZE")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  certificates    Certificate[]
+}
+
+model Certificate {
+  id              String   @id @default(cuid())
+  entityId        String
+  entity          Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  tokenId         String?  @unique
+  txHash          String?  @unique
+  contractAddress String?
+  tokenURI        String?
+  status          String   @default("PENDING")
+  level           String   @default("BRONZE")
+  issuedAt        DateTime @default(now())
+  verifications   Verification[]
+}
+
+model Verification {
+  id            String   @id @default(cuid())
+  certificateId String
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  ipAddress     String?
+  country       String?
+  userAgent     String?
+  verifiedAt    DateTime @default(now())
+}
