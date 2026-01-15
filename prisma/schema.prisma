@@ -57,3 +57,30 @@ model Verification {
   userAgent     String?
   verifiedAt    DateTime @default(now())
 }
+model Signature {
+  id            String   @id @default(uuid())
+  jti           String   @unique
+  certificateId String
+  entityId      String
+  ctxType       String
+  ctxHash       String
+  issuedAt      DateTime @default(now())
+  expiresAt     DateTime
+  revoked       Boolean  @default(false)
+
+  @@index([certificateId])
+  @@index([entityId])
+}
+
+model VerificationEvent {
+  id        String   @id @default(uuid())
+  jti       String
+  ip        String?
+  userAgent String?
+  verdict   String
+  createdAt DateTime @default(now())
+
+  @@index([jti])
+  @@index([createdAt])
+}
+
