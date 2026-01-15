@@ -55,7 +55,13 @@ export async function POST(req: NextRequest) {
     );
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const verifyUrl = `${baseUrl}/verify?token=${encodeURIComponent(token)}`;
+    const ctxJson = JSON.stringify(context);
+    const ctxB64 = Buffer.from(ctxJson, "utf8")
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+    const verifyUrl = `${baseUrl}/verify?token=${encodeURIComponent(token)}&ctx=${encodeURIComponent(ctxB64)}`;
 
     return NextResponse.json({ token, verifyUrl, signatureId: signature.id });
   } catch (e: any) {
