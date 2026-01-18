@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Entity" ADD COLUMN     "entityType" TEXT NOT NULL DEFAULT 'BUSINESS',
+ADD COLUMN     "firstName" TEXT,
+ADD COLUMN     "lastName" TEXT,
+ALTER COLUMN "legalName" DROP NOT NULL,
+ALTER COLUMN "siret" DROP NOT NULL;

@@ -22,8 +22,19 @@ model Entity {
   id              String   @id @default(cuid())
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  legalName       String
-  siret           String   @unique
+  
+  // Type d'entité : "BUSINESS" ou "INDIVIDUAL"
+  entityType      String   @default("BUSINESS")
+  
+  // Champs B2B (entreprise)
+  legalName       String?
+  siret           String?  @unique
+  
+  // Champs B2C (particulier)
+  firstName       String?
+  lastName        String?
+  
+  // Champs communs
   email           String
   website         String?
   description     String?
