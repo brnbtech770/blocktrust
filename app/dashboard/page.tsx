@@ -13,8 +13,16 @@ export default async function Dashboard() {
 
   // Calcule les stats
   const totalCertificates = entities.length;
-  const totalVerifications = 0; // On ajoutera plus tard
-  const plan = "Pro";
+  const totalBusinesses = entities.filter((e) => e.entityType === "BUSINESS").length;
+  const totalIndividuals = entities.filter((e) => e.entityType === "INDIVIDUAL").length;
+
+  // Fonction pour obtenir le nom d'affichage
+  const getDisplayName = (entity: any) => {
+    if (entity.entityType === "BUSINESS") {
+      return entity.legalName || "Entreprise sans nom";
+    }
+    return `${entity.firstName || ""} ${entity.lastName || ""}`.trim() || "Particulier";
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -23,7 +31,7 @@ export default async function Dashboard() {
         <div className="text-2xl font-bold text-white mb-8">
           🛡️ BlockTrust
         </div>
-        
+
         <nav className="space-y-2">
           <a href="/dashboard" className="flex items-center gap-3 px-4 py-3 bg-cyan-500/20 text-cyan-400 rounded-lg">
             <span>📜</span> Certificats
@@ -60,7 +68,7 @@ export default async function Dashboard() {
             <h1 className="text-3xl font-bold text-white">Mes Certificats</h1>
             <p className="text-gray-400">Gérez vos badges de certification</p>
           </div>
-          <a 
+          <a
             href="/dashboard/create"
             className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
           >
@@ -69,18 +77,22 @@ export default async function Dashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-4 gap-6 mb-8">
           <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-gray-700">
-            <p className="text-gray-400 text-sm mb-1">Certificats actifs</p>
+            <p className="text-gray-400 text-sm mb-1">Total certificats</p>
             <p className="text-4xl font-bold text-white">{totalCertificates}</p>
           </div>
           <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-gray-700">
-            <p className="text-gray-400 text-sm mb-1">Vérifications ce mois</p>
-            <p className="text-4xl font-bold text-cyan-400">{totalVerifications}</p>
+            <p className="text-gray-400 text-sm mb-1">🏢 Entreprises</p>
+            <p className="text-4xl font-bold text-cyan-400">{totalBusinesses}</p>
+          </div>
+          <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-gray-700">
+            <p className="text-gray-400 text-sm mb-1">👤 Particuliers</p>
+            <p className="text-4xl font-bold text-purple-400">{totalIndividuals}</p>
           </div>
           <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-gray-700">
             <p className="text-gray-400 text-sm mb-1">Plan actuel</p>
-            <p className="text-4xl font-bold text-yellow-400">{plan}</p>
+            <p className="text-4xl font-bold text-yellow-400">Pro</p>
           </div>
         </div>
 
@@ -90,10 +102,11 @@ export default async function Dashboard() {
             <table className="w-full">
               <thead className="bg-gray-800/50">
                 <tr>
-                  <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">Entité</th>
-                  <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">SIRET</th>
+                  <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">Type</th>
+                  <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">Nom</th>
+                  <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">Identifiant</th>
                   <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">Niveau</th>
-                  <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">Statut KYC</th>
+                  <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">Statut</th>
                   <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">Actions</th>
                 </tr>
               </thead>
@@ -101,49 +114,57 @@ export default async function Dashboard() {
                 {entities.map((entity) => (
                   <tr key={entity.id} className="border-t border-gray-800 hover:bg-gray-800/30">
                     <td className="px-6 py-4">
-                      <p className="text-white font-medium">{entity.legalName}</p>
+                      <span className="text-2xl">
+                        {entity.entityType === "BUSINESS" ? "🏢" : "👤"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-white font-medium">{getDisplayName(entity)}</p>
                       <p className="text-gray-500 text-sm">{entity.email}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <code className="text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded">
-                        {entity.siret}
-                      </code>
+                      {entity.entityType === "BUSINESS" && entity.siret ? (
+                        <code className="text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded">{entity.siret}</code>
+                      ) : (
+                        <span className="text-gray-500 text-sm">—</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        entity.validationLevel === "GOLD" 
-                          ? "bg-yellow-500/20 text-yellow-400" 
-                          : entity.validationLevel === "SILVER"
-                          ? "bg-gray-500/20 text-gray-300"
-                          : "bg-orange-500/20 text-orange-400"
-                      }`}>
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          entity.validationLevel === "GOLD"
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : entity.validationLevel === "SILVER"
+                            ? "bg-gray-500/20 text-gray-300"
+                            : "bg-orange-500/20 text-orange-400"
+                        }`}
+                      >
                         {entity.validationLevel}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        entity.kycStatus === "APPROVED"
-                          ? "bg-green-500/20 text-green-400"
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          entity.kycStatus === "APPROVED"
+                            ? "bg-green-500/20 text-green-400"
+                            : entity.kycStatus === "PENDING"
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-red-500/20 text-red-400"
+                        }`}
+                      >
+                        {entity.kycStatus === "APPROVED"
+                          ? "✓ Validé"
                           : entity.kycStatus === "PENDING"
-                          ? "bg-yellow-500/20 text-yellow-400"
-                          : "bg-red-500/20 text-red-400"
-                      }`}>
-                        {entity.kycStatus === "APPROVED" ? "✓ Validé" : 
-                         entity.kycStatus === "PENDING" ? "⏳ En attente" : "✗ Rejeté"}
+                          ? "⏳ En attente"
+                          : "✗ Rejeté"}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
-                        <a
-                          href={`/verify/${entity.id}`}
-                          className="text-cyan-400 hover:text-cyan-300 text-sm"
-                        >
+                        <a href={`/verify/${entity.id}`} className="text-cyan-400 hover:text-cyan-300 text-sm">
                           Vérifier
                         </a>
-                        <a
-                          href={`/badge/${entity.id}`}
-                          className="text-yellow-400 hover:text-yellow-300 text-sm"
-                        >
+                        <a href={`/badge/${entity.id}`} className="text-yellow-400 hover:text-yellow-300 text-sm">
                           Badge
                         </a>
                       </div>
@@ -158,7 +179,7 @@ export default async function Dashboard() {
             <div className="text-6xl mb-4">📭</div>
             <h3 className="text-xl font-bold text-white mb-2">Aucun certificat</h3>
             <p className="text-gray-400 mb-6">Créez votre premier badge de certification</p>
-            <a 
+            <a
               href="/dashboard/create"
               className="inline-block bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg"
             >
