@@ -1,5 +1,8 @@
 import { prisma } from "@/app/lib/db";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function Dashboard() {
   // Récupère les vraies données de la base
   const entities = await prisma.entity.findMany({
