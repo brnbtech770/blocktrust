@@ -160,9 +160,11 @@ export default async function BadgeV2Page({ params }: BadgeV2PageProps) {
         </div>
 
         {/* Footer */}
-        <div className="mt-6 pt-6 border-t border-gray-700 text-center">
-          <p className="text-gray-600 text-xs">Token: {signature.jti.substring(0, 8)}...</p>
-          <p className="text-gray-600 text-xs mt-1">Expire: {signature.expiresAt.toLocaleDateString("fr-FR")}</p>
+        <div className="mt-6 pt-6 border-t border-gray-700 text-center space-y-2">
+          <p className="text-gray-400 text-xs">URL de vérification :</p>
+          <p className="text-cyan-400 text-xs break-all bg-gray-800 p-2 rounded">{verifyUrl}</p>
+          <p className="text-gray-600 text-xs mt-2">Token: {signature.jti.substring(0, 8)}...</p>
+          <p className="text-gray-600 text-xs">Expire: {signature.expiresAt.toLocaleDateString("fr-FR")}</p>
           <p className="text-cyan-400 text-xs mt-2">blocktrust.tech</p>
         </div>
       </div>
