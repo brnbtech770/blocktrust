@@ -1,6 +1,7 @@
 import { prisma } from "@/app/lib/db";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 interface VerifyPageProps {
   params: Promise<{ token: string }>;

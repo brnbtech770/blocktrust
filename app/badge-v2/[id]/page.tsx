@@ -4,6 +4,7 @@ import QRCodeComponent from "@/app/components/QRCode";
 import * as crypto from "crypto";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 interface BadgeV2PageProps {
   params: Promise<{ id: string }>;
