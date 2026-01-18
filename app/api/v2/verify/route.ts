@@ -1,98 +1,153 @@
-﻿import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import { canonicalizeEmailContext, sha256Hex } from "@/lib/v2/context";
-import { verifyToken } from "@/lib/v2/jwt";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/app/lib/db";
 
-const prisma = new PrismaClient();
-
-function getIp(req: NextRequest) {
-  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-}
-
-export async function POST(req: NextRequest) {
+// GET - Vérifier un certificat V2
+export async function GET(request: NextRequest) {
   try {
-    const body = await req.json();
+    const { searchParams } = new URL(request.url);
+    const jti = searchParams.get("jti");
+    const hash = searchParams.get("h");
 
-    // Expected input:
-    // { token, context: { from,to,subject,date,body? } }
-    const token = String(body.token || "");
-    const context = body.context;
-
-    if (!token || !context) {
-      return NextResponse.json({ error: "Missing token/context" }, { status: 400 });
+    // Validation
+    if (!jti) {
+      return NextResponse.json({ error: "Token (jti) requis" }, { status: 400 });
     }
 
-    const payload = await verifyToken(token);
-
-    const jti = String(payload.jti || "");
-    const entityId = String(payload.entityId || "");
-    const certificateId = String(payload.certificateId || "");
-    const expectedHash = String(payload.ctx_hash || "");
-
-    if (!jti || !expectedHash) {
-      return NextResponse.json({ verdict: "INVALID", reason: "token_missing_claims" }, { status: 400 });
-    }
-
-    // Compute ctx hash from provided context
-    const canonical = canonicalizeEmailContext(context);
-    const computedHash = sha256Hex(canonical);
-
-    // Fetch signature record
-    const sig = await prisma.signature.findUnique({ where: { jti } });
-    if (!sig) {
-      return NextResponse.json({ verdict: "INVALID", reason: "unknown_jti" }, { status: 404 });
-    }
-    if (sig.revoked) {
-      return NextResponse.json({ verdict: "REVOKED" }, { status: 200 });
-    }
-    if (sig.expiresAt.getTime() < Date.now()) {
-      return NextResponse.json({ verdict: "EXPIRED" }, { status: 200 });
-    }
-
-    let verdict = "VALID";
-    let reason: string | null = null;
-
-    if (computedHash !== expectedHash || computedHash !== sig.ctxHash) {
-      verdict = "TAMPERED";
-      reason = "context_hash_mismatch";
-    }
-
-    // Minimal anti-replay: if verified multiple times from different UA/IP -> warning
-    const ip = getIp(req);
-    const ua = req.headers.get("user-agent") || "unknown";
-
-    const previous = await prisma.verificationEvent.findFirst({
+    // Récupère la signature
+    const signature = await prisma.signature.findUnique({
       where: { jti },
-      orderBy: { createdAt: "desc" },
     });
 
-    if (previous && verdict === "VALID") {
-      const changed = (previous.ip && previous.ip !== ip) || (previous.userAgent && previous.userAgent !== ua);
-      if (changed) {
-        verdict = "VALID_WITH_WARNING";
-        reason = "possible_replay";
-      }
+    if (!signature) {
+      // Log l'événement de vérification échouée
+      await prisma.verificationEvent.create({
+        data: {
+          jti: jti || "unknown",
+          ip: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
+          userAgent: request.headers.get("user-agent") || "unknown",
+          verdict: "INVALID_TOKEN",
+        },
+      });
+
+      return NextResponse.json(
+        {
+          valid: false,
+          verdict: "INVALID_TOKEN",
+          message: "❌ Ce certificat n'existe pas ou a été falsifié.",
+        },
+        { status: 404 }
+      );
     }
 
+    // Vérifie si révoqué
+    if (signature.revoked) {
+      await prisma.verificationEvent.create({
+        data: {
+          jti,
+          ip: request.headers.get("x-forwarded-for") || "unknown",
+          userAgent: request.headers.get("user-agent") || "unknown",
+          verdict: "REVOKED",
+        },
+      });
+
+      return NextResponse.json({
+        valid: false,
+        verdict: "REVOKED",
+        message: "❌ Ce certificat a été révoqué.",
+      });
+    }
+
+    // Vérifie si expiré
+    if (new Date() > signature.expiresAt) {
+      await prisma.verificationEvent.create({
+        data: {
+          jti,
+          ip: request.headers.get("x-forwarded-for") || "unknown",
+          userAgent: request.headers.get("user-agent") || "unknown",
+          verdict: "EXPIRED",
+        },
+      });
+
+      return NextResponse.json({
+        valid: false,
+        verdict: "EXPIRED",
+        message: "❌ Ce certificat a expiré.",
+      });
+    }
+
+    // Vérifie le hash du contenu (anti-falsification !)
+    if (hash && !signature.ctxHash.startsWith(hash)) {
+      await prisma.verificationEvent.create({
+        data: {
+          jti,
+          ip: request.headers.get("x-forwarded-for") || "unknown",
+          userAgent: request.headers.get("user-agent") || "unknown",
+          verdict: "HASH_MISMATCH",
+        },
+      });
+
+      return NextResponse.json({
+        valid: false,
+        verdict: "HASH_MISMATCH",
+        message: "⚠️ ALERTE FRAUDE : Ce lien a été copié dans un contexte différent !",
+      });
+    }
+
+    // Récupère l'entité
+    const entity = await prisma.entity.findUnique({
+      where: { id: signature.entityId },
+    });
+
+    if (!entity) {
+      return NextResponse.json(
+        {
+          valid: false,
+          verdict: "ENTITY_NOT_FOUND",
+          message: "❌ Entité non trouvée.",
+        },
+        { status: 404 }
+      );
+    }
+
+    // Log l'événement de vérification réussie
     await prisma.verificationEvent.create({
       data: {
         jti,
-        ip,
-        userAgent: ua,
-        verdict,
+        ip: request.headers.get("x-forwarded-for") || "unknown",
+        userAgent: request.headers.get("user-agent") || "unknown",
+        verdict: "VALID",
       },
     });
 
+    // Succès !
     return NextResponse.json({
-      verdict,
-      reason,
-      entityId,
-      certificateId,
-      jti,
+      valid: true,
+      verdict: "VALID",
+      message: "✅ Certificat valide et authentique !",
+      data: {
+        entity: {
+          id: entity.id,
+          type: entity.entityType,
+          name:
+            entity.entityType === "BUSINESS"
+              ? entity.legalName
+              : `${entity.firstName} ${entity.lastName}`,
+          email: entity.email,
+          validationLevel: entity.validationLevel,
+          kycStatus: entity.kycStatus,
+        },
+        certificate: {
+          contextType: signature.ctxType,
+          issuedAt: signature.issuedAt,
+          expiresAt: signature.expiresAt,
+        },
+      },
     });
-  } catch (e: any) {
-    return NextResponse.json({ verdict: "ERROR", error: e?.message || "verify_failed" }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+  } catch (error: any) {
+    console.error("Erreur vérification V2:", error);
+    return NextResponse.json(
+      { error: "Erreur serveur", details: error.message },
+      { status: 500 }
+    );
   }
 }
