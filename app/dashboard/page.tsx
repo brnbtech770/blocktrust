@@ -1,9 +1,12 @@
 import { prisma } from "@/app/lib/db";
+import QRCodeComponent from "@/app/components/QRCode";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function Dashboard() {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
   // Récupère les vraies données de la base
   const entities = await prisma.entity.findMany({
     include: {
@@ -110,6 +113,7 @@ export default async function Dashboard() {
                   <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">Identifiant</th>
                   <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">Niveau</th>
                   <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">Statut</th>
+                  <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">QR</th>
                   <th className="text-left text-gray-400 text-sm font-medium px-6 py-4">Actions</th>
                 </tr>
               </thead>
@@ -161,6 +165,11 @@ export default async function Dashboard() {
                           ? "⏳ En attente"
                           : "✗ Rejeté"}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="bg-white p-1 rounded-md inline-flex">
+                        <QRCodeComponent url={`${baseUrl}/badge-v2/${entity.id}`} size={64} />
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
