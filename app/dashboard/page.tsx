@@ -173,11 +173,11 @@ export default async function Dashboard() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
-                        <a href={`/verify/${entity.id}`} className="text-cyan-400 hover:text-cyan-300 text-sm">
-                          Vérifier
+                        <a href={`/badge-v2/${entity.id}`} className="text-cyan-400 hover:text-cyan-300 text-sm">
+                          Vérifier V2
                         </a>
-                        <a href={`/badge/${entity.id}`} className="text-yellow-400 hover:text-yellow-300 text-sm">
-                          Badge
+                        <a href={`/badge-v2/${entity.id}`} className="text-yellow-400 hover:text-yellow-300 text-sm">
+                          Badge V2
                         </a>
                       </div>
                     </td>
