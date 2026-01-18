@@ -1,72 +1,131 @@
-﻿import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import { canonicalizeEmailContext, sha256Hex } from "@/lib/v2/context";
-import { signToken } from "@/lib/v2/jwt";
-import crypto from "crypto";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/app/lib/db";
+import * as crypto from "crypto";
+import { SignJWT } from "jose";
 
-const prisma = new PrismaClient();
+// Clé privée pour signer les tokens
+const privateKeyPEM = process.env.BLOCKTRUST_JWT_PRIVATE_KEY?.replace(/\\n/g, "\n") || "";
 
-export async function POST(req: NextRequest) {
+async function getPrivateKey() {
+  return crypto.createPrivateKey(privateKeyPEM);
+}
+
+// POST - Émettre un certificat signé V2
+export async function POST(request: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await request.json();
+    const { entityId, contextType, contextData } = body;
 
-    // Expected input (V2):
-    // {
-    //   entityId, certificateId,
-    //   context: { from, to, subject, date, body? },
-    //   expiresInSeconds?: number
-    // }
-
-    const entityId = String(body.entityId || "");
-    const certificateId = String(body.certificateId || "");
-    const context = body.context;
-
-    if (!entityId || !certificateId || !context) {
-      return NextResponse.json({ error: "Missing entityId/certificateId/context" }, { status: 400 });
+    // Validation
+    if (!entityId || !contextType || !contextData) {
+      return NextResponse.json(
+        { error: "entityId, contextType et contextData sont requis" },
+        { status: 400 }
+      );
     }
 
-    const canonical = canonicalizeEmailContext(context);
-    const ctxHash = sha256Hex(canonical);
+    // Vérifie que l'entité existe
+    const entity = await prisma.entity.findUnique({
+      where: { id: entityId },
+      include: { certificates: true },
+    });
 
+    if (!entity) {
+      return NextResponse.json({ error: "Entité non trouvée" }, { status: 404 });
+    }
+
+    // Récupère ou crée le certificat
+    let certificate = entity.certificates[0];
+    if (!certificate) {
+      certificate = await prisma.certificate.create({
+        data: {
+          entityId: entity.id,
+          status: "ACTIVE",
+          level: entity.validationLevel,
+        },
+      });
+    }
+
+    // Génère le hash du contenu (SHA-256)
+    const contentToHash = JSON.stringify({
+      entityId,
+      contextType,
+      contextData,
+      timestamp: new Date().toISOString(),
+    });
+    const ctxHash = crypto.createHash("sha256").update(contentToHash).digest("hex");
+
+    // Génère un JTI unique (JWT ID)
     const jti = crypto.randomUUID();
-    const expiresInSeconds = Number(body.expiresInSeconds || 3600);
 
-    // Persist signature metadata
+    // Date d'expiration (1 an)
+    const expiresAt = new Date();
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+    // Crée la signature en base
     const signature = await prisma.signature.create({
       data: {
         jti,
-        certificateId,
-        entityId,
-        ctxType: "email",
+        certificateId: certificate.id,
+        entityId: entity.id,
+        ctxType: contextType,
         ctxHash,
-        expiresAt: new Date(Date.now() + expiresInSeconds * 1000),
+        expiresAt,
+        revoked: false,
       },
     });
 
-    const token = await signToken(
-      {
-        jti,
-        entityId,
-        certificateId,
-        ctx_type: "email",
-        ctx_hash: ctxHash,
+    // Génère le JWT signé
+    const privateKey = await getPrivateKey();
+    const token = await new SignJWT({
+      sub: entity.id,
+      jti,
+      ctxType: contextType,
+      ctxHash,
+      ent: {
+        type: entity.entityType,
+        name:
+          entity.entityType === "BUSINESS"
+            ? entity.legalName
+            : `${entity.firstName} ${entity.lastName}`,
+        email: entity.email,
       },
-      expiresInSeconds
+    })
+      .setProtectedHeader({ alg: "ES256" })
+      .setIssuedAt()
+      .setExpirationTime(expiresAt)
+      .setIssuer("blocktrust.tech")
+      .sign(privateKey);
+
+    // URL de vérification V2
+    const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://blocktrust.tech"}/v/${jti}?h=${ctxHash.substring(0, 16)}`;
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          jti,
+          token,
+          ctxHash,
+          verifyUrl,
+          expiresAt: expiresAt.toISOString(),
+          entity: {
+            id: entity.id,
+            type: entity.entityType,
+            name:
+              entity.entityType === "BUSINESS"
+                ? entity.legalName
+                : `${entity.firstName} ${entity.lastName}`,
+          },
+        },
+      },
+      { status: 201 }
     );
-
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const ctxJson = JSON.stringify(context);
-    const ctxB64 = Buffer.from(ctxJson, "utf8")
-      .toString("base64")
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/g, "");
-    const verifyUrl = `${baseUrl}/verify?token=${encodeURIComponent(token)}&ctx=${encodeURIComponent(ctxB64)}`;
-
-    return NextResponse.json({ token, verifyUrl, signatureId: signature.id });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || "issue_failed" }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+  } catch (error: any) {
+    console.error("Erreur émission V2:", error);
+    return NextResponse.json(
+      { error: "Erreur serveur", details: error.message },
+      { status: 500 }
+    );
   }
 }
