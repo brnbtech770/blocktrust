@@ -36,19 +36,16 @@ export default async function BadgeV2Page({ params }: BadgeV2PageProps) {
 
   // Si pas de signature, on en crée une
   if (!signature) {
-    const certificate = entity.certificates[0];
+    let certificate = entity.certificates[0];
 
     if (!certificate) {
-      return (
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-          <div className="text-center text-white">
-            <p>Aucun certificat trouvé pour cette entité.</p>
-            <a href="/dashboard" className="text-cyan-400 mt-4 inline-block">
-              Retour au dashboard
-            </a>
-          </div>
-        </div>
-      );
+      certificate = await prisma.certificate.create({
+        data: {
+          entityId: entity.id,
+          status: "ACTIVE",
+          level: entity.validationLevel,
+        },
+      });
     }
 
     // Génère le hash du contenu

@@ -75,8 +75,26 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // Hash requis pour l'anti-falsification
+    if (!hash) {
+      await prisma.verificationEvent.create({
+        data: {
+          jti,
+          ip: request.headers.get("x-forwarded-for") || "unknown",
+          userAgent: request.headers.get("user-agent") || "unknown",
+          verdict: "HASH_MISSING",
+        },
+      });
+
+      return NextResponse.json({
+        valid: false,
+        verdict: "HASH_MISSING",
+        message: "⚠️ Lien incomplet : hash manquant.",
+      });
+    }
+
     // Vérifie le hash du contenu (anti-falsification !)
-    if (hash && !signature.ctxHash.startsWith(hash)) {
+    if (!signature.ctxHash.startsWith(hash)) {
       await prisma.verificationEvent.create({
         data: {
           jti,

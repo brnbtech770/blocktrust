@@ -29,7 +29,7 @@ export default async function VerifyV2Page({ params, searchParams }: VerifyPageP
   }
 
   // Détermine le verdict
-  let verdict: "VALID" | "INVALID_TOKEN" | "REVOKED" | "EXPIRED" | "HASH_MISMATCH" = "VALID";
+  let verdict: "VALID" | "INVALID_TOKEN" | "REVOKED" | "EXPIRED" | "HASH_MISSING" | "HASH_MISMATCH" = "VALID";
   let message = "";
 
   if (!signature) {
@@ -41,7 +41,10 @@ export default async function VerifyV2Page({ params, searchParams }: VerifyPageP
   } else if (new Date() > signature.expiresAt) {
     verdict = "EXPIRED";
     message = "Ce certificat a expiré.";
-  } else if (hashFromUrl && !signature.ctxHash.startsWith(hashFromUrl)) {
+  } else if (!hashFromUrl) {
+    verdict = "HASH_MISSING";
+    message = "Lien incomplet : hash manquant.";
+  } else if (!signature.ctxHash.startsWith(hashFromUrl)) {
     verdict = "HASH_MISMATCH";
     message = "ALERTE : Ce lien a été copié dans un contexte frauduleux !";
   }
