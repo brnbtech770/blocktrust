@@ -1,21 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
 
-// POST - Créer une nouvelle entité
+// POST - Créer une nouvelle entité (B2B ou B2C)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { legalName, siret, email, website, description } = body;
+    const {
+      entityType = "BUSINESS",
+      legalName,
+      siret,
+      firstName,
+      lastName,
+      email,
+      website,
+      description,
+    } = body;
 
-    // Validation basique
-    if (!legalName || !siret || !email) {
+    // Validation selon le type d'entité
+    if (entityType === "BUSINESS") {
+      if (!legalName || !siret || !email) {
+        return NextResponse.json(
+          { error: "Nom de l'entreprise, SIRET et email sont requis" },
+          { status: 400 }
+        );
+      }
+    } else if (entityType === "INDIVIDUAL") {
+      if (!firstName || !lastName || !email) {
+        return NextResponse.json(
+          { error: "Prénom, nom et email sont requis" },
+          { status: 400 }
+        );
+      }
+    } else {
       return NextResponse.json(
-        { error: "Nom légal, SIRET et email sont requis" },
+        { error: "Type d'entité invalide" },
         { status: 400 }
       );
     }
 
-    // Créer un utilisateur temporaire (plus tard on utilisera l'auth)
+    // Créer ou récupérer l'utilisateur
     let user = await prisma.user.findFirst({
       where: { email: email },
     });
@@ -24,17 +47,23 @@ export async function POST(request: NextRequest) {
       user = await prisma.user.create({
         data: {
           email: email,
-          name: legalName,
+          name: entityType === "BUSINESS" ? legalName : `${firstName} ${lastName}`,
         },
       });
     }
 
-    // Créer l'entité
+    // Créer l'entité selon le type
     const entity = await prisma.entity.create({
       data: {
         userId: user.id,
-        legalName,
-        siret,
+        entityType,
+        // Champs B2B
+        legalName: entityType === "BUSINESS" ? legalName : null,
+        siret: entityType === "BUSINESS" ? siret : null,
+        // Champs B2C
+        firstName: entityType === "INDIVIDUAL" ? firstName : null,
+        lastName: entityType === "INDIVIDUAL" ? lastName : null,
+        // Champs communs
         email,
         website: website || null,
         description: description || null,
@@ -53,18 +82,20 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { 
-        success: true, 
-        entity, 
+      {
+        success: true,
+        entity,
         certificate,
-        message: "Entité créée avec succès !" 
+        message:
+          entityType === "BUSINESS"
+            ? "Entreprise créée avec succès !"
+            : "Profil créé avec succès !",
       },
       { status: 201 }
     );
-
   } catch (error: any) {
     console.error("Erreur création entité:", error);
-    
+
     // Gérer l'erreur de SIRET unique
     if (error.code === "P2002") {
       return NextResponse.json(
@@ -73,10 +104,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: "Erreur serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
 
@@ -96,9 +124,6 @@ export async function GET() {
     return NextResponse.json(entities);
   } catch (error) {
     console.error("Erreur récupération entités:", error);
-    return NextResponse.json(
-      { error: "Erreur serveur" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
