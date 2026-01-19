@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
 import { timingSafeEqual } from "crypto";
+import { rateLimit } from "@/app/lib/rate-limit";
 
 const MIN_HASH_LENGTH = 16;
+
+const verifyRateLimiter = rateLimit({ interval: 60_000, maxRequests: 60 });
 
 function secureHashCompare(hashFromUrl: string, hashStored: string): boolean {
   const compareTarget = hashStored.substring(0, hashFromUrl.length);
@@ -21,12 +24,33 @@ function secureHashCompare(hashFromUrl: string, hashStored: string): boolean {
   }
 }
 
+function getClientIp(request: NextRequest) {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0]?.trim() || "unknown";
+  }
+  return request.headers.get("x-real-ip") || request.ip || "unknown";
+}
+
 // GET - Vérifier un certificat V2
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const jti = searchParams.get("jti");
     const hash = searchParams.get("h");
+
+    const ip = getClientIp(request);
+    const rate = verifyRateLimiter.check(`verify:${ip}`);
+    if (!rate.success) {
+      return NextResponse.json(
+        {
+          valid: false,
+          verdict: "RATE_LIMITED",
+          message: "⏳ Trop de requêtes. Réessaie plus tard.",
+        },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
 
     // Validation
     if (!jti) {
@@ -43,7 +67,7 @@ export async function GET(request: NextRequest) {
       await prisma.verificationEvent.create({
         data: {
           jti: jti || "unknown",
-          ip: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
+          ip,
           userAgent: request.headers.get("user-agent") || "unknown",
           verdict: "INVALID_TOKEN",
         },
@@ -64,7 +88,7 @@ export async function GET(request: NextRequest) {
       await prisma.verificationEvent.create({
         data: {
           jti,
-          ip: request.headers.get("x-forwarded-for") || "unknown",
+          ip,
           userAgent: request.headers.get("user-agent") || "unknown",
           verdict: "REVOKED",
         },
@@ -82,7 +106,7 @@ export async function GET(request: NextRequest) {
       await prisma.verificationEvent.create({
         data: {
           jti,
-          ip: request.headers.get("x-forwarded-for") || "unknown",
+          ip,
           userAgent: request.headers.get("user-agent") || "unknown",
           verdict: "EXPIRED",
         },
@@ -100,7 +124,7 @@ export async function GET(request: NextRequest) {
       await prisma.verificationEvent.create({
         data: {
           jti,
-          ip: request.headers.get("x-forwarded-for") || "unknown",
+          ip,
           userAgent: request.headers.get("user-agent") || "unknown",
           verdict: "HASH_MISSING",
         },
@@ -117,7 +141,7 @@ export async function GET(request: NextRequest) {
       await prisma.verificationEvent.create({
         data: {
           jti,
-          ip: request.headers.get("x-forwarded-for") || "unknown",
+          ip,
           userAgent: request.headers.get("user-agent") || "unknown",
           verdict: "HASH_TOO_SHORT",
         },
@@ -135,7 +159,7 @@ export async function GET(request: NextRequest) {
       await prisma.verificationEvent.create({
         data: {
           jti,
-          ip: request.headers.get("x-forwarded-for") || "unknown",
+          ip,
           userAgent: request.headers.get("user-agent") || "unknown",
           verdict: "HASH_MISMATCH",
         },
@@ -168,7 +192,7 @@ export async function GET(request: NextRequest) {
     await prisma.verificationEvent.create({
       data: {
         jti,
-        ip: request.headers.get("x-forwarded-for") || "unknown",
+        ip,
         userAgent: request.headers.get("user-agent") || "unknown",
         verdict: "VALID",
       },

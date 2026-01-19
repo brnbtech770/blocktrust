@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
 import * as crypto from "crypto";
 import { SignJWT } from "jose";
+import { rateLimit } from "@/app/lib/rate-limit";
 
 // Clé privée pour signer les tokens
 const privateKeyPEM = process.env.BLOCKTRUST_JWT_PRIVATE_KEY?.replace(/\\n/g, "\n") || "";
@@ -10,9 +11,30 @@ async function getPrivateKey() {
   return crypto.createPrivateKey(privateKeyPEM);
 }
 
+const issueRateLimiter = rateLimit({ interval: 60_000, maxRequests: 10 });
+
+function getClientIp(request: NextRequest) {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0]?.trim() || "unknown";
+  }
+  return request.headers.get("x-real-ip") || request.ip || "unknown";
+}
+
 // POST - Émettre un certificat signé V2
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIp(request);
+    const rate = issueRateLimiter.check(`issue:${ip}`);
+    if (!rate.success) {
+      return NextResponse.json(
+        {
+          error: "Trop de requêtes. Réessaie plus tard.",
+        },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const body = await request.json();
     const { entityId, contextType, contextData } = body;
 
