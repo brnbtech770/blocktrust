@@ -1,5 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
+import { timingSafeEqual } from "crypto";
+
+const MIN_HASH_LENGTH = 16;
+
+function secureHashCompare(hashFromUrl: string, hashStored: string): boolean {
+  const compareTarget = hashStored.substring(0, hashFromUrl.length);
+
+  try {
+    const hashBuffer = Buffer.from(hashFromUrl, "utf8");
+    const storedBuffer = Buffer.from(compareTarget, "utf8");
+
+    if (hashBuffer.length !== storedBuffer.length) {
+      return false;
+    }
+
+    return timingSafeEqual(hashBuffer, storedBuffer);
+  } catch {
+    return false;
+  }
+}
 
 // GET - Vérifier un certificat V2
 export async function GET(request: NextRequest) {
@@ -93,8 +113,25 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    if (hash.length < MIN_HASH_LENGTH) {
+      await prisma.verificationEvent.create({
+        data: {
+          jti,
+          ip: request.headers.get("x-forwarded-for") || "unknown",
+          userAgent: request.headers.get("user-agent") || "unknown",
+          verdict: "HASH_TOO_SHORT",
+        },
+      });
+
+      return NextResponse.json({
+        valid: false,
+        verdict: "HASH_TOO_SHORT",
+        message: "⚠️ Hash invalide : longueur insuffisante.",
+      });
+    }
+
     // Vérifie le hash du contenu (anti-falsification !)
-    if (!signature.ctxHash.startsWith(hash)) {
+    if (!secureHashCompare(hash, signature.ctxHash)) {
       await prisma.verificationEvent.create({
         data: {
           jti,
