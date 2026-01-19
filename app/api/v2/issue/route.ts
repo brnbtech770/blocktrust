@@ -3,6 +3,7 @@ import { prisma } from "@/app/lib/db";
 import * as crypto from "crypto";
 import { SignJWT } from "jose";
 import { rateLimit } from "@/app/lib/rate-limit";
+import { issueSignatureSchema } from "@/app/lib/validations";
 
 // Clé privée pour signer les tokens
 const privateKeyPEM = process.env.BLOCKTRUST_JWT_PRIVATE_KEY?.replace(/\\n/g, "\n") || "";
@@ -35,16 +36,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Parse et validation Zod
     const body = await request.json();
-    const { entityId, contextType, contextData } = body;
+    const parseResult = issueSignatureSchema.safeParse(body);
 
-    // Validation
-    if (!entityId || !contextType || !contextData) {
+    if (!parseResult.success) {
       return NextResponse.json(
-        { error: "entityId, contextType et contextData sont requis" },
+        {
+          error: "Données invalides",
+          details: parseResult.error.flatten().fieldErrors,
+        },
         { status: 400 }
       );
     }
+
+    const { entityId, contextType, contextData, expiresInDays } = parseResult.data;
+
+    void expiresInDays;
 
     // Vérifie que l'entité existe
     const entity = await prisma.entity.findUnique({

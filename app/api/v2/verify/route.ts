@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
 import { timingSafeEqual } from "crypto";
 import { rateLimit } from "@/app/lib/rate-limit";
+import { verifyQuerySchema } from "@/app/lib/validations";
 
 const MIN_HASH_LENGTH = 16;
 
@@ -52,9 +53,22 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Validation
-    if (!jti) {
-      return NextResponse.json({ error: "Token (jti) requis" }, { status: 400 });
+    // Validation Zod
+    const parseResult = verifyQuerySchema.safeParse({
+      jti,
+      h: hash,
+    });
+
+    if (!parseResult.success) {
+      return NextResponse.json(
+        {
+          valid: false,
+          verdict: "INVALID_INPUT",
+          message: "❌ Paramètres invalides.",
+          errors: parseResult.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
 
     // Récupère la signature
