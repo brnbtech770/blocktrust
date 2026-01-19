@@ -4,7 +4,7 @@ import { z } from "zod";
 export const issueSignatureSchema = z.object({
   entityId: z.string().cuid(),
   contextType: z.enum(["email", "document", "website", "invoice", "contract", "other"]),
-  contextData: z.record(z.unknown()).optional(),
+  contextData: z.record(z.string(), z.unknown()).optional(),
   expiresInDays: z.number().int().min(1).max(365).default(30),
 });
 
