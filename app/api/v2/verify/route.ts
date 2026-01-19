@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
 
     // Validation Zod
     const parseResult = verifyQuerySchema.safeParse({
-      jti,
-      h: hash,
+      jti: jti ?? undefined,
+      h: hash ?? undefined,
     });
 
     if (!parseResult.success) {
@@ -71,16 +71,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Utilise les valeurs validées
+    const { jti: validJti, h: validHash } = parseResult.data;
+
     // Récupère la signature
     const signature = await prisma.signature.findUnique({
-      where: { jti },
+      where: { jti: validJti },
     });
 
     if (!signature) {
       // Log l'événement de vérification échouée
       await prisma.verificationEvent.create({
         data: {
-          jti: jti || "unknown",
+          jti: validJti,
           ip,
           userAgent: request.headers.get("user-agent") || "unknown",
           verdict: "INVALID_TOKEN",
@@ -101,7 +104,7 @@ export async function GET(request: NextRequest) {
     if (signature.revoked) {
       await prisma.verificationEvent.create({
         data: {
-          jti,
+          jti: validJti,
           ip,
           userAgent: request.headers.get("user-agent") || "unknown",
           verdict: "REVOKED",
@@ -119,7 +122,7 @@ export async function GET(request: NextRequest) {
     if (new Date() > signature.expiresAt) {
       await prisma.verificationEvent.create({
         data: {
-          jti,
+          jti: validJti,
           ip,
           userAgent: request.headers.get("user-agent") || "unknown",
           verdict: "EXPIRED",
@@ -134,10 +137,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Hash requis pour l'anti-falsification
-    if (!hash) {
+    if (!validHash) {
       await prisma.verificationEvent.create({
         data: {
-          jti,
+          jti: validJti,
           ip,
           userAgent: request.headers.get("user-agent") || "unknown",
           verdict: "HASH_MISSING",
@@ -151,10 +154,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    if (hash.length < MIN_HASH_LENGTH) {
+    if (validHash.length < MIN_HASH_LENGTH) {
       await prisma.verificationEvent.create({
         data: {
-          jti,
+          jti: validJti,
           ip,
           userAgent: request.headers.get("user-agent") || "unknown",
           verdict: "HASH_TOO_SHORT",
@@ -169,10 +172,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Vérifie le hash du contenu (anti-falsification !)
-    if (!secureHashCompare(hash, signature.ctxHash)) {
+    if (!secureHashCompare(validHash, signature.ctxHash)) {
       await prisma.verificationEvent.create({
         data: {
-          jti,
+          jti: validJti,
           ip,
           userAgent: request.headers.get("user-agent") || "unknown",
           verdict: "HASH_MISMATCH",
@@ -205,7 +208,7 @@ export async function GET(request: NextRequest) {
     // Log l'événement de vérification réussie
     await prisma.verificationEvent.create({
       data: {
-        jti,
+        jti: validJti,
         ip,
         userAgent: request.headers.get("user-agent") || "unknown",
         verdict: "VALID",
