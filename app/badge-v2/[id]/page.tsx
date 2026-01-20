@@ -2,6 +2,7 @@ import { prisma } from "@/app/lib/db";
 import { notFound } from "next/navigation";
 import QRCodeComponent from "@/app/components/QRCode";
 import * as crypto from "crypto";
+import { generateNonce, signContent } from "@/lib/crypto";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -65,14 +66,28 @@ export default async function BadgeV2Page({ params }: BadgeV2PageProps) {
     const expiresAt = new Date();
     expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
+    const ctxType = "identity_badge";
+    const nonce = generateNonce();
+    const jwtSignature = await signContent({
+      jti,
+      certificateId: certificate.id,
+      entityId: entity.id,
+      ctxType,
+      ctxHash,
+      nonce,
+    });
+
     // Crée la signature
     signature = await prisma.signature.create({
       data: {
         jti,
         certificateId: certificate.id,
         entityId: entity.id,
-        ctxType: "identity_badge",
+        ctxType,
         ctxHash,
+        ctxMetadata: contextData,
+        signature: jwtSignature,
+        nonce,
         expiresAt,
         revoked: false,
       },
