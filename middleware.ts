@@ -2,31 +2,28 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
+const ADMIN_EMAILS = ["brnrtech@gmail.com"];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  const protectedPaths = ["/dashboard", "/mon-espace"];
+  const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
+
+  if (isProtected && !token) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
 
   if (pathname.startsWith("/dashboard")) {
-    const allowedEmails = (process.env.ALLOWED_ADMIN_EMAILS || "brnbtech@gmail.com")
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean);
-
-    const token = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-    });
-
-    if (!token) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    const userEmail = typeof token.email === "string" ? token.email.toLowerCase() : "";
-    if (!allowedEmails.includes(userEmail)) {
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("error", "AccessDenied");
-      return NextResponse.redirect(loginUrl);
+    const userEmail = typeof token?.email === "string" ? token.email : "";
+    if (!ADMIN_EMAILS.includes(userEmail)) {
+      return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
   }
 
@@ -34,5 +31,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/mon-espace/:path*"],
 };
