@@ -9,65 +9,96 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  plan          String    @default("TRIAL")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  entities      Entity[]
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  plan      String    @default("TRIAL")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  entities  Entity[]
+  accounts  Account[]
+  sessions  Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 model Entity {
-  id              String   @id @default(cuid())
+  id              String        @id @default(cuid())
   userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Type d'entité : "BUSINESS" ou "INDIVIDUAL"
-  entityType      String   @default("BUSINESS")
-  
-  // Champs B2B (entreprise)
+  entityType      String        @default("BUSINESS")
   legalName       String?
-  siret           String?  @unique
-  
-  // Champs B2C (particulier)
+  siret           String?       @unique
   firstName       String?
   lastName        String?
-  
-  // Champs communs
   email           String
   website         String?
   description     String?
-  kycStatus       String   @default("PENDING")
-  validationLevel String   @default("BRONZE")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  kycStatus       String        @default("PENDING")
+  validationLevel String        @default("BRONZE")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   certificates    Certificate[]
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Certificate {
-  id              String   @id @default(cuid())
+  id              String         @id @default(cuid())
   entityId        String
-  entity          Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
-  tokenId         String?  @unique
-  txHash          String?  @unique
+  tokenId         String?        @unique
+  txHash          String?        @unique
   contractAddress String?
   tokenURI        String?
-  status          String   @default("PENDING")
-  level           String   @default("BRONZE")
-  issuedAt        DateTime @default(now())
+  status          String         @default("PENDING")
+  level           String         @default("BRONZE")
+  issuedAt        DateTime       @default(now())
+  entity          Entity         @relation(fields: [entityId], references: [id], onDelete: Cascade)
   verifications   Verification[]
 }
 
 model Verification {
-  id            String   @id @default(cuid())
+  id            String      @id @default(cuid())
   certificateId String
-  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
   ipAddress     String?
   country       String?
   userAgent     String?
-  verifiedAt    DateTime @default(now())
+  verifiedAt    DateTime    @default(now())
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
 }
+
 model Signature {
   id            String   @id @default(uuid())
   jti           String   @unique
@@ -94,4 +125,3 @@ model VerificationEvent {
   @@index([jti])
   @@index([createdAt])
 }
-
