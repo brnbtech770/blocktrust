@@ -29,6 +29,7 @@ interface SignPayload {
   ctxType: string;
   ctxHash: string;
   nonce: string;
+  [key: string]: unknown;
 }
 
 export async function signContent(
@@ -50,6 +51,7 @@ export async function verifySignature(token: string): Promise<SignPayload | null
     const { payload } = await jwtVerify(token, JWT_SECRET, {
       issuer: "blocktrust.tech",
     });
+
     return payload as unknown as SignPayload;
   } catch (error) {
     return null;
