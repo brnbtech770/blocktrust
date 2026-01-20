@@ -74,6 +74,7 @@ model Entity {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   certificates    Certificate[]
+  signatures      Signature[]
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
@@ -89,6 +90,7 @@ model Certificate {
   issuedAt        DateTime       @default(now())
   entity          Entity         @relation(fields: [entityId], references: [id], onDelete: Cascade)
   verifications   Verification[]
+  signatures      Signature[]
 }
 
 model Verification {
@@ -105,15 +107,27 @@ model Signature {
   id            String   @id @default(uuid())
   jti           String   @unique
   certificateId String
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
   entityId      String
+  entity        Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+
   ctxType       String
   ctxHash       String
+  ctxMetadata   Json?
+
+  signature     String
+  nonce         String   @unique
+
   issuedAt      DateTime @default(now())
   expiresAt     DateTime
   revoked       Boolean  @default(false)
+  revokedAt     DateTime?
+
+  verificationEvents VerificationEventV2[]
 
   @@index([certificateId])
   @@index([entityId])
+  @@index([ctxHash])
 }
 
 model VerificationEvent {
@@ -125,5 +139,25 @@ model VerificationEvent {
   createdAt DateTime @default(now())
 
   @@index([jti])
+  @@index([createdAt])
+}
+
+model VerificationEventV2 {
+  id          String   @id @default(uuid())
+  signatureId String
+  signature   Signature @relation(fields: [signatureId], references: [id], onDelete: Cascade)
+
+  hashFromUrl String
+  ipHash      String?
+  userAgent   String?
+  country     String?
+
+  verdict     String
+  fraudReason String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([signatureId])
+  @@index([verdict])
   @@index([createdAt])
 }
