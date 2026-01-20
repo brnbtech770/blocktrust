@@ -92,24 +92,15 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date();
     expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
-    // Crée la signature en base
-    const signature = await prisma.signature.create({
-      data: {
-        jti,
-        certificateId: certificate.id,
-        entityId: entity.id,
-        ctxType: contextType,
-        ctxHash,
-        expiresAt,
-        revoked: false,
-      },
-    });
+    // Génère un nonce anti-replay
+    const nonce = crypto.randomBytes(16).toString("hex");
 
     // Génère le JWT signé
     const privateKey = await getPrivateKey();
     const token = await new SignJWT({
       sub: entity.id,
       jti,
+      nonce,
       ctxType: contextType,
       ctxHash,
       ent: {
@@ -126,6 +117,22 @@ export async function POST(request: NextRequest) {
       .setExpirationTime(expiresAt)
       .setIssuer("blocktrust.tech")
       .sign(privateKey);
+
+    // Crée la signature en base
+    const signature = await prisma.signature.create({
+      data: {
+        jti,
+        certificateId: certificate.id,
+        entityId: entity.id,
+        ctxType: contextType,
+        ctxHash,
+        ctxMetadata: contextData,
+        signature: token,
+        nonce,
+        expiresAt,
+        revoked: false,
+      },
+    });
 
     // URL de vérification V2
     const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://blocktrust.tech"}/v/${jti}?h=${ctxHash.substring(0, 16)}`;
