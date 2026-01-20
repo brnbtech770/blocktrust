@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
 import * as crypto from "crypto";
-import { SignJWT } from "jose";
 import { rateLimit } from "@/app/lib/rate-limit";
 import { issueSignatureSchema } from "@/app/lib/validations";
-
-// Clé privée pour signer les tokens
-const privateKeyPEM = process.env.BLOCKTRUST_JWT_PRIVATE_KEY?.replace(/\\n/g, "\n") || "";
-
-async function getPrivateKey() {
-  return crypto.createPrivateKey(privateKeyPEM);
-}
+import { generateNonce, signContent } from "@/lib/crypto";
 
 const issueRateLimiter = rateLimit({ interval: 60_000, maxRequests: 10 });
 
@@ -51,6 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { entityId, contextType, contextData, expiresInDays } = parseResult.data;
+    const ctxType = contextType;
 
     void expiresInDays;
 
@@ -93,30 +87,17 @@ export async function POST(request: NextRequest) {
     expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
     // Génère un nonce anti-replay
-    const nonce = crypto.randomBytes(16).toString("hex");
+    const nonce = generateNonce();
 
     // Génère le JWT signé
-    const privateKey = await getPrivateKey();
-    const token = await new SignJWT({
-      sub: entity.id,
+    const jwtSignature = await signContent({
       jti,
-      nonce,
-      ctxType: contextType,
+      certificateId: certificate.id,
+      entityId: entity.id,
+      ctxType,
       ctxHash,
-      ent: {
-        type: entity.entityType,
-        name:
-          entity.entityType === "BUSINESS"
-            ? entity.legalName
-            : `${entity.firstName} ${entity.lastName}`,
-        email: entity.email,
-      },
-    })
-      .setProtectedHeader({ alg: "ES256" })
-      .setIssuedAt()
-      .setExpirationTime(expiresAt)
-      .setIssuer("blocktrust.tech")
-      .sign(privateKey);
+      nonce,
+    });
 
     // Crée la signature en base
     const signature = await prisma.signature.create({
@@ -124,10 +105,10 @@ export async function POST(request: NextRequest) {
         jti,
         certificateId: certificate.id,
         entityId: entity.id,
-        ctxType: contextType,
+        ctxType,
         ctxHash,
         ctxMetadata: contextData,
-        signature: token,
+        signature: jwtSignature,
         nonce,
         expiresAt,
         revoked: false,
@@ -142,7 +123,7 @@ export async function POST(request: NextRequest) {
         success: true,
         data: {
           jti,
-          token,
+          token: jwtSignature,
           ctxHash,
           verifyUrl,
           expiresAt: expiresAt.toISOString(),
