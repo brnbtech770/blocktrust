@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const ADMIN_EMAILS = ["brnrtech@gmail.com"];
+const ADMIN_EMAILS = ["brnbtech@gmail.com", "brnrtech@gmail.com"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
