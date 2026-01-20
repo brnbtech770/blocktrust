@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 
-const ADMIN_EMAILS = ["brnrtech@gmail.com"];
+const ADMIN_EMAILS = ["brnbtech@gmail.com"];
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
