@@ -1,11 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
 export default function LoginClient() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const error = searchParams.get("error");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (process.env.NODE_ENV !== "production") {
+    console.info("Login debug", { callbackUrl, error });
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -17,9 +27,80 @@ export default function LoginClient() {
           </p>
         </div>
 
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            Erreur de connexion : {error}
+          </div>
+        )}
+
         <div className="space-y-4">
+          <form
+            onSubmit={async (event) => {
+              event.preventDefault();
+              setFormError(null);
+              setIsSubmitting(true);
+
+              const result = await signIn("credentials", {
+                redirect: true,
+                email,
+                password,
+                callbackUrl,
+              });
+
+              if (result?.error) {
+                setFormError("Email ou mot de passe incorrect.");
+              }
+              setIsSubmitting(false);
+            }}
+            className="space-y-3"
+          >
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700" htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                autoComplete="email"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700" htmlFor="password">
+                Mot de passe
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                autoComplete="current-password"
+                required
+              />
+            </div>
+
+            {formError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {formError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
+            >
+              {isSubmitting ? "Connexion..." : "Se connecter"}
+            </button>
+          </form>
+
           <button
-            onClick={() => signIn("google", { callbackUrl })}
+            onClick={() => signIn("google", { callbackUrl, redirect: true })}
             className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
