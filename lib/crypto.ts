@@ -2,8 +2,10 @@ import { createHash, randomBytes } from "crypto";
 import { SignJWT, jwtVerify } from "jose";
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "blocktrust-v2-secret-change-in-production"
+  process.env.JWT_SECRET || "blocktrust-v2-secret-change-in-production-min-32-chars"
 );
+
+// ========== HASH ==========
 
 export function hashContent(content: string): string {
   return createHash("sha256").update(content).digest("hex");
@@ -22,6 +24,7 @@ export function generateJti(): string {
   return randomBytes(9).toString("base64url").substring(0, 12);
 }
 
+// ========== JWT SIGNATURES ==========
 interface SignPayload {
   jti: string;
   certificateId: string;
@@ -58,6 +61,7 @@ export async function verifySignature(token: string): Promise<SignPayload | null
   }
 }
 
+// ========== URL GENERATION ==========
 export function generateVerifyUrl(jti: string, ctxHash: string): string {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://blocktrust.tech";
   const shortHash = ctxHash.substring(0, 16);
