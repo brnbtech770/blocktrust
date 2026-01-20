@@ -45,7 +45,6 @@ export async function POST(request: NextRequest) {
 
     const { entityId, contextType, contextData, expiresInDays } = parseResult.data;
     const ctxType = contextType;
-
     void expiresInDays;
 
     // Vérifie que l'entité existe
@@ -107,7 +106,7 @@ export async function POST(request: NextRequest) {
         entityId: entity.id,
         ctxType,
         ctxHash,
-        ctxMetadata: contextData ?? undefined,
+        ctxMetadata: JSON.parse(JSON.stringify(contextData || {})),
         signature: jwtSignature,
         nonce,
         expiresAt,
