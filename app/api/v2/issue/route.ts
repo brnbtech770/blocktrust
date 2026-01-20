@@ -4,7 +4,6 @@ import * as crypto from "crypto";
 import { rateLimit } from "@/app/lib/rate-limit";
 import { issueSignatureSchema } from "@/app/lib/validations";
 import { generateNonce, signContent } from "@/lib/crypto";
-import type { Prisma } from "@prisma/client";
 
 const issueRateLimiter = rateLimit({ interval: 60_000, maxRequests: 10 });
 
@@ -108,7 +107,7 @@ export async function POST(request: NextRequest) {
         entityId: entity.id,
         ctxType,
         ctxHash,
-        ctxMetadata: (contextData ?? undefined) as Prisma.InputJsonValue,
+        ctxMetadata: contextData ?? undefined,
         signature: jwtSignature,
         nonce,
         expiresAt,
