@@ -1,11 +1,28 @@
 import { prisma } from "@/app/lib/db";
 import QRCodeComponent from "@/app/components/QRCode";
 import Sidebar from "@/app/components/Sidebar";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function Dashboard() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    redirect("/login?callbackUrl=/dashboard");
+  }
+
+  const allowedEmails = (process.env.ALLOWED_ADMIN_EMAILS || "brnbtech@gmail.com")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (!allowedEmails.includes(session.user.email.toLowerCase())) {
+    redirect("/login?error=AccessDenied");
+  }
+
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
   const entities = await prisma.entity.findMany({
