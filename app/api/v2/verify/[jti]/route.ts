@@ -27,9 +27,9 @@ interface VerifyResult {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { jti: string } }
+  context: { params: Promise<{ jti: string }> }
 ) {
-  const { jti } = params;
+  const { jti } = await context.params;
   const hashFromUrl = req.nextUrl.searchParams.get("h");
 
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
