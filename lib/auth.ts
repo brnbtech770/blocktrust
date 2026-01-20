@@ -38,6 +38,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Utilisateur non trouvé");
         }
 
+        if (user.status !== "ACTIVE") {
+          throw new Error("Compte en attente de validation");
+        }
+
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
           user.password

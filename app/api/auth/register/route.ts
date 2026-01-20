@@ -31,11 +31,13 @@ export async function POST(req: NextRequest) {
         email,
         password: hashedPassword,
         name,
+        status: "PENDING",
       },
     });
 
     return NextResponse.json({
       success: true,
+      message: "Inscription reçue. Votre compte sera activé après validation.",
       user: {
         id: user.id,
         email: user.email,
