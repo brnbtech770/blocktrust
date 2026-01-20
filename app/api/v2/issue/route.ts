@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
         entityId: entity.id,
         ctxType,
         ctxHash,
-        ctxMetadata: contextData as Prisma.JsonValue,
+        ctxMetadata: (contextData ?? undefined) as Prisma.InputJsonValue,
         signature: jwtSignature,
         nonce,
         expiresAt,
