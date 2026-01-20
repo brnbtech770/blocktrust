@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 
+const ADMIN_EMAILS = ["brnrtech@gmail.com"];
+
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -14,13 +16,9 @@ export default async function Dashboard() {
     redirect("/login?callbackUrl=/dashboard");
   }
 
-  const allowedEmails = (process.env.ALLOWED_ADMIN_EMAILS || "brnbtech@gmail.com")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-
-  if (!allowedEmails.includes(session.user.email.toLowerCase())) {
-    redirect("/login?error=AccessDenied");
+  const userEmail = session.user.email.toLowerCase();
+  if (!ADMIN_EMAILS.includes(userEmail)) {
+    redirect("/unauthorized");
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
