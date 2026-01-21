@@ -15,6 +15,7 @@ model User {
   image     String?
   emailVerified DateTime?
   password  String?
+  company   String?
   status    String    @default("PENDING")
   plan      String    @default("TRIAL")
   createdAt DateTime  @default(now())
