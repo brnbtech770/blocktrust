@@ -100,11 +100,12 @@ export default function LoginClient() {
           </form>
 
           <button
+            type="button"
             onClick={() => {
-              console.log("Google button clicked, callbackUrl:", callbackUrl);
+              console.log("Google button clicked!");
               signIn("google", { callbackUrl, redirect: true });
             }}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="relative z-50 w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
