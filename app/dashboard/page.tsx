@@ -4,7 +4,7 @@ import Sidebar from "@/app/components/Sidebar";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
-import LogoutButton from "./LogoutButton";
+import LogoutButton from "@/app/components/LogoutButton";
 
 const ADMIN_EMAILS = ["brnbtech@gmail.com"];
 
