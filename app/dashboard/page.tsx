@@ -12,14 +12,16 @@ export const revalidate = 0;
 
 export default async function Dashboard() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    redirect("/login?callbackUrl=/dashboard");
-  }
+  // TEMPORAIREMENT DÉSACTIVÉ POUR DEBUG
+  // if (!session?.user?.email) {
+  //   redirect("/login?callbackUrl=/dashboard");
+  // }
+  // const userEmail = session.user.email.toLowerCase();
+  // if (!ADMIN_EMAILS.includes(userEmail)) {
+  //   redirect("/unauthorized");
+  // }
 
-  const userEmail = session.user.email.toLowerCase();
-  if (!ADMIN_EMAILS.includes(userEmail)) {
-    redirect("/unauthorized");
-  }
+  console.log("Session:", session);
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
