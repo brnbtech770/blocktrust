@@ -103,7 +103,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        domain: process.env.NODE_ENV === "production" ? ".blocktrust.tech" : undefined,
+        // Pas de domain pour __Host- prefix
       },
     },
   },
