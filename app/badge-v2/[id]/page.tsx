@@ -173,8 +173,24 @@ export default async function BadgeV2Page({ params }: BadgeV2PageProps) {
 
         {/* Footer */}
         <div className="mt-6 pt-6 border-t border-gray-700 text-center space-y-2">
-          <p className="text-gray-400 text-xs">URL de vérification :</p>
-          <p className="text-cyan-400 text-xs break-all bg-gray-800 p-2 rounded">{verifyUrl}</p>
+          <div className="mt-6">
+            <a
+              href={verifyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all shadow-lg"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Vérifier l'authenticité
+            </a>
+          </div>
           <p className="text-gray-600 text-xs mt-2">Token: {signature.jti.substring(0, 8)}...</p>
           <p className="text-gray-600 text-xs">Expire: {signature.expiresAt.toLocaleDateString("fr-FR")}</p>
           <p className="text-cyan-400 text-xs mt-2">blocktrust.tech</p>
