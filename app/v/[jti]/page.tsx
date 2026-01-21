@@ -7,7 +7,8 @@ interface PageProps {
 
 async function getVerification(jti: string, hash: string | undefined) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const url = `${baseUrl}/api/v2/verify/${jti}${hash ? `?h=${hash}` : ""}`;
+  const query = hash ? `?h=${hash}` : "";
+  const url = `${baseUrl}/api/v2/verify/${jti}${query}`;
 
   const res = await fetch(url, { cache: "no-store" });
   return res.json();
