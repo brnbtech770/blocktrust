@@ -5,11 +5,15 @@ import { useState } from "react";
 export default function InscriptionPage() {
   const [formData, setFormData] = useState({
     name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     confirmPassword: "",
     company: "",
+    siret: "",
   });
+  const [accountType, setAccountType] = useState<"business" | "individual">("business");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,10 +40,17 @@ export default function InscriptionPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: formData.name,
+          accountType,
+          name:
+            accountType === "business"
+              ? formData.name
+              : `${formData.firstName} ${formData.lastName}`.trim(),
+          firstName: formData.firstName,
+          lastName: formData.lastName,
           email: formData.email,
           password: formData.password,
           company: formData.company,
+          siret: formData.siret,
         }),
       });
 
@@ -93,34 +104,100 @@ export default function InscriptionPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(event) => setFormData({ ...formData, name: event.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-            />
+          <div className="flex gap-4 p-1 bg-gray-100 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setAccountType("business")}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                accountType === "business"
+                  ? "bg-white text-cyan-600 shadow"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              🏢 Professionnel
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountType("individual")}
+              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                accountType === "individual"
+                  ? "bg-white text-cyan-600 shadow"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              👤 Particulier
+            </button>
           </div>
 
+          {accountType === "business" ? (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nom de l'entreprise
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.company}
+                  onChange={(event) => setFormData({ ...formData, company: event.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">SIRET (optionnel)</label>
+                <input
+                  type="text"
+                  value={formData.siret}
+                  onChange={(event) => setFormData({ ...formData, siret: event.target.value })}
+                  placeholder="12345678901234"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Nom du responsable
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(event) => setFormData({ ...formData, name: event.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.firstName}
+                  onChange={(event) => setFormData({ ...formData, firstName: event.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.lastName}
+                  onChange={(event) => setFormData({ ...formData, lastName: event.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                />
+              </div>
+            </>
+          )}
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email professionnel</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               type="email"
               required
               value={formData.email}
               onChange={(event) => setFormData({ ...formData, email: event.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Entreprise</label>
-            <input
-              type="text"
-              value={formData.company}
-              onChange={(event) => setFormData({ ...formData, company: event.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
             />
           </div>
@@ -137,7 +214,9 @@ export default function InscriptionPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirmer le mot de passe</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Confirmer le mot de passe
+            </label>
             <input
               type="password"
               required

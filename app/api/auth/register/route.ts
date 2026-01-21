@@ -4,7 +4,14 @@ import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password, company } = await request.json();
+    const { accountType, name, email, password, company } = await request.json();
+
+    if (!accountType || !["business", "individual"].includes(accountType)) {
+      return NextResponse.json(
+        { error: "Type de compte invalide" },
+        { status: 400 }
+      );
+    }
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -41,6 +48,7 @@ export async function POST(request: NextRequest) {
         email: normalizedEmail,
         password: hashedPassword,
         company: company || null,
+        accountType,
         status: "PENDING",
         plan: "TRIAL",
       },
