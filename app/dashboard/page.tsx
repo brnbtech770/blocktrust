@@ -4,6 +4,7 @@ import Sidebar from "@/app/components/Sidebar";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import LogoutButton from "./LogoutButton";
 
 const ADMIN_EMAILS = ["brnbtech@gmail.com"];
 
@@ -54,12 +55,15 @@ export default async function Dashboard() {
             <h1 className="text-2xl md:text-3xl font-bold text-white">Mes Certificats</h1>
             <p className="text-gray-400 text-sm md:text-base">Gérez vos badges de certification</p>
           </div>
-          <a
-            href="/dashboard/create"
-            className="w-full sm:w-auto text-center bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
-          >
-            + Créer un certificat
-          </a>
+          <div className="flex w-full sm:w-auto flex-col sm:flex-row gap-2 sm:items-center">
+            <LogoutButton />
+            <a
+              href="/dashboard/create"
+              className="w-full sm:w-auto text-center bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
+            >
+              + Créer un certificat
+            </a>
+          </div>
         </div>
 
         {/* Stats Cards */}
