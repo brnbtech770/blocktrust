@@ -4,26 +4,32 @@ import { getToken } from "next-auth/jwt";
 
 const ADMIN_EMAILS = ["brnbtech@gmail.com"];
 
+const PUBLIC_PATHS = ["/login", "/register", "/api", "/verify", "/v", "/_next", "/favicon.ico"];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
+    return NextResponse.next();
+  }
+
+  if (pathname === "/") {
+    return NextResponse.next();
+  }
+
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  const protectedPaths = ["/dashboard", "/mon-espace"];
-  const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
-
-  if (isProtected && !token) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(loginUrl);
+  if (!token) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   if (pathname.startsWith("/dashboard")) {
     const userEmail = typeof token?.email === "string" ? token.email : "";
     if (!ADMIN_EMAILS.includes(userEmail)) {
-      return NextResponse.redirect(new URL("/unauthorized", request.url));
+      return NextResponse.redirect(new URL("/mon-espace", request.url));
     }
   }
 
@@ -31,5 +37,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/mon-espace/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };
