@@ -11,6 +11,7 @@ export default function Sidebar() {
   const navItems = [
     { href: "/dashboard", label: "Certificats", icon: "📜" },
     { href: "/dashboard/create", label: "Créer", icon: "➕" },
+  { href: "/dashboard/users", label: "Utilisateurs", icon: "👥" },
     { href: "/dashboard/settings", label: "Paramètres", icon: "⚙️" },
     { href: "/dashboard/billing", label: "Facturation", icon: "💳" },
   ];
