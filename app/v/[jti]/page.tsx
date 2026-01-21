@@ -6,19 +6,29 @@ interface PageProps {
 }
 
 async function getVerification(jti: string, hash: string | undefined) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://blocktrust.tech";
   const query = hash ? `?h=${hash}` : "";
   const url = `${baseUrl}/api/v2/verify/${jti}${query}`;
-
+  console.log("Fetching verification URL:", url);
   const res = await fetch(url, { cache: "no-store" });
-  return res.json();
+  const data = await res.json();
+  console.log("Verification result:", data);
+  return data;
 }
 
 export default async function VerifyV2Page({ params, searchParams }: PageProps) {
   const result = await getVerification(params.jti, searchParams.h);
 
   if (result.verdict === "NOT_FOUND") {
-    notFound();
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-6 text-center">
+          <h1 className="text-xl font-bold text-gray-900">Certificat non trouvé</h1>
+          <p className="text-gray-600 mt-2">Ce certificat n'existe pas ou a été supprimé.</p>
+          <p className="text-xs text-gray-400 mt-4">Debug: {JSON.stringify(result)}</p>
+        </div>
+      </div>
+    );
   }
 
   return (
