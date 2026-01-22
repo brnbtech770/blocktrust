@@ -104,12 +104,14 @@ export default function ClientDashboard({ user, entities, stats }: Props) {
 
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-white">Mes Certificats</h2>
-          <Link
-            href="/mon-espace/creer"
-            className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all"
-          >
-            + Créer un certificat
-          </Link>
+          {user.status !== "SUSPENDED" && (
+            <Link
+              href="/mon-espace/creer"
+              className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all"
+            >
+              + Créer un certificat
+            </Link>
+          )}
         </div>
 
         {entities.length === 0 ? (
@@ -133,12 +135,14 @@ export default function ClientDashboard({ user, entities, stats }: Props) {
             <p className="text-gray-400 mb-6">
               Commencez par créer votre premier certificat BlockTrust
             </p>
-            <Link
-              href="/mon-espace/creer"
-              className="inline-flex px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all"
-            >
-              Créer mon premier certificat
-            </Link>
+            {user.status !== "SUSPENDED" && (
+              <Link
+                href="/mon-espace/creer"
+                className="inline-flex px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all"
+              >
+                Créer mon premier certificat
+              </Link>
+            )}
           </div>
         ) : (
           <div className="space-y-6">

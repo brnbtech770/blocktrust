@@ -29,8 +29,8 @@ export default async function CreateCertificatePage() {
     redirect("/login");
   }
 
-  if (user.status !== "ACTIVE") {
-    redirect("/mon-espace?error=pending");
+  if (user.status === "SUSPENDED") {
+    redirect("/mon-espace?error=suspended");
   }
 
   return (
