@@ -1,17 +1,15 @@
-import { redirect } from "next/navigation";
-
 export default async function VerifyPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ jti: string }>;
-  searchParams: Promise<{ h?: string }>;
+  params: { jti: string };
+  searchParams: { h?: string };
 }) {
-  const { jti } = await params;
-  const { h } = await searchParams;
+  const { jti } = params;
+  const { h } = searchParams;
 
   const res = await fetch(
-    `https://blocktrust.tech/api/v2/verify/${jti}${h ? `?h=${h}` : ""}`,
+    `${process.env.NEXT_PUBLIC_APP_URL || "https://blocktrust.tech"}/api/v2/verify/${jti}${h ? `?h=${h}` : ""}`,
     { cache: "no-store" }
   );
   const result = await res.json();
