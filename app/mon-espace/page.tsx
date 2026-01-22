@@ -1,8 +1,13 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 import ClientDashboard from "./ClientDashboard";
+
+export const metadata = {
+  title: "Mon Espace - BlockTrust",
+  description: "Gérez vos certificats BlockTrust",
+};
 
 export default async function MonEspacePage() {
   const session = await getServerSession(authOptions);
@@ -12,18 +17,15 @@ export default async function MonEspacePage() {
   }
 
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email.toLowerCase() },
+    where: { email: session.user.email },
     include: {
       entities: {
         include: {
           certificates: {
-            include: {
-              _count: {
-                select: { verifications: true },
-              },
-            },
+            orderBy: { issuedAt: "desc" },
           },
         },
+        orderBy: { createdAt: "desc" },
       },
     },
   });
@@ -32,30 +34,72 @@ export default async function MonEspacePage() {
     redirect("/login");
   }
 
-  const totalCertificats = user.entities.reduce(
+  const totalCertificates = user.entities.reduce(
     (acc, entity) => acc + entity.certificates.length,
     0
   );
-  const totalVerifications = user.entities.reduce(
+
+  const activeCertificates = user.entities.reduce(
     (acc, entity) =>
-      acc +
-      entity.certificates.reduce(
-        (acc2, cert) => acc2 + cert._count.verifications,
-        0
-      ),
+      acc + entity.certificates.filter((c) => c.status === "ACTIVE").length,
     0
   );
 
-  return (
-    <ClientDashboard
-      user={user}
-      stats={{
-        totalCertificats,
-        totalVerifications,
-        plan: user.plan,
-      }}
-    />
-  );
+  let totalVerifications = 0;
+  try {
+    const certificateIds = user.entities.flatMap((e) =>
+      e.certificates.map((c) => c.id)
+    );
+
+    if (certificateIds.length > 0) {
+      totalVerifications = await prisma.verification.count({
+        where: {
+          certificateId: { in: certificateIds },
+        },
+      });
+    }
+  } catch {
+    totalVerifications = 0;
+  }
+
+  const userData = {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    plan: user.plan,
+    status: user.status,
+    company: user.company,
+    createdAt: user.createdAt.toISOString(),
+  };
+
+  const entitiesData = user.entities.map((entity) => ({
+    id: entity.id,
+    entityType: entity.entityType,
+    legalName: entity.legalName,
+    firstName: entity.firstName,
+    lastName: entity.lastName,
+    email: entity.email,
+    website: entity.website,
+    kycStatus: entity.kycStatus,
+    validationLevel: entity.validationLevel,
+    createdAt: entity.createdAt.toISOString(),
+    certificates: entity.certificates.map((cert) => ({
+      id: cert.id,
+      status: cert.status,
+      level: cert.level,
+      issuedAt: cert.issuedAt.toISOString(),
+      tokenId: cert.tokenId,
+    })),
+  }));
+
+  const stats = {
+    totalCertificates,
+    activeCertificates,
+    totalVerifications,
+    totalEntities: user.entities.length,
+  };
+
+  return <ClientDashboard user={userData} entities={entitiesData} stats={stats} />;
 }
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
