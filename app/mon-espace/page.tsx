@@ -1,5 +1,64 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import ClientDashboard from "./ClientDashboard";
+
+export default async function MonEspacePage() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.email) {
+    redirect("/login");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email.toLowerCase() },
+    include: {
+      entities: {
+        include: {
+          certificates: {
+            include: {
+              _count: {
+                select: { verifications: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const totalCertificats = user.entities.reduce(
+    (acc, entity) => acc + entity.certificates.length,
+    0
+  );
+  const totalVerifications = user.entities.reduce(
+    (acc, entity) =>
+      acc +
+      entity.certificates.reduce(
+        (acc2, cert) => acc2 + cert._count.verifications,
+        0
+      ),
+    0
+  );
+
+  return (
+    <ClientDashboard
+      user={user}
+      stats={{
+        totalCertificats,
+        totalVerifications,
+        plan: user.plan,
+      }}
+    />
+  );
+}
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 
