@@ -31,7 +31,7 @@ interface Props {
       issuedAt: string;
       tokenId: string | null;
     }>;
-  };
+  }>;
   stats: {
     totalCertificates: number;
     activeCertificates: number;
