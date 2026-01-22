@@ -2,17 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { createHash, randomBytes } from "crypto";
+import {
+  generateJti,
+  generateNonce,
+  hashContent,
+  signContent,
+} from "@/lib/crypto";
 
 const ADMIN_EMAILS = ["brnbtech@gmail.com"];
-
-function generateJti(): string {
-  return randomBytes(9).toString("base64url").substring(0, 12);
-}
-
-function generateCtxHash(entityData: string): string {
-  return createHash("sha256").update(entityData).digest("hex");
-}
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -62,7 +59,7 @@ export async function PATCH(request: NextRequest) {
         const jti = generateJti();
         const entity = certificate.entity;
 
-        const contextData = JSON.stringify({
+        const contextPayload = {
           entityId: entity.id,
           entityType: entity.entityType,
           legalName: entity.legalName,
@@ -72,11 +69,21 @@ export async function PATCH(request: NextRequest) {
           siret: entity.siret,
           certificateId: certificate.id,
           issuedAt: new Date().toISOString(),
-        });
+        };
 
-        const ctxHash = generateCtxHash(contextData);
+        const ctxHash = hashContent(JSON.stringify(contextPayload));
         const expiresAt = new Date();
         expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+        const nonce = generateNonce();
+        const signature = await signContent({
+          jti,
+          certificateId: certificate.id,
+          entityId: entity.id,
+          ctxType: "certificate",
+          ctxHash,
+          nonce,
+        });
 
         await prisma.signature.create({
           data: {
@@ -85,6 +92,9 @@ export async function PATCH(request: NextRequest) {
             entityId: entity.id,
             ctxType: "certificate",
             ctxHash,
+            ctxMetadata: JSON.parse(JSON.stringify(contextPayload)),
+            signature,
+            nonce,
             expiresAt,
             revoked: false,
           },
