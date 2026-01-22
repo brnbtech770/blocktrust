@@ -18,6 +18,13 @@ export default async function MonEspacePage() {
       entities: {
         include: {
           certificates: {
+            include: {
+              signatures: {
+                where: { revoked: false },
+                orderBy: { issuedAt: "desc" },
+                take: 1,
+              },
+            },
             orderBy: { issuedAt: "desc" },
           },
         },
@@ -81,6 +88,13 @@ export default async function MonEspacePage() {
       level: cert.level,
       issuedAt: cert.issuedAt.toISOString(),
       tokenId: cert.tokenId,
+      signature: cert.signatures[0]
+        ? {
+            jti: cert.signatures[0].jti,
+            ctxHash: cert.signatures[0].ctxHash,
+            expiresAt: cert.signatures[0].expiresAt.toISOString(),
+          }
+        : null,
     })),
   }));
 
