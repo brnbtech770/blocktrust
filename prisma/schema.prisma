@@ -16,6 +16,7 @@ model User {
   emailVerified DateTime?
   password  String?
   company   String?
+  accountType String  @default("business")
   status    String    @default("PENDING")
   plan      String    @default("TRIAL")
   createdAt DateTime  @default(now())
