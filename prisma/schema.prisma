@@ -158,7 +158,9 @@ model VerificationEventV2 {
   verdict     String
   fraudReason String?
 
-  createdAt   DateTime @default(now())  @@index([signatureId])
+  createdAt   DateTime @default(now())
+
+  @@index([signatureId])
   @@index([verdict])
   @@index([createdAt])
 }
