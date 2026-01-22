@@ -8,10 +8,9 @@ export default async function VerifyPage({
   const { jti } = params;
   const { h } = searchParams;
 
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_APP_URL || "https://blocktrust.tech"}/api/v2/verify/${jti}${h ? `?h=${h}` : ""}`,
-    { cache: "no-store" }
-  );
+  const url = `${process.env.NEXT_PUBLIC_APP_URL || "https://blocktrust.tech"}/api/v2/verify/${jti}${h ? `?h=${h}` : ""}`;
+
+  const res = await fetch(url, { cache: "no-store" });
   const result = await res.json();
 
   const isValid = result.verdict === "VALID";
@@ -68,7 +67,6 @@ export default async function VerifyPage({
             </div>
           </>
         )}
-
         {isFraud && (
           <>
             <div style={{ fontSize: "60px" }}>⚠️</div>
@@ -88,7 +86,6 @@ export default async function VerifyPage({
             </p>
           </>
         )}
-
         {!isValid && !isFraud && (
           <>
             <div style={{ fontSize: "60px" }}>❓</div>
