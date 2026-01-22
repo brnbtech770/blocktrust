@@ -1,11 +1,8 @@
-import { prisma } from "@/app/lib/db";
+import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import QRCodeComponent from "@/app/components/QRCode";
-import * as crypto from "crypto";
-import { generateNonce, signContent } from "@/lib/crypto";
 
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
 interface BadgeV2PageProps {
   params: Promise<{ id: string }>;
@@ -13,91 +10,56 @@ interface BadgeV2PageProps {
 
 export default async function BadgeV2Page({ params }: BadgeV2PageProps) {
   const resolvedParams = await params;
-  const id = resolvedParams.id;
+  const entityId = resolvedParams.id;
 
-  // Récupère l'entité
   const entity = await prisma.entity.findUnique({
-    where: { id },
-    include: { certificates: true },
+    where: { id: entityId },
   });
 
   if (!entity) {
     notFound();
   }
 
-  // Vérifie si une signature V2 existe déjà
-  let signature = await prisma.signature.findFirst({
+  const signature = await prisma.signature.findFirst({
     where: {
       entityId: entity.id,
       revoked: false,
-      expiresAt: { gt: new Date() },
     },
     orderBy: { issuedAt: "desc" },
   });
 
-  // Si pas de signature, on en crée une
   if (!signature) {
-    let certificate = entity.certificates[0];
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+        <div className="bg-white/5 backdrop-blur-lg p-8 rounded-3xl border border-gray-700 max-w-md w-full text-center">
+          <div className="text-4xl mb-4">⏳</div>
+          <h1 className="text-2xl font-bold text-white mb-2">
+            Certificat en attente
+          </h1>
+          <p className="text-gray-400">
+            Ce certificat n'a pas encore été validé par l'administrateur.
+          </p>
 
-    if (!certificate) {
-      certificate = await prisma.certificate.create({
-        data: {
-          entityId: entity.id,
-          status: "ACTIVE",
-          level: entity.validationLevel,
-        },
-      });
-    }
-
-    // Génère le hash du contenu
-    const contextData = {
-      entityId: entity.id,
-      type: entity.entityType,
-      name: entity.entityType === "BUSINESS" ? entity.legalName : `${entity.firstName} ${entity.lastName}`,
-      email: entity.email,
-      timestamp: new Date().toISOString(),
-    };
-    const ctxHash = crypto.createHash("sha256").update(JSON.stringify(contextData)).digest("hex");
-
-    // Génère un JTI unique
-    const jti = crypto.randomUUID();
-
-    // Date d'expiration (1 an)
-    const expiresAt = new Date();
-    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
-
-    const ctxType = "identity_badge";
-    const nonce = generateNonce();
-    const jwtSignature = await signContent({
-      jti,
-      certificateId: certificate.id,
-      entityId: entity.id,
-      ctxType,
-      ctxHash,
-      nonce,
-    });
-
-    // Crée la signature
-    signature = await prisma.signature.create({
-      data: {
-        jti,
-        certificateId: certificate.id,
-        entityId: entity.id,
-        ctxType,
-        ctxHash,
-        ctxMetadata: contextData,
-        signature: jwtSignature,
-        nonce,
-        expiresAt,
-        revoked: false,
-      },
-    });
+          <a
+            href="/mon-espace"
+            className="inline-block mt-6 px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors"
+          >
+            Retour à mon espace
+          </a>
+        </div>
+      </div>
+    );
   }
 
-  // URL de vérification V2 avec hash
-  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://blocktrust.tech"}/v/${signature.jti}?h=${signature.ctxHash.substring(0, 16)}`;
+  const verifyUrl = `https://blocktrust.tech/v/${signature.jti}?h=${signature.ctxHash.substring(
+    0,
+    16
+  )}`;
 
-  const displayName = entity.entityType === "BUSINESS" ? entity.legalName : `${entity.firstName} ${entity.lastName}`;
+  const displayName =
+    entity.entityType === "BUSINESS"
+      ? entity.legalName
+      : `${entity.firstName} ${entity.lastName}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
@@ -120,7 +82,9 @@ export default async function BadgeV2Page({ params }: BadgeV2PageProps) {
         <div className="space-y-4 mb-6">
           <div className="text-center">
             <p className="text-gray-500 text-sm">
-              {entity.entityType === "BUSINESS" ? "🏢 Entreprise certifiée" : "👤 Particulier certifié"}
+              {entity.entityType === "BUSINESS"
+                ? "🏢 Entreprise certifiée"
+                : "👤 Particulier certifié"}
             </p>
             <p className="text-white text-xl font-bold">{displayName}</p>
           </div>
@@ -142,14 +106,8 @@ export default async function BadgeV2Page({ params }: BadgeV2PageProps) {
             </div>
             <div className="text-center">
               <p className="text-gray-500 text-xs">Statut</p>
-              <span
-                className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                  entity.kycStatus === "APPROVED"
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-yellow-500/20 text-yellow-400"
-                }`}
-              >
-                {entity.kycStatus === "APPROVED" ? "Validé" : "En attente"}
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-green-500/20 text-green-400">
+                Vérifié
               </span>
             </div>
           </div>
@@ -161,7 +119,8 @@ export default async function BadgeV2Page({ params }: BadgeV2PageProps) {
             🔐 <strong>Badge V2 anti-falsification</strong>
           </p>
           <p className="text-gray-400 text-xs text-center mt-1">
-            Ce QR code est lié cryptographiquement à ce contexte. Toute copie dans un autre contexte sera détectée.
+            Ce QR code est lié cryptographiquement à ce contexte. Toute copie
+            dans un autre contexte sera détectée.
           </p>
         </div>
 
@@ -173,26 +132,34 @@ export default async function BadgeV2Page({ params }: BadgeV2PageProps) {
 
         {/* Footer */}
         <div className="mt-6 pt-6 border-t border-gray-700 text-center space-y-2">
-          <div className="mt-6">
-            <a
-              href={verifyUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all shadow-lg"
+          <a
+            href={verifyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center w-full px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-lg hover:from-cyan-600 hover:to-blue-600 transition-all shadow-lg"
+          >
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              Vérifier l'authenticité
-            </a>
-          </div>
-          <p className="text-gray-600 text-xs mt-2">Token: {signature.jti.substring(0, 8)}...</p>
-          <p className="text-gray-600 text-xs">Expire: {signature.expiresAt.toLocaleDateString("fr-FR")}</p>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            Vérifier l'authenticité
+          </a>
+          <p className="text-gray-600 text-xs mt-2">
+            Token: {signature.jti.substring(0, 8)}...
+          </p>
+          <p className="text-gray-600 text-xs">
+            Expire:{" "}
+            {new Date(signature.expiresAt).toLocaleDateString("fr-FR")}
+          </p>
           <p className="text-cyan-400 text-xs mt-2">blocktrust.tech</p>
         </div>
       </div>
