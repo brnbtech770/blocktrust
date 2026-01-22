@@ -191,6 +191,12 @@ export default function ClientDashboard({ user, entities, stats }: Props) {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
+                        <Link
+                          href={`/verify/${cert.id}`}
+                          className="px-2 py-1 text-xs rounded bg-cyan-900/50 text-cyan-400 hover:bg-cyan-800/60 transition-colors"
+                        >
+                          Vérifier
+                        </Link>
                         <span
                           className={`px-2 py-1 text-xs rounded ${
                             cert.level === "BRONZE"
