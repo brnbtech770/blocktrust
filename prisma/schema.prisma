@@ -16,7 +16,6 @@ model User {
   emailVerified DateTime?
   password  String?
   company   String?
-  accountType String  @default("business")
   status    String    @default("PENDING")
   plan      String    @default("TRIAL")
   createdAt DateTime  @default(now())
@@ -159,11 +158,7 @@ model VerificationEventV2 {
   verdict     String
   fraudReason String?
 
-  createdAt   DateTime @default(now())
-
-  @@index([signatureId])
+  createdAt   DateTime @default(now())  @@index([signatureId])
   @@index([verdict])
   @@index([createdAt])
 }
-
-
