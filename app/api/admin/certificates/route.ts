@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createHash, randomBytes } from "crypto";
 
 const ADMIN_EMAILS = ["brnbtech@gmail.com"];
+
+function generateJti(): string {
+  return randomBytes(9).toString("base64url").substring(0, 12);
+}
+
+function generateCtxHash(entityData: string): string {
+  return createHash("sha256").update(entityData).digest("hex");
+}
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -22,12 +31,21 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Données invalides" }, { status: 400 });
     }
 
-    const certificate = await prisma.certificate.update({
+    const certificate = await prisma.certificate.findUnique({
+      where: { id: certificateId },
+      include: { entity: true },
+    });
+
+    if (!certificate) {
+      return NextResponse.json(
+        { error: "Certificat non trouvé" },
+        { status: 404 }
+      );
+    }
+
+    const updatedCertificate = await prisma.certificate.update({
       where: { id: certificateId },
       data: { status },
-      include: {
-        entity: true,
-      },
     });
 
     if (status === "ACTIVE") {
@@ -35,13 +53,57 @@ export async function PATCH(request: NextRequest) {
         where: { id: certificate.entityId },
         data: { kycStatus: "VERIFIED" },
       });
+
+      const existingSignature = await prisma.signature.findFirst({
+        where: { certificateId: certificateId },
+      });
+
+      if (!existingSignature) {
+        const jti = generateJti();
+        const entity = certificate.entity;
+
+        const contextData = JSON.stringify({
+          entityId: entity.id,
+          entityType: entity.entityType,
+          legalName: entity.legalName,
+          firstName: entity.firstName,
+          lastName: entity.lastName,
+          email: entity.email,
+          siret: entity.siret,
+          certificateId: certificate.id,
+          issuedAt: new Date().toISOString(),
+        });
+
+        const ctxHash = generateCtxHash(contextData);
+        const expiresAt = new Date();
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+        await prisma.signature.create({
+          data: {
+            jti,
+            certificateId: certificate.id,
+            entityId: entity.id,
+            ctxType: "certificate",
+            ctxHash,
+            expiresAt,
+            revoked: false,
+          },
+        });
+      }
+    }
+
+    if (status === "REVOKED") {
+      await prisma.signature.updateMany({
+        where: { certificateId },
+        data: { revoked: true },
+      });
     }
 
     return NextResponse.json({
       success: true,
       certificate: {
-        id: certificate.id,
-        status: certificate.status,
+        id: updatedCertificate.id,
+        status: updatedCertificate.status,
       },
     });
   } catch (error) {
@@ -65,12 +127,7 @@ export async function GET() {
       include: {
         entity: {
           include: {
-            user: {
-              select: {
-                name: true,
-                email: true,
-              },
-            },
+            user: { select: { name: true, email: true } },
           },
         },
       },
