@@ -9,29 +9,38 @@ interface Props {
     name: string | null;
     email: string;
     plan: string;
-    entities: Array<{
+    status: string;
+    company: string | null;
+    createdAt: string;
+  };
+  entities: Array<{
+    id: string;
+    entityType: string;
+    legalName: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+    website: string | null;
+    kycStatus: string;
+    validationLevel: string;
+    createdAt: string;
+    certificates: Array<{
       id: string;
-      legalName: string | null;
-      firstName: string | null;
-      lastName: string | null;
-      entityType: string;
-      certificates: Array<{
-        id: string;
-        status: string;
-        level: string;
-        issuedAt: Date;
-        _count: { verifications: number };
-      }>;
+      status: string;
+      level: string;
+      issuedAt: string;
+      tokenId: string | null;
     }>;
   };
   stats: {
-    totalCertificats: number;
+    totalCertificates: number;
+    activeCertificates: number;
     totalVerifications: number;
-    plan: string;
+    totalEntities: number;
   };
 }
 
-export default function ClientDashboard({ user, stats }: Props) {
+export default function ClientDashboard({ user, entities, stats }: Props) {
   return (
     <div className="min-h-screen bg-gray-900">
       <header className="bg-gray-800 border-b border-gray-700">
@@ -45,7 +54,7 @@ export default function ClientDashboard({ user, stats }: Props) {
                 {user.name || user.email}
               </h1>
               <span className="text-xs text-cyan-400 bg-cyan-900/50 px-2 py-0.5 rounded">
-                Plan {stats.plan}
+                Plan {user.plan}
               </span>
             </div>
           </div>
@@ -76,7 +85,7 @@ export default function ClientDashboard({ user, stats }: Props) {
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <p className="text-gray-400 text-sm">Total certificats</p>
             <p className="text-3xl font-bold text-white mt-1">
-              {stats.totalCertificats}
+              {stats.totalCertificates}
             </p>
           </div>
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
@@ -86,9 +95,9 @@ export default function ClientDashboard({ user, stats }: Props) {
             </p>
           </div>
           <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-            <p className="text-gray-400 text-sm">Plan actuel</p>
+            <p className="text-gray-400 text-sm">Certificats actifs</p>
             <p className="text-3xl font-bold text-green-400 mt-1">
-              {stats.plan}
+              {stats.activeCertificates}
             </p>
           </div>
         </div>
@@ -103,7 +112,7 @@ export default function ClientDashboard({ user, stats }: Props) {
           </Link>
         </div>
 
-        {user.entities.length === 0 ? (
+        {entities.length === 0 ? (
           <div className="bg-gray-800 rounded-xl p-12 text-center border border-gray-700">
             <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
@@ -133,7 +142,7 @@ export default function ClientDashboard({ user, stats }: Props) {
           </div>
         ) : (
           <div className="space-y-6">
-            {user.entities.map((entity) => (
+            {entities.map((entity) => (
               <div
                 key={entity.id}
                 className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden"
@@ -174,7 +183,6 @@ export default function ClientDashboard({ user, stats }: Props) {
                             {new Date(cert.issuedAt).toLocaleDateString(
                               "fr-FR"
                             )}{" "}
-                            • {cert._count.verifications} vérifications
                           </p>
                         </div>
                       </div>
