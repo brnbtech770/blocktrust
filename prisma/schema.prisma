@@ -1,3 +1,8 @@
+// BlockTrust - Schema Prisma Complet
+// Version: 2.0 - Février 2026
+// Inclut: Core, Trust Circle, Plans, Stripe, Multi-Tenant
+// ============================================================
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,79 +13,698 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ============================================================
+// AUTHENTIFICATION & UTILISATEURS
+// ============================================================
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token     String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([email])
+}
+
 model User {
   id            String    @id @default(cuid())
-  email         String    @unique
   name          String?
-  plan          String    @default("TRIAL")
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  company       String?
+  phone         String?
+  password      String?
+  accountType   AccountType @default(PERSONAL)
+  
+  // Relation plan & paiement
+  planId           String?
+  plan             Plan?     @relation(fields: [planId], references: [id])
+  stripeCustomerId String?   @unique
+  subscription    Subscription?
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  
+  accounts      Account[]
+  sessions      Session[]
   entities      Entity[]
+  devices       UserDevice[]
+  
+  // Organisation (B2B)
+  ownedOrganizations    Organization[] @relation("OrganizationOwner")
+  organizationMemberships OrganizationMember[]
+  
+  // Compte personnel (B2C)
+  ownedPersonalAccounts PersonalAccount[] @relation("PersonalAccountOwner")
+  personalAccountMemberships PersonalAccountMember[]
 }
+
+enum AccountType {
+  PERSONAL
+  BUSINESS
+}
+
+model UserDevice {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceName  String
+  deviceType  String
+  userAgent   String?
+  lastUsedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+}
+
+// ============================================================
+// ORGANISATIONS (B2B)
+// ============================================================
+
+model Organization {
+  id            String   @id @default(cuid())
+  name          String
+  siret         String?  @unique
+  vatNumber     String?
+  address       String?
+  city          String?
+  postalCode    String?
+  country       String   @default("FR")
+  
+  ownerId       String
+  owner         User     @relation("OrganizationOwner", fields: [ownerId], references: [id])
+  
+  planId        String?
+  plan          Plan?    @relation(fields: [planId], references: [id])
+  stripeCustomerId String? @unique
+  
+  maxSeats      Int      @default(3)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  members       OrganizationMember[]
+  entities      Entity[]
+  
+  @@index([ownerId])
+}
+
+model OrganizationMember {
+  id              String   @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role            OrgRole  @default(MEMBER)
+  invitedAt       DateTime @default(now())
+  joinedAt        DateTime?
+  
+  @@unique([organizationId, userId])
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+// ============================================================
+// COMPTES PERSONNELS (B2C Famille)
+// ============================================================
+
+model PersonalAccount {
+  id            String   @id @default(cuid())
+  name          String   @default("Mon compte")
+  
+  ownerId       String
+  owner         User     @relation("PersonalAccountOwner", fields: [ownerId], references: [id])
+  
+  planId        String?
+  plan          Plan?    @relation(fields: [planId], references: [id])
+  stripeCustomerId String? @unique
+  
+  maxProfiles   Int      @default(1)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  members       PersonalAccountMember[]
+  
+  @@index([ownerId])
+}
+
+model PersonalAccountMember {
+  id                String   @id @default(cuid())
+  personalAccountId String
+  personalAccount   PersonalAccount @relation(fields: [personalAccountId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role              String   @default("MEMBER")
+  invitedAt         DateTime @default(now())
+  joinedAt          DateTime?
+  
+  @@unique([personalAccountId, userId])
+}
+
+// ============================================================
+// PLANS & ABONNEMENTS
+// ============================================================
+
+model Plan {
+  id            String   @id @default(cuid())
+  name          String
+  type          PlanType
+  price         Decimal  @db.Decimal(10, 2)
+  currency      String   @default("EUR")
+  interval      BillingInterval @default(MONTHLY)
+  
+  // Limites B2C
+  maxProfiles   Int      @default(1)
+  maxEntities   Int      @default(20)
+  
+  // Limites B2B
+  maxSeats      Int      @default(3)
+  maxCertificates Int    @default(10)
+  apiRequestsPerMonth Int @default(1000)
+  
+  // Features
+  trustCircleEnabled    Boolean @default(false)
+  blockchainAnchor      Boolean @default(false)
+  whitelabelEnabled     Boolean @default(false)
+  aiAlertsEnabled       Boolean @default(false)
+  prioritySupport       Boolean @default(false)
+  
+  stripePriceId String?  @unique
+  
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  
+  users         User[]
+  organizations Organization[]
+  personalAccounts PersonalAccount[]
+}
+
+enum PlanType {
+  TRIAL
+  B2C_ESSENTIEL
+  B2C_PREMIUM
+  B2C_FAMILLE
+  B2C_FAMILLE_PLUS
+  B2B_STARTER
+  B2B_TEAM
+  B2B_BUSINESS
+  B2B_ENTERPRISE
+}
+
+enum BillingInterval {
+  MONTHLY
+  YEARLY
+}
+
+model Subscription {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String?  @unique
+  stripeSubscriptionId String?  @unique
+  stripePriceId        String?
+  plan                 String   @default("FREE") // FREE, ESSENTIEL, PREMIUM, FAMILLE, FAMILLE_PLUS
+  status               String   @default("inactive") // active, inactive, past_due, canceled
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+}
+
+// ============================================================
+// ENTITÉS & CERTIFICATS
+// ============================================================
 
 model Entity {
   id              String   @id @default(cuid())
   userId          String
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  legalName       String
-  siret           String   @unique
+  
+  // Organisation optionnelle (B2B)
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  
+  entityType      EntityType @default(BUSINESS)
+  
+  // Champs B2B
+  legalName       String?
+  tradeName       String?
+  siret           String?  @unique
+  vatNumber       String?
+  
+  // Champs B2C
+  firstName       String?
+  lastName        String?
+  
+  // Champs communs
   email           String
+  phone           String?
   website         String?
-  description     String?
-  kycStatus       String   @default("PENDING")
-  validationLevel String   @default("BRONZE")
+  address         String?
+  city            String?
+  postalCode      String?
+  country         String   @default("FR")
+  description     String?  @db.Text
+  logoUrl         String?
+  
+  // Vérification
+  kycStatus       KycStatus @default(PENDING)
+  validationLevel ValidationLevel @default(BRONZE)
+  emailVerified   Boolean  @default(false)
+  phoneVerified   Boolean  @default(false)
+  domainVerified  Boolean  @default(false)
+  
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  
   certificates    Certificate[]
+  signatures      Signature[]
+  trustScore      TrustScore?
+  aiAlerts        AIAlert[]
+  
+  // Trust Circle
+  trustRequestsSent     TrustRelation[] @relation("TrustRequester")
+  trustRequestsReceived TrustRelation[] @relation("TrustRequestee")
+  manualTrustEntries    ManualTrustEntry[]
+  
+  // Badge Interactions
+  interactionsAsA BadgeInteraction[] @relation("InteractionBadgeA")
+  interactionsAsB BadgeInteraction[] @relation("InteractionBadgeB")
+  
+  @@index([userId])
+  @@index([organizationId])
+  @@index([email])
+  @@index([siret])
+}
+
+enum EntityType {
+  BUSINESS
+  INDIVIDUAL
+  ASSOCIATION
+  PUBLIC_ENTITY
+}
+
+enum KycStatus {
+  PENDING
+  IN_PROGRESS
+  VERIFIED
+  REJECTED
+  EXPIRED
+}
+
+enum ValidationLevel {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
 }
 
 model Certificate {
   id              String   @id @default(cuid())
   entityId        String
   entity          Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
-  tokenId         String?  @unique
+  
+  // Identifiants
+  publicId        String?  @unique @default(cuid())
+  
+  // Blockchain
   txHash          String?  @unique
-  contractAddress String?
-  tokenURI        String?
-  status          String   @default("PENDING")
-  level           String   @default("BRONZE")
+  blockNumber     Int?
+  contractAddress     String?
+  tokenId         String?
+  merkleRoot      String?
+  anchoredAt      DateTime?
+  
+  // Métadonnées
+  level           ValidationLevel @default(BRONZE)
+  status          CertificateStatus @default(PENDING)
+  
   issuedAt        DateTime @default(now())
+  expiresAt       DateTime?
+  revokedAt       DateTime?
+  revocationReason String?
+  
+  // Stats
+  verificationCount Int    @default(0)
+  lastVerifiedAt  DateTime?
+  
+  signatures      Signature[]
   verifications   Verification[]
+  
+  // Badge Interactions
+  interactionsAsA BadgeInteraction[] @relation("CertificateA")
+  interactionsAsB BadgeInteraction[] @relation("CertificateB")
+  aiAlerts        AIAlert[]
+
+  @@index([entityId])
+  @@index([status])
+  @@index([publicId])
 }
+
+enum CertificateStatus {
+  PENDING
+  ACTIVE
+  ANCHORED
+  SUSPENDED
+  REVOKED
+  EXPIRED
+}
+
+// ============================================================
+// SIGNATURES V2 (Anti-Falsification)
+// ============================================================
+
+model Signature {
+  id            String   @id @default(uuid())
+  jti           String   @unique
+  
+  certificateId String
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  
+  entityId      String
+  entity        Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  
+  // Payload complet
+  payload       Json?
+  
+  // Contexte anti-copie
+  contextHash   String?
+  targetUrl     String?
+  purpose       String?
+  
+  // Signature cryptographique
+  signature     String?  @db.Text
+  
+  issuedAt      DateTime @default(now())
+  expiresAt     DateTime
+  revokedAt     DateTime?
+  revoked       Boolean  @default(false)
+  
+  @@index([certificateId])
+  @@index([entityId])
+  @@index([jti])
+}
+
+// ============================================================
+// VÉRIFICATIONS
+// ============================================================
 
 model Verification {
   id            String   @id @default(cuid())
   certificateId String
   certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
-  ipAddress     String?
-  country       String?
+  
+  ipHash        String?
   userAgent     String?
+  referer       String?
+  country       String?
+  
+  result        VerificationResult @default(VALID)
+  signatureJti  String?
+  
   verifiedAt    DateTime @default(now())
-}
-model Signature {
-  id            String   @id @default(uuid())
-  jti           String   @unique
-  certificateId String
-  entityId      String
-  ctxType       String
-  ctxHash       String
-  issuedAt      DateTime @default(now())
-  expiresAt     DateTime
-  revoked       Boolean  @default(false)
-
+  
   @@index([certificateId])
-  @@index([entityId])
+  @@index([verifiedAt])
 }
 
-model VerificationEvent {
-  id        String   @id @default(uuid())
-  jti       String
-  ip        String?
-  userAgent String?
-  verdict   String
-  createdAt DateTime @default(now())
+enum VerificationResult {
+  VALID
+  FRAUD_ALERT
+  EXPIRED
+  REVOKED
+  NOT_FOUND
+}
 
-  @@index([jti])
+// ============================================================
+// TRUST CIRCLE
+// ============================================================
+
+model TrustRelation {
+  id              String   @id @default(cuid())
+  
+  requesterId     String
+  requester       Entity   @relation("TrustRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  
+  requesteeId     String
+  requestee       Entity   @relation("TrustRequestee", fields: [requesteeId], references: [id], onDelete: Cascade)
+  
+  status          TrustStatus @default(PENDING)
+  
+  txHash          String?
+  
+  createdAt       DateTime @default(now())
+  respondedAt     DateTime?
+  revokedAt       DateTime?
+  revokedBy       String?
+  
+  message         String?
+  relationshipType String?
+  
+  @@unique([requesterId, requesteeId])
+  @@index([requesterId])
+  @@index([requesteeId])
+  @@index([status])
+}
+
+enum TrustStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  REVOKED
+  EXPIRED
+}
+
+model ManualTrustEntry {
+  id              String   @id @default(cuid())
+  
+  ownerId         String
+  owner           Entity   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  
+  trustedName     String
+  trustedEmail    String?
+  trustedPhone    String?
+  trustedDomain   String?
+  trustedSiret    String?
+  
+  emailVerified   Boolean  @default(false)
+  domainVerified  Boolean  @default(false)
+  
+  category        String?
+  notes           String?  @db.Text
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([ownerId])
+  @@index([trustedDomain])
+}
+
+// ============================================================
+// TRUST SCORE
+// ============================================================
+
+model TrustScore {
+  id              String   @id @default(cuid())
+  
+  entityId        String   @unique
+  entity          Entity   @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  
+  score           Int      @default(50)
+  
+  kycScore        Int      @default(0)
+  historyScore    Int      @default(0)
+  interactionScore Int     @default(0)
+  behaviorScore   Int      @default(0)
+  networkScore    Int      @default(0)
+  
+  penalties       Int      @default(0)
+  
+  level           TrustLevel @default(STANDARD)
+  
+  previousScore   Int?
+  lastCalculated  DateTime @default(now())
+  
+  @@index([score])
+  @@index([level])
+}
+
+enum TrustLevel {
+  UNVERIFIED
+  STANDARD
+  TRUSTED
+  HIGHLY_TRUSTED
+  ELITE
+}
+
+// ============================================================
+// BADGE INTERACTIONS
+// ============================================================
+
+model BadgeInteraction {
+  id              String   @id @default(cuid())
+  
+  entityAId       String?
+  entityA         Entity?  @relation("InteractionBadgeA", fields: [entityAId], references: [id], onDelete: Cascade)
+  
+  entityBId       String?
+  entityB         Entity?  @relation("InteractionBadgeB", fields: [entityBId], references: [id], onDelete: Cascade)
+  
+  certificateAId  String?
+  certificateA    Certificate? @relation("CertificateA", fields: [certificateAId], references: [id], onDelete: Cascade)
+  
+  certificateBId  String?
+  certificateB    Certificate? @relation("CertificateB", fields: [certificateBId], references: [id], onDelete: Cascade)
+  
+  interactionType InteractionType
+  
+  txHash          String?
+  metadata        Json?
+  initiatedBy     String
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([entityAId])
+  @@index([entityBId])
+  @@index([certificateAId])
+  @@index([certificateBId])
+  @@index([interactionType])
+}
+
+enum InteractionType {
+  ENDORSEMENT
+  COLLABORATION
+  VERIFICATION
+  TRANSACTION
+  REPORT
+}
+
+// ============================================================
+// IA & ALERTES
+// ============================================================
+
+model AIAlert {
+  id              String   @id @default(cuid())
+  
+  entityId        String?
+  entity          Entity?  @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  certificateId   String?
+  certificate     Certificate? @relation(fields: [certificateId], references: [id], onDelete: SetNull)
+  
+  alertType       AlertType
+  severity        AlertSeverity @default(MEDIUM)
+  
+  title           String
+  description     String   @db.Text
+  details         Json?
+  
+  status          AlertStatus @default(PENDING)
+  resolvedAt      DateTime?
+  resolvedBy      String?
+  resolution      String?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([entityId])
+  @@index([certificateId])
+  @@index([alertType])
+  @@index([status])
+}
+
+enum AlertType {
+  SUSPICIOUS_ACTIVITY
+  IDENTITY_MISMATCH
+  UNUSUAL_PATTERN
+  PHISHING_ATTEMPT
+  CERTIFICATE_ABUSE
+  TRUST_CIRCLE_ANOMALY
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  PENDING
+  INVESTIGATING
+  RESOLVED
+  DISMISSED
+  ESCALATED
+}
+
+// ============================================================
+// AUDIT LOG
+// ============================================================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  
+  userId      String?
+  entityId    String?
+  
+  action      String
+  resource    String
+  resourceId  String?
+  
+  oldValue    Json?
+  newValue    Json?
+  
+  ipHash      String?
+  userAgent   String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([entityId])
+  @@index([action])
   @@index([createdAt])
 }
-
