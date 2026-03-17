@@ -37,19 +37,34 @@ export async function generateMetadata({
   const { id } = await params
   const { h = '' } = await searchParams
 
-  const signature = await prisma.signature.findUnique({
-    where: { jti: id, revoked: false },
+  let signature = await prisma.signature.findUnique({
+    where: { jti: id },
     include: {
       certificate: { include: { entity: true } },
     },
   })
+  if (!signature?.revoked) {
+    signature = signature ?? (await prisma.signature.findFirst({
+      where: { certificateId: id, revoked: false },
+      orderBy: { issuedAt: 'desc' },
+      include: {
+        certificate: { include: { entity: true } },
+      },
+    })) ?? null
+  } else {
+    signature = null
+  }
 
   if (!signature) {
     return { title: 'Certificat introuvable — BlockTrust' }
   }
 
   const expectedHash = signature.contextHash ?? ''
-  const verdict: Verdict = expectedHash && h ? (expectedHash === h ? 'VALID' : 'FRAUD_ALERT') : 'NOT_FOUND'
+  const verdict: Verdict = !h
+    ? 'VALID'
+    : expectedHash === h
+      ? 'VALID'
+      : 'FRAUD_ALERT'
   const entityName = entityDisplayName(signature.certificate.entity)
 
   if (verdict === 'VALID') {
@@ -82,7 +97,8 @@ export default async function VerifyPublicPage({
     return <RateLimitedView retryAfter={rate.retryAfter} />
   }
 
-  const signature = await prisma.signature.findUnique({
+  // Chercher d'abord par jti (Signature), puis par certificateId (accès direct / ancien QR)
+  let signature = await prisma.signature.findUnique({
     where: { jti: id },
     include: {
       certificate: {
@@ -92,6 +108,20 @@ export default async function VerifyPublicPage({
       },
     },
   })
+
+  if (!signature) {
+    signature = await prisma.signature.findFirst({
+      where: { certificateId: id, revoked: false },
+      orderBy: { issuedAt: 'desc' },
+      include: {
+        certificate: {
+          include: {
+            entity: true,
+          },
+        },
+      },
+    })
+  }
 
   if (!signature || signature.revoked) {
     return <NotFoundView />
@@ -105,10 +135,12 @@ export default async function VerifyPublicPage({
   }
 
   const expectedHash = signature.contextHash ?? ''
-  let verdict: Verdict = 'NOT_FOUND'
-  if (expectedHash && ctxHashFromQuery) {
-    verdict = expectedHash === ctxHashFromQuery ? 'VALID' : 'FRAUD_ALERT'
-  }
+  // Pas de ?h= = accès direct (dashboard / ancien QR) → VALID ; avec ?h= = vérification anti-fraude
+  let verdict: Verdict = !ctxHashFromQuery
+    ? 'VALID'
+    : expectedHash === ctxHashFromQuery
+      ? 'VALID'
+      : 'FRAUD_ALERT'
 
   const hashedIp = hashIp(ip)
 
@@ -118,7 +150,7 @@ export default async function VerifyPublicPage({
       ipHash: hashedIp,
       userAgent,
       result: verdict === 'VALID' ? 'VALID' : verdict === 'FRAUD_ALERT' ? 'FRAUD_ALERT' : 'NOT_FOUND',
-      signatureJti: id,
+      signatureJti: signature.jti,
     },
   })
 
@@ -152,10 +184,6 @@ export default async function VerifyPublicPage({
         }),
       })
     }
-  }
-
-  if (verdict === 'NOT_FOUND') {
-    return <NotFoundView />
   }
 
   if (verdict === 'VALID') {
