@@ -1,6 +1,6 @@
 import { prisma } from "@/app/lib/db";
 import { notFound } from "next/navigation";
-import QRCode from "@/app/components/QRCode";
+import QRCodeImage from "@/app/components/QRCode";
 
 export default async function BadgePage({
   params,
@@ -10,48 +10,101 @@ export default async function BadgePage({
   const resolvedParams = await params;
   const id = resolvedParams.id;
 
-  let entity = await prisma.entity.findUnique({
-    where: { id },
-    include: { certificates: true },
+  // Chercher d'abord par certificat (publicId)
+  let certificate = await prisma.certificate.findUnique({
+    where: { publicId: id },
+    include: { entity: true },
   });
 
-  if (!entity) {
-    entity = await prisma.entity.findUnique({
-      where: { siret: id },
-      include: { certificates: true },
+  if (!certificate) {
+    certificate = await prisma.certificate.findUnique({
+      where: { id },
+      include: { entity: true },
     });
   }
 
-  if (!entity) {
-    notFound();
+  if (!certificate) {
+    // Fallback: chercher par entité
+    let entity = await prisma.entity.findUnique({
+      where: { id },
+      include: { certificates: true },
+    });
+
+    if (!entity) {
+      entity = await prisma.entity.findUnique({
+        where: { siret: id },
+        include: { certificates: true },
+      });
+    }
+
+    if (!entity) {
+      notFound();
+    }
+
+    // Utiliser le premier certificat de l'entité
+    const firstCert = entity.certificates[0];
+    if (!firstCert) {
+      notFound();
+    }
+    // Récupérer le certificat avec l'entité
+    certificate = await prisma.certificate.findUnique({
+      where: { id: firstCert.id },
+      include: { entity: true },
+    });
+    if (!certificate) {
+      notFound();
+    }
   }
+
+  const entity = certificate.entity;
+
+  // Récupérer le TrustScore de l'entité
+  const trustScore = await prisma.trustScore.findUnique({
+    where: { entityId: entity.id },
+  });
 
   const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/verify/${entity.id}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
-      <div className="bg-white/5 backdrop-blur-lg p-8 rounded-3xl border border-gray-700 max-w-md w-full">
+    <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-blue-950 flex items-center justify-center p-4">
+      <div className="bg-blue-900/30 backdrop-blur-lg p-8 rounded-3xl border border-blue-800/50 max-w-md w-full">
         <div className="text-center mb-6">
-          <div className="text-4xl mb-2">🛡️</div>
-          <h1 className="text-2xl font-bold text-white">Badge BlockTrust</h1>
-          <p className="text-gray-400 text-sm">Certificat de confiance vérifié</p>
+          <div className="relative inline-block mb-2">
+            <span className="text-4xl block">🛡️</span>
+            <div className="absolute inset-0 text-4xl blur-sm opacity-50">🛡️</div>
+          </div>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent relative">
+            BlockTrust
+            <span className="absolute inset-0 text-2xl font-bold bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent blur-[2px] opacity-30">
+              BlockTrust
+            </span>
+          </h1>
+          <p className="text-gray-300 text-sm mt-2">Certificat de confiance vérifié</p>
         </div>
 
         <div className="flex justify-center mb-6">
-          <div className="bg-white p-4 rounded-2xl">
-            <QRCode url={verifyUrl} size={200} />
+          <div className="bg-white p-6 rounded-2xl shadow-2xl border-2 border-cyan-400/30 hover:border-cyan-400/50 transition-colors">
+            <QRCodeImage url={verifyUrl} size={250} />
           </div>
         </div>
 
         <div className="space-y-4 mb-6">
           <div className="text-center">
-            <p className="text-gray-500 text-sm">Entité certifiée</p>
-            <p className="text-white text-xl font-bold">{entity.legalName}</p>
+            <p className="text-gray-300 text-sm mb-2">
+              {entity.entityType === 'INDIVIDUAL' 
+                ? '✅ Identité vérifiée par BlockTrust'
+                : `✅ Entreprise certifiée BlockTrust${entity.siret ? ` • SIRET ${entity.siret}` : ''}`}
+            </p>
+            <p className="text-white text-xl font-bold">
+              {entity.entityType === 'INDIVIDUAL'
+                ? `${entity.firstName || ''} ${entity.lastName || ''}`.trim() || entity.email
+                : entity.legalName || entity.tradeName || entity.email}
+            </p>
           </div>
 
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-center gap-4 flex-wrap">
             <div className="text-center">
-              <p className="text-gray-500 text-xs">Niveau</p>
+              <p className="text-gray-300 text-xs">Niveau</p>
               <span
                 className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
                   entity.validationLevel === "GOLD"
@@ -65,27 +118,41 @@ export default async function BadgePage({
               </span>
             </div>
             <div className="text-center">
-              <p className="text-gray-500 text-xs">Statut</p>
+              <p className="text-gray-300 text-xs">Statut</p>
               <span
                 className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                  entity.kycStatus === "APPROVED"
+                  entity.kycStatus === "VERIFIED"
                     ? "bg-green-500/20 text-green-400"
                     : "bg-yellow-500/20 text-yellow-400"
                 }`}
               >
-                {entity.kycStatus === "APPROVED" ? "Validé" : "En attente"}
+                {entity.kycStatus === "VERIFIED" ? "Validé" : "En attente"}
               </span>
             </div>
+            {trustScore && (
+              <div className="text-center">
+                <p className="text-gray-300 text-xs">TrustScore</p>
+                <div className="flex items-center gap-1 justify-center">
+                  <span className="font-bold text-lg text-cyan-400">
+                    {trustScore.score}
+                  </span>
+                  <span className="text-xs text-gray-300">/100</span>
+                </div>
+                <span className="text-xs text-gray-300">{trustScore.level}</span>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="text-center text-gray-500 text-sm">
+        <div className="text-center text-gray-300 text-sm">
           <p>Scannez le QR code pour vérifier</p>
           <p>l'authenticité de ce certificat</p>
         </div>
 
-        <div className="mt-6 pt-6 border-t border-gray-700 text-center">
-          <p className="text-gray-600 text-xs">SIRET: {entity.siret}</p>
+        <div className="mt-6 pt-6 border-t border-blue-800/50 text-center">
+          {entity.entityType === 'BUSINESS' && entity.siret && (
+            <p className="text-gray-300 text-xs">SIRET: {entity.siret}</p>
+          )}
           <p className="text-cyan-400 text-xs mt-1">blocktrust.io</p>
         </div>
       </div>

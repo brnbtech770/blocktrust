@@ -37,8 +37,8 @@ export async function POST(req: NextRequest) {
         jti,
         certificateId,
         entityId,
-        ctxType: "email",
-        ctxHash,
+        purpose: "email",
+        contextHash: ctxHash,
         expiresAt: new Date(Date.now() + expiresInSeconds * 1000),
       },
     });

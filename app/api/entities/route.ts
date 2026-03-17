@@ -1,103 +1,331 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/app/lib/db";
+// app/api/entities/route.ts
+// CRUD pour les entités (B2C et B2B)
+// ============================================================
 
-// POST - Créer une nouvelle entité
-export async function POST(request: NextRequest) {
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/app/lib/auth-server';
+import { prisma } from '@/app/lib/db';
+import { z } from 'zod';
+import { checkEntityQuota } from '@/lib/checkQuota';
+
+// ─────────────────────────────────────────────
+// Schémas de validation
+// ─────────────────────────────────────────────
+const individualSchema = z.object({
+  entityType: z.literal('INDIVIDUAL'),
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  email: z.string().email(),
+  phone: z.string().optional().nullable(),
+  website: z.string().max(500).optional().nullable().or(z.literal('')),
+  description: z.string().max(1000).optional().nullable(),
+});
+
+const businessSchema = z.object({
+  entityType: z.literal('BUSINESS'),
+  legalName: z.string().min(1).max(255),
+  tradeName: z.string().max(255).optional().nullable(),
+  siret: z.string().length(14).regex(/^\d{14}$/), // Exactement 14 chiffres
+  email: z.string().email(),
+  phone: z.string().optional().nullable(),
+  website: z.string().url(), // Requis pour BUSINESS
+  description: z.string().max(1000).optional().nullable(),
+});
+
+const createEntitySchema = z.discriminatedUnion('entityType', [
+  individualSchema,
+  businessSchema,
+]);
+
+// ─────────────────────────────────────────────
+// POST — Créer une entité
+// ─────────────────────────────────────────────
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json();
-    const { legalName, siret, email, website, description } = body;
+    // Vérifier l'authentification avec NextAuth v5
+    // auth() lit automatiquement les cookies depuis les headers de la requête
+    const session = await auth();
+    
+    console.log('🔍 Session check:', { 
+      hasSession: !!session, 
+      hasUser: !!session?.user, 
+      email: session?.user?.email,
+      cookies: req.cookies.getAll().map(c => c.name)
+    });
+    
+    if (!session?.user?.email) {
+      console.error('❌ No session found:', { 
+        session, 
+        cookies: req.cookies.getAll(),
+        headers: Object.fromEntries(req.headers.entries())
+      });
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
 
-    // Validation basique
-    if (!legalName || !siret || !email) {
+    // Récupérer l'utilisateur depuis la base de données
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: { 
+        entities: true,
+        plan: true,
+      },
+    });
+
+    if (!user) {
+      console.error('❌ User not found in database:', session.user.email);
+      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+    }
+
+    // Valider le body
+    const body = await req.json();
+    const parsed = createEntitySchema.safeParse(body);
+
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Nom légal, SIRET et email sont requis" },
+        { 
+          error: 'Données invalides', 
+          details: parsed.error.flatten() 
+        },
         { status: 400 }
       );
     }
 
-    // Créer un utilisateur temporaire (plus tard on utilisera l'auth)
-    let user = await prisma.user.findFirst({
-      where: { email: email },
-    });
+    const data = parsed.data;
 
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          email: email,
-          name: legalName,
+    // Vérifier le quota selon le plan
+    const quotaCheck = await checkEntityQuota(user.id);
+    if (!quotaCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: quotaCheck.reason || 'Quota dépassé',
+          code: 'QUOTA_EXCEEDED',
+          current: quotaCheck.current,
+          max: quotaCheck.max,
+          upgradeUrl: '/pricing',
+        },
+        { status: 403 }
+      );
+    }
+
+    // Préparer les données selon le type
+    let entityData: any;
+
+    if (data.entityType === 'INDIVIDUAL') {
+      // Vérifier si un particulier avec cet email existe déjà
+      const existing = await prisma.entity.findFirst({
+        where: {
+          email: data.email,
+          userId: user.id,
+          entityType: 'INDIVIDUAL',
         },
       });
+
+      if (existing) {
+        return NextResponse.json(
+          { error: 'Un profil avec cet email existe déjà' },
+          { status: 409 }
+        );
+      }
+
+      // Normaliser le website (peut être vide string ou null)
+      let website = data.website;
+      if (website === '' || !website) {
+        website = null;
+      } else if (!website.startsWith('http://') && !website.startsWith('https://')) {
+        // Ajouter https:// si manquant
+        website = `https://${website}`;
+      }
+
+      entityData = {
+        userId: user.id,
+        entityType: 'INDIVIDUAL',
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone || null,
+        website: website,
+        description: data.description || null,
+        kycStatus: 'PENDING',
+        validationLevel: 'BRONZE',
+      };
+    } else {
+      // Vérifier si une entreprise avec ce SIRET existe déjà
+      const existing = await prisma.entity.findFirst({
+        where: {
+          siret: data.siret,
+        },
+      });
+
+      if (existing) {
+        return NextResponse.json(
+          { error: 'Ce SIRET est déjà enregistré' },
+          { status: 409 }
+        );
+      }
+
+      // Vérifier si une entreprise avec cet email existe déjà pour cet utilisateur
+      const existingEmail = await prisma.entity.findFirst({
+        where: {
+          email: data.email,
+          userId: user.id,
+          entityType: 'BUSINESS',
+        },
+      });
+
+      if (existingEmail) {
+        return NextResponse.json(
+          { error: 'Une entreprise avec cet email existe déjà' },
+          { status: 409 }
+        );
+      }
+
+      // Normaliser le website (ajouter https:// si manquant)
+      let website = data.website;
+      if (!website.startsWith('http://') && !website.startsWith('https://')) {
+        website = `https://${website}`;
+      }
+
+      entityData = {
+        userId: user.id,
+        entityType: 'BUSINESS',
+        legalName: data.legalName,
+        tradeName: data.tradeName || null,
+        siret: data.siret,
+        email: data.email,
+        phone: data.phone || null,
+        website: website,
+        description: data.description || null,
+        kycStatus: 'PENDING',
+        validationLevel: 'BRONZE',
+      };
     }
 
     // Créer l'entité
     const entity = await prisma.entity.create({
+      data: entityData,
+    });
+
+    // Créer le TrustScore initial
+    await prisma.trustScore.create({
       data: {
-        userId: user.id,
-        legalName,
-        siret,
-        email,
-        website: website || null,
-        description: description || null,
-        kycStatus: "PENDING",
-        validationLevel: "BRONZE",
+        entityId: entity.id,
+        score: 50,
+        level: 'STANDARD',
+        kycScore: 0,
+        historyScore: 0,
+        interactionScore: 0,
+        behaviorScore: 0,
+        networkScore: 0,
       },
     });
 
-    // Créer un certificat automatiquement
+    // Créer un certificat automatiquement avec status PENDING
+    // Seul l'admin peut passer en ACTIVE via /api/admin/certificates/[id]
     const certificate = await prisma.certificate.create({
       data: {
         entityId: entity.id,
-        status: "PENDING",
-        level: "BRONZE",
+        status: 'PENDING', // PAS 'ACTIVE' - seul l'admin peut activer
+        level: 'BRONZE',
       },
     });
 
-    return NextResponse.json(
-      { 
-        success: true, 
-        entity, 
-        certificate,
-        message: "Entité créée avec succès !" 
-      },
-      { status: 201 }
-    );
+    // Créer le TrustScore initial et le calculer
+    const { updateTrustScore } = await import('@/app/lib/trust-score')
+    await updateTrustScore(entity.id)
 
+    return NextResponse.json({
+      success: true,
+      entity: {
+        id: entity.id,
+        entityType: entity.entityType,
+        ...(entity.entityType === 'INDIVIDUAL'
+          ? {
+              firstName: entity.firstName,
+              lastName: entity.lastName,
+            }
+          : {
+              legalName: entity.legalName,
+              tradeName: entity.tradeName,
+              siret: entity.siret,
+            }),
+        email: entity.email,
+      },
+      certificate: {
+        id: certificate.id,
+        publicId: certificate.publicId,
+        status: certificate.status,
+      },
+    });
   } catch (error: any) {
-    console.error("Erreur création entité:", error);
-    
-    // Gérer l'erreur de SIRET unique
-    if (error.code === "P2002") {
-      return NextResponse.json(
-        { error: "Ce SIRET est déjà enregistré" },
-        { status: 400 }
-      );
+    console.error('❌ Entity creation error:', error);
+
+    if (error.code === 'P2002') {
+      // Violation de contrainte unique
+      if (error.meta?.target?.includes('siret')) {
+        return NextResponse.json(
+          { error: 'Ce SIRET est déjà enregistré' },
+          { status: 409 }
+        );
+      }
+      if (error.meta?.target?.includes('email')) {
+        return NextResponse.json(
+          { error: 'Cet email est déjà utilisé' },
+          { status: 409 }
+        );
+      }
     }
 
     return NextResponse.json(
-      { error: "Erreur serveur" },
+      {
+        error: 'Erreur lors de la création de l\'entité',
+        details: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+      },
       { status: 500 }
     );
   }
 }
 
-// GET - Récupérer toutes les entités
-export async function GET() {
+// ─────────────────────────────────────────────
+// GET — Liste des entités de l'utilisateur
+// ─────────────────────────────────────────────
+export async function GET(req: NextRequest) {
   try {
+    // Vérifier l'authentification avec NextAuth v5
+    const session = await auth();
+    
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    // Récupérer l'utilisateur depuis la base de données
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: { 
+        entities: true,
+        plan: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+    }
+
+    // Récupérer les entités de l'utilisateur
     const entities = await prisma.entity.findMany({
+      where: { userId: user.id },
       include: {
         certificates: true,
-        user: true,
       },
       orderBy: {
-        createdAt: "desc",
+        createdAt: 'desc',
       },
     });
 
     return NextResponse.json(entities);
   } catch (error) {
-    console.error("Erreur récupération entités:", error);
+    console.error('❌ Entities list error:', error);
     return NextResponse.json(
-      { error: "Erreur serveur" },
+      { error: 'Erreur récupération entités' },
       { status: 500 }
     );
   }

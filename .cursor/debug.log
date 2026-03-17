@@ -1,0 +1,17 @@
+{"location":"app/dashboard/layout.tsx:15","message":"DashboardLayout entry","data":{},"timestamp":1770784678820,"runId":"run1","hypothesisId":"A"}
+{"location":"app/dashboard/layout.tsx:18","message":"After auth()","data":{"hasSession":false,"hasEmail":false},"timestamp":1770784678861,"runId":"run1","hypothesisId":"A"}
+{"location":"app/dashboard/layout.tsx:22","message":"About to redirect - no session","data":{},"timestamp":1770784678862,"runId":"run1","hypothesisId":"B"}
+{"location":"app/dashboard/layout.tsx:15","message":"DashboardLayout entry","data":{},"timestamp":1770784714470,"runId":"run1","hypothesisId":"A"}
+{"location":"app/dashboard/layout.tsx:18","message":"After auth()","data":{"hasSession":false,"hasEmail":false},"timestamp":1770784714526,"runId":"run1","hypothesisId":"A"}
+{"location":"app/dashboard/layout.tsx:22","message":"About to redirect - no session (fallback)","data":{},"timestamp":1770784714526,"runId":"run1","hypothesisId":"B"}
+{"location":"app/dashboard/layout.tsx:15","message":"DashboardLayout entry","data":{},"timestamp":1770784714703,"runId":"run1","hypothesisId":"A"}
+{"location":"app/dashboard/layout.tsx:18","message":"After auth()","data":{"hasSession":false,"hasEmail":false},"timestamp":1770784714746,"runId":"run1","hypothesisId":"A"}
+{"location":"app/dashboard/layout.tsx:22","message":"About to redirect - no session (fallback)","data":{},"timestamp":1770784714746,"runId":"run1","hypothesisId":"B"}
+{"location":"app/dashboard/layout.tsx:15","message":"DashboardLayout entry","data":{},"timestamp":1770784715025,"runId":"run1","hypothesisId":"A"}
+{"location":"app/dashboard/layout.tsx:18","message":"After auth()","data":{"hasSession":false,"hasEmail":false},"timestamp":1770784715034,"runId":"run1","hypothesisId":"A"}
+{"location":"app/dashboard/layout.tsx:22","message":"About to redirect - no session (fallback)","data":{},"timestamp":1770784715035,"runId":"run1","hypothesisId":"B"}
+{"location":"app/dashboard/layout.tsx:15","message":"DashboardLayout entry","data":{},"timestamp":1770784715414,"runId":"run1","hypothesisId":"A"}
+{"location":"app/dashboard/layout.tsx:18","message":"After auth()","data":{"hasSession":false,"hasEmail":false},"timestamp":1770784715423,"runId":"run1","hypothesisId":"A"}
+{"location":"app/dashboard/layout.tsx:22","message":"About to redirect - no session (fallback)","data":{},"timestamp":1770784715423,"runId":"run1","hypothesisId":"B"}
+{"location":"app/dashboard/layout.tsx:15","message":"DashboardLayout entry","data":{},"timestamp":1770784766516,"runId":"run1","hypothesisId":"A"}
+{"location":"app/dashboard/layout.tsx:18","message":"After auth()","data":{"hasSession":true,"hasEmail":true},"timestamp":1770784766531,"runId":"run1","hypothesisId":"A"}

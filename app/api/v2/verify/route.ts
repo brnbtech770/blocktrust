@@ -1,7 +1,9 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { canonicalizeEmailContext, sha256Hex } from "@/lib/v2/context";
 import { verifyToken } from "@/lib/v2/jwt";
+import { sendEmailFireAndForget } from "@/lib/email";
+import { FraudAlertEmail, subject as fraudAlertSubject } from "@/emails/FraudAlertEmail";
 
 const prisma = new PrismaClient();
 
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest) {
     let verdict = "VALID";
     let reason: string | null = null;
 
-    if (computedHash !== expectedHash || computedHash !== sig.ctxHash) {
+    if (computedHash !== expectedHash || computedHash !== sig.contextHash) {
       verdict = "TAMPERED";
       reason = "context_hash_mismatch";
     }
@@ -61,27 +63,52 @@ export async function POST(req: NextRequest) {
     const ip = getIp(req);
     const ua = req.headers.get("user-agent") || "unknown";
 
-    const previous = await prisma.verificationEvent.findFirst({
-      where: { jti },
-      orderBy: { createdAt: "desc" },
-    });
-
-    if (previous && verdict === "VALID") {
-      const changed = (previous.ip && previous.ip !== ip) || (previous.userAgent && previous.userAgent !== ua);
-      if (changed) {
-        verdict = "VALID_WITH_WARNING";
-        reason = "possible_replay";
-      }
-    }
-
-    await prisma.verificationEvent.create({
+    // Note: Le modèle Verification n'a pas de champ jti direct, on utilise signatureJti
+    // Pour l'instant, on crée une vérification basique
+    await prisma.verification.create({
       data: {
-        jti,
-        ip,
+        certificateId: sig.certificateId,
+        ipHash: ip, // TODO: Hasher l'IP avec hashIp() pour RGPD
         userAgent: ua,
-        verdict,
+        result: verdict === "VALID" || verdict === "VALID_WITH_WARNING" ? "VALID" : "FRAUD_ALERT",
+        signatureJti: jti,
       },
     });
+
+    // Alerte fraude : envoyer email au propriétaire du certificat
+    if (verdict === "TAMPERED" || verdict === "FRAUD_ALERT") {
+      const certWithOwner = await prisma.certificate.findUnique({
+        where: { id: certificateId },
+        include: {
+          entity: {
+            include: {
+              user: { select: { email: true } },
+            },
+          },
+        },
+      });
+      const ownerEmail = certWithOwner?.entity?.user?.email;
+      if (ownerEmail) {
+        const entityName =
+          certWithOwner!.entity.entityType === "INDIVIDUAL"
+            ? `${certWithOwner!.entity.firstName || ""} ${certWithOwner!.entity.lastName || ""}`.trim() ||
+              certWithOwner!.entity.email
+            : certWithOwner!.entity.legalName || certWithOwner!.entity.email;
+        const baseUrl =
+          process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "https://blocktrust.tech";
+        sendEmailFireAndForget({
+          to: ownerEmail,
+          subject: fraudAlertSubject,
+          react: FraudAlertEmail({
+            entityName,
+            tokenId: jti,
+            timestamp: new Date().toISOString(),
+            ip: ip !== "unknown" ? ip : undefined,
+            revokeUrl: `${baseUrl}/dashboard/certificate/${certificateId}`,
+          }),
+        });
+      }
+    }
 
     return NextResponse.json({
       verdict,

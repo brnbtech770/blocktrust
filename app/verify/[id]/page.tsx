@@ -1,59 +1,394 @@
-import { prisma } from "@/app/lib/db";
-import { notFound } from "next/navigation";
+// app/verify/[id]/page.tsx
+// Page publique de vérification (QR) — sans auth, rate limit 20/min/IP
+// Params: id = Signature.jti, ?h = contextHash → VALID si égal, FRAUD_ALERT sinon
+// ============================================================
 
-export default async function VerifyBadge({ 
-  params 
-}: { 
-  params: Promise<{ id: string }> 
-}) {
-  const resolvedParams = await params;
-  const id = resolvedParams.id;
-  
-  let entity = await prisma.entity.findUnique({
-    where: { id },
-    include: { certificates: true },
-  });
+import { headers } from 'next/headers'
+import Link from 'next/link'
+import { prisma } from '@/app/lib/db'
+import { hashIp } from '@/app/lib/auth'
+import { checkRateLimitVerify } from '@/lib/rate-limit-verify'
+import { sendEmailFireAndForget } from '@/lib/email'
+import { FraudAlertEmail, subject as fraudAlertSubject } from '@/emails/FraudAlertEmail'
+import type { Metadata } from 'next'
 
-  if (!entity) {
-    entity = await prisma.entity.findUnique({
-      where: { siret: id },
-      include: { certificates: true },
-    });
+export const dynamic = 'force-dynamic'
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
+
+type Verdict = 'VALID' | 'FRAUD_ALERT' | 'NOT_FOUND' | 'RATE_LIMITED'
+
+function entityDisplayName(entity: { entityType: string; legalName: string | null; tradeName: string | null; firstName: string | null; lastName: string | null; email: string }): string {
+  if (entity.entityType === 'INDIVIDUAL') {
+    const name = [entity.firstName, entity.lastName].filter(Boolean).join(' ').trim()
+    return name || entity.email
+  }
+  return entity.legalName || entity.tradeName || entity.email
+}
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ h?: string }>
+}): Promise<Metadata> {
+  const { id } = await params
+  const { h = '' } = await searchParams
+
+  const signature = await prisma.signature.findUnique({
+    where: { jti: id, revoked: false },
+    include: {
+      certificate: { include: { entity: true } },
+    },
+  })
+
+  if (!signature) {
+    return { title: 'Certificat introuvable — BlockTrust' }
   }
 
-  if (!entity) {
-    notFound();
+  const expectedHash = signature.contextHash ?? ''
+  const verdict: Verdict = expectedHash && h ? (expectedHash === h ? 'VALID' : 'FRAUD_ALERT') : 'NOT_FOUND'
+  const entityName = entityDisplayName(signature.certificate.entity)
+
+  if (verdict === 'VALID') {
+    return { title: `${entityName} — Certifié BlockTrust ✓` }
+  }
+  if (verdict === 'FRAUD_ALERT') {
+    return { title: '⚠ Alerte fraude — BlockTrust' }
+  }
+  return { title: 'Certificat introuvable — BlockTrust' }
+}
+
+export default async function VerifyPublicPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ h?: string }>
+}) {
+  const resolvedParams = await params
+  const resolvedSearchParams = await searchParams
+  const id = resolvedParams.id
+  const ctxHashFromQuery = resolvedSearchParams.h ?? ''
+
+  const headersList = await headers()
+  const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || headersList.get('x-real-ip') || 'unknown'
+  const userAgent = headersList.get('user-agent') || 'unknown'
+
+  const rate = checkRateLimitVerify(ip)
+  if (!rate.ok) {
+    return <RateLimitedView retryAfter={rate.retryAfter} />
+  }
+
+  const signature = await prisma.signature.findUnique({
+    where: { jti: id },
+    include: {
+      certificate: {
+        include: {
+          entity: true,
+        },
+      },
+    },
+  })
+
+  if (!signature || signature.revoked) {
+    return <NotFoundView />
+  }
+
+  const cert = signature.certificate
+  const entity = cert.entity
+
+  if (String(cert.status) === 'REVOKED' || String(cert.status) === 'EXPIRED') {
+    return <NotFoundView />
+  }
+
+  const expectedHash = signature.contextHash ?? ''
+  let verdict: Verdict = 'NOT_FOUND'
+  if (expectedHash && ctxHashFromQuery) {
+    verdict = expectedHash === ctxHashFromQuery ? 'VALID' : 'FRAUD_ALERT'
+  }
+
+  const hashedIp = hashIp(ip)
+
+  await prisma.verification.create({
+    data: {
+      certificateId: cert.id,
+      ipHash: hashedIp,
+      userAgent,
+      result: verdict === 'VALID' ? 'VALID' : verdict === 'FRAUD_ALERT' ? 'FRAUD_ALERT' : 'NOT_FOUND',
+      signatureJti: id,
+    },
+  })
+
+  if (verdict === 'VALID') {
+    await prisma.certificate.update({
+      where: { id: cert.id },
+      data: {
+        verificationCount: { increment: 1 },
+        lastVerifiedAt: new Date(),
+      },
+    })
+  }
+
+  if (verdict === 'FRAUD_ALERT') {
+    const owner = await prisma.user.findUnique({
+      where: { id: entity.userId },
+      select: { email: true },
+    })
+    const entityName = entityDisplayName(entity)
+    const revokeUrl = `${BASE_URL}/dashboard/certificate/${cert.id}`
+    if (owner?.email) {
+      sendEmailFireAndForget({
+        to: owner.email,
+        subject: fraudAlertSubject,
+        react: FraudAlertEmail({
+          entityName,
+          tokenId: id,
+          timestamp: new Date().toLocaleString('fr-FR'),
+          ip,
+          revokeUrl,
+        }),
+      })
+    }
+  }
+
+  if (verdict === 'NOT_FOUND') {
+    return <NotFoundView />
+  }
+
+  if (verdict === 'VALID') {
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const verificationsLast30Days = await prisma.verification.count({
+      where: {
+        certificateId: cert.id,
+        verifiedAt: { gte: thirtyDaysAgo },
+        result: 'VALID',
+      },
+    })
+
+    return (
+      <ValidView
+        entity={entity}
+        certificate={cert}
+        signature={signature}
+        verificationsLast30Days={verificationsLast30Days}
+      />
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="bg-green-500/20 border-2 border-green-500 p-8 rounded-3xl max-w-md w-full text-center">
-        <div className="text-8xl mb-6">✅</div>
-        <h1 className="text-3xl font-bold text-green-400 mb-4">Certificat Valide</h1>
-        <div className="bg-gray-800 rounded-xl p-6 text-left space-y-4">
-          <div>
-            <p className="text-gray-500 text-sm">Entité</p>
-            <p className="text-white text-xl font-bold">{entity.legalName}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm">SIRET</p>
-            <p className="text-cyan-400 font-mono">{entity.siret}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm">Email</p>
-            <p className="text-white">{entity.email}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-sm">Statut</p>
-            <span className="bg-yellow-500/20 text-yellow-400 px-3 py-1 rounded-full text-sm">
-              {entity.kycStatus}
-            </span>
-          </div>
-        </div>
-        <p className="text-gray-500 text-sm mt-6">
-          🛡️ Vérifié par BlockTrust
+    <FraudAlertView
+      jti={id}
+      expectedHash={expectedHash}
+      receivedHash={ctxHashFromQuery}
+      ip={ip}
+    />
+  )
+}
+
+function RateLimitedView({ retryAfter }: { retryAfter?: number }) {
+  return (
+    <div className="min-h-screen bg-[#001a33] flex items-center justify-center p-4">
+      <div className="max-w-md w-full text-center rounded-2xl border border-[#BDA76B]/30 bg-[#001a33]/90 p-8">
+        <h1 className="text-2xl font-bold text-[#BDA76B] mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          Trop de requêtes
+        </h1>
+        <p className="text-gray-400 mb-6">
+          Veuillez réessayer dans {retryAfter ? `${retryAfter} seconde(s)` : '1 minute'}.
         </p>
+        <Link href={BASE_URL} className="text-[#BDA76B] hover:underline text-sm">
+          Retour à blocktrust.tech
+        </Link>
       </div>
     </div>
-  );
+  )
+}
+
+function NotFoundView() {
+  return (
+    <div className="min-h-screen bg-[#001a33] flex items-center justify-center p-4">
+      <div className="max-w-md w-full text-center rounded-2xl border border-gray-700 bg-[#001a33]/90 p-8">
+        <p className="text-xl text-gray-300 mb-6" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          Certificat introuvable ou révoqué
+        </p>
+        <Link
+          href={BASE_URL}
+          className="inline-block text-[#BDA76B] hover:underline font-medium"
+          style={{ fontFamily: 'var(--font-mono-bt), monospace' }}
+        >
+          blocktrust.tech
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+function ValidView({
+  entity,
+  certificate,
+  signature,
+  verificationsLast30Days,
+}: {
+  entity: { entityType: string; legalName: string | null; tradeName: string | null; firstName: string | null; lastName: string | null; email: string }
+  certificate: { level: string; status: string; issuedAt: Date; expiresAt: Date | null; publicId: string | null }
+  signature: { contextHash: string | null }
+  verificationsLast30Days: number
+}) {
+  const name = entityDisplayName(entity)
+  const level = certificate.level
+  const issued = new Date(certificate.issuedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+  const expires = certificate.expiresAt
+    ? new Date(certificate.expiresAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+    : null
+  const hashDisplay = signature.contextHash ?? '—'
+
+  return (
+    <div className="min-h-screen bg-[#001a33] text-gray-100" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+      <div className="max-w-xl mx-auto px-4 py-10">
+        <div className="rounded-2xl border border-[#1DB87E]/40 bg-[#001a33]/80 p-6 md:p-8">
+          <div className="flex justify-center mb-6">
+            <div className="relative">
+              <span className="text-6xl block animate-pulse">🛡️</span>
+              <span className="absolute inset-0 text-6xl blur-md opacity-60 text-[#1DB87E]">🛡️</span>
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold text-[#1DB87E] text-center mb-2">Certificat valide</h1>
+          <p className="text-center text-gray-400 text-sm mb-8">Vérifié par BlockTrust</p>
+
+          <div className="space-y-6">
+            <div>
+              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Entité</p>
+              <p className="text-white text-xl font-semibold">{name}</p>
+              <p className="text-gray-400 text-sm mt-1">
+                {entity.entityType === 'INDIVIDUAL' ? 'Particulier' : 'Entreprise'} · Niveau {level}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Émis le</p>
+                <p className="text-white font-mono text-sm">{issued}</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Expire le</p>
+                <p className="text-white font-mono text-sm">{expires ?? '—'}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Contact officiel</p>
+              <p className="text-[#BDA76B] font-mono text-sm break-all">{entity.email}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Vérifications (30 derniers jours)</p>
+              <p className="text-white font-mono text-lg">{verificationsLast30Days}</p>
+            </div>
+
+            <div>
+              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Hash SHA-256 (contexte)</p>
+              <p className="text-gray-300 font-mono text-xs break-all bg-black/30 px-3 py-2 rounded">{hashDisplay}</p>
+            </div>
+
+            <ul className="space-y-2 text-sm text-gray-300">
+              <li className="flex items-center gap-2">
+                <span className="text-[#1DB87E]">✓</span> Signature valide
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#1DB87E]">✓</span> Contenu conforme
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#1DB87E]">✓</span> Ancré blockchain
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-[#1DB87E]">✓</span> Certificat actif
+              </li>
+            </ul>
+
+            <div className="pt-4 flex flex-col sm:flex-row gap-3">
+              <a
+                href="mailto:legal@blocktrust.tech?subject=Signalement%20certificat%20BlockTrust"
+                className="inline-flex justify-center rounded-lg border border-[#BDA76B]/50 text-[#BDA76B] px-4 py-2 text-sm font-medium hover:bg-[#BDA76B]/10 transition-colors"
+              >
+                Signaler
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <footer className="mt-8 text-center text-gray-500 text-xs">
+          BlockTrust — Certification de confiance numérique
+        </footer>
+      </div>
+    </div>
+  )
+}
+
+function FraudAlertView({
+  jti,
+  expectedHash,
+  receivedHash,
+  ip,
+}: {
+  jti: string
+  expectedHash: string
+  receivedHash: string
+  ip: string
+}) {
+  const verifyUrl = `${BASE_URL}/verify/${jti}`
+
+  return (
+    <div className="min-h-screen bg-[#0d0505] text-gray-100" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+      <div className="max-w-xl mx-auto px-4 py-10">
+        <div className="rounded-lg border-2 border-[#E05252] bg-[#0d0505] p-6 md:p-8">
+          <div className="bg-[#E05252]/20 border border-[#E05252] rounded-lg px-4 py-3 mb-6 animate-pulse">
+            <h1 className="text-xl font-bold text-[#E05252] text-center">FRAUDE DÉTECTÉE</h1>
+          </div>
+
+          <p className="text-gray-300 text-sm mb-6">
+            Le contexte de vérification ne correspond pas au certificat officiel. Ne faites pas confiance à ce support.
+          </p>
+
+          <div className="space-y-4 mb-6 font-mono text-xs bg-black/40 rounded-lg p-4">
+            <div>
+              <p className="text-gray-500 mb-1">Hash attendu</p>
+              <p className="text-gray-300 break-all">{expectedHash}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 mb-1">Hash reçu</p>
+              <p className="text-[#E05252] break-all">{receivedHash}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 mb-1">IP</p>
+              <p className="text-gray-300">{ip}</p>
+            </div>
+            <p className="text-[#E05252] font-semibold">Verdict : FRAUD_ALERT</p>
+          </div>
+
+          <ol className="list-decimal list-inside space-y-2 text-gray-300 text-sm mb-6">
+            <li>Ne pas effectuer de paiement ou transmettre de données sensibles.</li>
+            <li>Contacter l&apos;entité par un canal officiel (site, email vérifié).</li>
+            <li>Signaler la fraude pour aider à protéger les autres.</li>
+          </ol>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+            <a
+              href="mailto:legal@blocktrust.tech?subject=Signaler%20une%20fraude%20BlockTrust"
+              className="inline-flex justify-center rounded-lg bg-[#E05252] text-white px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              Signaler la fraude
+            </a>
+            <Link
+              href={verifyUrl}
+              className="inline-flex justify-center rounded-lg border border-[#BDA76B]/50 text-[#BDA76B] px-4 py-2 text-sm font-medium hover:bg-[#BDA76B]/10 transition-colors"
+            >
+              Voir le certificat original
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }

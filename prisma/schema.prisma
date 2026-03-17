@@ -244,7 +244,6 @@ model Plan {
 }
 
 enum PlanType {
-  TRIAL
   B2C_ESSENTIEL
   B2C_PREMIUM
   B2C_FAMILLE
@@ -267,7 +266,7 @@ model Subscription {
   stripeCustomerId     String?  @unique
   stripeSubscriptionId String?  @unique
   stripePriceId        String?
-  plan                 String   @default("FREE") // FREE, ESSENTIEL, PREMIUM, FAMILLE, FAMILLE_PLUS
+  plan                 String   @default("ESSENTIEL") // ESSENTIEL, PREMIUM, FAMILLE, FAMILLE_PLUS
   status               String   @default("inactive") // active, inactive, past_due, canceled
   currentPeriodEnd     DateTime?
   createdAt            DateTime @default(now())

@@ -1,0 +1,97 @@
+# Checklist des variables d'environnement
+
+## Variables requises pour NextAuth
+
+Vérifiez que votre fichier `.env.local` contient **exactement** ces variables :
+
+```env
+# NextAuth - REQUIS
+NEXTAUTH_SECRET="votre-secret-ici"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Google OAuth - REQUIS
+GOOGLE_CLIENT_ID="votre-client-id-google"
+GOOGLE_CLIENT_SECRET="votre-client-secret-google"
+
+# JWT - REQUIS
+BLOCKTRUST_JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+BLOCKTRUST_JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----\n"
+
+# Emails transactionnels (Resend) - optionnel en dev
+RESEND_API_KEY="re_..."
+```
+
+## Comment générer NEXTAUTH_SECRET
+
+```bash
+openssl rand -base64 32
+```
+
+Copiez le résultat dans `.env.local` :
+```env
+NEXTAUTH_SECRET="le-résultat-de-la-commande-ci-dessus"
+```
+
+## Format des clés JWT
+
+Les clés JWT doivent être au format PEM avec `\n` (backslash + n) pour les retours à la ligne.
+
+**Exemple correct :**
+```env
+BLOCKTRUST_JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg...\n-----END PRIVATE KEY-----\n"
+```
+
+**❌ Incorrect :**
+```env
+# Ne pas utiliser de vrais retours à la ligne
+BLOCKTRUST_JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg...
+-----END PRIVATE KEY-----"
+```
+
+## Vérification rapide
+
+Exécutez ce script pour vérifier vos variables :
+
+```bash
+node scripts/diagnose-auth.js
+```
+
+Ou vérifiez manuellement dans votre `.env.local` :
+
+1. ✅ `NEXTAUTH_SECRET` existe et n'est pas vide
+2. ✅ `NEXTAUTH_URL=http://localhost:3000`
+3. ✅ `GOOGLE_CLIENT_ID` existe et n'est pas vide
+4. ✅ `GOOGLE_CLIENT_SECRET` existe et n'est pas vide
+5. ✅ `BLOCKTRUST_JWT_PRIVATE_KEY` contient `BEGIN PRIVATE KEY` et `END PRIVATE KEY`
+6. ✅ `BLOCKTRUST_JWT_PUBLIC_KEY` contient `BEGIN PUBLIC KEY` et `END PUBLIC KEY`
+7. ✅ Les clés JWT utilisent `\n` (backslash + n) et non de vrais retours à la ligne
+8. ✅ `RESEND_API_KEY` (optionnel) : clé API Resend pour les emails transactionnels (bienvenue, certificat créé/révoqué, alerte fraude, paiement). Sans cette variable, les emails sont logués mais non envoyés.
+
+## Emails transactionnels (Resend)
+
+Pour activer l’envoi d’emails (bienvenue, certificats, alerte fraude, paiement) :
+
+1. Créez un compte sur [resend.com](https://resend.com) et vérifiez le domaine `blocktrust.tech` (ou utilisez le domaine de test en dev).
+2. Dans le dashboard Resend, créez une clé API et ajoutez-la dans `.env.local` :
+   ```env
+   RESEND_API_KEY="re_..."
+   ```
+3. L’expéditeur par défaut est `BlockTrust <noreply@blocktrust.tech>` (à configurer côté Resend si besoin).
+
+Sans `RESEND_API_KEY`, l’app fonctionne normalement mais les envois d’emails sont uniquement logués en console.
+
+## Erreurs courantes
+
+### "Internal Server Error" sur /api/auth/session
+
+**Causes possibles :**
+1. `NEXTAUTH_SECRET` manquant ou vide
+2. `NEXTAUTH_URL` incorrect
+3. Clés JWT mal formatées (vrais retours à la ligne au lieu de `\n`)
+4. Problème de connexion à la base de données
+
+**Solution :**
+1. Vérifiez que `NEXTAUTH_SECRET` est défini
+2. Vérifiez le format des clés JWT (doivent utiliser `\n`)
+3. Redémarrez le serveur : `npm run dev`

@@ -244,7 +244,6 @@ export function checkPlanFeature(plan: string | { type?: string; trustCircleEnab
 
 function checkPlanFeatureByType(planType: string, feature: string): boolean {
   const planFeatures: Record<string, string[]> = {
-    TRIAL: ["basic"],
     B2C_ESSENTIEL: ["basic"],
     ESSENTIEL: ["basic"],
     B2C_PREMIUM: ["basic", "advanced"],
