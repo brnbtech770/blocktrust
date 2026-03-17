@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // ─────────────────────────────────────────────
-    // PROTECTION ROUTES DASHBOARD
+    // PROTECTION ROUTES DASHBOARD + CHECK KYC
     // ─────────────────────────────────────────────
     if (pathname.startsWith('/dashboard')) {
       if (!session?.user?.email) {
@@ -41,12 +41,22 @@ export async function middleware(request: NextRequest) {
       if (isAdmin(session.user.email)) {
         return NextResponse.redirect(new URL('/admin', request.url))
       }
+
+      const kycStatus = (session.user as { kycStatus?: string }).kycStatus ?? 'PENDING'
+      if (kycStatus === 'PENDING') {
+        return NextResponse.redirect(new URL('/onboarding/pending', request.url))
+      }
+      if (kycStatus === 'REJECTED') {
+        return NextResponse.redirect(new URL('/onboarding/rejected', request.url))
+      }
       return NextResponse.next()
     }
 
     // ─────────────────────────────────────────────
-    // PROTECTION ROUTES API (sauf webhook Stripe)
+    // ROUTES API PUBLIQUES (non listées dans config.matcher) :
+    // /api/badge/*, /api/v2/verify/* — pas d'auth requise
     // ─────────────────────────────────────────────
+    // PROTECTION ROUTES API (sauf webhook Stripe)
     if (
       pathname.startsWith('/api/certificates') ||
       pathname.startsWith('/api/entities') ||

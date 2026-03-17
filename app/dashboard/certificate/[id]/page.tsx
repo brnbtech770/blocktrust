@@ -44,11 +44,16 @@ export default async function CertificateDetailPage({
       );
     }
 
-    // Récupérer le certificat avec l'entité
+    // Récupérer le certificat avec l'entité et la dernière signature (pour badge / verify URL)
     const certificate = await prisma.certificate.findUnique({
       where: { id: certificateId },
       include: {
         entity: true,
+        signatures: {
+          where: { revoked: false },
+          orderBy: { issuedAt: 'desc' },
+          take: 1,
+        },
         verifications: {
           orderBy: { verifiedAt: 'desc' },
           take: 20,
@@ -77,8 +82,13 @@ export default async function CertificateDetailPage({
       : entity.legalName || entity.tradeName || entity.email;
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech';
-    const verifyUrl = `${baseUrl}/verify/${certificate.publicId || certificate.id}`;
-    const badgeUrl = `${baseUrl}/api/badge/${certificate.publicId || certificate.id}`;
+    const signature = certificate.signatures?.[0];
+    const verifyUrl =
+      signature?.jti && signature?.contextHash
+        ? `${baseUrl}/verify/${signature.jti}?h=${signature.contextHash}`
+        : `${baseUrl}/verify/${certificate.publicId || certificate.id}`;
+    const badgeId = certificate.publicId || certificate.id;
+    const badgeUrl = `${baseUrl}/api/badge/${badgeId}`;
 
     const statusColors = {
       ACTIVE: 'bg-green-500/20 text-green-400 border-green-500/50',
@@ -100,7 +110,7 @@ export default async function CertificateDetailPage({
     const levelColor = levelColors[certificate.level as keyof typeof levelColors] || levelColors.BRONZE;
 
     const htmlCode = `<a href="${verifyUrl}" target="_blank">
-  <img src="${badgeUrl}" alt="Certifié BlockTrust" width="120"/>
+  <img src="${badgeUrl}" alt="Certifié BlockTrust" width="320" height="100"/>
 </a>`;
 
     return (
@@ -250,8 +260,24 @@ export default async function CertificateDetailPage({
             </div>
           </div>
 
-          {/* Colonne droite : QR code et intégration */}
+          {/* Colonne droite : Badge, QR code et intégration */}
           <div className="space-y-6">
+            {/* Badge BlockTrust */}
+            <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
+              <h2 className="text-xl font-bold text-white mb-4">Badge BlockTrust</h2>
+              <div style={{ marginBottom: '20px' }}>
+                <img
+                  src={`/api/badge/${badgeId}`}
+                  alt="Badge BlockTrust"
+                  style={{
+                    width: '320px',
+                    height: '100px',
+                    borderRadius: '10px',
+                  }}
+                />
+              </div>
+            </div>
+
             {/* QR code */}
             <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
               <h2 className="text-xl font-bold text-white mb-4">QR Code de vérification</h2>
@@ -269,12 +295,22 @@ export default async function CertificateDetailPage({
               <p className="text-gray-400 text-sm mb-4">
                 Copiez-collez ce code HTML sur votre site web pour afficher le badge de certification :
               </p>
-              <div className="bg-gray-900 rounded-lg p-4 mb-4 overflow-x-auto">
-                <pre className="text-xs text-gray-300">
-                  <code>{htmlCode}</code>
-                </pre>
+              <div
+                className="rounded-lg p-4 mb-4 overflow-x-auto border"
+                style={{
+                  background: 'rgba(0,0,0,0.3)',
+                  borderColor: 'rgba(0,212,255,0.15)',
+                  fontFamily: 'monospace',
+                  fontSize: '12px',
+                  color: 'rgba(232,234,240,0.6)',
+                }}
+              >
+                <div className="mb-2" style={{ color: '#00d4ff' }}>
+                  Code d&apos;intégration
+                </div>
+                <code className="block break-all text-gray-300 text-xs">{htmlCode}</code>
+                <CertificateDetailClient htmlCode={htmlCode} />
               </div>
-              <CertificateDetailClient htmlCode={htmlCode} />
             </div>
 
             {/* Historique des vérifications */}

@@ -3,6 +3,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
@@ -254,7 +255,6 @@ export async function POST(req: NextRequest) {
           entityId,
           level: entity.validationLevel,
           status: 'PENDING', // PAS 'ACTIVE' - seul l'admin peut activer
-          // publicId sera généré automatiquement par @default(cuid())
         },
         include: {
           entity: {
@@ -268,11 +268,32 @@ export async function POST(req: NextRequest) {
           },
         },
       })
+
+      // Signature pour le badge et la vérification publique (/verify/[jti]?h=)
+      const jti = certificate.publicId ?? certificate.id
+      const contextHash = crypto.createHash('sha256').update(`badge:${certificate.id}`).digest('hex')
+      await prisma.signature.create({
+        data: {
+          jti,
+          certificateId: certificate.id,
+          entityId: certificate.entityId,
+          contextHash,
+          purpose: 'badge',
+          expiresAt: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000), // 10 ans
+        },
+      })
     }
 
-    // Générer l'URL de vérification
+    // Générer l'URL de vérification (jti + contextHash si Signature existe)
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
-    const verifyUrl = `${baseUrl}/verify/${certificate.publicId}`
+    const latestSignature = await prisma.signature.findFirst({
+      where: { certificateId: certificate.id, revoked: false },
+      orderBy: { issuedAt: 'desc' },
+    })
+    const verifyUrl =
+      latestSignature?.jti && latestSignature?.contextHash
+        ? `${baseUrl}/verify/${latestSignature.jti}?h=${latestSignature.contextHash}`
+        : `${baseUrl}/verify/${certificate.publicId || certificate.id}`
 
     // Générer le QR code
     let qrCodeDataUrl: string
