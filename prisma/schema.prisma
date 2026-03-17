@@ -80,6 +80,15 @@ model User {
   stripeCustomerId String?   @unique
   subscription    Subscription?
   
+  // KYC Stripe Identity
+  kycStatus          String    @default("PENDING")
+  kycVerifiedAt      DateTime?
+  kycRejectedAt      DateTime?
+  kycRejectedReason  String?
+  stripeIdentityId   String?   @unique
+  siret              String?
+  companyName        String?
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   
@@ -95,6 +104,12 @@ model User {
   // Compte personnel (B2C)
   ownedPersonalAccounts PersonalAccount[] @relation("PersonalAccountOwner")
   personalAccountMemberships PersonalAccountMember[]
+  
+  // KYC & Trust Circle (User-centric)
+  kycVerifications     KYCVerification[]
+  userTrustFrom        UserTrustRelation[] @relation("UserTrustFrom")
+  userTrustTo          UserTrustRelation[] @relation("UserTrustTo")
+  userManualTrustEntries UserManualTrustEntry[]
 }
 
 enum AccountType {
@@ -244,6 +259,7 @@ model Plan {
 }
 
 enum PlanType {
+  TRIAL
   B2C_ESSENTIEL
   B2C_PREMIUM
   B2C_FAMILLE
@@ -445,9 +461,17 @@ model Signature {
   revokedAt     DateTime?
   revoked       Boolean  @default(false)
   
+  // QR dynamique (usage limité)
+  maxScans       Int      @default(10)
+  scanCount      Int      @default(0)
+  lastScannedAt  DateTime?
+  dynamicToken   String?  @unique
+  tokenExpiry    DateTime?
+  
   @@index([certificateId])
   @@index([entityId])
   @@index([jti])
+  @@index([dynamicToken])
 }
 
 // ============================================================
@@ -543,6 +567,89 @@ model ManualTrustEntry {
   
   @@index([ownerId])
   @@index([trustedDomain])
+}
+
+// ============================================================
+// KYC STRIPE IDENTITY (User)
+// ============================================================
+
+model KYCVerification {
+  id                    String    @id @default(cuid())
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeSessionId       String    @unique
+  stripeVerificationUrl String?
+  status                String    @default("PENDING")
+  accountType           String    @default("INDIVIDUAL")
+  documents             Json?
+  siretVerified         Boolean   @default(false)
+  siretData             Json?
+  adminOverride         Boolean   @default(false)
+  adminOverrideBy       String?
+  adminOverrideAt       DateTime?
+  adminOverrideReason   String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+// ============================================================
+// TRUST CIRCLE USER-CENTRIC (User↔User, invitations)
+// ============================================================
+
+model UserTrustRelation {
+  id            String    @id @default(cuid())
+  fromUserId    String
+  fromUser      User      @relation("UserTrustFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId      String?
+  toUser        User?     @relation("UserTrustTo", fields: [toUserId], references: [id], onDelete: SetNull)
+  toEmail       String?
+  toName        String?
+  toEntityType  String    @default("INDIVIDUAL")
+  trustType     String    @default("UNVERIFIED")
+  status        String    @default("PENDING")
+  isMutual      Boolean   @default(false)
+  inviteToken   String?   @unique
+  inviteExpiry  DateTime?
+  inviteSentAt  DateTime?
+  confirmedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([fromUserId, toUserId])
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([inviteToken])
+  @@index([toEmail])
+}
+
+// ============================================================
+// DEMANDES MANUELLES TRUST (User → Admin)
+// ============================================================
+
+model UserManualTrustEntry {
+  id                String    @id @default(cuid())
+  requestedBy       String
+  user              User      @relation(fields: [requestedBy], references: [id], onDelete: Cascade)
+  entityName        String
+  entityEmail       String?
+  entityType        String    @default("INDIVIDUAL")
+  siret             String?
+  documents         Json?
+  status            String    @default("PENDING_ADMIN")
+  adminValidatedBy  String?
+  adminValidatedAt  DateTime?
+  adminRejectedAt   DateTime?
+  adminRejectReason String?
+  kycLevel          String    @default("MANUAL_VERIFIED")
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([requestedBy])
+  @@index([status])
 }
 
 // ============================================================

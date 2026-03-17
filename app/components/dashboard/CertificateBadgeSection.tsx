@@ -1,0 +1,319 @@
+// app/components/dashboard/CertificateBadgeSection.tsx
+// Configuration du badge + aperçu (design Lovable)
+// ============================================================
+
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+
+const DIMS = {
+  sm: { w: 240, h: 280 },
+  md: { w: 320, h: 400 },
+  lg: { w: 400, h: 480 },
+} as const
+
+type SizeKey = keyof typeof DIMS
+
+export type CertificateBadgeSectionProps = {
+  certificateId: string
+  publicId: string | null
+  baseUrl: string
+  signature: {
+    jti: string
+    contextHash: string | null
+    scanCount: number
+    maxScans: number
+  } | null
+}
+
+export default function CertificateBadgeSection({
+  certificateId,
+  publicId,
+  baseUrl,
+  signature,
+}: CertificateBadgeSectionProps) {
+  const [size, setSize] = useState<SizeKey>('md')
+  const [scriptOpen, setScriptOpen] = useState(true)
+  const [iframeOpen, setIframeOpen] = useState(false)
+  const [scriptCopied, setScriptCopied] = useState(false)
+  const [iframeCopied, setIframeCopied] = useState(false)
+  const [regenerating, setRegenerating] = useState(false)
+  const [maxScans, setMaxScans] = useState(signature?.maxScans ?? 10)
+  const [settingsSaving, setSettingsSaving] = useState(false)
+
+  const dims = DIMS[size]
+  const badgeId = publicId || certificateId
+
+  const scriptCode = `<!-- BlockTrust Badge Widget -->
+<div id="blocktrust-badge"
+  data-certificate="${certificateId}"
+  data-size="${size}">
+</div>
+<script src="${baseUrl}/api/widget.js" async defer><\/script>`
+
+  const iframeCode = `<iframe
+  src="${baseUrl}/api/badge/${badgeId}?size=${size}"
+  width="${dims.w}"
+  height="${dims.h}"
+  frameborder="0"
+  style="border: none; background: transparent;">
+</iframe>`
+
+  const verifyPageUrl =
+    signature?.jti && signature?.contextHash
+      ? `${baseUrl}/verify/${signature.jti}?h=${signature.contextHash}`
+      : `${baseUrl}/verify/${badgeId}`
+
+  const copyScript = () => {
+    navigator.clipboard.writeText(scriptCode).then(() => {
+      setScriptCopied(true)
+      setTimeout(() => setScriptCopied(false), 2000)
+    })
+  }
+
+  const copyIframe = () => {
+    navigator.clipboard.writeText(iframeCode).then(() => {
+      setIframeCopied(true)
+      setTimeout(() => setIframeCopied(false), 2000)
+    })
+  }
+
+  const handleRegenerate = async () => {
+    setRegenerating(true)
+    try {
+      const res = await fetch(`/api/qr/generate/${certificateId}`, { method: 'POST', credentials: 'include' })
+      if (!res.ok) throw new Error('Erreur')
+      window.location.reload()
+    } catch {
+      alert('Erreur lors de la régénération du QR')
+    } finally {
+      setRegenerating(false)
+    }
+  }
+
+  const handleApplyMaxScans = async () => {
+    setSettingsSaving(true)
+    try {
+      const res = await fetch(`/api/qr/settings/${certificateId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ maxScans }),
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error('Erreur')
+      window.location.reload()
+    } catch {
+      alert('Erreur lors de la mise à jour')
+    } finally {
+      setSettingsSaving(false)
+    }
+  }
+
+  const cardStyle = {
+    background: 'rgba(13,31,60,0.8)',
+    border: '1px solid rgba(0,212,255,0.15)',
+    borderRadius: 12,
+    padding: 24,
+  }
+  const inputStyle = {
+    background: 'rgba(0,0,0,0.3)',
+    border: '1px solid rgba(0,212,255,0.15)',
+    color: 'rgba(232,234,240,0.6)',
+    fontFamily: 'var(--font-mono-bt), "IBM Plex Mono", monospace',
+    fontSize: 12,
+    borderRadius: 8,
+    padding: '10px 14px',
+    width: '100%',
+  }
+  const codeBlockStyle = {
+    background: 'rgba(0,0,0,0.4)',
+    border: '1px solid rgba(0,212,255,0.1)',
+    borderRadius: 8,
+    padding: 12,
+    fontFamily: 'var(--font-mono-bt), "IBM Plex Mono", monospace',
+    fontSize: 11,
+    color: 'rgba(232,234,240,0.7)',
+    overflowX: 'auto' as const,
+  }
+  const copyBtnStyle = {
+    background: 'rgba(0,212,255,0.1)',
+    border: '1px solid rgba(0,212,255,0.3)',
+    color: '#00d4ff',
+    borderRadius: 6,
+    fontSize: 12,
+    padding: '8px 14px',
+    marginTop: 8,
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* Colonne gauche — Configuration */}
+      <div className="lg:col-span-5 space-y-6">
+        <div style={cardStyle}>
+          <h2 className="text-base font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+            Configuration du badge
+          </h2>
+          <div className="mb-4">
+            <label className="block text-xs text-gray-400 mb-2">ID du certificat</label>
+            <input
+              type="text"
+              readOnly
+              value={certificateId}
+              style={inputStyle}
+              className="w-full"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-xs text-gray-400 mb-2">Taille</label>
+            <div className="flex flex-wrap gap-2">
+              {(['sm', 'md', 'lg'] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setSize(s)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  style={{
+                    background: size === s ? '#00d4ff' : 'rgba(0,212,255,0.1)',
+                    color: size === s ? '#0a1628' : '#00d4ff',
+                    border: `1px solid ${size === s ? '#00d4ff' : 'rgba(0,212,255,0.3)'}`,
+                  }}
+                >
+                  {s === 'sm' ? 'Petit (240×280)' : s === 'md' ? 'Moyen (320×400)' : 'Grand (400×480)'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-gray-700/50 pt-4 mt-4">
+            <button
+              type="button"
+              onClick={() => setScriptOpen(!scriptOpen)}
+              className="flex items-center gap-2 w-full text-left text-white font-medium mb-2"
+            >
+              {scriptOpen ? '▼' : '▶'} Code Script (Recommandé)
+            </button>
+            {scriptOpen && (
+              <div style={codeBlockStyle}>
+                <pre className="text-xs whitespace-pre-wrap break-all">{scriptCode}</pre>
+                <button type="button" onClick={copyScript} style={copyBtnStyle}>
+                  {scriptCopied ? '✓ Copié' : 'Copier le code'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-gray-700/50 pt-4 mt-4">
+            <button
+              type="button"
+              onClick={() => setIframeOpen(!iframeOpen)}
+              className="flex items-center gap-2 w-full text-left text-white font-medium mb-2"
+            >
+              {iframeOpen ? '▼' : '▶'} Code iFrame (Alternative)
+            </button>
+            {iframeOpen && (
+              <div style={codeBlockStyle}>
+                <pre className="text-xs whitespace-pre-wrap break-all">{iframeCode}</pre>
+                <button type="button" onClick={copyIframe} style={copyBtnStyle}>
+                  {iframeCopied ? '✓ Copié' : 'Copier le code'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Paramètres QR dynamique */}
+        {signature && (
+          <div style={cardStyle}>
+            <h2 className="text-base font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+              Paramètres du QR dynamique
+            </h2>
+            <div className="mb-4">
+              <label className="block text-xs text-gray-400 mb-2">Nombre max de scans par QR</label>
+              <select
+                value={maxScans}
+                onChange={(e) => setMaxScans(Number(e.target.value))}
+                style={{ ...inputStyle, width: 'auto', minWidth: 120 }}
+              >
+                <option value={1}>1</option>
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={999999}>Illimité</option>
+              </select>
+              <button
+                type="button"
+                onClick={handleApplyMaxScans}
+                disabled={settingsSaving}
+                className="ml-2 px-3 py-2 rounded-lg text-sm bg-[#00d4ff]/20 text-[#00d4ff] border border-[#00d4ff]/30 hover:bg-[#00d4ff]/30 disabled:opacity-50"
+              >
+                {settingsSaving ? 'Enregistrement...' : 'Appliquer'}
+              </button>
+            </div>
+            <div className="mb-4">
+              <p className="text-xs text-gray-400 mb-1">Statut actuel</p>
+              <p className="text-white text-sm">
+                {signature.scanCount} scan(s) effectué(s) sur {signature.maxScans === 999999 ? '∞' : signature.maxScans} maximum
+              </p>
+              {signature.maxScans !== 999999 && (
+                <div className="mt-2 h-2 rounded-full bg-gray-800 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-[#00d4ff]"
+                    style={{ width: `${Math.min(100, (signature.scanCount / signature.maxScans) * 100)}%` }}
+                  />
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={handleRegenerate}
+              disabled={regenerating}
+              className="w-full py-2.5 rounded-lg text-sm font-medium border border-[#BDA76B]/50 text-[#BDA76B] hover:bg-[#BDA76B]/10 disabled:opacity-50"
+            >
+              {regenerating ? 'Génération...' : 'Régénérer le QR'}
+            </button>
+            <p className="text-xs text-gray-500 mt-2">
+              Le QR est régénéré automatiquement après chaque scan valide. Expiration : 24h si non scanné.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Colonne droite — Aperçu */}
+      <div className="lg:col-span-7">
+        <div style={cardStyle}>
+          <h2 className="text-base font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+            Aperçu en direct
+          </h2>
+          <div
+            className="flex justify-center rounded-2xl overflow-hidden"
+            style={{ boxShadow: '0 0 40px rgba(0,212,255,0.1)' }}
+          >
+            <img
+              src={`/api/badge/${badgeId}?size=${size}`}
+              alt="Badge BlockTrust"
+              width={dims.w}
+              height={dims.h}
+              style={{ width: dims.w, height: dims.h }}
+              key={`${size}-${badgeId}`}
+            />
+          </div>
+          <p className="text-sm text-gray-400 mt-4 text-center">
+            Voici comment votre badge apparaîtra sur votre site web.
+          </p>
+          <div className="mt-4 text-center">
+            <Link
+              href={verifyPageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-[#00d4ff] hover:underline"
+            >
+              Voir la page de vérification →
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

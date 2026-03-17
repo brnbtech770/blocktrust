@@ -1,5 +1,5 @@
 // app/dashboard/certificate/[id]/page.tsx
-// Page de détail d'un certificat avec QR code et code HTML
+// Page de détail d'un certificat — badge Lovable + QR dynamique
 // ============================================================
 
 import { prisma } from "@/app/lib/db";
@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import QRCodeImage from "@/app/components/QRCode";
 import CertificateDetailClient from "@/app/components/dashboard/CertificateDetailClient";
+import CertificateBadgeSection from "@/app/components/dashboard/CertificateBadgeSection";
 
 export default async function CertificateDetailPage({
   params,
@@ -83,9 +84,16 @@ export default async function CertificateDetailPage({
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech';
     const signature = certificate.signatures?.[0];
+    const now = new Date();
+    const useDynamicQr =
+      signature?.dynamicToken &&
+      signature?.tokenExpiry &&
+      signature.tokenExpiry > now;
     const verifyUrl =
       signature?.jti && signature?.contextHash
-        ? `${baseUrl}/verify/${signature.jti}?h=${signature.contextHash}`
+        ? useDynamicQr
+          ? `${baseUrl}/verify/qr/${signature.dynamicToken}?h=${signature.contextHash}`
+          : `${baseUrl}/verify/${signature.jti}?h=${signature.contextHash}`
         : `${baseUrl}/verify/${certificate.publicId || certificate.id}`;
     const badgeId = certificate.publicId || certificate.id;
     const badgeUrl = `${baseUrl}/api/badge/${badgeId}`;
@@ -144,6 +152,28 @@ export default async function CertificateDetailPage({
             </div>
           </div>
         </div>
+
+        {/* Section Badge — design Lovable (2 colonnes : config | aperçu) */}
+        <section
+          className="rounded-2xl border border-[rgba(0,212,255,0.15)] p-6 lg:p-8 mb-8"
+          style={{ background: '#0a1628' }}
+        >
+          <CertificateBadgeSection
+            certificateId={certificate.id}
+            publicId={certificate.publicId}
+            baseUrl={baseUrl}
+            signature={
+              signature
+                ? {
+                    jti: signature.jti,
+                    contextHash: signature.contextHash,
+                    scanCount: signature.scanCount,
+                    maxScans: signature.maxScans,
+                  }
+                : null
+            }
+          />
+        </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Colonne gauche : Informations */}
@@ -260,24 +290,8 @@ export default async function CertificateDetailPage({
             </div>
           </div>
 
-          {/* Colonne droite : Badge, QR code et intégration */}
+          {/* Colonne droite : QR code, intégration, historique, actions */}
           <div className="space-y-6">
-            {/* Badge BlockTrust */}
-            <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
-              <h2 className="text-xl font-bold text-white mb-4">Badge BlockTrust</h2>
-              <div style={{ marginBottom: '20px' }}>
-                <img
-                  src={`/api/badge/${badgeId}`}
-                  alt="Badge BlockTrust"
-                  style={{
-                    width: '320px',
-                    height: '100px',
-                    borderRadius: '10px',
-                  }}
-                />
-              </div>
-            </div>
-
             {/* QR code */}
             <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
               <h2 className="text-xl font-bold text-white mb-4">QR Code de vérification</h2>
