@@ -13,62 +13,63 @@ interface RouteParams {
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params
-
-    // Vérifier l'authentification
-    // TODO: Remplacer par getServerSession(authOptions) quand NextAuth sera implémenté
     const user = await getAuthUser(req)
-    
     if (!user?.email) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    // Vérifier si Trust Circle est activé pour ce plan
-    const userPlan = user.plan || (user as any).plan // Support ancien et nouveau format
+    let body: { type?: string } = {}
+    try {
+      body = await req.json()
+    } catch {
+      body = {}
+    }
+    const type = body.type || new URL(req.url).searchParams.get('type') || 'mutual'
+
+    // User-centric: UserManualTrustEntry
+    if (type === 'manual') {
+      const userEntry = await prisma.userManualTrustEntry.findFirst({
+        where: { id, requestedBy: user.id },
+      })
+      if (userEntry) {
+        await prisma.userManualTrustEntry.delete({ where: { id } })
+        return NextResponse.json({ success: true, deletedCount: 1, type: 'manual' })
+      }
+    }
+
+    // User-centric: UserTrustRelation
+    if (type === 'mutual' || type === 'relation') {
+      const userRel = await prisma.userTrustRelation.findFirst({
+        where: { id, fromUserId: user.id },
+      })
+      if (userRel) {
+        await prisma.userTrustRelation.delete({ where: { id } })
+        return NextResponse.json({ success: true, deletedCount: 1, type: 'mutual' })
+      }
+    }
+
+    // Legacy: Entity-based
+    const userPlan = user.plan || (user as any).plan
     if (!checkPlanFeature(userPlan, 'trustCircle')) {
       return NextResponse.json(
         { error: 'Trust Circle non disponible avec votre plan', code: 'PLAN_LIMIT' },
         { status: 403 }
       )
     }
-
-    // Récupérer les entités de l'utilisateur
     const userEntities = await prisma.entity.findMany({
       where: { userId: user.id },
       select: { id: true },
     })
     const entityIds = userEntities.map((e) => e.id)
 
-    // Déterminer le type de relation (TrustRelation ou ManualTrustEntry)
-    const { searchParams } = new URL(req.url)
-    const type = searchParams.get('type') || 'mutual'
-
     if (type === 'manual') {
-      // Supprimer une entrée manuelle
-      const entry = await prisma.manualTrustEntry.findUnique({
-        where: { id },
-      })
-
-      if (!entry) {
-        return NextResponse.json({ error: 'Entrée non trouvée' }, { status: 404 })
-      }
-
-      // Vérifier que l'utilisateur est propriétaire
+      const entry = await prisma.manualTrustEntry.findUnique({ where: { id } })
+      if (!entry) return NextResponse.json({ error: 'Entrée non trouvée' }, { status: 404 })
       if (!entityIds.includes(entry.ownerId)) {
-        return NextResponse.json(
-          { error: 'Vous n\'êtes pas autorisé à supprimer cette entrée' },
-          { status: 403 }
-        )
+        return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
       }
-
-      await prisma.manualTrustEntry.delete({
-        where: { id },
-      })
-
-      return NextResponse.json({ 
-        success: true, 
-        deletedCount: 1,
-        type: 'manual',
-      })
+      await prisma.manualTrustEntry.delete({ where: { id } })
+      return NextResponse.json({ success: true, deletedCount: 1, type: 'manual' })
     } else {
       // Supprimer/Révoquer une relation mutuelle
       const relation = await prisma.trustRelation.findUnique({

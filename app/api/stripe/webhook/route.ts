@@ -197,6 +197,61 @@ export async function POST(req: NextRequest) {
         break
       }
 
+      // ─────────────────────────────────────────────
+      // STRIPE IDENTITY — Vérification session
+      // ─────────────────────────────────────────────
+      case 'identity.verification_session.verified': {
+        const vs = event.data.object as { id: string; metadata?: { userId?: string } }
+        const userId = vs.metadata?.userId
+        if (!userId) break
+
+        await prisma.kYCVerification.updateMany({
+          where: { stripeSessionId: vs.id },
+          data:  { status: 'VERIFIED' },
+        })
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            kycStatus:     'VERIFIED',
+            kycVerifiedAt: new Date(),
+          },
+        })
+        const { sendKYCApprovedEmail } = await import('@/lib/kyc-email')
+        sendKYCApprovedEmail(userId).catch(console.error)
+        console.log(`✅ KYC vérifié pour user ${userId}`)
+        break
+      }
+
+      case 'identity.verification_session.requires_input': {
+        const vs = event.data.object as { id: string; metadata?: { userId?: string }; url?: string }
+        const userId = vs.metadata?.userId
+        if (!userId) break
+
+        await prisma.kYCVerification.updateMany({
+          where: { stripeSessionId: vs.id },
+          data:  { status: 'REQUIRES_INPUT' },
+        })
+        let verificationUrl: string | undefined = vs.url
+        if (!verificationUrl && (stripe as any).identity?.verificationSessions?.retrieve) {
+          try {
+            const session = await (stripe as any).identity.verificationSessions.retrieve(vs.id)
+            verificationUrl = session?.url ?? undefined
+          } catch (_) {}
+        }
+        const { sendKYCRetryEmail } = await import('@/lib/kyc-email')
+        sendKYCRetryEmail(userId, verificationUrl).catch(console.error)
+        break
+      }
+
+      case 'identity.verification_session.canceled': {
+        const vs = event.data.object as { id: string }
+        await prisma.kYCVerification.updateMany({
+          where: { stripeSessionId: vs.id },
+          data:  { status: 'CANCELED' },
+        })
+        break
+      }
+
       default:
         console.log(`ℹ️ Événement non géré: ${event.type}`)
     }

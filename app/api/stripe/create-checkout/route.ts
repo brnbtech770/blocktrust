@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${baseUrl}/dashboard?success=true`,
+      success_url: `${baseUrl}/onboarding/verify`,
       cancel_url: `${baseUrl}/pricing`,
       metadata: {
         userId: user.id,
