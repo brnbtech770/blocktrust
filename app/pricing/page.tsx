@@ -3,22 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
-import PublicHeader from '@/app/components/PublicHeader'
+import Navbar from '@/app/components/landing/Navbar'
 import type { PlanDefinition } from '@/lib/pricing'
-
-// Charte BlockTrust
-const styles = {
-  bg: '#001a33',
-  primary: '#BDA76B',
-  text: '#e8eaf0',
-  textMuted: 'rgba(232,234,240,0.5)',
-  border: 'rgba(189,167,107,0.2)',
-  borderAccent: 'rgba(189,167,107,0.45)',
-  success: '#1DB87E',
-  danger: '#E05252',
-  cardBg: 'rgba(0,34,68,0.85)',
-  popularBadgeBg: 'rgba(189,167,107,0.15)',
-}
 
 const FAQ = [
   {
@@ -79,21 +65,18 @@ export default function PricingPage() {
   const currentPlan = (session?.user as { plan?: string } | null)?.plan ?? null
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: styles.bg }}>
-      <PublicHeader />
+    <div className="min-h-screen bt-circuit-bg" style={{ background: 'var(--bt-navy)' }}>
+      <Navbar />
 
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
         <h1
           className="text-4xl md:text-5xl font-bold text-center mb-4"
-          style={{ color: styles.text, fontFamily: 'var(--font-syne), sans-serif' }}
+          style={{ color: 'var(--bt-text)', fontFamily: 'var(--font-syne), sans-serif' }}
         >
           Protégez votre identité numérique
         </h1>
-        <p
-          className="text-center text-lg max-w-2xl mx-auto"
-          style={{ color: styles.textMuted }}
-        >
+        <p className="text-center text-lg max-w-2xl mx-auto" style={{ color: 'var(--bt-muted)' }}>
           Certification cryptographique · Badge vérifiable · Anti-fraude
         </p>
       </section>
@@ -127,54 +110,47 @@ export default function PricingPage() {
             return (
               <div
                 key={plan.id}
-                className="relative rounded-xl p-6 flex flex-col"
+                className="relative rounded-[14px] p-6 flex flex-col border"
                 style={{
-                  backgroundColor: styles.cardBg,
-                  border: plan.highlighted
-                    ? `2px solid ${styles.borderAccent}`
-                    : `1px solid ${styles.border}`,
+                  background: 'rgba(13,31,60,0.8)',
+                  borderColor: plan.highlighted ? '#00d4ff' : 'var(--bt-border)',
+                  borderWidth: plan.highlighted ? 2 : 1,
+                  boxShadow: plan.highlighted ? '0 0 30px rgba(0,212,255,0.15)' : undefined,
                 }}
               >
                 {plan.highlighted && (
                   <div
-                    className="absolute top-0 right-0 rounded-bl-lg px-2 py-1 text-[10px] font-semibold tracking-widest"
-                    style={{
-                      backgroundColor: styles.popularBadgeBg,
-                      color: styles.primary,
-                      fontFamily: 'var(--font-ibm-plex-mono), monospace',
-                    }}
+                    className="absolute top-0 right-0 rounded-bl-lg px-2 py-1 text-[10px] font-bold"
+                    style={{ background: '#00d4ff', color: '#0a1628' }}
                   >
-                    POPULAIRE
+                    Populaire
                   </div>
                 )}
                 <h3
                   className="text-lg font-bold uppercase mb-2"
-                  style={{ color: styles.text, fontFamily: 'var(--font-syne), sans-serif' }}
+                  style={{ color: 'var(--bt-text)', fontFamily: 'var(--font-syne), sans-serif' }}
                 >
                   {plan.name}
                 </h3>
                 <div className="mb-4">
                   <span
-                    className="text-3xl font-bold"
-                    style={{ color: styles.text, fontFamily: 'var(--font-ibm-plex-mono), monospace' }}
+                    className="text-[32px] font-extrabold"
+                    style={{ color: 'var(--bt-text)', fontFamily: 'var(--font-syne), sans-serif' }}
                   >
                     {plan.price.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
                   </span>
-                  <span className="text-sm ml-1" style={{ color: styles.textMuted }}>
+                  <span className="text-base ml-1" style={{ color: 'var(--bt-muted)' }}>
                     /mois
                   </span>
                 </div>
-                <div
-                  className="h-px w-full mb-4"
-                  style={{ backgroundColor: styles.border }}
-                />
+                <div className="h-px w-full mb-4" style={{ background: 'var(--bt-border)' }} />
                 <ul className="flex-1 space-y-2 mb-6">
                   {plan.features.map((f, i) => (
                     <li
                       key={i}
                       className="flex items-center gap-2 text-sm"
                       style={{
-                        color: f.included ? styles.success : styles.textMuted,
+                        color: f.included ? '#1DB87E' : 'rgba(255,255,255,0.2)',
                         textDecoration: f.included ? undefined : 'line-through',
                       }}
                     >
@@ -185,12 +161,10 @@ export default function PricingPage() {
                 <button
                   onClick={ctaOnClick}
                   disabled={ctaDisabled || loadingPlan === plan.priceId}
-                  className="w-full py-3 px-4 rounded-lg font-semibold text-center transition disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 rounded-lg font-bold text-center transition disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2 hover:brightness-110"
                   style={{
-                    backgroundColor: ctaDisabled
-                      ? styles.textMuted
-                      : styles.primary,
-                    color: ctaDisabled ? styles.text : '#001a33',
+                    background: ctaDisabled ? 'var(--bt-muted)' : '#00d4ff',
+                    color: ctaDisabled ? 'var(--bt-text)' : '#0a1628',
                   }}
                 >
                   {loadingPlan === plan.priceId ? (
@@ -229,10 +203,10 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <section id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
         <h2
           className="text-2xl font-bold text-center mb-8"
-          style={{ color: styles.text, fontFamily: 'var(--font-syne), sans-serif' }}
+          style={{ color: 'var(--bt-text)', fontFamily: 'var(--font-syne), sans-serif' }}
         >
           Questions fréquentes
         </h2>
@@ -240,26 +214,23 @@ export default function PricingPage() {
           {FAQ.map((item, i) => (
             <div
               key={i}
-              className="rounded-xl overflow-hidden"
+              className="rounded-xl overflow-hidden border"
               style={{
-                backgroundColor: styles.cardBg,
-                border: `1px solid ${styles.border}`,
+                background: 'rgba(13,31,60,0.8)',
+                borderColor: 'var(--bt-border)',
               }}
             >
               <button
                 type="button"
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
                 className="w-full text-left px-6 py-4 flex justify-between items-center"
-                style={{ color: styles.text }}
+                style={{ color: 'var(--bt-text)' }}
               >
                 <span className="font-medium">{item.q}</span>
-                <span style={{ color: styles.primary }}>{openFaq === i ? '−' : '+'}</span>
+                <span style={{ color: 'var(--bt-cyan)' }}>{openFaq === i ? '−' : '+'}</span>
               </button>
               {openFaq === i && (
-                <div
-                  className="px-6 pb-4 pt-0"
-                  style={{ color: styles.textMuted }}
-                >
+                <div className="px-6 pb-4 pt-0" style={{ color: 'var(--bt-muted)' }}>
                   {item.a}
                 </div>
               )}
@@ -270,19 +241,19 @@ export default function PricingPage() {
 
       {/* B2B */}
       <section
-        className="max-w-7xl mx-auto mx-4 sm:mx-6 lg:mx-8 mb-16 rounded-xl py-6 px-6 text-center"
+        className="max-w-7xl mx-auto mx-4 sm:mx-6 lg:mx-8 mb-16 rounded-xl py-6 px-6 text-center border"
         style={{
-          backgroundColor: styles.cardBg,
-          border: `1px solid ${styles.border}`,
+          background: 'rgba(13,31,60,0.8)',
+          borderColor: 'var(--bt-border)',
         }}
       >
-        <p className="mb-4" style={{ color: styles.text }}>
+        <p className="mb-4" style={{ color: 'var(--bt-text)' }}>
           Vous êtes une entreprise ? Découvrez nos offres B2B à partir de 29€/mois
         </p>
         <a
           href="mailto:contact@blocktrust.tech"
-          className="inline-block py-2 px-5 rounded-lg font-medium"
-          style={{ backgroundColor: styles.primary, color: '#001a33' }}
+          className="inline-block py-2 px-5 rounded-lg font-medium hover:brightness-110 transition-all"
+          style={{ background: '#00d4ff', color: '#0a1628' }}
         >
           Nous contacter
         </a>

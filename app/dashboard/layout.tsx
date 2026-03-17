@@ -58,7 +58,7 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-[var(--bt-navy)]">
       <DashboardSidebar />
-      <div className="ml-64">
+      <div className="ml-[220px]">
         <main className="min-h-screen">{children}</main>
       </div>
     </div>

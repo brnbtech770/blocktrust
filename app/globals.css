@@ -1,99 +1,106 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  
-  /* Charte BlockTrust (dashboard) */
-  --bt-navy: #001a33;
-  --bt-gold: #BDA76B;
-  --bt-success: #1DB87E;
-  --bt-danger: #E05252;
-  --bt-warn: #E8943A;
-  
-  /* Palette BlockTrust (legacy) */
-  --blue-dark: #0a1a2e;
-  --blue-medium: #1a2b47;
-  --blue-light: #3b82f6;
-  --cyan-light: #60a5fa;
-  --cyan-bright: #22d3ee;
-  --yellow: #fbbf24;
-  --yellow-bright: #fcd34d;
-  --gold-neon: #ffd700;
-  --white: #ffffff;
+  /* Couleurs principales */
+  --bt-navy:        #0a1628;
+  --bt-deep:        #060e1a;
+  --bt-mid:         #0d1f3c;
+  --bt-gold:        #BDA76B;
+  --bt-gold-light:  #D4C08A;
+  --bt-gold-dim:    rgba(189,167,107,0.12);
+  --bt-cyan:        #00d4ff;
+  --bt-cyan-dim:    rgba(0,212,255,0.1);
+  --bt-cyan-border: rgba(0,212,255,0.2);
+
+  /* États */
+  --bt-success:     #1DB87E;
+  --bt-danger:      #E05252;
+  --bt-warn:        #E8943A;
+
+  /* Texte */
+  --bt-text:        #ffffff;
+  --bt-muted:       rgba(255,255,255,0.55);
+
+  /* Bordures */
+  --bt-border:      rgba(0,212,255,0.15);
+  --bt-border-gold: rgba(189,167,107,0.25);
+
+  /* Legacy / compat */
+  --background:     #0a1628;
+  --foreground:     #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-geist-sans), Inter, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), var(--font-mono-bt), monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  background: var(--bt-navy);
+  color: var(--bt-text);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-syne), sans-serif;
   font-weight: 700;
 }
 
-/* Effet néon or pour les contours */
-.neon-gold {
-  text-shadow: 
-    0 0 5px rgba(255, 215, 0, 0.5),
-    0 0 10px rgba(255, 215, 0, 0.3),
-    0 0 15px rgba(255, 215, 0, 0.2);
+/* Circuit board background */
+.bt-circuit-bg {
+  position: relative;
+  overflow: hidden;
 }
-
-.neon-gold-border {
-  box-shadow: 
-    0 0 5px rgba(255, 215, 0, 0.3),
-    0 0 10px rgba(255, 215, 0, 0.2),
-    inset 0 0 5px rgba(255, 215, 0, 0.1);
-}
-
-/* Grille subtile dashboard */
-.bt-grid-subtle {
+.bt-circuit-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
   background-image:
-    linear-gradient(rgba(189, 167, 107, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(189, 167, 107, 0.03) 1px, transparent 1px);
-  background-size: 24px 24px;
+    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+.bt-circuit-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 50%,
+      rgba(0,212,255,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 30%,
+      rgba(189,167,107,0.05) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
 }
 
-@keyframes bt-ticker {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-33.333%); }
-}
-.bt-ticker-track {
-  animation: bt-ticker 25s linear infinite;
-}
-
+/* Animations */
 @keyframes logo-float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50%       { transform: translateY(-8px) rotate(2deg); }
+  0%, 100% { transform: translateY(0px); }
+  50%     { transform: translateY(-10px); }
 }
-
 @keyframes logo-glow {
-  0%, 100% { filter: drop-shadow(0 0 8px rgba(0,180,255,0.3)); }
-  50%       { filter: drop-shadow(0 0 20px rgba(0,180,255,0.6))
-                       drop-shadow(0 0 40px rgba(189,167,107,0.3)); }
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(0,212,255,0.4))
+                     drop-shadow(0 0 30px rgba(189,167,107,0.2)); }
+  50%     { filter: drop-shadow(0 0 25px rgba(0,212,255,0.7))
+                     drop-shadow(0 0 50px rgba(189,167,107,0.4)); }
+}
+@keyframes pulse-cyan {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.3); }
+  50%     { box-shadow: 0 0 0 8px rgba(0,212,255,0); }
+}
+@keyframes bt-ticker {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
 }
 
 .logo-hero {
-  animation:
-    logo-float 4s ease-in-out infinite,
-    logo-glow  3s ease-in-out infinite;
+  animation: logo-float 4s ease-in-out infinite,
+             logo-glow  3s ease-in-out infinite;
 }
+.pulse-cyan { animation: pulse-cyan 2s infinite; }

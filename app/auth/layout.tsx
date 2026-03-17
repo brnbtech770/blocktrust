@@ -20,12 +20,8 @@ export default function AuthLayout({
 }) {
   return (
     <div
-      className={`${syne.variable} ${ibmPlexMono.variable}`}
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#001a33",
-        fontFamily: "var(--font-ibm-plex-mono), monospace",
-      }}
+      className={`${syne.variable} ${ibmPlexMono.variable} min-h-screen bt-circuit-bg`}
+      style={{ background: 'var(--bt-navy)' }}
     >
       {children}
     </div>

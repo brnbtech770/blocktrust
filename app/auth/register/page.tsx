@@ -6,13 +6,22 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Logo } from "@/app/components/ui/Logo";
 
-const cardStyle = {
+const cardStyle: React.CSSProperties = {
   maxWidth: "420px",
   margin: "0 auto",
-  padding: "24px",
-  border: "1px solid rgba(189,167,107,0.2)",
-  borderRadius: "12px",
-  backgroundColor: "rgba(0,34,68,0.85)",
+  padding: "32px",
+  border: "1px solid var(--bt-border)",
+  borderRadius: "16px",
+  backgroundColor: "rgba(13,31,60,0.9)",
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "10px 12px",
+  borderRadius: "8px",
+  border: "1px solid var(--bt-border)",
+  backgroundColor: "rgba(6,14,26,0.8)",
+  color: "#fff",
 };
 
 export default function RegisterPage() {
@@ -93,7 +102,7 @@ export default function RegisterPage() {
         <h1
           style={{
             fontFamily: "var(--font-syne), sans-serif",
-            color: "#BDA76B",
+            color: "#fff",
             fontSize: "1.5rem",
             marginBottom: "1.5rem",
           }}
@@ -102,133 +111,35 @@ export default function RegisterPage() {
         </h1>
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "rgba(232,234,240,0.8)", display: "block", marginBottom: "4px" }}>
-              Prénom
-            </label>
-            <input
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1px solid rgba(189,167,107,0.3)",
-                backgroundColor: "#001a33",
-                color: "#e8eaf0",
-              }}
-            />
+            <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Prénom</label>
+            <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} />
           </div>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "rgba(232,234,240,0.8)", display: "block", marginBottom: "4px" }}>
-              Nom
-            </label>
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              required
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1px solid rgba(189,167,107,0.3)",
-                backgroundColor: "#001a33",
-                color: "#e8eaf0",
-              }}
-            />
+            <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Nom</label>
+            <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} />
           </div>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "rgba(232,234,240,0.8)", display: "block", marginBottom: "4px" }}>
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1px solid rgba(189,167,107,0.3)",
-                backgroundColor: "#001a33",
-                color: "#e8eaf0",
-              }}
-            />
+            <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} />
           </div>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "rgba(232,234,240,0.8)", display: "block", marginBottom: "4px" }}>
-              Mot de passe
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1px solid rgba(189,167,107,0.3)",
-                backgroundColor: "#001a33",
-                color: "#e8eaf0",
-              }}
-            />
-            {fieldError.password && (
-              <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>
-                {fieldError.password}
-              </p>
-            )}
+            <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Mot de passe</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} />
+            {fieldError.password && <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>{fieldError.password}</p>}
           </div>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "rgba(232,234,240,0.8)", display: "block", marginBottom: "4px" }}>
-              Confirmer le mot de passe
-            </label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1px solid rgba(189,167,107,0.3)",
-                backgroundColor: "#001a33",
-                color: "#e8eaf0",
-              }}
-            />
-            {fieldError.confirmPassword && (
-              <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>
-                {fieldError.confirmPassword}
-              </p>
-            )}
+            <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Confirmer le mot de passe</label>
+            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} />
+            {fieldError.confirmPassword && <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>{fieldError.confirmPassword}</p>}
           </div>
-          {error && (
-            <p style={{ color: "#E05252", marginBottom: "1rem" }}>{error}</p>
-          )}
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "none",
-              backgroundColor: "#BDA76B",
-              color: "#001a33",
-              fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
-          >
+          {error && <p style={{ color: "#E05252", marginBottom: "1rem" }}>{error}</p>}
+          <button type="submit" disabled={loading} className="w-full py-3 rounded-lg font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed" style={{ background: "#00d4ff", color: "#0a1628" }}>
             {loading ? "Création..." : "Créer mon compte"}
           </button>
         </form>
-        <p style={{ color: "rgba(232,234,240,0.5)", marginTop: "1.5rem", fontSize: "0.875rem" }}>
+        <p style={{ color: "var(--bt-muted)", marginTop: "1.5rem", fontSize: "0.875rem" }}>
           Déjà un compte ?{" "}
-          <Link href="/auth/signin" style={{ color: "#BDA76B" }}>
+          <Link href="/auth/signin" className="text-[#00d4ff] hover:underline">
             Se connecter
           </Link>
         </p>

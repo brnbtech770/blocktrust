@@ -10,19 +10,23 @@ const STATIC_HASH =
 export default function BlockchainTicker() {
   return (
     <div
-      className="relative overflow-hidden border-y border-[var(--bt-gold)]/30 bg-[var(--bt-navy)]/80 py-2"
+      className="relative overflow-hidden border-t py-2"
+      style={{
+        background: 'rgba(0,0,0,0.5)',
+        borderTopColor: 'var(--bt-border)',
+      }}
       aria-label="Statut blockchain"
     >
-      <div className="bt-ticker-track flex w-max items-center gap-8">
-        <span className="font-mono text-xs text-[var(--bt-gold)]/90 whitespace-nowrap">
-          {STATIC_HASH}
-        </span>
-        <span className="font-mono text-xs text-[var(--bt-gold)]/90 whitespace-nowrap">
-          {STATIC_HASH}
-        </span>
-        <span className="font-mono text-xs text-[var(--bt-gold)]/90 whitespace-nowrap">
-          {STATIC_HASH}
-        </span>
+      <div
+        className="flex w-max items-center gap-8"
+        style={{ animation: 'bt-ticker 20s linear infinite' }}
+      >
+        {[1, 2].map((i) => (
+          <span key={i} className="font-mono text-xs whitespace-nowrap inline-flex">
+            <span style={{ color: '#00d4ff' }}>BLOCKCHAIN · </span>
+            <span style={{ color: 'rgba(0,212,255,0.35)' }}>{STATIC_HASH}</span>
+          </span>
+        ))}
       </div>
     </div>
   )

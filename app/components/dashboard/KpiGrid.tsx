@@ -32,28 +32,28 @@ export default function KpiGrid({
         label="Certificats actifs"
         value={String(certs)}
         sub="actifs / total"
-        icon={<Shield className="w-5 h-5 text-[var(--bt-gold)]" />}
+        icon={<Shield className="w-5 h-5 shrink-0" style={{ color: 'var(--bt-cyan)' }} />}
         accent="gold"
       />
       <KpiCard
         label="Vérifications (7j)"
         value={String(verifications)}
         sub="derniers 7 jours"
-        icon={<CheckCircle className="w-5 h-5 text-[var(--bt-success)]" />}
+        icon={<CheckCircle className="w-5 h-5 shrink-0 text-[var(--bt-success)]" />}
         accent="success"
       />
       <KpiCard
         label="Blockchain"
         value={statusLabel[blockchainStatus]}
         sub="Polygon"
-        icon={<Link2 className="w-5 h-5 text-[var(--bt-gold)]" />}
+        icon={<Link2 className="w-5 h-5 shrink-0" style={{ color: 'var(--bt-gold)' }} />}
         accent="gold"
       />
       <KpiCard
         label="Alertes fraude"
         value={String(fraudAlerts)}
         sub="en attente"
-        icon={<AlertTriangle className="w-5 h-5 text-[var(--bt-warn)]" />}
+        icon={<AlertTriangle className="w-5 h-5 shrink-0 text-[var(--bt-warn)]" />}
         accent={fraudAlerts > 0 ? 'warn' : 'muted'}
       />
     </div>
@@ -73,27 +73,32 @@ function KpiCard({
   icon: React.ReactNode
   accent: 'gold' | 'success' | 'warn' | 'muted'
 }) {
-  const borderColor =
+  const topBorder =
     accent === 'gold'
-      ? 'border-[var(--bt-gold)]/30'
+      ? 'var(--bt-gold)'
       : accent === 'success'
-        ? 'border-[var(--bt-success)]/30'
+        ? 'var(--bt-success)'
         : accent === 'warn'
-          ? 'border-[var(--bt-warn)]/30'
-          : 'border-gray-700'
+          ? 'var(--bt-warn)'
+          : 'var(--bt-cyan)'
   return (
     <div
-      className={`rounded-xl border bg-[var(--bt-navy)]/60 backdrop-blur-sm p-5 ${borderColor}`}
+      className="rounded-xl border p-5 relative overflow-hidden"
+      style={{
+        background: 'rgba(13,31,60,0.8)',
+        borderColor: 'var(--bt-border)',
+      }}
     >
+      <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: topBorder }} />
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-sm text-gray-400 font-medium mb-1" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <p className="text-[10px] mb-1 font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
             {label}
           </p>
-          <p className="text-2xl font-bold text-white tracking-tight" style={{ fontFamily: 'var(--font-mono-bt), monospace' }}>
+          <p className="text-[28px] font-extrabold text-white tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
             {value}
           </p>
-          <p className="text-xs text-gray-500 mt-1">{sub}</p>
+          <p className="text-[10px] mt-1" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>{sub}</p>
         </div>
         {icon}
       </div>

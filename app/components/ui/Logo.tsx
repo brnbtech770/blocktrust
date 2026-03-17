@@ -4,15 +4,16 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 interface LogoProps {
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'hero'
   withText?: boolean
   href?: string
 }
 
-const sizes = {
-  sm: 32,
-  md: 44,
+const sizes: Record<string, number> = {
+  sm: 28,
+  md: 36,
   lg: 80,
+  hero: 380,
 }
 
 export function Logo({
@@ -20,7 +21,7 @@ export function Logo({
   withText = true,
   href = '/',
 }: LogoProps) {
-  const px = sizes[size]
+  const px = sizes[size] ?? sizes.md
 
   const image = (
     <div style={{ position: 'relative', width: px, height: px, flexShrink: 0 }}>
@@ -38,19 +39,19 @@ export function Logo({
   const text = withText && (
     <div>
       <div style={{
-        fontFamily: 'var(--font-syne)',
-        fontSize: size === 'lg' ? '22px' : size === 'md' ? '18px' : '14px',
+        fontFamily: 'var(--font-syne), sans-serif',
+        fontSize: size === 'lg' || size === 'hero' ? '22px' : size === 'md' ? '18px' : '14px',
         fontWeight: 800,
-        color: 'var(--bt-gold)',
-        letterSpacing: '0.06em',
+        color: 'var(--bt-cyan)',
+        letterSpacing: '0.08em',
         lineHeight: 1,
       }}>
         BLOCKTRUST
       </div>
       <div style={{
-        fontFamily: 'var(--font-mono-bt)',
+        fontFamily: 'var(--font-mono-bt), monospace',
         fontSize: '9px',
-        color: 'rgba(232,234,240,0.4)',
+        color: 'var(--bt-muted)',
         letterSpacing: '0.15em',
         marginTop: '2px',
       }}>
@@ -63,7 +64,7 @@ export function Logo({
     <div style={{
       display: 'flex',
       alignItems: 'center',
-      gap: size === 'lg' ? '14px' : '10px',
+      gap: size === 'lg' || size === 'hero' ? '14px' : '10px',
       textDecoration: 'none',
     }}>
       {image}

@@ -6,14 +6,24 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Logo } from "@/app/components/ui/Logo";
 
-const cardStyle = {
+const cardStyle: React.CSSProperties = {
   maxWidth: "420px",
   margin: "0 auto",
-  padding: "24px",
-  border: "1px solid rgba(189,167,107,0.2)",
-  borderRadius: "12px",
-  backgroundColor: "rgba(0,34,68,0.85)",
+  padding: "32px",
+  border: "1px solid var(--bt-border)",
+  borderRadius: "16px",
+  backgroundColor: "rgba(13,31,60,0.9)",
 };
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  padding: "10px 12px",
+  borderRadius: "8px",
+  border: "1px solid var(--bt-border)",
+  backgroundColor: "rgba(6,14,26,0.8)",
+  color: "#fff",
+};
+
 
 function SignInContent() {
   const router = useRouter();
@@ -62,7 +72,7 @@ function SignInContent() {
         <h1
           style={{
             fontFamily: "var(--font-syne), sans-serif",
-            color: "#BDA76B",
+            color: "#fff",
             fontSize: "1.5rem",
             marginBottom: "1.5rem",
           }}
@@ -73,71 +83,43 @@ function SignInContent() {
         <button
           type="button"
           onClick={handleGoogle}
+          className="w-full py-3 rounded-lg border text-white transition-colors mb-4"
           style={{
-            width: "100%",
-            padding: "12px",
-            borderRadius: "8px",
-            border: "1px solid rgba(189,167,107,0.4)",
-            backgroundColor: "transparent",
-            color: "#e8eaf0",
-            cursor: "pointer",
-            marginBottom: "1rem",
+            background: "rgba(255,255,255,0.05)",
+            borderColor: "rgba(255,255,255,0.15)",
           }}
         >
           Continuer avec Google
         </button>
 
-        <p
-          style={{
-            color: "rgba(232,234,240,0.5)",
-            textAlign: "center",
-            marginBottom: "1rem",
-            fontSize: "0.875rem",
-          }}
-        >
+        <p style={{ color: "var(--bt-muted)", textAlign: "center", marginBottom: "1rem", fontSize: "0.875rem" }}>
           ou
         </p>
 
         <form onSubmit={handleCredentialsSubmit}>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "rgba(232,234,240,0.8)", display: "block", marginBottom: "4px" }}>
-              Email
-            </label>
+            <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1px solid rgba(189,167,107,0.3)",
-                backgroundColor: "#001a33",
-                color: "#e8eaf0",
-              }}
+              className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]"
+              style={inputStyle}
             />
           </div>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "rgba(232,234,240,0.8)", display: "block", marginBottom: "4px" }}>
-              Mot de passe
-            </label>
+            <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Mot de passe</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1px solid rgba(189,167,107,0.3)",
-                backgroundColor: "#001a33",
-                color: "#e8eaf0",
-              }}
+              className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]"
+              style={inputStyle}
             />
             <p style={{ marginTop: "4px", fontSize: "0.875rem" }}>
-              <Link href="/auth/forgot-password" style={{ color: "#BDA76B" }}>
+              <Link href="/auth/forgot-password" className="text-[#00d4ff] hover:underline">
                 Mot de passe oublié ?
               </Link>
             </p>
@@ -150,24 +132,16 @@ function SignInContent() {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: "100%",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "none",
-              backgroundColor: "#BDA76B",
-              color: "#001a33",
-              fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
+            className="w-full py-3 rounded-lg font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ background: "#00d4ff", color: "#0a1628" }}
           >
             {loading ? "Connexion..." : "Se connecter"}
           </button>
         </form>
 
-        <p style={{ color: "rgba(232,234,240,0.5)", marginTop: "1.5rem", fontSize: "0.875rem" }}>
+        <p style={{ color: "var(--bt-muted)", marginTop: "1.5rem", fontSize: "0.875rem" }}>
           Pas encore de compte ?{" "}
-          <Link href="/auth/register" style={{ color: "#BDA76B" }}>
+          <Link href="/auth/register" className="text-[#00d4ff] hover:underline">
             Créer un compte
           </Link>
         </p>

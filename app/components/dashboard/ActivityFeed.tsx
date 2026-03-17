@@ -17,11 +17,11 @@ const POLL_INTERVAL_MS = 30_000
 function resultIcon(result: VerificationEvent['result']) {
   switch (result) {
     case 'VALID':
-      return <CheckCircle className="w-4 h-4 text-[var(--bt-success)] shrink-0" />
+      return <span className="w-2.5 h-2.5 rounded-full shrink-0 animate-pulse" style={{ background: '#00d4ff' }} aria-hidden />
     case 'FRAUD_ALERT':
-      return <AlertTriangle className="w-4 h-4 text-[var(--bt-warn)] shrink-0" />
+      return <span className="w-2.5 h-2.5 rounded-full shrink-0 animate-pulse" style={{ background: '#E05252' }} aria-hidden />
     default:
-      return <XCircle className="w-4 h-4 text-[var(--bt-danger)] shrink-0" />
+      return <XCircle className="w-4 h-4 shrink-0" style={{ color: 'var(--bt-danger)' }} />
   }
 }
 
@@ -66,33 +66,33 @@ export default function ActivityFeed({ initialEvents = [] }: ActivityFeedProps) 
   }, [])
 
   return (
-    <div className="rounded-xl border border-gray-700 bg-[var(--bt-navy)]/60 backdrop-blur-sm overflow-hidden">
-      <div className="border-b border-gray-700 px-4 py-3 flex items-center justify-between">
+    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--bt-border)', background: 'rgba(13,31,60,0.5)' }}>
+      <div className="border-b px-4 py-3 flex items-center justify-between" style={{ borderColor: 'var(--bt-border)' }}>
         <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
           Activité récente
         </h2>
         {loading && (
-          <span className="text-xs text-gray-500">Actualisation...</span>
+          <span className="text-[10px]" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>Actualisation...</span>
         )}
       </div>
-      <ul className="divide-y divide-gray-800 max-h-80 overflow-y-auto">
+      <ul className="divide-y max-h-80 overflow-y-auto" style={{ borderColor: 'var(--bt-border)' }}>
         {events.length === 0 && !loading ? (
-          <li className="px-4 py-8 text-center text-gray-500 text-sm">
+          <li className="px-4 py-8 text-center text-sm" style={{ color: 'var(--bt-muted)' }}>
             Aucune vérification récente
           </li>
         ) : (
           events.map((ev) => (
-            <li key={ev.id} className="px-4 py-3 flex items-start gap-3 hover:bg-white/5 transition-colors">
+            <li key={ev.id} className="px-4 py-3 flex items-start gap-3 hover:bg-[rgba(0,212,255,0.04)] transition-colors">
               {resultIcon(ev.result)}
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-gray-300">
-                  Certificat <span className="font-mono text-[var(--bt-gold)]">{ev.certificatePublicId ?? ev.certificateId}</span>
+                <p className="text-sm text-white">
+                  Certificat <span className="font-mono" style={{ color: 'var(--bt-cyan)' }}>{ev.certificatePublicId ?? ev.certificateId}</span>
                   {' · '}
-                  <span className={ev.result === 'VALID' ? 'text-[var(--bt-success)]' : 'text-[var(--bt-warn)]'}>
+                  <span style={{ color: ev.result === 'VALID' ? '#1DB87E' : 'var(--bt-warn)' }}>
                     {resultLabel(ev.result)}
                   </span>
                 </p>
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-[10px] mt-0.5" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>
                   {new Date(ev.verifiedAt).toLocaleString('fr-FR')}
                   {ev.country ? ` · ${ev.country}` : ''}
                 </p>

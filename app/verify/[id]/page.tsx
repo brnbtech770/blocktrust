@@ -246,72 +246,76 @@ function ValidView({
   const hashDisplay = signature.contextHash ?? '—'
 
   return (
-    <div className="min-h-screen bg-[#001a33] text-gray-100" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+    <div className="min-h-screen bt-circuit-bg text-gray-100" style={{ fontFamily: 'var(--font-syne), sans-serif', background: 'var(--bt-navy)' }}>
       <div className="max-w-xl mx-auto px-4 py-10">
-        <div className="rounded-2xl border border-[#1DB87E]/40 bg-[#001a33]/80 p-6 md:p-8">
+        <div className="rounded-2xl border p-6 md:p-8" style={{ borderColor: 'rgba(0,212,255,0.3)', background: 'rgba(13,31,60,0.8)' }}>
           <div className="flex justify-center mb-6">
             <div className="relative">
-              <span className="text-6xl block animate-pulse">🛡️</span>
-              <span className="absolute inset-0 text-6xl blur-md opacity-60 text-[#1DB87E]">🛡️</span>
+              <span className="text-6xl block animate-pulse" style={{ filter: 'drop-shadow(0 0 12px rgba(0,212,255,0.6))' }}>🛡️</span>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-[#1DB87E] text-center mb-2">Certificat valide</h1>
-          <p className="text-center text-gray-400 text-sm mb-8">Vérifié par BlockTrust</p>
+          <h1 className="text-2xl font-bold text-center mb-2" style={{ color: '#00d4ff' }}>Certificat valide</h1>
+          <p className="text-center text-sm mb-8" style={{ color: 'var(--bt-muted)' }}>Vérifié par BlockTrust</p>
 
           <div className="space-y-6">
             <div>
-              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Entité</p>
+              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--bt-muted)' }}>Entité</p>
               <p className="text-white text-xl font-semibold">{name}</p>
-              <p className="text-gray-400 text-sm mt-1">
+              <p className="text-sm mt-1" style={{ color: 'var(--bt-muted)' }}>
                 {entity.entityType === 'INDIVIDUAL' ? 'Particulier' : 'Entreprise'} · Niveau {level}
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Émis le</p>
+                <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--bt-muted)' }}>Émis le</p>
                 <p className="text-white font-mono text-sm">{issued}</p>
               </div>
               <div>
-                <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Expire le</p>
+                <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--bt-muted)' }}>Expire le</p>
                 <p className="text-white font-mono text-sm">{expires ?? '—'}</p>
               </div>
             </div>
 
             <div>
-              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Contact officiel</p>
-              <p className="text-[#BDA76B] font-mono text-sm break-all">{entity.email}</p>
+              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--bt-muted)' }}>Contact officiel</p>
+              <p className="font-mono text-sm break-all" style={{ color: 'var(--bt-gold)' }}>{entity.email}</p>
             </div>
 
             <div>
-              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Vérifications (30 derniers jours)</p>
+              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--bt-muted)' }}>Vérifications (30 derniers jours)</p>
               <p className="text-white font-mono text-lg">{verificationsLast30Days}</p>
             </div>
 
             <div>
-              <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">Hash SHA-256 (contexte)</p>
-              <p className="text-gray-300 font-mono text-xs break-all bg-black/30 px-3 py-2 rounded">{hashDisplay}</p>
+              <p className="text-xs uppercase tracking-wider mb-1" style={{ color: '#00d4ff' }}>Hash SHA-256 (contexte)</p>
+              <p className="font-mono text-xs break-all px-3 py-2 rounded" style={{ color: 'rgba(0,212,255,0.35)', background: 'rgba(0,0,0,0.3)' }}>{hashDisplay}</p>
             </div>
 
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-center gap-2">
-                <span className="text-[#1DB87E]">✓</span> Signature valide
+                <span className="w-2 h-2 rounded-full shrink-0 animate-pulse" style={{ background: '#00d4ff' }} />
+                Signature valide
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-[#1DB87E]">✓</span> Contenu conforme
+                <span className="w-2 h-2 rounded-full shrink-0 animate-pulse" style={{ background: '#00d4ff' }} />
+                Contenu conforme
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-[#1DB87E]">✓</span> Ancré blockchain
+                <span className="w-2 h-2 rounded-full shrink-0 animate-pulse" style={{ background: '#00d4ff' }} />
+                Ancré blockchain
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-[#1DB87E]">✓</span> Certificat actif
+                <span className="w-2 h-2 rounded-full shrink-0 animate-pulse" style={{ background: '#00d4ff' }} />
+                Certificat actif
               </li>
             </ul>
 
             <div className="pt-4 flex flex-col sm:flex-row gap-3">
               <a
                 href="mailto:legal@blocktrust.tech?subject=Signalement%20certificat%20BlockTrust"
-                className="inline-flex justify-center rounded-lg border border-[#BDA76B]/50 text-[#BDA76B] px-4 py-2 text-sm font-medium hover:bg-[#BDA76B]/10 transition-colors"
+                className="inline-flex justify-center rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--bt-gold-dim)]"
+                style={{ borderColor: 'var(--bt-border-gold)', color: 'var(--bt-gold)' }}
               >
                 Signaler
               </a>

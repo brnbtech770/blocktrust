@@ -23,17 +23,17 @@ function entityDisplayName(entity: CertificateTableItem['entity']): string {
 }
 
 function statusBadge(status: string) {
-  const styles: Record<string, string> = {
-    ACTIVE: 'bg-[var(--bt-success)]/20 text-[var(--bt-success)] border-[var(--bt-success)]/40',
-    ANCHORED: 'bg-[var(--bt-gold)]/20 text-[var(--bt-gold)] border-[var(--bt-gold)]/40',
-    PENDING: 'bg-gray-500/20 text-gray-400 border-gray-500/40',
-    REVOKED: 'bg-[var(--bt-danger)]/20 text-[var(--bt-danger)] border-[var(--bt-danger)]/40',
-    EXPIRED: 'bg-[var(--bt-warn)]/20 text-[var(--bt-warn)] border-[var(--bt-warn)]/40',
-    SUSPENDED: 'bg-[var(--bt-warn)]/20 text-[var(--bt-warn)] border-[var(--bt-warn)]/40',
+  const styles: Record<string, { bg: string; text: string; border: string }> = {
+    ACTIVE: { bg: 'rgba(0,212,255,0.1)', text: '#00d4ff', border: 'rgba(0,212,255,0.3)' },
+    ANCHORED: { bg: 'rgba(189,167,107,0.15)', text: 'var(--bt-gold)', border: 'rgba(189,167,107,0.3)' },
+    PENDING: { bg: 'rgba(189,167,107,0.1)', text: 'var(--bt-gold)', border: 'rgba(189,167,107,0.25)' },
+    REVOKED: { bg: 'rgba(224,82,82,0.15)', text: '#E05252', border: 'rgba(224,82,82,0.3)' },
+    EXPIRED: { bg: 'rgba(232,148,58,0.15)', text: 'var(--bt-warn)', border: 'rgba(232,148,58,0.3)' },
+    SUSPENDED: { bg: 'rgba(232,148,58,0.15)', text: 'var(--bt-warn)', border: 'rgba(232,148,58,0.3)' },
   }
-  const s = styles[status] ?? 'bg-gray-500/20 text-gray-400 border-gray-500/40'
+  const s = styles[status] ?? { bg: 'rgba(255,255,255,0.08)', text: 'var(--bt-muted)', border: 'var(--bt-border)' }
   return (
-    <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${s}`}>
+    <span className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium" style={{ background: s.bg, color: s.text, borderColor: s.border }}>
       {status}
     </span>
   )
@@ -65,24 +65,24 @@ export default function CertificateTable({ certificates }: CertificateTableProps
 
   return (
     <>
-      <div className="rounded-xl border border-gray-700 bg-[var(--bt-navy)]/60 backdrop-blur-sm overflow-hidden">
+      <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--bt-border)', background: 'rgba(13,31,60,0.5)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-gray-700 bg-black/20">
-                <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+              <tr className="border-b" style={{ background: 'rgba(0,0,0,0.3)', borderColor: 'var(--bt-border)' }}>
+                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
                   Entité / ID
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
                   Statut
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
                   Vérifications
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
                   Émis le
                 </th>
-                <th className="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider w-32" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider w-32" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
                   Actions
                 </th>
               </tr>
@@ -90,13 +90,13 @@ export default function CertificateTable({ certificates }: CertificateTableProps
             <tbody>
               {certificates.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-4 py-8 text-center" style={{ color: 'var(--bt-muted)' }}>
                     Aucun certificat
                   </td>
                 </tr>
               ) : (
                 certificates.map((cert) => (
-                  <tr key={cert.id} className="border-b border-gray-800 hover:bg-white/5 transition-colors">
+                  <tr key={cert.id} className="border-b transition-colors hover:bg-[rgba(0,212,255,0.04)]" style={{ borderColor: 'var(--bt-border)' }}>
                     <td className="px-4 py-3">
                       <div className="font-medium text-white">{entityDisplayName(cert.entity)}</div>
                       <div className="text-xs text-gray-500 font-mono">{cert.publicId ?? cert.id}</div>
