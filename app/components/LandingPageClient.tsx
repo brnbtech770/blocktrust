@@ -1,6 +1,7 @@
 "use client";
 
 import PublicHeader from "./PublicHeader";
+import { Logo } from "@/app/components/ui/Logo";
 
 export default function LandingPageClient() {
   return (
@@ -11,6 +12,11 @@ export default function LandingPageClient() {
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center">
+          <div className="flex justify-center mb-8">
+            <div className="logo-hero">
+              <Logo size="lg" withText={false} href="/" />
+            </div>
+          </div>
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
             Certifiez votre identité
             <br />
@@ -95,8 +101,9 @@ export default function LandingPageClient() {
 
       {/* Footer */}
       <footer className="border-t border-blue-900/50 bg-blue-950/50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-300">
-          <p>© 2024 BlockTrust. Tous droits réservés.</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center gap-4 text-gray-300">
+          <Logo size="md" withText={true} href="/" />
+          <p className="text-sm">© 2024 BlockTrust. Tous droits réservés.</p>
         </div>
       </footer>
     </div>

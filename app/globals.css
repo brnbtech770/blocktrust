@@ -80,3 +80,20 @@ h1, h2, h3, h4, h5, h6 {
 .bt-ticker-track {
   animation: bt-ticker 25s linear infinite;
 }
+
+@keyframes logo-float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-8px) rotate(2deg); }
+}
+
+@keyframes logo-glow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(0,180,255,0.3)); }
+  50%       { filter: drop-shadow(0 0 20px rgba(0,180,255,0.6))
+                       drop-shadow(0 0 40px rgba(189,167,107,0.3)); }
+}
+
+.logo-hero {
+  animation:
+    logo-float 4s ease-in-out infinite,
+    logo-glow  3s ease-in-out infinite;
+}

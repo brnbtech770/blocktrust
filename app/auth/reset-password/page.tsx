@@ -3,6 +3,7 @@
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Logo } from "@/app/components/ui/Logo";
 
 const cardStyle = {
   maxWidth: "420px",
@@ -91,6 +92,9 @@ function ResetPasswordContent() {
   if (!valid) {
     return (
       <div style={{ padding: "48px 16px" }}>
+        <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
+          <Logo size="lg" withText={true} href="/" />
+        </div>
         <div style={cardStyle}>
           <h1 style={{ fontFamily: "var(--font-syne), sans-serif", color: "#BDA76B", marginBottom: "1rem" }}>
             Lien invalide ou expiré
@@ -110,6 +114,9 @@ function ResetPasswordContent() {
 
   return (
     <div style={{ padding: "48px 16px" }}>
+      <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
+        <Logo size="lg" withText={true} href="/" />
+      </div>
       <div style={cardStyle}>
         <h1
           style={{

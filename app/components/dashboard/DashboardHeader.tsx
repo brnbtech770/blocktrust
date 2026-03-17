@@ -6,6 +6,7 @@
 
 import { signOut } from 'next-auth/react'
 import { useSession } from 'next-auth/react'
+import { Logo } from '@/app/components/ui/Logo'
 
 export default function DashboardHeader() {
   const { data: session } = useSession()
@@ -15,9 +16,7 @@ export default function DashboardHeader() {
   return (
     <header className="sticky top-0 z-40 bg-[var(--bt-navy)]/95 backdrop-blur-sm border-b border-[var(--bt-gold)]/20">
       <div className="flex items-center justify-between px-6 md:px-8 py-4">
-        <h1 className="text-xl font-bold text-white" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
-          Mon espace
-        </h1>
+        <Logo size="md" withText={true} href="/dashboard" />
         <div className="flex items-center gap-4">
           <div className="text-right hidden sm:block">
             <p className="text-xs text-gray-400">Connecté</p>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { Logo } from "@/app/components/ui/Logo";
 
 const cardStyle = {
   maxWidth: "420px",
@@ -85,6 +86,9 @@ export default function RegisterPage() {
 
   return (
     <div style={{ padding: "48px 16px" }}>
+      <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
+        <Logo size="lg" withText={true} href="/" />
+      </div>
       <div style={cardStyle}>
         <h1
           style={{

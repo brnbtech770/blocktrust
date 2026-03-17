@@ -14,6 +14,7 @@ import {
   Settings 
 } from 'lucide-react'
 import Link from 'next/link'
+import { Logo } from '@/app/components/ui/Logo'
 
 export default async function DashboardSidebar() {
   console.log('[DEBUG] DashboardSidebar entry');
@@ -24,7 +25,7 @@ export default async function DashboardSidebar() {
     if (!session?.user?.email) {
       return (
         <aside className="fixed left-0 top-0 h-full w-64 bg-gray-900/95 backdrop-blur-sm border-r border-gray-800 p-6">
-          <div className="text-3xl font-bold text-white mb-8 tracking-tight">🛡️ BlockTrust</div>
+          <div className="mb-8"><Logo size="md" withText={true} href="/dashboard" /></div>
           <div className="text-red-400 text-sm">Session non trouvée</div>
         </aside>
       )
@@ -52,7 +53,7 @@ export default async function DashboardSidebar() {
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-gray-900/95 backdrop-blur-sm border-r border-gray-800 p-6">
-      <div className="text-3xl font-bold text-white mb-8 tracking-tight">🛡️ BlockTrust</div>
+      <div className="mb-8"><Logo size="md" withText={true} href="/dashboard" /></div>
 
       <nav className="space-y-1">
         {menuItems.map((item) => {

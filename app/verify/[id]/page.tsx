@@ -6,6 +6,7 @@
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { prisma } from '@/app/lib/db'
+import { Logo } from '@/app/components/ui/Logo'
 import { hashIp } from '@/app/lib/auth'
 import { checkRateLimitVerify } from '@/lib/rate-limit-verify'
 import { sendEmailFireAndForget } from '@/lib/email'
@@ -318,8 +319,8 @@ function ValidView({
           </div>
         </div>
 
-        <footer className="mt-8 text-center text-gray-500 text-xs">
-          BlockTrust — Certification de confiance numérique
+        <footer className="mt-8 flex justify-center">
+          <Logo size="sm" withText={true} />
         </footer>
       </div>
     </div>
@@ -388,6 +389,9 @@ function FraudAlertView({
             </Link>
           </div>
         </div>
+        <footer className="mt-8 flex justify-center opacity-60">
+          <Logo size="sm" withText={false} />
+        </footer>
       </div>
     </div>
   )
