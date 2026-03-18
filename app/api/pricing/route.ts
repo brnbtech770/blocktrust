@@ -1,11 +1,13 @@
 // app/api/pricing/route.ts
-// GET — Retourne les plans B2C avec Price IDs (côté serveur)
+// GET — Plans B2C et B2B avec Price IDs mensuel/annuel (côté serveur)
 // ============================================================
 
 import { NextResponse } from 'next/server'
-import { getPlansServer } from '@/lib/pricing'
+import { PLANS_B2C, PLANS_B2B } from '@/lib/pricing'
 
 export async function GET() {
-  const plans = getPlansServer()
-  return NextResponse.json({ plans })
+  return NextResponse.json({
+    plans: PLANS_B2C,
+    plansB2B: PLANS_B2B,
+  })
 }

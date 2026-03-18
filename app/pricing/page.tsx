@@ -7,7 +7,7 @@ import Navbar from '@/app/components/landing/Navbar'
 import PricingToggle from '@/app/components/pricing/PricingToggle'
 import PricingGridB2C from '@/app/components/pricing/PricingGridB2C'
 import PricingGridB2B from '@/app/components/pricing/PricingGridB2B'
-import type { PlanDefinition } from '@/lib/pricing'
+import type { PlanB2C, PlanB2B } from '@/lib/pricing'
 
 const FAQ = [
   {
@@ -35,7 +35,9 @@ const FAQ = [
 export default function PricingPage() {
   const router = useRouter()
   const { data: session, status } = useSession()
-  const [plans, setPlans] = useState<PlanDefinition[]>([])
+  const [plans, setPlans] = useState<PlanB2C[]>([])
+  const [plansB2B, setPlansB2B] = useState<PlanB2B[]>([])
+  const [interval, setInterval] = useState<'monthly' | 'yearly'>('monthly')
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [mode, setMode] = useState<'B2C' | 'B2B'>('B2C')
@@ -43,8 +45,11 @@ export default function PricingPage() {
   useEffect(() => {
     fetch('/api/pricing')
       .then((res) => res.json())
-      .then((data) => setPlans(data.plans || []))
-      .catch(() => setPlans([]))
+      .then((data) => {
+        setPlans(data.plans || [])
+        setPlansB2B(data.plansB2B || [])
+      })
+      .catch(() => { setPlans([]); setPlansB2B([]) })
   }, [])
 
   async function handleCheckout(priceId: string) {
@@ -90,6 +95,46 @@ export default function PricingPage() {
 
         <PricingToggle mode={mode} setMode={setMode} />
 
+        {/* Toggle Mensuel / Annuel */}
+        <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
+          <button
+            type="button"
+            onClick={() => setInterval('monthly')}
+            className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              background: interval === 'monthly' ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.06)',
+              color: interval === 'monthly' ? '#00d4ff' : 'var(--bt-muted)',
+              border: `1px solid ${interval === 'monthly' ? 'rgba(0,212,255,0.4)' : 'var(--bt-border)'}`,
+            }}
+          >
+            Mensuel
+          </button>
+          <button
+            type="button"
+            onClick={() => setInterval('yearly')}
+            className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            style={{
+              background: interval === 'yearly' ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.06)',
+              color: interval === 'yearly' ? '#00d4ff' : 'var(--bt-muted)',
+              border: `1px solid ${interval === 'yearly' ? 'rgba(0,212,255,0.4)' : 'var(--bt-border)'}`,
+            }}
+          >
+            Annuel
+          </button>
+          {interval === 'yearly' && (
+            <span
+              className="rounded-full px-3 py-1 text-[10px] font-medium"
+              style={{
+                background: 'rgba(29,184,126,0.15)',
+                color: '#1DB87E',
+                fontFamily: 'var(--font-mono-bt), "IBM Plex Mono", monospace',
+              }}
+            >
+              -20% · Offre de lancement
+            </span>
+          )}
+        </div>
+
         {/* Pill info */}
         <div
           className="w-fit mx-auto mb-3 text-[13px] rounded-full px-4 py-1.5 border"
@@ -114,13 +159,21 @@ export default function PricingPage() {
         {mode === 'B2C' ? (
           <PricingGridB2C
             plans={plans}
+            interval={interval}
             currentPlan={currentPlan}
             isAuthenticated={isAuthenticated}
             loadingPlan={loadingPlan}
             onCheckout={handleCheckout}
           />
         ) : (
-          <PricingGridB2B />
+          <PricingGridB2B
+            plans={plansB2B}
+            interval={interval}
+            currentPlan={currentPlan}
+            isAuthenticated={isAuthenticated}
+            loadingPlan={loadingPlan}
+            onCheckout={handleCheckout}
+          />
         )}
       </section>
 

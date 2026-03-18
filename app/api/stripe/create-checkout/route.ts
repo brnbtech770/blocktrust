@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { stripe } from '@/lib/stripe'
-import { getPlansServer } from '@/lib/pricing'
+import { isValidPriceId, getPlanIdFromPriceId } from '@/lib/pricing'
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,16 +36,13 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const plans = getPlansServer()
-    const validPriceIds = plans.map((p) => p.priceId).filter(Boolean)
-    if (!validPriceIds.includes(priceId)) {
+    if (!isValidPriceId(priceId)) {
       return NextResponse.json(
         { error: 'Price ID invalide' },
         { status: 400 }
       )
     }
-    const plan = plans.find((p) => p.priceId === priceId)
-    const planId = plan?.id ?? ''
+    const planId = getPlanIdFromPriceId(priceId) ?? ''
 
     // Récupérer ou créer un customer Stripe
     let stripeCustomerId = user.stripeCustomerId
