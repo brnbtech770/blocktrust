@@ -20,23 +20,20 @@ export default async function AdminUsersPage() {
 
   return (
     <div className="font-sans">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Utilisateurs</h1>
-        <p className="text-gray-400 text-sm">Liste de tous les clients</p>
-      </div>
+      <p className="mb-6 text-sm" style={{ color: 'var(--bt-muted)' }}>Liste de tous les clients</p>
 
-      <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 overflow-hidden">
+      <div className="rounded-xl border overflow-hidden" style={{ background: 'rgba(13,31,60,0.5)', borderColor: 'var(--bt-border)' }}>
         <table className="w-full">
-          <thead className="bg-gray-800/50">
-            <tr>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Email</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Nom</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Plan</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Entités</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Certificats</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Date inscription</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Statut</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Actions</th>
+          <thead>
+            <tr style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--bt-border)' }}>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Email</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Nom</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Plan</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Entités</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Certificats</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Date inscription</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Statut</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -47,49 +44,41 @@ export default async function AdminUsersPage() {
               )
 
               return (
-                <tr key={user.id} className="border-t border-gray-800 hover:bg-gray-800/30">
+                <tr key={user.id} className="transition-colors hover:bg-[rgba(0,212,255,0.04)]" style={{ borderTop: '1px solid var(--bt-border)' }}>
                   <td className="px-6 py-4">
                     <p className="text-white font-medium">{user.email}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-gray-400">{user.name || '—'}</p>
+                    <p style={{ color: 'var(--bt-muted)' }}>{user.name || '—'}</p>
                   </td>
                   <td className="px-6 py-4">
                     {user.plan ? (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-cyan-500/20 text-cyan-400">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' }}>
                         {user.plan.name}
                       </span>
                     ) : (
-                      <span className="text-gray-500 text-sm">Sans abonnement</span>
+                      <span className="text-sm" style={{ color: 'var(--bt-muted)' }}>Sans abonnement</span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-gray-400">
+                  <td className="px-6 py-4" style={{ color: 'var(--bt-muted)' }}>
                     {user.entities.length}
                   </td>
-                  <td className="px-6 py-4 text-gray-400">
+                  <td className="px-6 py-4" style={{ color: 'var(--bt-muted)' }}>
                     {totalCertificates}
                   </td>
-                  <td className="px-6 py-4 text-gray-400 text-sm">
-                    {new Date(user.createdAt).toLocaleDateString('fr-FR', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
+                  <td className="px-6 py-4 text-sm" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>
+                    {new Date(user.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      user.planId
-                        ? 'bg-green-500/20 text-green-400'
-                        : 'bg-gray-500/20 text-gray-400'
-                    }`}>
+                    <span
+                      className="px-3 py-1 rounded-full text-xs font-bold"
+                      style={user.planId ? { background: 'rgba(29,184,126,0.15)', color: '#1DB87E' } : { background: 'rgba(255,255,255,0.08)', color: 'var(--bt-muted)' }}
+                    >
                       {user.planId ? 'Actif' : 'Sans abonnement'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <Link
-                      href={`/admin/users/${user.id}`}
-                      className="text-cyan-400 hover:text-cyan-300 text-sm"
-                    >
+                    <Link href={`/admin/users/${user.id}`} className="text-sm hover:underline" style={{ color: 'var(--bt-cyan)' }}>
                       Voir détail →
                     </Link>
                   </td>

@@ -12,7 +12,7 @@ export type PlanCardProps = {
   cta: string
   ctaStyle: { background: string; border?: string; color: string }
   isPopular: boolean
-  icon: 'person' | 'shield' | 'group' | 'crown'
+  icon: 'person' | 'shield' | 'group' | 'building' | 'crown'
   ctaHref?: string
   ctaOnClick?: () => void
   ctaDisabled?: boolean
@@ -28,6 +28,9 @@ const ICONS = {
   ),
   group: (
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+  ),
+  building: (
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
   ),
   crown: (
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
@@ -60,7 +63,7 @@ export default function PlanCard({
       className="relative flex flex-col rounded-2xl p-7 transition"
       style={{
         background: 'rgba(13,31,60,0.8)',
-        border: `1px solid ${isPopular ? popularBorder : 'rgba(255,255,255,0.08)'}`,
+        border: `1px solid ${isPopular ? popularBorder : 'rgba(255,255,255,0.12)'}`,
         boxShadow: isPopular ? '0 0 30px rgba(0,212,255,0.1)' : undefined,
       }}
     >

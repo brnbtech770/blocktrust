@@ -1,6 +1,5 @@
 // app/dashboard/trust-circle/page.tsx
-// Réseau de confiance de l'utilisateur
-// Visible uniquement si plan.trustCircleEnabled === true
+// Réseau de confiance User-centric (UserTrustRelation + UserManualTrustEntry)
 // ============================================================
 
 'use client'
@@ -9,50 +8,22 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Users, UserPlus, Mail, X, Check, XCircle } from 'lucide-react'
+import { Users, UserPlus, X, Check, XCircle } from 'lucide-react'
 import TrustCircleInviteModal from '@/app/components/TrustCircleInviteModal'
 import TrustCircleManualModal from '@/app/components/TrustCircleManualModal'
-
-interface TrustRelation {
-  id: string
-  type: 'mutual'
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'REVOKED'
-  direction: 'incoming' | 'outgoing'
-  otherParty: {
-    id: string
-    name: string
-    email: string
-    logoUrl?: string
-    entityType: string
-  }
-  relationshipType?: string
-  message?: string
-  createdAt: string
-  respondedAt?: string
-}
-
-interface ManualEntry {
-  id: string
-  type: 'manual'
-  name: string
-  email?: string
-  phone?: string
-  domain?: string
-  siret?: string
-  category?: string
-  notes?: string
-  emailVerified: boolean
-  domainVerified: boolean
-  createdAt: string
-}
+import { QuotaBanner } from '@/app/components/trust-circle/QuotaBanner'
 
 interface TrustCircleData {
-  relations: TrustRelation[]
-  manual: ManualEntry[]
+  mutual: any[]
+  unilateral: any[]
+  pending: any[]
+  manualEntries: any[]
   stats: {
-    totalMutual: number
-    totalManual: number
-    pending: number
+    current: number
+    limit: number | null
+    percentage: number
+    shouldShowUpgrade: boolean
+    upgradeMessage: string | null
   }
 }
 
@@ -62,7 +33,7 @@ export default function TrustCirclePage() {
   const [data, setData] = useState<TrustCircleData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState<'mutual' | 'manual'>('mutual')
+  const [activeTab, setActiveTab] = useState<'all' | 'mutual' | 'pending' | 'manual'>('all')
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showManualModal, setShowManualModal] = useState(false)
   const [userEntities, setUserEntities] = useState<Array<{ id: string; name: string; entityType: string }>>([])
@@ -78,50 +49,24 @@ export default function TrustCirclePage() {
     }
   }, [sessionStatus, router])
 
-  const [plan, setPlan] = useState<{ trustCircleEnabled: boolean } | null>(null)
-
   const fetchTrustCircle = async () => {
     try {
       setLoading(true)
-      
-      // Vérifier d'abord le plan
-      const planResponse = await fetch('/api/stripe/subscription', {
-        credentials: 'include',
-      })
-      if (planResponse.ok) {
-        const planData = await planResponse.json()
-        setPlan(planData.plan)
-        
-        if (!planData.plan?.trustCircleEnabled) {
-          setLoading(false)
-          return
-        }
-      }
-
-      const response = await fetch('/api/trust-circle', {
-        credentials: 'include',
-      })
-
+      const response = await fetch('/api/trust-circle', { credentials: 'include' })
       if (!response.ok) {
         if (response.status === 403) {
-          // Plan limit
           setLoading(false)
           return
         }
         throw new Error('Erreur lors du chargement')
       }
-
       const data = await response.json()
       setData(data)
-
-      // Récupérer les entités de l'utilisateur pour les modals
-      const entitiesResponse = await fetch('/api/entities', {
-        credentials: 'include',
-      })
+      const entitiesResponse = await fetch('/api/entities', { credentials: 'include' })
       if (entitiesResponse.ok) {
         const entities = await entitiesResponse.json()
         setUserEntities(
-          entities.map((e: any) => ({
+          (entities || []).map((e: any) => ({
             id: e.id,
             name: e.entityType === 'INDIVIDUAL'
               ? `${e.firstName || ''} ${e.lastName || ''}`.trim() || e.email
@@ -137,42 +82,16 @@ export default function TrustCirclePage() {
     }
   }
 
-  const handleRespond = async (relationId: string, action: 'accept' | 'reject') => {
+  const handleDelete = async (id: string, type: 'relation' | 'manual') => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ?')) return
     try {
-      const response = await fetch('/api/trust-circle/respond', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ relationId, action }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de la réponse')
-      }
-
-      await fetchTrustCircle()
-    } catch (err: any) {
-      alert(err.message)
-    }
-  }
-
-  const handleDelete = async (id: string, type: 'mutual' | 'manual') => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette relation ?')) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/trust-circle/${id}`, {
+      const res = await fetch(`/api/trust-circle/${id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ type }),
+        body: JSON.stringify({ type: type === 'relation' ? 'mutual' : type }),
       })
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de la suppression')
-      }
-
+      if (!res.ok) throw new Error('Erreur suppression')
       await fetchTrustCircle()
     } catch (err: any) {
       alert(err.message)
@@ -195,29 +114,6 @@ export default function TrustCirclePage() {
     )
   }
 
-  // Si le plan ne permet pas Trust Circle
-  if (plan && !plan.trustCircleEnabled) {
-    return (
-      <>
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-12 text-center">
-          <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-3xl font-bold text-white mb-4 tracking-tight">
-            Trust Circle non disponible
-          </h2>
-          <p className="text-gray-400 text-base mb-6">
-            Disponible avec Famille+ ou Team
-          </p>
-          <Link
-            href="/pricing?feature=trustCircle"
-            className="inline-block bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
-          >
-            Passer au plan supérieur
-          </Link>
-        </div>
-      </>
-    )
-  }
-
   if (!data) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -226,215 +122,102 @@ export default function TrustCirclePage() {
     )
   }
 
+  const totalEntites = (data.mutual?.length ?? 0) + (data.unilateral?.length ?? 0) + (data.pending?.length ?? 0) + (data.manualEntries?.length ?? 0)
+  const quotaAllowed = data.stats.limit == null || data.stats.current < data.stats.limit
+
   return (
     <>
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-4xl font-bold text-white tracking-tight mb-2">Trust Circle</h1>
-            <p className="text-gray-400 text-base">Gérez votre réseau de confiance</p>
+            <h1 className="text-4xl font-bold text-white tracking-tight mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+              Mon Trust Circle
+            </h1>
+            <p className="text-gray-400 text-base" style={{ fontFamily: 'var(--font-mono-bt), monospace' }}>
+              {data.stats.current} entités · {(data.mutual?.length ?? 0)} mutuelles
+            </p>
           </div>
-          <div className="flex gap-3">
+          <button
+            onClick={() => setShowInviteModal(true)}
+            disabled={!quotaAllowed}
+            className="bg-cyan-500/20 text-cyan-400 px-4 py-2 rounded-lg hover:bg-cyan-500/30 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <UserPlus size={18} />
+            + Ajouter
+          </button>
+        </div>
+
+        <QuotaBanner
+          current={data.stats.current}
+          limit={data.stats.limit}
+          percentage={data.stats.percentage}
+          shouldShowUpgrade={data.stats.shouldShowUpgrade}
+          upgradeMessage={data.stats.upgradeMessage}
+        />
+
+        <div className="flex gap-2 mb-6 border-b border-gray-700">
+          {(['all', 'mutual', 'pending', 'manual'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-2 font-medium transition rounded-t ${
+                activeTab === tab ? 'bg-cyan-500/20 text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400 hover:text-white border border-transparent'
+              }`}
+            >
+              {tab === 'all' && `Toutes (${totalEntites})`}
+              {tab === 'mutual' && `Mutuelles (${data.mutual?.length ?? 0})`}
+              {tab === 'pending' && `En attente (${data.pending?.length ?? 0})`}
+              {tab === 'manual' && `Manuelles (${data.manualEntries?.length ?? 0})`}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {activeTab === 'all' && [
+            ...(data.mutual || []).map((r: any) => (
+              <Card key={r.id} type="mutual" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
+            )),
+            ...(data.unilateral || []).map((r: any) => (
+              <Card key={r.id} type="unilateral" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
+            )),
+            ...(data.pending || []).map((r: any) => (
+              <Card key={r.id} type="pending" data={r} />
+            )),
+            ...(data.manualEntries || []).map((e: any) => (
+              <Card key={e.id} type="manual" data={e} onDelete={() => handleDelete(e.id, 'manual')} />
+            )),
+          ]}
+          {activeTab === 'mutual' && (data.mutual || []).map((r: any) => (
+            <Card key={r.id} type="mutual" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
+          ))}
+          {activeTab === 'pending' && (data.pending || []).map((r: any) => (
+            <Card key={r.id} type="pending" data={r} />
+          ))}
+          {activeTab === 'manual' && (data.manualEntries || []).map((e: any) => (
+            <Card key={e.id} type="manual" data={e} onDelete={() => handleDelete(e.id, 'manual')} />
+          ))}
+        </div>
+
+        {totalEntites === 0 && (
+          <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-12 text-center">
+            <div className="text-6xl mb-4">🔗</div>
+            <h3 className="text-xl font-bold text-white mb-2">Aucune entité</h3>
+            <p className="text-gray-400 mb-6">Ajoutez des contacts à votre cercle de confiance</p>
             <button
               onClick={() => setShowInviteModal(true)}
-              className="bg-cyan-500/20 text-cyan-400 px-4 py-2 rounded-lg hover:bg-cyan-500/30 transition flex items-center gap-2"
+              disabled={!quotaAllowed}
+              className="bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50"
             >
-              <UserPlus size={18} />
-              Inviter une entité
+              + Ajouter
             </button>
-            <button
-              onClick={() => setShowManualModal(true)}
-              className="bg-purple-500/20 text-purple-400 px-4 py-2 rounded-lg hover:bg-purple-500/30 transition flex items-center gap-2"
-            >
-              <Users size={18} />
-              Ajouter manuellement
-            </button>
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-6 mb-8">
-          <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-gray-700">
-            <p className="text-gray-400 text-base font-medium mb-2">Relations mutuelles</p>
-            <p className="text-5xl font-bold text-cyan-400 tracking-tight">{data.stats.totalMutual}</p>
-          </div>
-          <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-gray-700">
-            <p className="text-gray-400 text-base font-medium mb-2">Entrées manuelles</p>
-            <p className="text-5xl font-bold text-purple-400 tracking-tight">{data.stats.totalManual}</p>
-          </div>
-          <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-gray-700">
-            <p className="text-gray-400 text-base font-medium mb-2">En attente</p>
-            <p className="text-5xl font-bold text-yellow-400 tracking-tight">{data.stats.pending}</p>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-2 mb-6 border-b border-gray-700">
-          <button
-            onClick={() => setActiveTab('mutual')}
-            className={`px-4 py-2 font-medium transition ${
-              activeTab === 'mutual'
-                ? 'text-cyan-400 border-b-2 border-cyan-400'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Mes relations ({data.relations.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('manual')}
-            className={`px-4 py-2 font-medium transition ${
-              activeTab === 'manual'
-                ? 'text-purple-400 border-b-2 border-purple-400'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            Entrées manuelles ({data.manual.length})
-          </button>
-        </div>
-
-        {/* Contenu */}
-        {activeTab === 'mutual' ? (
-          <div className="space-y-4">
-            {data.relations.length > 0 ? (
-              data.relations.map((relation) => (
-                <div
-                  key={relation.id}
-                  className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-2xl font-bold text-white">{relation.otherParty.name}</h3>
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          relation.status === 'ACCEPTED'
-                            ? 'bg-green-500/20 text-green-400'
-                            : relation.status === 'PENDING'
-                            ? 'bg-yellow-500/20 text-yellow-400'
-                            : relation.status === 'REJECTED'
-                            ? 'bg-red-500/20 text-red-400'
-                            : 'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {relation.status === 'ACCEPTED' && '✅ Accepté'}
-                          {relation.status === 'PENDING' && '⏳ En attente'}
-                          {relation.status === 'REJECTED' && '❌ Rejeté'}
-                          {relation.status === 'REVOKED' && '🚫 Révoqué'}
-                        </span>
-                        {relation.direction === 'outgoing' && (
-                          <span className="text-gray-500 text-xs">→ Sortant</span>
-                        )}
-                        {relation.direction === 'incoming' && (
-                          <span className="text-gray-500 text-xs">← Entrant</span>
-                        )}
-                      </div>
-                      <p className="text-gray-400 text-base mb-2">{relation.otherParty.email}</p>
-                      {relation.message && (
-                        <p className="text-gray-300 text-base mb-2">"{relation.message}"</p>
-                      )}
-                      {relation.relationshipType && (
-                        <span className="inline-block px-2 py-1 rounded text-xs bg-gray-700 text-gray-300">
-                          {relation.relationshipType}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      {relation.status === 'PENDING' && relation.direction === 'incoming' && (
-                        <>
-                          <button
-                            onClick={() => handleRespond(relation.id, 'accept')}
-                            className="bg-green-500/20 text-green-400 px-3 py-1 rounded hover:bg-green-500/30 transition text-sm flex items-center gap-1"
-                          >
-                            <Check size={16} />
-                            Accepter
-                          </button>
-                          <button
-                            onClick={() => handleRespond(relation.id, 'reject')}
-                            className="bg-red-500/20 text-red-400 px-3 py-1 rounded hover:bg-red-500/30 transition text-sm flex items-center gap-1"
-                          >
-                            <XCircle size={16} />
-                            Rejeter
-                          </button>
-                        </>
-                      )}
-                      {(relation.status === 'ACCEPTED' || relation.status === 'REJECTED') && (
-                        <button
-                          onClick={() => handleDelete(relation.id, 'mutual')}
-                          className="bg-gray-500/20 text-gray-400 px-3 py-1 rounded hover:bg-gray-500/30 transition text-sm flex items-center gap-1"
-                        >
-                          <X size={16} />
-                          Supprimer
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-12 text-center">
-                <div className="text-6xl mb-4">🔗</div>
-                <h3 className="text-xl font-bold text-white mb-2">Aucune relation</h3>
-                <p className="text-gray-400 mb-6">Invitez une entité BlockTrust à rejoindre votre réseau de confiance</p>
-                <button
-                  onClick={() => setShowInviteModal(true)}
-                  className="bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg"
-                >
-                  Inviter une entité
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {data.manual.length > 0 ? (
-              data.manual.map((entry) => (
-                <div
-                  key={entry.id}
-                  className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-white mb-2">{entry.name}</h3>
-                      <div className="space-y-1 text-base text-gray-400">
-                        {entry.email && <p>📧 {entry.email} {entry.emailVerified && '✓'}</p>}
-                        {entry.phone && <p>📱 {entry.phone}</p>}
-                        {entry.domain && <p>🌐 {entry.domain} {entry.domainVerified && '✓'}</p>}
-                        {entry.siret && <p>🏢 SIRET: {entry.siret}</p>}
-                        {entry.category && <p>📁 {entry.category}</p>}
-                        {entry.notes && <p className="text-gray-300 mt-2">{entry.notes}</p>}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleDelete(entry.id, 'manual')}
-                      className="bg-gray-500/20 text-gray-400 px-3 py-1 rounded hover:bg-gray-500/30 transition text-sm flex items-center gap-1"
-                    >
-                      <X size={16} />
-                      Supprimer
-                    </button>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-12 text-center">
-                <div className="text-6xl mb-4">📝</div>
-                <h3 className="text-xl font-bold text-white mb-2">Aucune entrée manuelle</h3>
-                <p className="text-gray-400 mb-6">Ajoutez des entités externes à votre réseau de confiance</p>
-                <button
-                  onClick={() => setShowManualModal(true)}
-                  className="bg-purple-500 text-white font-bold py-3 px-6 rounded-lg"
-                >
-                  Ajouter manuellement
-                </button>
-              </div>
-            )}
           </div>
         )}
 
-        {/* Modals */}
         <TrustCircleInviteModal
           isOpen={showInviteModal}
           onClose={() => setShowInviteModal(false)}
           onSuccess={fetchTrustCircle}
           userEntities={userEntities}
         />
-
         <TrustCircleManualModal
           isOpen={showManualModal}
           onClose={() => setShowManualModal(false)}
@@ -442,5 +225,34 @@ export default function TrustCirclePage() {
           userEntities={userEntities}
         />
     </>
+  )
+}
+
+function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pending' | 'manual'; data: any; onDelete?: () => void }) {
+  const name = data.toUser?.name || data.toName || data.entityName || data.toEmail || '—'
+  const email = data.toUser?.email || data.toEmail || data.entityEmail
+  return (
+    <div
+      className="p-4 rounded-xl border"
+      style={{
+        borderColor: type === 'mutual' ? 'rgba(0,212,255,0.4)' : type === 'manual' ? 'rgba(29,184,126,0.3)' : 'rgba(255,255,255,0.1)',
+        background: 'rgba(13,31,60,0.8)',
+      }}
+    >
+      <div className="flex justify-between items-start">
+        <div>
+          {type === 'mutual' && <span className="text-[9px] font-mono text-green-500 bg-green-500/10 px-2 py-0.5 rounded">Mutuelle</span>}
+          {type === 'pending' && <span className="text-[9px] text-gray-400 bg-white/10 px-2 py-0.5 rounded">Invitation envoyée</span>}
+          {type === 'manual' && <span className="text-[9px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded">Vérifié admin</span>}
+          <h3 className="text-lg font-bold text-white mt-1">{name}</h3>
+          {email && <p className="text-sm text-gray-400">{email}</p>}
+        </div>
+        {onDelete && (
+          <button onClick={onDelete} className="text-gray-400 hover:text-white p-1">
+            <X size={18} />
+          </button>
+        )}
+      </div>
+    </div>
   )
 }

@@ -91,114 +91,60 @@ export default async function AdminCertificatesPage({
     return entity.legalName || entity.tradeName || entity.email
   }
 
+  const filterCls = (active: boolean) =>
+    `px-4 py-2 rounded-lg transition ${active ? '' : 'hover:bg-[rgba(255,255,255,0.04)]'}`
+
   return (
     <div className="font-sans">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Demandes de certificats</h1>
-        <p className="text-gray-400 text-sm">Gérez toutes les demandes de certificats</p>
-      </div>
+      <p className="mb-6 text-sm" style={{ color: 'var(--bt-muted)' }}>Gérez toutes les demandes de certificats</p>
 
-      {/* Filtres */}
       <div className="mb-6 space-y-4">
-        {/* Filtres par statut */}
         <div className="flex gap-2 flex-wrap">
-          <Link
-            href="/admin/certificates"
-            className={`px-4 py-2 rounded-lg transition ${
-              !statusFilter
-                ? 'bg-cyan-500/20 text-cyan-400'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
+          <Link href="/admin/certificates" className={filterCls(!statusFilter)} style={!statusFilter ? { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' } : { color: 'var(--bt-muted)' }}>
             Tous ({certificates.length})
           </Link>
-        <Link
-          href="/admin/certificates?status=PENDING"
-          className={`px-4 py-2 rounded-lg transition ${
-            statusFilter === 'PENDING'
-              ? 'bg-yellow-500/20 text-yellow-400'
-              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-          }`}
-        >
-          En attente ({statusCounts.PENDING})
-        </Link>
-        <Link
-          href="/admin/certificates?status=ACTIVE"
-          className={`px-4 py-2 rounded-lg transition ${
-            statusFilter === 'ACTIVE'
-              ? 'bg-green-500/20 text-green-400'
-              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-          }`}
-        >
-          Actifs ({statusCounts.ACTIVE})
-        </Link>
-        <Link
-          href="/admin/certificates?status=SUSPENDED"
-          className={`px-4 py-2 rounded-lg transition ${
-            statusFilter === 'SUSPENDED'
-              ? 'bg-orange-500/20 text-orange-400'
-              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-          }`}
-        >
-          Suspendus ({statusCounts.SUSPENDED})
-        </Link>
-        <Link
-          href="/admin/certificates?status=REVOKED"
-          className={`px-4 py-2 rounded-lg transition ${
-            statusFilter === 'REVOKED'
-              ? 'bg-red-500/20 text-red-400'
-              : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-          }`}
-        >
-          Révoqués ({statusCounts.REVOKED})
-        </Link>
+          <Link href="/admin/certificates?status=PENDING" className={filterCls(statusFilter === 'PENDING')} style={statusFilter === 'PENDING' ? { background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)' } : { color: 'var(--bt-muted)' }}>
+            En attente ({statusCounts.PENDING})
+          </Link>
+          <Link href="/admin/certificates?status=ACTIVE" className={filterCls(statusFilter === 'ACTIVE')} style={statusFilter === 'ACTIVE' ? { background: 'rgba(29,184,126,0.15)', color: '#1DB87E' } : { color: 'var(--bt-muted)' }}>
+            Actifs ({statusCounts.ACTIVE})
+          </Link>
+          <Link href="/admin/certificates?status=SUSPENDED" className={filterCls(statusFilter === 'SUSPENDED')} style={statusFilter === 'SUSPENDED' ? { background: 'rgba(232,148,58,0.15)', color: 'var(--bt-warn)' } : { color: 'var(--bt-muted)' }}>
+            Suspendus ({statusCounts.SUSPENDED})
+          </Link>
+          <Link href="/admin/certificates?status=REVOKED" className={filterCls(statusFilter === 'REVOKED')} style={statusFilter === 'REVOKED' ? { background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' } : { color: 'var(--bt-muted)' }}>
+            Révoqués ({statusCounts.REVOKED})
+          </Link>
         </div>
-
-        {/* Filtres par type */}
         <div className="flex gap-2">
-          <Link
-            href="/admin/certificates?type=B2C"
-            className={`px-4 py-2 rounded-lg transition ${
-              typeFilter === 'B2C'
-                ? 'bg-purple-500/20 text-purple-400'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
+          <Link href="/admin/certificates?type=B2C" className={filterCls(typeFilter === 'B2C')} style={typeFilter === 'B2C' ? { background: 'rgba(189,167,107,0.12)', color: 'var(--bt-gold)' } : { color: 'var(--bt-muted)' }}>
             B2C (Particuliers)
           </Link>
-          <Link
-            href="/admin/certificates?type=B2B"
-            className={`px-4 py-2 rounded-lg transition ${
-              typeFilter === 'B2B'
-                ? 'bg-blue-500/20 text-blue-400'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
+          <Link href="/admin/certificates?type=B2B" className={filterCls(typeFilter === 'B2B')} style={typeFilter === 'B2B' ? { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' } : { color: 'var(--bt-muted)' }}>
             B2B (Entreprises)
           </Link>
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 overflow-hidden">
+      <div className="rounded-xl border overflow-hidden" style={{ background: 'rgba(13,31,60,0.5)', borderColor: 'var(--bt-border)' }}>
         <table className="w-full">
-          <thead className="bg-gray-800/50">
-            <tr>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">ID</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Entité</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Type</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Email</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Statut</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">TrustScore</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Date création</th>
-              <th className="text-left text-gray-400 text-xs font-semibold uppercase tracking-wide px-6 py-4">Actions</th>
+          <thead>
+            <tr style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid var(--bt-border)' }}>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>ID</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Entité</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Type</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Email</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Statut</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>TrustScore</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Date création</th>
+              <th className="text-left text-[10px] font-medium uppercase tracking-wider px-6 py-4" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {certificatesWithTrustScore.map((cert) => (
-              <tr key={cert.id} className="border-t border-gray-800 hover:bg-gray-800/30">
+              <tr key={cert.id} className="transition-colors hover:bg-[rgba(0,212,255,0.04)]" style={{ borderTop: '1px solid var(--bt-border)' }}>
                 <td className="px-6 py-4">
-                  <code className="text-cyan-400 text-xs bg-cyan-500/10 px-2 py-1 rounded">
+                  <code className="text-xs px-2 py-1 rounded" style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' }}>
                     {cert.publicId || cert.id.slice(0, 8)}
                   </code>
                 </td>
@@ -206,30 +152,27 @@ export default async function AdminCertificatesPage({
                   <p className="text-white font-medium">{getEntityName(cert.entity)}</p>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${
-                    cert.entity.entityType === 'INDIVIDUAL'
-                      ? 'bg-purple-500/20 text-purple-400'
-                      : 'bg-blue-500/20 text-blue-400'
-                  }`}>
+                  <span className="px-2 py-1 rounded text-xs font-medium" style={cert.entity.entityType === 'INDIVIDUAL' ? { background: 'var(--bt-gold-dim)', color: 'var(--bt-gold)' } : { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' }}>
                     {cert.entity.entityType === 'INDIVIDUAL' ? 'B2C' : 'B2B'}
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  <p className="text-gray-400 text-sm">{cert.entity.email}</p>
+                  <p className="text-sm" style={{ color: 'var(--bt-muted)' }}>{cert.entity.email}</p>
                 </td>
                 <td className="px-6 py-4">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                    className="px-3 py-1 rounded-full text-xs font-bold border"
+                    style={
                       cert.status === 'PENDING'
-                        ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                        ? { background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)', borderColor: 'rgba(189,167,107,0.3)' }
                         : cert.status === 'ACTIVE'
-                        ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                        ? { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)', borderColor: 'rgba(0,212,255,0.3)' }
                         : cert.status === 'SUSPENDED'
-                        ? 'bg-orange-500/20 text-orange-400 border-orange-500/30'
+                        ? { background: 'rgba(232,148,58,0.15)', color: 'var(--bt-warn)', borderColor: 'rgba(232,148,58,0.3)' }
                         : cert.status === 'REVOKED'
-                        ? 'bg-red-500/20 text-red-400 border-red-500/30'
-                        : 'bg-gray-500/20 text-gray-400 border-gray-500/30'
-                    }`}
+                        ? { background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)', borderColor: 'rgba(224,82,82,0.3)' }
+                        : { background: 'rgba(255,255,255,0.08)', color: 'var(--bt-muted)', borderColor: 'var(--bt-border)' }
+                    }
                   >
                     {cert.status === 'PENDING' && '🟡 '}
                     {cert.status === 'ACTIVE' && '🟢 '}
@@ -241,28 +184,20 @@ export default async function AdminCertificatesPage({
                 <td className="px-6 py-4">
                   {cert.trustScore ? (
                     <div className="flex items-center gap-1">
-                      <span className="font-bold text-cyan-400">{cert.trustScore.score}</span>
-                      <span className="text-xs text-gray-500">/100</span>
-                      <span className="text-xs text-gray-400">({cert.trustScore.level})</span>
+                      <span className="font-bold" style={{ color: 'var(--bt-cyan)' }}>{cert.trustScore.score}</span>
+                      <span className="text-xs" style={{ color: 'var(--bt-muted)' }}>/100 ({cert.trustScore.level})</span>
                     </div>
                   ) : (
-                    <span className="text-gray-500 text-sm">—</span>
+                    <span className="text-sm" style={{ color: 'var(--bt-muted)' }}>—</span>
                   )}
                 </td>
-                <td className="px-6 py-4 text-gray-400 text-sm">
-                  {new Date(cert.issuedAt).toLocaleDateString('fr-FR', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
+                <td className="px-6 py-4 text-sm" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>
+                  {new Date(cert.issuedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex gap-2 items-center flex-wrap">
                     <QuickActions certificateId={cert.id} currentStatus={cert.status} />
-                    <Link
-                      href={`/admin/certificates/${cert.id}`}
-                      className="text-cyan-400 hover:text-cyan-300 text-xs"
-                    >
+                    <Link href={`/admin/certificates/${cert.id}`} className="text-xs hover:underline" style={{ color: 'var(--bt-cyan)' }}>
                       Détails →
                     </Link>
                   </div>

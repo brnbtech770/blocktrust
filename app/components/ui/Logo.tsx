@@ -37,20 +37,20 @@ export function Logo({
   )
 
   const text = withText && (
-    <div>
+    <div style={{ minWidth: 0 }}>
       <div style={{
         fontFamily: 'var(--font-syne), sans-serif',
-        fontSize: size === 'lg' || size === 'hero' ? '22px' : size === 'md' ? '18px' : '14px',
+        fontSize: size === 'lg' || size === 'hero' ? '22px' : size === 'md' ? '18px' : '11px',
         fontWeight: 800,
         color: 'var(--bt-cyan)',
-        letterSpacing: '0.08em',
+        letterSpacing: size === 'sm' ? '0.04em' : '0.08em',
         lineHeight: 1,
       }}>
         BLOCKTRUST
       </div>
       <div style={{
         fontFamily: 'var(--font-mono-bt), monospace',
-        fontSize: '9px',
+        fontSize: size === 'sm' ? '8px' : '9px',
         color: 'var(--bt-muted)',
         letterSpacing: '0.15em',
         marginTop: '2px',

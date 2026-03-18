@@ -54,8 +54,8 @@ export default function PricingGridB2C({ plans, interval, currentPlan, isAuthent
       {plans.map((plan) => {
         const isCurrent = isAuthenticated && currentPlan === plan.id
         const priceInfo = plan.prices[interval]
-        const amount = priceInfo.amount
-        const priceId = priceInfo.priceId
+        const amount = priceInfo?.amount ?? 0
+        const priceId = priceInfo?.priceId ?? ''
         const pricePerProfile = plan.profiles > 0 ? amount / plan.profiles : amount
         const priceUnit = interval === 'monthly' ? '/mois' : '/an'
 

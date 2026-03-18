@@ -51,108 +51,60 @@ export default async function AdminCertificateDetailPage({
     return certificate.entity.legalName || certificate.entity.tradeName || certificate.entity.email
   }
 
+  const cardCls = 'rounded-xl border p-6'
+  const cardStyle = { background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }
+  const labelCls = 'text-sm'
+  const labelStyle = { color: 'var(--bt-muted)' }
+
   return (
     <div>
       <div className="mb-8">
-        <a
-          href="/admin/certificates"
-          className="text-cyan-400 hover:text-cyan-300 mb-4 inline-block"
-        >
+        <a href="/admin/certificates" className="mb-4 inline-block hover:underline" style={{ color: 'var(--bt-cyan)' }}>
           ← Retour à la liste
         </a>
-        <h1 className="text-3xl font-bold text-white">Détail du certificat</h1>
-        <p className="text-gray-400">ID: {certificate.publicId || certificate.id}</p>
+        <p style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>ID: {certificate.publicId || certificate.id}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-6 mb-6">
-        {/* Informations entité */}
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Informations entité</h2>
+        <div className={cardCls} style={cardStyle}>
+          <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Informations entité</h2>
           <div className="space-y-3">
-            <div>
-              <p className="text-gray-400 text-sm">Nom</p>
-              <p className="text-white">{getEntityName()}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 text-sm">Type</p>
-              <p className="text-white">
-                {certificate.entity.entityType === 'INDIVIDUAL' ? 'Particulier' : 'Entreprise'}
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-400 text-sm">Email</p>
-              <p className="text-white">{certificate.entity.email}</p>
-            </div>
-            {certificate.entity.siret && (
-              <div>
-                <p className="text-gray-400 text-sm">SIRET</p>
-                <p className="text-white">{certificate.entity.siret}</p>
-              </div>
-            )}
-            {certificate.entity.website && (
-              <div>
-                <p className="text-gray-400 text-sm">Site web</p>
-                <p className="text-white">{certificate.entity.website}</p>
-              </div>
-            )}
+            <div><p className={labelCls} style={labelStyle}>Nom</p><p className="text-white">{getEntityName()}</p></div>
+            <div><p className={labelCls} style={labelStyle}>Type</p><p className="text-white">{certificate.entity.entityType === 'INDIVIDUAL' ? 'Particulier' : 'Entreprise'}</p></div>
+            <div><p className={labelCls} style={labelStyle}>Email</p><p className="text-white">{certificate.entity.email}</p></div>
+            {certificate.entity.siret && <div><p className={labelCls} style={labelStyle}>SIRET</p><p className="text-white">{certificate.entity.siret}</p></div>}
+            {certificate.entity.website && <div><p className={labelCls} style={labelStyle}>Site web</p><p className="text-white">{certificate.entity.website}</p></div>}
           </div>
         </div>
 
-        {/* Informations certificat */}
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
-          <h2 className="text-xl font-bold text-white mb-4">Informations certificat</h2>
+        <div className={cardCls} style={cardStyle}>
+          <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Informations certificat</h2>
           <div className="space-y-3">
             <div>
-              <p className="text-gray-400 text-sm">Statut</p>
+              <p className={labelCls} style={labelStyle}>Statut</p>
               <span
-                className={`px-3 py-1 rounded-full text-xs font-bold inline-block ${
-                  certificate.status === 'PENDING'
-                    ? 'bg-yellow-500/20 text-yellow-400'
-                    : certificate.status === 'ACTIVE'
-                    ? 'bg-green-500/20 text-green-400'
-                    : certificate.status === 'SUSPENDED'
-                    ? 'bg-orange-500/20 text-orange-400'
-                    : 'bg-red-500/20 text-red-400'
-                }`}
+                className="px-3 py-1 rounded-full text-xs font-bold inline-block border"
+                style={
+                  certificate.status === 'PENDING' ? { background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)', borderColor: 'rgba(189,167,107,0.3)' }
+                  : certificate.status === 'ACTIVE' ? { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)', borderColor: 'rgba(0,212,255,0.3)' }
+                  : certificate.status === 'SUSPENDED' ? { background: 'rgba(232,148,58,0.15)', color: 'var(--bt-warn)', borderColor: 'rgba(232,148,58,0.3)' }
+                  : { background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)', borderColor: 'rgba(224,82,82,0.3)' }
+                }
               >
                 {certificate.status}
               </span>
             </div>
-            <div>
-              <p className="text-gray-400 text-sm">Niveau</p>
-              <p className="text-white">{certificate.level}</p>
-            </div>
-            <div>
-              <p className="text-gray-400 text-sm">Date d'émission</p>
-              <p className="text-white">
-                {new Date(certificate.issuedAt).toLocaleDateString('fr-FR')}
-              </p>
-            </div>
-            {certificate.revokedAt && (
-              <div>
-                <p className="text-gray-400 text-sm">Date de révocation</p>
-                <p className="text-white">
-                  {new Date(certificate.revokedAt).toLocaleDateString('fr-FR')}
-                </p>
-              </div>
-            )}
-            {certificate.revocationReason && (
-              <div>
-                <p className="text-gray-400 text-sm">Raison de révocation</p>
-                <p className="text-white">{certificate.revocationReason}</p>
-              </div>
-            )}
-            <div>
-              <p className="text-gray-400 text-sm">Vérifications</p>
-              <p className="text-white">{certificate.verificationCount}</p>
-            </div>
+            <div><p className={labelCls} style={labelStyle}>Niveau</p><p className="text-white">{certificate.level}</p></div>
+            <div><p className={labelCls} style={labelStyle}>Date d'émission</p><p className="text-white">{new Date(certificate.issuedAt).toLocaleDateString('fr-FR')}</p></div>
+            {certificate.revokedAt && <div><p className={labelCls} style={labelStyle}>Date de révocation</p><p className="text-white">{new Date(certificate.revokedAt).toLocaleDateString('fr-FR')}</p></div>}
+            {certificate.revocationReason && <div><p className={labelCls} style={labelStyle}>Raison de révocation</p><p className="text-white">{certificate.revocationReason}</p></div>}
+            <div><p className={labelCls} style={labelStyle}>Vérifications</p><p className="text-white">{certificate.verificationCount}</p></div>
           </div>
         </div>
       </div>
 
-      {/* Actions admin */}
-      <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
-        <h2 className="text-xl font-bold text-white mb-4">Actions</h2>
+      <div className={cardCls} style={cardStyle}>
+        <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Actions</h2>
         <CertificateActions certificateId={certificate.id} currentStatus={certificate.status} />
       </div>
     </div>

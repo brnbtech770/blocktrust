@@ -30,24 +30,41 @@
   --foreground:     #ffffff;
 }
 
+/* Hiérarchie des polices :
+   Inter 400-900     → corps (nav, boutons, paragraphes, labels, inputs)
+   Syne 800          → titres H1-H4, logo BLOCKTRUST
+   IBM Plex Mono     → hashes, timestamps, badges techniques, ticker blockchain
+*/
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans), Inter, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), var(--font-mono-bt), monospace;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-mono-bt), monospace;
 }
 
 body {
   background: var(--bt-navy);
   color: var(--bt-text);
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, h5, h6 {
+/* Titres : Syne 800 */
+h1, h2, h3, h4 {
+  font-family: var(--font-syne), sans-serif;
+  font-weight: 800;
+}
+
+h5, h6 {
   font-family: var(--font-syne), sans-serif;
   font-weight: 700;
+}
+
+/* Données techniques : IBM Plex Mono (hashes, timestamps, badges techniques, ticker) */
+.font-mono-bt,
+[data-font="mono-bt"] {
+  font-family: var(--font-mono-bt), monospace;
 }
 
 /* Circuit board background */

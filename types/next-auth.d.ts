@@ -9,10 +9,14 @@ declare module "next-auth" {
       name?: string | null;
       image?: string | null;
       plan: string;
+      kycStatus?: string;
+      accountType?: string;
     };
   }
   interface User {
     plan?: string;
+    kycStatus?: string;
+    accountType?: string;
   }
 }
 
@@ -20,5 +24,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
     plan?: string;
+    kycStatus?: string;
+    accountType?: string;
   }
 }

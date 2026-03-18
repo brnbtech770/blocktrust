@@ -83,187 +83,102 @@ export default async function AdminAlertsPage({
     return entity.legalName || entity.tradeName || entity.email
   }
 
-  const getSeverityColor = (severity: string) => {
+  const getSeverityStyle = (severity: string) => {
     switch (severity) {
-      case 'CRITICAL':
-        return 'bg-red-500/20 text-red-400 border-red-500/30'
-      case 'HIGH':
-        return 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-      case 'MEDIUM':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-      case 'LOW':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-      default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+      case 'CRITICAL': return { background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)', borderColor: 'rgba(224,82,82,0.3)' }
+      case 'HIGH': return { background: 'rgba(232,148,58,0.15)', color: 'var(--bt-warn)', borderColor: 'rgba(232,148,58,0.3)' }
+      case 'MEDIUM': return { background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)', borderColor: 'rgba(189,167,107,0.3)' }
+      case 'LOW': return { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)', borderColor: 'rgba(0,212,255,0.3)' }
+      default: return { background: 'rgba(255,255,255,0.08)', color: 'var(--bt-muted)', borderColor: 'var(--bt-border)' }
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusStyle = (status: string) => {
     switch (status) {
-      case 'PENDING':
-        return 'bg-yellow-500/20 text-yellow-400'
-      case 'INVESTIGATING':
-        return 'bg-blue-500/20 text-blue-400'
-      case 'RESOLVED':
-        return 'bg-green-500/20 text-green-400'
-      case 'DISMISSED':
-        return 'bg-gray-500/20 text-gray-400'
-      case 'ESCALATED':
-        return 'bg-red-500/20 text-red-400'
-      default:
-        return 'bg-gray-500/20 text-gray-400'
+      case 'PENDING': return { background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)' }
+      case 'INVESTIGATING': return { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' }
+      case 'RESOLVED': return { background: 'rgba(29,184,126,0.15)', color: '#1DB87E' }
+      case 'DISMISSED': return { background: 'rgba(255,255,255,0.08)', color: 'var(--bt-muted)' }
+      case 'ESCALATED': return { background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' }
+      default: return { background: 'rgba(255,255,255,0.08)', color: 'var(--bt-muted)' }
     }
   }
+
+  const filterCls = (active: boolean) => `px-4 py-2 rounded-lg transition ${active ? '' : 'hover:bg-[rgba(255,255,255,0.04)]'}`
 
   return (
     <div className="font-sans">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Alertes IA</h1>
-        <p className="text-gray-400 text-sm">Gestion des alertes anti-fraude détectées</p>
-      </div>
+      <p className="mb-6 text-sm" style={{ color: 'var(--bt-muted)' }}>Gestion des alertes anti-fraude détectées</p>
 
-      {/* Filtres */}
       <div className="mb-6 space-y-4">
-        {/* Filtres par statut */}
         <div className="flex gap-2 flex-wrap">
-          <a
-            href="/admin/alerts"
-            className={`px-4 py-2 rounded-lg transition ${
-              !statusFilter
-                ? 'bg-cyan-500/20 text-cyan-400'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
+          <a href="/admin/alerts" className={filterCls(!statusFilter)} style={!statusFilter ? { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' } : { color: 'var(--bt-muted)' }}>
             Tous ({alerts.length})
           </a>
-          <a
-            href="/admin/alerts?status=PENDING"
-            className={`px-4 py-2 rounded-lg transition ${
-              statusFilter === 'PENDING'
-                ? 'bg-yellow-500/20 text-yellow-400'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
+          <a href="/admin/alerts?status=PENDING" className={filterCls(statusFilter === 'PENDING')} style={statusFilter === 'PENDING' ? { background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)' } : { color: 'var(--bt-muted)' }}>
             En attente ({statusCounts.PENDING})
           </a>
-          <a
-            href="/admin/alerts?status=INVESTIGATING"
-            className={`px-4 py-2 rounded-lg transition ${
-              statusFilter === 'INVESTIGATING'
-                ? 'bg-blue-500/20 text-blue-400'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
+          <a href="/admin/alerts?status=INVESTIGATING" className={filterCls(statusFilter === 'INVESTIGATING')} style={statusFilter === 'INVESTIGATING' ? { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' } : { color: 'var(--bt-muted)' }}>
             En investigation ({statusCounts.INVESTIGATING})
           </a>
-          <a
-            href="/admin/alerts?status=RESOLVED"
-            className={`px-4 py-2 rounded-lg transition ${
-              statusFilter === 'RESOLVED'
-                ? 'bg-green-500/20 text-green-400'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
+          <a href="/admin/alerts?status=RESOLVED" className={filterCls(statusFilter === 'RESOLVED')} style={statusFilter === 'RESOLVED' ? { background: 'rgba(29,184,126,0.15)', color: '#1DB87E' } : { color: 'var(--bt-muted)' }}>
             Résolues ({statusCounts.RESOLVED})
           </a>
         </div>
-
-        {/* Filtres par sévérité */}
-        <div className="flex gap-2">
-          <a
-            href="/admin/alerts?severity=CRITICAL"
-            className={`px-4 py-2 rounded-lg transition ${
-              severityFilter === 'CRITICAL'
-                ? 'bg-red-500/20 text-red-400'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
+        <div className="flex gap-2 flex-wrap">
+          <a href="/admin/alerts?severity=CRITICAL" className={filterCls(severityFilter === 'CRITICAL')} style={severityFilter === 'CRITICAL' ? { background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' } : { color: 'var(--bt-muted)' }}>
             🔴 Critique ({severityCounts.CRITICAL})
           </a>
-          <a
-            href="/admin/alerts?severity=HIGH"
-            className={`px-4 py-2 rounded-lg transition ${
-              severityFilter === 'HIGH'
-                ? 'bg-orange-500/20 text-orange-400'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
+          <a href="/admin/alerts?severity=HIGH" className={filterCls(severityFilter === 'HIGH')} style={severityFilter === 'HIGH' ? { background: 'rgba(232,148,58,0.15)', color: 'var(--bt-warn)' } : { color: 'var(--bt-muted)' }}>
             🟠 Élevée ({severityCounts.HIGH})
           </a>
-          <a
-            href="/admin/alerts?severity=MEDIUM"
-            className={`px-4 py-2 rounded-lg transition ${
-              severityFilter === 'MEDIUM'
-                ? 'bg-yellow-500/20 text-yellow-400'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
+          <a href="/admin/alerts?severity=MEDIUM" className={filterCls(severityFilter === 'MEDIUM')} style={severityFilter === 'MEDIUM' ? { background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)' } : { color: 'var(--bt-muted)' }}>
             🟡 Moyenne ({severityCounts.MEDIUM})
           </a>
-          <a
-            href="/admin/alerts?severity=LOW"
-            className={`px-4 py-2 rounded-lg transition ${
-              severityFilter === 'LOW'
-                ? 'bg-blue-500/20 text-blue-400'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
+          <a href="/admin/alerts?severity=LOW" className={filterCls(severityFilter === 'LOW')} style={severityFilter === 'LOW' ? { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' } : { color: 'var(--bt-muted)' }}>
             🔵 Faible ({severityCounts.LOW})
           </a>
         </div>
       </div>
 
-      {/* Liste des alertes */}
       {alerts.length > 0 ? (
         <div className="space-y-4">
           {alerts.map((alert) => (
             <div
               key={alert.id}
-              className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6"
+              className="rounded-xl border p-6"
+              style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold border ${getSeverityColor(
-                        alert.severity
-                      )}`}
-                    >
+                    <span className="px-3 py-1 rounded-full text-xs font-bold border" style={getSeverityStyle(alert.severity)}>
                       {alert.severity}
                     </span>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold ${getStatusColor(
-                        alert.status
-                      )}`}
-                    >
+                    <span className="px-3 py-1 rounded-full text-xs font-bold" style={getStatusStyle(alert.status)}>
                       {alert.status}
                     </span>
-                    <span className="text-gray-400 text-xs">
+                    <span className="text-xs" style={{ color: 'var(--bt-muted)' }}>
                       {alert.alertType.replace(/_/g, ' ')}
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">{alert.title}</h3>
-                  <p className="text-gray-400 text-sm mb-4">{alert.description}</p>
+                  <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>{alert.title}</h3>
+                  <p className="text-sm mb-4" style={{ color: 'var(--bt-muted)' }}>{alert.description}</p>
                 </div>
-                <span className="text-gray-500 text-xs">
+                <span className="text-xs" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>
                   {new Date(alert.createdAt).toLocaleDateString('fr-FR')}
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <p className="text-gray-400 text-sm">Entité</p>
-                  <p className="text-white">
-                    {getEntityName(alert.entity)}
-                  </p>
+                  <p className="text-sm mb-1" style={{ color: 'var(--bt-muted)' }}>Entité</p>
+                  <p className="text-white">{getEntityName(alert.entity)}</p>
                 </div>
                 {alert.certificate && (
                   <div>
-                    <p className="text-gray-400 text-sm">Certificat</p>
-                    <a
-                      href={`/admin/certificates/${alert.certificate.id}`}
-                      className="text-cyan-400 hover:text-cyan-300 text-sm"
-                    >
+                    <p className="text-sm mb-1" style={{ color: 'var(--bt-muted)' }}>Certificat</p>
+                    <a href={`/admin/certificates/${alert.certificate.id}`} className="text-sm hover:underline" style={{ color: 'var(--bt-cyan)' }}>
                       {alert.certificate.publicId || alert.certificate.id.slice(0, 8)} →
                     </a>
                   </div>
@@ -271,47 +186,46 @@ export default async function AdminAlertsPage({
               </div>
 
               {alert.details && (
-                <div className="bg-gray-800/50 rounded-lg p-4 mb-4">
-                  <p className="text-gray-400 text-sm mb-2">Détails</p>
-                  <pre className="text-white text-xs overflow-auto">
+                <div className="rounded-lg p-4 mb-4" style={{ background: 'rgba(0,0,0,0.3)' }}>
+                  <p className="text-sm mb-2" style={{ color: 'var(--bt-muted)' }}>Détails</p>
+                  <pre className="text-white text-xs overflow-auto" style={{ fontFamily: 'var(--font-mono-bt), monospace' }}>
                     {JSON.stringify(alert.details, null, 2)}
                   </pre>
                 </div>
               )}
 
               {alert.status === 'RESOLVED' && alert.resolution && (
-                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mb-4">
-                  <p className="text-green-400 text-sm font-medium mb-1">Résolution</p>
-                  <p className="text-gray-300 text-sm">{alert.resolution}</p>
+                <div className="rounded-lg p-4 mb-4 border" style={{ background: 'rgba(29,184,126,0.08)', borderColor: 'rgba(29,184,126,0.3)' }}>
+                  <p className="text-sm font-medium mb-1" style={{ color: '#1DB87E' }}>Résolution</p>
+                  <p className="text-sm" style={{ color: 'var(--bt-muted)' }}>{alert.resolution}</p>
                   {alert.resolvedAt && (
-                    <p className="text-gray-500 text-xs mt-2">
+                    <p className="text-xs mt-2" style={{ color: 'var(--bt-muted)' }}>
                       Résolu le {new Date(alert.resolvedAt).toLocaleDateString('fr-FR')}
                     </p>
                   )}
                 </div>
               )}
 
-              {/* Actions */}
               <div className="flex gap-2">
                 {alert.status === 'PENDING' && (
                   <>
-                    <button className="bg-blue-500/20 text-blue-400 px-4 py-2 rounded-lg hover:bg-blue-500/30 transition text-sm">
+                    <button className="px-4 py-2 rounded-lg text-sm transition" style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' }}>
                       🔍 Investiguer
                     </button>
-                    <button className="bg-green-500/20 text-green-400 px-4 py-2 rounded-lg hover:bg-green-500/30 transition text-sm">
+                    <button className="px-4 py-2 rounded-lg text-sm transition" style={{ background: 'rgba(29,184,126,0.15)', color: '#1DB87E' }}>
                       ✅ Résoudre
                     </button>
-                    <button className="bg-gray-500/20 text-gray-400 px-4 py-2 rounded-lg hover:bg-gray-500/30 transition text-sm">
+                    <button className="px-4 py-2 rounded-lg text-sm transition" style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--bt-muted)' }}>
                       ❌ Ignorer
                     </button>
                   </>
                 )}
                 {alert.status === 'INVESTIGATING' && (
                   <>
-                    <button className="bg-green-500/20 text-green-400 px-4 py-2 rounded-lg hover:bg-green-500/30 transition text-sm">
+                    <button className="px-4 py-2 rounded-lg text-sm transition" style={{ background: 'rgba(29,184,126,0.15)', color: '#1DB87E' }}>
                       ✅ Résoudre
                     </button>
-                    <button className="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/30 transition text-sm">
+                    <button className="px-4 py-2 rounded-lg text-sm transition" style={{ background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' }}>
                       🚨 Escalader
                     </button>
                   </>
@@ -321,10 +235,10 @@ export default async function AdminAlertsPage({
           ))}
         </div>
       ) : (
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-12 text-center">
+        <div className="rounded-xl border p-12 text-center" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
           <div className="text-6xl mb-4">✅</div>
-          <h3 className="text-xl font-bold text-white mb-2">Aucune alerte</h3>
-          <p className="text-gray-400">Toutes les alertes sont résolues ou il n'y a pas d'alerte en cours.</p>
+          <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Aucune alerte</h3>
+          <p style={{ color: 'var(--bt-muted)' }}>Toutes les alertes sont résolues ou il n'y a pas d'alerte en cours.</p>
         </div>
       )}
     </div>

@@ -67,54 +67,59 @@ export default async function AdminDashboard() {
 
   return (
     <div className="font-sans">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Tableau de bord Admin</h1>
-        <p className="text-gray-400 text-sm">Vue d'ensemble de la plateforme</p>
-      </div>
+      <p className="mb-8 text-sm" style={{ color: 'var(--bt-muted)' }}>Vue d'ensemble de la plateforme</p>
 
       {/* KPIs */}
-      <div className="grid grid-cols-5 gap-6 mb-8">
-        <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-gray-700">
-          <p className="text-gray-400 text-xs font-medium mb-2 uppercase tracking-wide">Demandes en attente</p>
-          <p className="text-4xl font-bold text-yellow-400 tracking-tight">{pendingCertificates}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+        <div className="p-6 rounded-xl border relative overflow-hidden" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
+          <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'var(--bt-gold)' }} />
+          <p className="text-[10px] font-medium mb-2 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Demandes en attente</p>
+          <p className="text-[28px] font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif', color: 'var(--bt-gold)' }}>{pendingCertificates}</p>
         </div>
-        <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-gray-700">
-          <p className="text-gray-400 text-xs font-medium mb-2 uppercase tracking-wide">Utilisateurs actifs</p>
-          <p className="text-4xl font-bold text-green-400 tracking-tight">{activeUsers}</p>
+        <div className="p-6 rounded-xl border relative overflow-hidden" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
+          <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'var(--bt-success)' }} />
+          <p className="text-[10px] font-medium mb-2 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Utilisateurs actifs</p>
+          <p className="text-[28px] font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif', color: '#1DB87E' }}>{activeUsers}</p>
         </div>
-        <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-gray-700">
-          <p className="text-gray-400 text-xs font-medium mb-2 uppercase tracking-wide">Revenus MRR</p>
-          <p className="text-4xl font-bold text-purple-400 tracking-tight">{mrr.toFixed(2)}€</p>
+        <div className="p-6 rounded-xl border relative overflow-hidden" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
+          <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'var(--bt-cyan)' }} />
+          <p className="text-[10px] font-medium mb-2 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Revenus MRR</p>
+          <p className="text-[28px] font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif', color: 'var(--bt-cyan)' }}>{mrr.toFixed(2)}€</p>
         </div>
-        <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-gray-700">
-          <p className="text-gray-400 text-xs font-medium mb-2 uppercase tracking-wide">Total utilisateurs</p>
-          <p className="text-4xl font-bold text-cyan-400 tracking-tight">{totalUsers}</p>
+        <div className="p-6 rounded-xl border relative overflow-hidden" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
+          <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'var(--bt-cyan)' }} />
+          <p className="text-[10px] font-medium mb-2 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Total utilisateurs</p>
+          <p className="text-[28px] font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif', color: 'var(--bt-cyan)' }}>{totalUsers}</p>
         </div>
-        <div className="bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-gray-700">
-          <p className="text-gray-400 text-xs font-medium mb-2 uppercase tracking-wide">Certificats actifs</p>
-          <p className="text-4xl font-bold text-blue-400 tracking-tight">{activeCertificates}</p>
+        <div className="p-6 rounded-xl border relative overflow-hidden" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
+          <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'var(--bt-cyan)' }} />
+          <p className="text-[10px] font-medium mb-2 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Certificats actifs</p>
+          <p className="text-[28px] font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif', color: 'var(--bt-cyan)' }}>{activeCertificates}</p>
         </div>
       </div>
 
       {/* Actions rapides */}
-      <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
-        <h2 className="text-xl font-bold text-white mb-4 tracking-tight">Actions rapides</h2>
-        <div className="flex gap-3">
+      <div className="rounded-xl border p-6" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
+        <h2 className="text-xl font-bold text-white mb-4 tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Actions rapides</h2>
+        <div className="flex flex-wrap gap-3">
           <a
             href="/admin/certificates?status=PENDING"
-            className="bg-yellow-500/20 text-yellow-400 px-4 py-2 rounded-lg hover:bg-yellow-500/30 transition text-sm font-medium"
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90"
+            style={{ background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)' }}
           >
             Voir les demandes en attente
           </a>
           <a
             href="/admin/users"
-            className="bg-cyan-500/20 text-cyan-400 px-4 py-2 rounded-lg hover:bg-cyan-500/30 transition text-sm font-medium"
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90"
+            style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' }}
           >
             Gérer les utilisateurs
           </a>
           <a
             href="/admin/alerts"
-            className="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/30 transition text-sm font-medium"
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90"
+            style={{ background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' }}
           >
             Voir les alertes
           </a>

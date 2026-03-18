@@ -68,6 +68,8 @@ export const authOptions: NextAuthConfig = {
           email: user.email ?? undefined,
           name: user.name ?? undefined,
           plan,
+          kycStatus: (user as any).kycStatus ?? 'PENDING',
+          accountType: (user as any).accountType ?? 'PERSONAL',
         };
       },
     }),
@@ -80,6 +82,8 @@ export const authOptions: NextAuthConfig = {
           token.email = user.email ?? undefined;
           token.name = user.name ?? undefined;
           (token as any).plan = (user as any).plan ?? null;
+          (token as any).kycStatus = (user as any).kycStatus ?? 'PENDING';
+          (token as any).accountType = (user as any).accountType ?? 'PERSONAL';
         } else {
         // Première connexion Google - créer ou mettre à jour l'utilisateur en DB
         try {
@@ -102,6 +106,8 @@ export const authOptions: NextAuthConfig = {
           token.email = dbUser.email;
           token.name = dbUser.name;
           token.picture = dbUser.image;
+          (token as any).kycStatus = (dbUser as any).kycStatus ?? 'PENDING';
+          (token as any).accountType = dbUser.accountType ?? 'PERSONAL';
           console.log('✅ User created/updated in DB:', dbUser.email);
 
           // Email de bienvenue pour les nouveaux utilisateurs (fire-and-forget)
@@ -129,13 +135,29 @@ export const authOptions: NextAuthConfig = {
         }
         }
       }
-      // Rafraîchir le plan abonnement à chaque requête (pour pricing / dashboard)
+      // Rafraîchir plan + KYC à chaque requête
       if (token.sub) {
-        const sub = await prisma.subscription.findUnique({
-          where: { userId: token.sub },
-          select: { plan: true },
-        });
-        (token as any).plan = sub?.plan ?? null;
+        try {
+          const [sub, dbUser] = await Promise.all([
+            prisma.subscription.findUnique({
+              where: { userId: token.sub },
+              select: { plan: true },
+            }),
+            prisma.user.findUnique({
+              where: { id: token.sub },
+              select: { kycStatus: true, accountType: true },
+            }),
+          ]);
+          (token as any).plan = sub?.plan ?? null;
+          if (dbUser) {
+            (token as any).kycStatus = dbUser.kycStatus ?? 'PENDING';
+            (token as any).accountType = dbUser.accountType ?? 'PERSONAL';
+          }
+        } catch (err) {
+          console.error('[JWT callback error]', err);
+          (token as any).kycStatus = (token as any).kycStatus ?? 'PENDING';
+          (token as any).accountType = (token as any).accountType ?? 'PERSONAL';
+        }
       }
       return token;
     },
@@ -148,6 +170,8 @@ export const authOptions: NextAuthConfig = {
             id: (token.sub ?? (token as any).id ?? '') as string,
             email: session.user.email ?? token.email ?? '',
             plan: (token as any).plan ?? 'ESSENTIEL',
+            kycStatus: (token as any).kycStatus ?? 'PENDING',
+            accountType: (token as any).accountType ?? 'PERSONAL',
           },
         };
       }

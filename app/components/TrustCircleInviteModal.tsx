@@ -20,10 +20,10 @@ export default function TrustCircleInviteModal({
   onSuccess,
   userEntities,
 }: TrustCircleInviteModalProps) {
-  const [selectedEntityId, setSelectedEntityId] = useState('')
   const [toEmail, setToEmail] = useState('')
-  const [relationshipType, setRelationshipType] = useState('')
-  const [message, setMessage] = useState('')
+  const [toName, setToName] = useState('')
+  const [entityType, setEntityType] = useState<'INDIVIDUAL' | 'BUSINESS' | 'DOMAIN' | 'EMAIL'>('INDIVIDUAL')
+  const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -35,30 +35,31 @@ export default function TrustCircleInviteModal({
     setLoading(true)
 
     try {
-      const response = await fetch('/api/trust-circle/invite', {
+      const response = await fetch('/api/trust-circle/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          fromEntityId: selectedEntityId,
-          toEmail,
-          relationshipType: relationshipType || undefined,
-          message: message || undefined,
+          email: toEmail,
+          name: toName || toEmail,
+          entityType,
+          note: note || undefined,
         }),
       })
 
+      const data = await response.json()
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Erreur lors de l\'invitation')
+        if (data.error === 'QUOTA_EXCEEDED') {
+          throw new Error(`Limite atteinte (${data.current}/${data.limit}). Passez à un plan supérieur.`)
+        }
+        throw new Error(data.error || data.message || 'Erreur lors de l\'invitation')
       }
 
       onSuccess()
       onClose()
-      // Reset form
-      setSelectedEntityId('')
       setToEmail('')
-      setRelationshipType('')
-      setMessage('')
+      setToName('')
+      setNote('')
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -87,28 +88,7 @@ export default function TrustCircleInviteModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Mon entité
-            </label>
-            <select
-              value={selectedEntityId}
-              onChange={(e) => setSelectedEntityId(e.target.value)}
-              required
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-            >
-              <option value="">Sélectionner une entité</option>
-              {userEntities.map((entity) => (
-                <option key={entity.id} value={entity.id}>
-                  {entity.name} ({entity.entityType === 'INDIVIDUAL' ? 'B2C' : 'B2B'})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Email de l'entité à inviter
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
               <input
@@ -123,35 +103,40 @@ export default function TrustCircleInviteModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Type de relation (optionnel)
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Nom</label>
+            <input
+              type="text"
+              value={toName}
+              onChange={(e) => setToName(e.target.value)}
+              placeholder="Nom ou raison sociale"
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Type d&apos;entité</label>
             <select
-              value={relationshipType}
-              onChange={(e) => setRelationshipType(e.target.value)}
+              value={entityType}
+              onChange={(e) => setEntityType(e.target.value as any)}
               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
             >
-              <option value="">Aucun</option>
-              <option value="client">Client</option>
-              <option value="fournisseur">Fournisseur</option>
-              <option value="partenaire">Partenaire</option>
-              <option value="autre">Autre</option>
+              <option value="INDIVIDUAL">Particulier</option>
+              <option value="BUSINESS">Entreprise</option>
+              <option value="DOMAIN">Domaine</option>
+              <option value="EMAIL">Email</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Message (optionnel)
-            </label>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Note (optionnel)</label>
             <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Ajoutez un message personnalisé..."
-              rows={3}
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Message ou note..."
+              rows={2}
               maxLength={500}
               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none"
             />
-            <p className="text-xs text-gray-500 mt-1">{message.length}/500</p>
           </div>
 
           <div className="flex gap-3 pt-4">

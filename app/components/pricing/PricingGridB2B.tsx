@@ -47,7 +47,7 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
       {plans.map((plan) => {
         const isCurrent = isAuthenticated && currentPlan === plan.id
         const hasPrices = plan.prices != null
-        const priceInfo = hasPrices ? plan.prices![interval] : null
+        const priceInfo = hasPrices ? plan.prices?.[interval] : null
         const amount = priceInfo?.amount ?? ('Sur devis' as const)
         const priceId = priceInfo?.priceId ?? ''
         const priceUnit = interval === 'monthly' ? '/mois' : '/an'

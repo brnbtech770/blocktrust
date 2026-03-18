@@ -6,6 +6,67 @@ import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { redirect } from 'next/navigation'
 import SignOutButton from '@/app/components/SignOutButton'
+import { Logo } from '@/app/components/ui/Logo'
+import Link from 'next/link'
+import AdminPageHeader from '@/app/admin/AdminPageHeader'
+
+function IconDashboard() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
+      <rect x="1" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+      <rect x="9" y="1" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+      <rect x="1" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+      <rect x="9" y="9" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+    </svg>
+  )
+}
+
+function IconDemandes() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
+      <rect x="2" y="1" width="12" height="14" rx="2" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M5 5h6M5 8h6M5 11h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function IconClients() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
+      <circle cx="6" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M1 14c0-3 10-3 10 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="12" cy="5" r="2" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M14 14c0-2 2-2 2-2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function IconAlertes() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
+      <path d="M8 2L14 13H2L8 2Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+      <path d="M8 6v4M8 11.5v.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function IconKyc() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
+      <path d="M8 10a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M2 14c0-3.5 2.5-6 6-6s6 2.5 6 6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+const navLinks = [
+  { href: '/admin', label: 'Tableau de bord', Icon: IconDashboard },
+  { href: '/admin/certificates', label: 'Certificats', Icon: IconDemandes },
+  { href: '/admin/kyc', label: 'KYC', Icon: IconKyc },
+  { href: '/admin/demandes', label: 'Demandes Trust', Icon: IconDemandes },
+  { href: '/admin/users', label: 'Clients', Icon: IconClients },
+  { href: '/admin/alerts', label: 'Alertes', Icon: IconAlertes },
+]
 
 export default async function AdminLayout({
   children,
@@ -23,58 +84,87 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 font-sans">
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-64 bg-gray-900/95 backdrop-blur-sm border-r border-gray-800 p-6">
-        <div className="text-2xl font-bold text-white mb-8 tracking-tight">
-          🛡️ BlockTrust <span className="text-xs font-semibold text-red-400 ml-1">Admin</span>
+    <div
+      className="flex h-screen overflow-hidden font-sans"
+      style={{ background: 'var(--bt-navy)' }}
+    >
+      {/* Sidebar fixe */}
+      <aside
+        className="flex w-[220px] flex-shrink-0 flex-col overflow-y-auto border-r"
+        style={{
+          height: '100vh',
+          background: 'rgba(6,14,26,0.9)',
+          borderRightColor: 'var(--bt-border)',
+        }}
+      >
+        {/* Bloc logo 60px */}
+        <div
+          className="flex flex-shrink-0 items-center gap-2.5 px-4 border-b"
+          style={{
+            height: 60,
+            borderBottomColor: 'var(--bt-border)',
+          }}
+        >
+          <Logo size="sm" withText={true} href="/admin" />
+          <span
+            className="rounded font-bold uppercase tracking-widest"
+            style={{
+              fontFamily: 'var(--font-mono-bt), monospace',
+              fontSize: '9px',
+              letterSpacing: '0.15em',
+              color: '#0a1628',
+              background: '#00d4ff',
+              padding: '2px 6px',
+              marginLeft: 2,
+            }}
+          >
+            ADMIN
+          </span>
         </div>
 
-        <nav className="space-y-1">
-          <a
-            href="/admin"
-            className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-colors"
-          >
-            <span className="text-lg">📊</span> Tableau de bord
-          </a>
-          <a
-            href="/admin/certificates"
-            className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-colors"
-          >
-            <span className="text-lg">📜</span> Demandes
-          </a>
-          <a
-            href="/admin/users"
-            className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-colors"
-          >
-            <span className="text-lg">👥</span> Clients
-          </a>
-          <a
-            href="/admin/alerts"
-            className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-400 hover:text-white hover:bg-gray-800/50 rounded-lg transition-colors"
-          >
-            <span className="text-lg">🚨</span> Alertes
-          </a>
+        {/* Nav */}
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+          {navLinks.map(({ href, label, Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium transition-colors hover:bg-[rgba(255,255,255,0.04)] hover:text-white"
+              style={{ color: 'var(--bt-muted)' }}
+            >
+              <Icon />
+              {label}
+            </Link>
+          ))}
         </nav>
 
-        <div className="absolute bottom-6 left-6 right-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3 p-3 bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-700">
-              <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                A
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-semibold truncate">Admin</p>
-                <p className="text-gray-400 text-xs truncate">{session.user.email}</p>
-              </div>
+        {/* User pill en bas */}
+        <div className="flex-shrink-0 space-y-2 border-t p-4" style={{ borderTopColor: 'var(--bt-border)' }}>
+          <div
+            className="flex items-center gap-3 rounded-lg border p-3"
+            style={{ background: 'rgba(13,31,60,0.6)', borderColor: 'var(--bt-border)' }}
+          >
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+              style={{ background: 'var(--bt-cyan)' }}
+            >
+              A
             </div>
-            <SignOutButton />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-white">Admin</p>
+              <p className="truncate text-xs" style={{ color: 'var(--bt-muted)' }}>{session.user.email}</p>
+            </div>
           </div>
+          <SignOutButton />
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="ml-64 p-8">{children}</main>
+      {/* Zone contenu */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <AdminPageHeader />
+        <div className="flex-1 overflow-y-auto p-8">
+          {children}
+        </div>
+      </div>
     </div>
   )
 }

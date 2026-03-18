@@ -17,6 +17,7 @@
     "@prisma/client": "^6.19.2",
     "@react-email/components": "^1.0.9",
     "@stripe/stripe-js": "^2.4.0",
+    "@vercel/blob": "^2.3.1",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
     "jose": "^6.1.3",

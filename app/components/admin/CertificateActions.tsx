@@ -38,10 +38,27 @@ export default function CertificateActions({ certificateId, currentStatus }: Cer
     }
   }
 
+  const btn = (onClick: () => void, label: string, variant: 'success' | 'danger' | 'warn') => (
+    <button
+      onClick={onClick}
+      disabled={loading}
+      className="px-4 py-2 rounded-lg transition disabled:opacity-50"
+      style={
+        variant === 'success'
+          ? { background: 'rgba(29,184,126,0.15)', color: '#1DB87E' }
+          : variant === 'danger'
+            ? { background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' }
+            : { background: 'rgba(232,148,58,0.15)', color: 'var(--bt-warn)' }
+      }
+    >
+      {loading ? '...' : label}
+    </button>
+  )
+
   return (
     <div>
       {error && (
-        <div className="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-lg mb-4">
+        <div className="p-4 rounded-lg mb-4 border" style={{ background: 'rgba(224,82,82,0.1)', borderColor: 'var(--bt-danger)', color: 'var(--bt-danger)' }}>
           ❌ {error}
         </div>
       )}
@@ -49,63 +66,24 @@ export default function CertificateActions({ certificateId, currentStatus }: Cer
       <div className="flex gap-3 flex-wrap">
         {currentStatus === 'PENDING' && (
           <>
-            <button
-              onClick={() => handleAction('activate')}
-              disabled={loading}
-              className="bg-green-500/20 text-green-400 px-4 py-2 rounded-lg hover:bg-green-500/30 transition disabled:opacity-50"
-            >
-              {loading ? '...' : '✅ Valider'}
-            </button>
-            <button
-              onClick={() => handleAction('reject')}
-              disabled={loading}
-              className="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/30 transition disabled:opacity-50"
-            >
-              {loading ? '...' : '❌ Rejeter'}
-            </button>
+            {btn(() => handleAction('activate'), '✅ Valider', 'success')}
+            {btn(() => handleAction('reject'), '❌ Rejeter', 'danger')}
           </>
         )}
-
         {(currentStatus === 'ACTIVE' || currentStatus === 'ANCHORED') && (
           <>
-            <button
-              onClick={() => handleAction('suspend')}
-              disabled={loading}
-              className="bg-orange-500/20 text-orange-400 px-4 py-2 rounded-lg hover:bg-orange-500/30 transition disabled:opacity-50"
-            >
-              {loading ? '...' : '⏸️ Suspendre'}
-            </button>
-            <button
-              onClick={() => handleAction('revoke')}
-              disabled={loading}
-              className="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/30 transition disabled:opacity-50"
-            >
-              {loading ? '...' : '🚫 Révoquer'}
-            </button>
+            {btn(() => handleAction('suspend'), '⏸️ Suspendre', 'warn')}
+            {btn(() => handleAction('revoke'), '🚫 Révoquer', 'danger')}
           </>
         )}
-
         {currentStatus === 'SUSPENDED' && (
           <>
-            <button
-              onClick={() => handleAction('reactivate')}
-              disabled={loading}
-              className="bg-green-500/20 text-green-400 px-4 py-2 rounded-lg hover:bg-green-500/30 transition disabled:opacity-50"
-            >
-              {loading ? '...' : '▶️ Réactiver'}
-            </button>
-            <button
-              onClick={() => handleAction('revoke')}
-              disabled={loading}
-              className="bg-red-500/20 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/30 transition disabled:opacity-50"
-            >
-              {loading ? '...' : '🚫 Révoquer'}
-            </button>
+            {btn(() => handleAction('reactivate'), '▶️ Réactiver', 'success')}
+            {btn(() => handleAction('revoke'), '🚫 Révoquer', 'danger')}
           </>
         )}
-
         {(currentStatus === 'REVOKED' || currentStatus === 'EXPIRED') && (
-          <p className="text-gray-400 text-sm">Aucune action disponible</p>
+          <p className="text-sm" style={{ color: 'var(--bt-muted)' }}>Aucune action disponible</p>
         )}
       </div>
     </div>
