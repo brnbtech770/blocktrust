@@ -29,6 +29,7 @@ export default function PublicHeader() {
         <>
           <Link
             href="/dashboard"
+            prefetch={false}
             className="text-gray-300 hover:text-cyan-400 transition-colors font-medium"
             onClick={() => setMenuOpen(false)}
           >

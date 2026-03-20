@@ -10,6 +10,8 @@ import { Logo } from '@/app/components/ui/Logo'
 import Link from 'next/link'
 import AdminPageHeader from '@/app/admin/AdminPageHeader'
 
+export const dynamic = 'force-dynamic'
+
 function IconDashboard() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
@@ -76,7 +78,7 @@ export default async function AdminLayout({
   const session = await auth()
 
   if (!session?.user?.email) {
-    redirect('/')
+    redirect('/auth/signin?callbackUrl=/admin')
   }
 
   if (!isAdmin(session.user.email)) {

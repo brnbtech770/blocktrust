@@ -6,7 +6,7 @@ Résumé des risques identifiés et des mesures appliquées dans le code.
 
 | Risque | Fichier(s) | Mesure |
 |--------|------------|--------|
-| Bypass auth si `auth()` échouait dans le middleware | `app/middleware.ts` | **Fail-closed** : 503 sur routes protégées au lieu de `next()`. |
+| Couche Edge middleware + JWT fragile vs `auth()` Node | *(middleware supprimé)* | **Auth uniquement** dans layouts / route handlers (`auth()`), pas de double garde Edge. |
 | Contournement via `x-user-id` / cookie `user-id` si `getAuthUser` échouait | `app/lib/auth.ts` | **Suppression du fallback** ; uniquement la session NextAuth. |
 | Session OAuth sans `sub` si l’upsert DB échouait | `app/lib/auth.ts` | `throw` dans le `catch` JWT (pas de token partiel). |
 | Open redirect sur `redirect` callback | `app/lib/auth.ts` | Vérification **origine identique** ou chemin **relatif** (`/`). |
@@ -22,7 +22,7 @@ Résumé des risques identifiés et des mesures appliquées dans le code.
 - Définir **`IP_HASH_SALT`** (secret dédié, pas stocké en clair dans le repo).
 - **`NEXTAUTH_SECRET`**, **`STRIPE_WEBHOOK_SECRET`**, clés Stripe : uniquement via variables d’environnement secrètes.
 - Vérifier périodiquement **`npm audit`** et dépendances.
-- Les routes `/api/admin/*`, `/api/v2/*`, `/api/trust-circle/*`, `/api/upload` ne passent pas par le middleware : chaque handler doit continuer d’appeler `auth()` / `isAdmin()` comme aujourd’hui.
+- **Pas de `middleware.ts`** : chaque route API et layout doit appliquer `auth()` / `isAdmin()` comme aujourd’hui (vérifier les handlers avant d’exposer des données sensibles).
 
 ## Variables d’environnement liées
 

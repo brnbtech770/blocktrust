@@ -3,11 +3,11 @@ import { createHash } from "node:crypto";
 import { prisma } from "@/app/lib/db";
 import type { NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { isAdmin } from "./admin";
+import authEdgeConfig from "./auth.edge.config";
 
 /**
  * Configuration NextAuth avec Google OAuth
@@ -92,23 +92,10 @@ async function resolveDbUserAfterOAuth(user: {
 
 // allowDangerousEmailAccountLinking : uniquement sur GoogleProvider (pas d’option globale Auth.js v5)
 export const authOptions: NextAuthConfig = {
-  trustHost: true,
+  ...authEdgeConfig,
   adapter: PrismaAdapter(prisma),
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      /** Permet de lier un compte Google à un utilisateur existant (même email, ex. email/password). */
-      // Sécurité : ne lier automatiquement Google qu’au même email qu’avec opt-in explicite
-      allowDangerousEmailAccountLinking: true,
-      authorization: {
-        params: {
-          prompt: "select_account", // Force la sélection de compte à chaque connexion
-          access_type: "offline",
-          response_type: "code",
-        },
-      },
-    }),
+    ...authEdgeConfig.providers,
     emailMagicLinkProvider,
     CredentialsProvider({
       name: "Email",
@@ -150,6 +137,7 @@ export const authOptions: NextAuthConfig = {
     }),
   ],
   callbacks: {
+    ...authEdgeConfig.callbacks,
     // Google OAuth : garantir un enregistrement User (avant JWT) — requis si l’adapter est en retard ou en échec partiel.
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
@@ -229,11 +217,14 @@ export const authOptions: NextAuthConfig = {
             }),
             prisma.user.findUnique({
               where: { id: token.sub },
-              select: { kycStatus: true, accountType: true },
+              select: { email: true, kycStatus: true, accountType: true },
             }),
           ]);
           (token as any).plan = sub?.plan ?? null;
           if (dbUser) {
+            if (dbUser.email) {
+              token.email = dbUser.email;
+            }
             (token as any).kycStatus = dbUser.kycStatus ?? 'PENDING';
             (token as any).accountType = dbUser.accountType ?? 'PERSONAL';
           }
@@ -245,59 +236,15 @@ export const authOptions: NextAuthConfig = {
       }
       return token;
     },
-    async session({ session, token }) {
-      if (session.user) {
-        return {
-          ...session,
-          user: {
-            ...session.user,
-            id: (token.sub ?? (token as any).id ?? '') as string,
-            email: session.user.email ?? token.email ?? '',
-            plan: (token as any).plan ?? 'ESSENTIEL',
-            kycStatus: (token as any).kycStatus ?? 'PENDING',
-            accountType: (token as any).accountType ?? 'PERSONAL',
-          },
-        };
-      }
-      return session;
-    },
-    async redirect({ url, baseUrl }) {
-      // Évite les open-redirects : même origine ou chemin relatif uniquement
-      try {
-        if (url.startsWith('/')) {
-          return `${baseUrl}${url}`;
-        }
-        const target = new URL(url);
-        const origin = new URL(baseUrl).origin;
-        if (target.origin === origin) {
-          return url;
-        }
-      } catch {
-        /* URL invalide */
-      }
-      return baseUrl;
-    },
   },
-  debug: true,
   logger: {
     error(code, ...message) {
       console.error('[NEXTAUTH ERROR]', code, JSON.stringify(message));
     },
-    warn(code, ...message) {
-      console.warn('[NEXTAUTH WARN]', code, JSON.stringify(message));
-    },
-    debug(code, ...message) {
-      console.log('[NEXTAUTH DEBUG]', code, JSON.stringify(message));
+    warn(code) {
+      console.warn('[NEXTAUTH WARN]', code);
     },
   },
-  pages: {
-    signIn: "/auth/signin",
-    error: "/auth/signin",
-  },
-  session: {
-    strategy: "jwt",
-  },
-  secret: process.env.NEXTAUTH_SECRET,
 };
 
 /**

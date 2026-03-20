@@ -4,8 +4,13 @@
 
 import { auth } from '@/app/lib/auth-server'
 import { redirect } from 'next/navigation'
+import { cookies, headers } from 'next/headers'
 import { prisma } from '@/app/lib/db'
 import DashboardSidebar from '@/app/components/DashboardSidebar'
+import { writeAgentDebugLog } from '@/app/lib/agent-debug-467f2c-log'
+
+/** Évite cache / flux RSC sans cookies → auth() null alors que l’utilisateur est connecté */
+export const dynamic = 'force-dynamic'
 
 export default async function DashboardLayout({
   children,
@@ -13,11 +18,45 @@ export default async function DashboardLayout({
   children: React.ReactNode
 }) {
   const session = await auth()
+  const cookieStore = await cookies()
+  const sessionCookieHints = cookieStore.getAll().filter(
+    (c) =>
+      c.name === 'authjs.session-token' ||
+      c.name === '__Secure-authjs.session-token' ||
+      c.name.startsWith('authjs.session-token.') ||
+      c.name.startsWith('__Secure-authjs.session-token.')
+  )
+  const hasSessionCookie = sessionCookieHints.length > 0
+  const hasSession = !!session?.user?.email
 
-  // La vérification de session est maintenant dans le middleware
-  // On garde cette vérification comme fallback de sécurité
+  const hdrs = await headers()
+  const cookieHeaderLen = (hdrs.get('cookie') ?? '').length
+  const nextPrefetch =
+    hdrs.get('Next-Router-Prefetch') === '1' ||
+    hdrs.get('next-router-prefetch') === '1'
+  const secPurpose = hdrs.get('sec-purpose') ?? hdrs.get('Sec-Purpose') ?? ''
+
+  // #region agent log
+  await writeAgentDebugLog({
+    hypothesisId: 'H2',
+    location: 'app/dashboard/layout.tsx:auth',
+    message: 'Dashboard auth vs session cookie',
+    runId: 'verify-layout',
+    data: {
+      hasSession,
+      hasSessionCookie,
+      sessionCookieCount: sessionCookieHints.length,
+      mismatchCookieWithoutSession: hasSessionCookie && !hasSession,
+      cookieHeaderLen,
+      nextPrefetch,
+      secPurposeLen: secPurpose ? secPurpose.length : 0,
+    },
+  })
+  // #endregion
+
+  // Garde-fou session : pas de middleware Edge (decoding JWT fragile) ; tout passe par auth() Node.
   if (!session?.user?.email) {
-    redirect('/')
+    redirect('/auth/signin?callbackUrl=/dashboard')
   }
 
   console.log('[DEBUG] Fetching user from database');
@@ -30,7 +69,7 @@ export default async function DashboardLayout({
 
   if (!user) {
     console.log('[DEBUG] Redirecting: no user');
-    redirect('/')
+    redirect('/auth/signin?callbackUrl=/dashboard')
   }
 
   // Vérifier si l'utilisateur a un plan actif (optionnel pour le moment)

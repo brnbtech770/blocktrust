@@ -1,7 +1,16 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/app/lib/auth-server";
+import { isAdmin } from "@/app/lib/admin";
 import LandingPageClient from "@/app/components/LandingPageClient";
 
-// Landing publique pour tous (connecté ou non). Aucune redirection vers /pricing ici.
-// Seuls les admins sont redirigés depuis / vers /admin (middleware racine).
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+// Landing publique. Redirection admin : auth() côté Node (plus de décodage JWT dans middleware Edge).
+export default async function HomePage() {
+  const session = await auth();
+  const email = session?.user?.email ?? null;
+  if (email && isAdmin(email)) {
+    redirect("/admin");
+  }
   return <LandingPageClient />;
 }

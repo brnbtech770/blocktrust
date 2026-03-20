@@ -50,11 +50,32 @@ const separatorStyle: React.CSSProperties = {
   fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
 };
 
+/** Messages NextAuth / Auth.js pour ?error= (visibles aussi pour Google OAuth). */
+function oauthErrorMessage(code: string | null): string | null {
+  if (!code) return null;
+  const map: Record<string, string> = {
+    Configuration: "Erreur de configuration serveur (vérifiez AUTH_URL / Google redirect URI).",
+    AccessDenied: "Connexion refusée.",
+    Verification: "Le lien de vérification a expiré ou a déjà été utilisé.",
+    OAuthSignin: "Impossible de démarrer la connexion OAuth.",
+    OAuthCallback: "Erreur lors du retour OAuth (callback).",
+    OAuthAccountNotLinked: "Ce compte est déjà lié à une autre méthode de connexion.",
+    Callback: "Erreur callback (URL ou secret).",
+    Default: "Connexion impossible. Réessayez.",
+    CredentialsSignin: "Email ou mot de passe incorrect.",
+  };
+  return map[code] ?? `Erreur : ${code}`;
+}
+
 function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const errorParam = searchParams.get("error");
+  const oauthError =
+    errorParam && errorParam !== "CredentialsSignin"
+      ? oauthErrorMessage(errorParam)
+      : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -144,6 +165,20 @@ function SignInContent() {
         >
           Connexion
         </h1>
+
+        {oauthError && (
+          <p
+            role="alert"
+            style={{
+              color: "#E05252",
+              marginBottom: "1.25rem",
+              fontSize: "0.9rem",
+              lineHeight: 1.45,
+            }}
+          >
+            {oauthError}
+          </p>
+        )}
 
         {/* 1. Google */}
         <button

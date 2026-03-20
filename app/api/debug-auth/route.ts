@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { Session } from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(req: NextRequest) {
   const adapter = PrismaAdapter(prisma) as any
 
-  // 1. Session state
+  // 1. Session state (Session explicite : ReturnType<typeof auth> peut être mal inféré sur next-auth beta)
+  let session: Session | null  = null
   let sessionInfo: any = null
   try {
-    const session = await auth()
+    session = await auth()
     sessionInfo = session
       ? {
           userId: session.user?.id ?? '(empty)',
@@ -23,10 +27,44 @@ export async function GET(req: NextRequest) {
     sessionInfo = { error: String(e) }
   }
 
-  // 2. Cookies present
+  const allJar = req.cookies.getAll()
+  const sessionCookieHints = allJar.filter(
+    (c) =>
+      c.name === 'authjs.session-token' ||
+      c.name === '__Secure-authjs.session-token' ||
+      c.name.startsWith('authjs.session-token.') ||
+      c.name.startsWith('__Secure-authjs.session-token.')
+  )
+  const hasSession = !!session?.user?.email
+  const hasSessionCookie = sessionCookieHints.length > 0
+  const rawCookie = req.headers.get('cookie') ?? ''
+  const cookieHeaderLen = rawCookie.length
+  const nextPrefetch =
+    req.headers.get('Next-Router-Prefetch') === '1' ||
+    req.headers.get('next-router-prefetch') === '1'
+  const secPurpose = req.headers.get('sec-purpose') ?? req.headers.get('Sec-Purpose') ?? ''
+  const layoutDiagnostic = {
+    sessionId: '467f2c',
+    hypothesisId: 'H2',
+    message: 'parity with app/dashboard/layout.tsx auth probe',
+    data: {
+      hasSession,
+      hasSessionCookie,
+      sessionCookieCount: sessionCookieHints.length,
+      mismatchCookieWithoutSession: hasSessionCookie && !hasSession,
+      cookieHeaderLen,
+      nextPrefetch,
+      secPurposePrefix: secPurpose ? secPurpose.slice(0, 24) : '',
+    },
+    timestamp: Date.now(),
+    runId: 'debug-auth-get',
+  }
+
+  // 2. Cookies present (+ indices chunk session JWT > 4ko)
   const cookies = {
     'authjs.session-token': !!req.cookies.get('authjs.session-token')?.value,
     '__Secure-authjs.session-token': !!req.cookies.get('__Secure-authjs.session-token')?.value,
+    sessionTokenChunked: /\.session-token\.\d+=/.test(rawCookie),
     'authjs.callback-url': req.cookies.get('authjs.callback-url')?.value ?? null,
     'authjs.csrf-token': !!req.cookies.get('authjs.csrf-token')?.value,
     '__Secure-authjs.csrf-token': !!req.cookies.get('__Secure-authjs.csrf-token')?.value,
@@ -92,7 +130,15 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(
-    { session: sessionInfo, cookies, env: envCheck, accounts, request: requestInfo },
+    {
+      debugAuthVersion: 2,
+      session: sessionInfo,
+      layoutDiagnostic,
+      cookies,
+      env: envCheck,
+      accounts,
+      request: requestInfo,
+    },
     { status: 200 }
   )
 }

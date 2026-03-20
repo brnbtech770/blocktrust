@@ -1,5 +1,11 @@
 # Checklist des variables d'environnement
 
+## Production (Vercel)
+
+- Déployer le **dernier commit** : `/api/debug-auth` doit inclure `debugAuthVersion: 2` et `layoutDiagnostic`. S’ils manquent, la prod n’a pas le code de debug récent.
+- Recommandé : définir **`AUTH_SECRET`** avec **la même valeur** que `NEXTAUTH_SECRET` (Auth.js v5 cite souvent `AUTH_SECRET` ; la config lit les deux, mais tout définir évite les ambiguïtés).
+- Optionnel : `BT_DEBUG_RING_SECRET` (≥16 caractères) pour lire `/api/debug/agent-log-recent` en prod avec `Authorization: Bearer …`.
+
 ## Variables requises pour NextAuth
 
 Vérifiez que votre fichier `.env.local` contient **exactement** ces variables :

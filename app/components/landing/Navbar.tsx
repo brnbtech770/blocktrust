@@ -47,8 +47,10 @@ export default function Navbar() {
           >
             Connexion
           </Link>
+          {/* prefetch=false : évite RSC prefetch non authentifié vers /dashboard/* (layout + auth()) */}
           <Link
             href="/dashboard/create"
+            prefetch={false}
             className="rounded-lg px-5 py-2 text-sm font-bold transition-colors hover:bg-[#00b8e6]"
             style={{ background: '#00d4ff', color: '#0a1628' }}
           >
@@ -106,6 +108,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/dashboard/create"
+                prefetch={false}
                 className="block py-3 px-4 rounded-lg text-sm font-bold mt-2 text-center"
                 style={{ background: '#00d4ff', color: '#0a1628' }}
                 onClick={() => setMenuOpen(false)}
