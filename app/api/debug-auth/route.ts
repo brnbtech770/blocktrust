@@ -236,9 +236,20 @@ export async function GET(req: NextRequest) {
       'JWT contient un email (longueur > 0) mais auth() ne retourne pas session.user.email → session callback ou typage session.'
   }
 
+  const rhLow = hostVsNextAuth.requestHost?.toLowerCase() ?? ''
+  const nhLow = hostVsNextAuth.nextAuthHostname?.toLowerCase() ?? ''
+  const wwwVsCanonical = {
+    isWwwOfCanonical: Boolean(nhLow && rhLow === `www.${nhLow}`),
+    hint: null as string | null,
+  }
+  if (wwwVsCanonical.isWwwOfCanonical) {
+    wwwVsCanonical.hint =
+      'Host = www.* alors que NEXTAUTH_URL est en apex : risque de cookies session sur le mauvais host. Utiliser l’URL sans www ou déployer le middleware de redirection www→apex.'
+  }
+
   return NextResponse.json(
     {
-      debugAuthVersion: 6,
+      debugAuthVersion: 7,
       vercelGitCommitSha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
       authEnvShim,
       runtimeAuthSecretPresent: !!process.env.AUTH_SECRET,
@@ -255,7 +266,13 @@ export async function GET(req: NextRequest) {
       env: envCheck,
       accounts,
       request: requestInfo,
+      wwwVsCanonical,
     },
-    { status: 200 }
+    {
+      status: 200,
+      headers: {
+        'Cache-Control': 'private, no-store, max-age=0, must-revalidate',
+      },
+    }
   )
 }

@@ -21,4 +21,8 @@ Si les deux diffèrent, **blocktrust.tech n’exécute pas le code que vous croy
 
 ## Après alignement des SHA
 
-Refaire le flux Google puis ouvrir **`/api/debug-auth` dans le même navigateur** : avec `debugAuthVersion: 6`, le bloc `jwtFromCookie` permet de trancher (cookie illisible vs session vide, etc.).
+Refaire le flux Google puis ouvrir **`/api/debug-auth` dans le même navigateur** : avec `debugAuthVersion` ≥ 6, le bloc `jwtFromCookie` permet de trancher (cookie illisible vs session vide, etc.).
+
+## www vs apex (cookies OAuth)
+
+Si `NEXTAUTH_URL` est `https://blocktrust.tech` (sans `www`) mais les utilisateurs ouvrent **`https://www.blocktrust.tech`**, les cookies de session sont **host-only** : la session peut « manquer » après Google. Le dépôt inclut un **middleware** qui redirige `www.<NEXTAUTH_URL hostname>` → hostname canonique. Vérifiez aussi dans Vercel que le domaine principal sans `www` est celui utilisé dans `NEXTAUTH_URL`.
