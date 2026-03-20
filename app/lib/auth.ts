@@ -208,8 +208,10 @@ export const authOptions: NextAuthConfig = {
           }
         }
       }
-      // Rafraîchir plan + KYC à chaque requête
-      if (token.sub) {
+      // Rafraîchir plan + KYC uniquement quand ce n’est pas le premier JWT de cette connexion :
+      // si `user` est défini, on vient déjà de peupler le token (OAuth + resolveDbUserAfterOAuth).
+      // Éviter un second bloc Prisma ici réduit la charge au cold start Vercel (timeouts / session vide).
+      if (token.sub && !user) {
         try {
           const [sub, dbUser] = await Promise.all([
             prisma.subscription.findUnique({
