@@ -55,7 +55,17 @@ export default function TrustCirclePage() {
       const response = await fetch('/api/trust-circle', { credentials: 'include' })
       if (!response.ok) {
         if (response.status === 403) {
-          setLoading(false)
+          let msg =
+            'Abonnez-vous à une offre incluant le Trust Circle pour accéder à cette page.'
+          try {
+            const err = await response.json()
+            if (err?.message && typeof err.message === 'string') msg = err.message
+          } catch {
+            /* ignore */
+          }
+          router.replace(
+            `/pricing?feature=trustCircle&message=${encodeURIComponent(msg)}`
+          )
           return
         }
         throw new Error('Erreur lors du chargement')

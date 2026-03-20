@@ -58,10 +58,18 @@ export default function DashboardSidebarClient() {
           </a>
         ) : (
           <a
-            href="/pricing?feature=trustCircle"
-            className="flex items-center gap-3 px-4 py-3 text-base text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg opacity-60 transition-colors font-medium"
+            href={`/pricing?feature=trustCircle&message=${encodeURIComponent(
+              'Abonnez-vous pour accéder au Trust Circle — disponible à partir des offres Famille et équivalents B2B.'
+            )}`}
+            className="flex items-center gap-3 px-4 py-3 text-base text-amber-200/90 hover:bg-gray-800 hover:text-white rounded-lg transition-colors font-medium border border-amber-500/30"
           >
-            <span className="text-lg">🔗</span> Trust Circle 🔒
+            <span className="text-lg">🔗</span>
+            <span>
+              Trust Circle
+              <span className="block text-xs font-normal text-amber-400/90 mt-0.5">
+                Abonnez-vous pour accéder
+              </span>
+            </span>
           </a>
         )}
         <a

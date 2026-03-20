@@ -45,7 +45,9 @@ export async function POST(req: NextRequest) {
           html: `Cliquez pour réinitialiser votre mot de passe : <a href="${link}">${link}</a>. Ce lien expire dans 1 heure.`,
         });
       } else {
-        console.log("[RESET LINK]", link);
+        console.error(
+          "[FORGOT-PASSWORD] RESEND_API_KEY absent : aucun email envoyé (ne jamais logger le lien reset)"
+        );
       }
     })().catch((err) => console.error("[FORGOT-PASSWORD]", err));
 

@@ -39,8 +39,15 @@ export default async function DashboardSidebar() {
     { name: 'Mes certificats', href: '/dashboard/certificates', icon: 'Shield' },
     ...(plan?.trustCircleEnabled
       ? [{ name: 'Trust Circle', href: '/dashboard/trust-circle', icon: 'Users' as const }]
-      : [{ name: 'Trust Circle 🔒', href: '/pricing?feature=trustCircle', icon: 'Users' as const }]
-    ),
+      : [
+          {
+            name: 'Trust Circle',
+            href: `/pricing?feature=trustCircle&message=${encodeURIComponent(
+              'Abonnez-vous pour accéder au Trust Circle — disponible à partir des offres Famille et équivalents B2B.'
+            )}`,
+            icon: 'Users' as const,
+          },
+        ]),
     { name: 'Facturation', href: '/dashboard/billing', icon: 'CreditCard' },
     { name: 'Paramètres', href: '/dashboard/settings', icon: 'Settings' },
   ]

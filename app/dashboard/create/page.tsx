@@ -32,6 +32,11 @@ const businessSchema = z.object({
 type IndividualData = z.infer<typeof individualSchema>;
 type BusinessData = z.infer<typeof businessSchema>;
 
+/** SIRET : uniquement des chiffres, max 14 (espaces et autres caractères retirés à la saisie). */
+function normalizeSiretInput(raw: string): string {
+  return raw.replace(/\D/g, "").slice(0, 14);
+}
+
 export default function CreateCertificate() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
@@ -443,20 +448,20 @@ export default function CreateCertificate() {
                   </label>
                   <input
                     type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
                     required
                     value={businessData.siret || ""}
-                    onChange={(e) => {
-                      // Formatage automatique : espaces tous les 3 chiffres
-                      const value = e.target.value.replace(/\s/g, "");
-                      const formatted = value.match(/.{1,3}/g)?.join(" ") || value;
-                      setBusinessData({ ...businessData, siret: formatted });
+                    onInput={(e) => {
+                      const v = normalizeSiretInput(e.currentTarget.value);
+                      setBusinessData({ ...businessData, siret: v });
                     }}
-                    placeholder="123 456 789 00012"
-                    maxLength={17} // 14 chiffres + 3 espaces
+                    placeholder="12345678900014"
+                    maxLength={14}
                     className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Le SIRET doit contenir exactement 14 chiffres
+                    14 chiffres uniquement — les espaces sont retirés automatiquement (ex. coller « 123 456 789 000 14 » devient 12345678900014).
                   </p>
                 </div>
 

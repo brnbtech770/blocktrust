@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { createHash } from "node:crypto";
 import { prisma } from "@/app/lib/db";
 import type { NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -56,7 +57,9 @@ export const authOptions: NextAuthConfig = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       /** Permet de lier un compte Google à un utilisateur existant (même email, ex. email/password). */
-      allowDangerousEmailAccountLinking: true,
+      // Sécurité : ne lier automatiquement Google qu’au même email qu’avec opt-in explicite
+      allowDangerousEmailAccountLinking:
+        process.env.ALLOW_DANGEROUS_EMAIL_LINKING === 'true',
       authorization: {
         params: {
           prompt: "select_account", // Force la sélection de compte à chaque connexion
@@ -139,7 +142,6 @@ export const authOptions: NextAuthConfig = {
           token.picture = dbUser.image;
           (token as any).kycStatus = (dbUser as any).kycStatus ?? 'PENDING';
           (token as any).accountType = dbUser.accountType ?? 'PERSONAL';
-          console.log('✅ User created/updated in DB:', dbUser.email);
 
           // Email de bienvenue pour les nouveaux utilisateurs (fire-and-forget)
           if (!existingUser && dbUser.email) {
@@ -157,12 +159,8 @@ export const authOptions: NextAuthConfig = {
           }
         } catch (error) {
           console.error('❌ Error creating/updating user in DB:', error);
-          // En cas d'erreur, on continue avec les infos du token
-          if (user.email) {
-            token.email = user.email;
-            token.name = user.name;
-            token.picture = user.image;
-          }
+          // Fail-closed : pas de session sans enregistrement DB cohérent (évite token sans sub)
+          throw error;
         }
         }
       }
@@ -209,11 +207,19 @@ export const authOptions: NextAuthConfig = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Si l'URL contient un callbackUrl, l'utiliser
-      if (url.startsWith(baseUrl)) {
-        return url;
+      // Évite les open-redirects : même origine ou chemin relatif uniquement
+      try {
+        if (url.startsWith('/')) {
+          return `${baseUrl}${url}`;
+        }
+        const target = new URL(url);
+        const origin = new URL(baseUrl).origin;
+        if (target.origin === origin) {
+          return url;
+        }
+      } catch {
+        /* URL invalide */
       }
-      // Sinon, rediriger vers la base (le middleware gérera la redirection admin)
       return baseUrl;
     },
   },
@@ -252,26 +258,8 @@ export async function getAuthUser(req: NextRequest) {
     return user;
   } catch (error) {
     console.error("❌ getAuthUser error:", error);
-    // Fallback sur l'ancien système si NextAuth n'est pas encore configuré
-    const userId = req.headers.get("x-user-id") || req.cookies.get("user-id")?.value;
-    
-    if (!userId) {
-      return null;
-    }
-
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: { 
-          entities: true,
-          plan: true,
-        },
-      });
-
-      return user;
-    } catch (error) {
-      return null;
-    }
+    // Pas de fallback header/cookie : contournement trivial d’auth autrement
+    return null;
   }
 }
 
@@ -284,7 +272,14 @@ export function checkPlanFeature(plan: string | { type?: string; trustCircleEnab
     
     if (feature === 'trustCircle' && planObj.trustCircleEnabled) return true;
     if (feature === 'blockchainAnchor' && planObj.blockchainAnchor) return true;
-    if (feature === 'unlimited' && planObj.type?.includes('PLUS') || planObj.type?.includes('BUSINESS') || planObj.type?.includes('ENTERPRISE')) return true;
+    if (
+      feature === 'unlimited' &&
+      (planObj.type?.includes('PLUS') ||
+        planObj.type?.includes('BUSINESS') ||
+        planObj.type?.includes('ENTERPRISE'))
+    ) {
+      return true;
+    }
     
     const planType = planObj.type || '';
     return checkPlanFeatureByType(planType, feature);
@@ -324,9 +319,12 @@ function checkPlanFeatureByType(planType: string, feature: string): boolean {
  * Hash IP pour RGPD (SHA-256 avec salt)
  */
 export function hashIp(ip: string): string {
-  const crypto = require("crypto");
-  const salt = process.env.IP_HASH_SALT || "default-salt";
-  return crypto.createHash("sha256").update(ip + salt).digest("hex");
+  const salt =
+    process.env.IP_HASH_SALT ||
+    (process.env.NODE_ENV === "production" && process.env.NEXTAUTH_SECRET
+      ? `${process.env.NEXTAUTH_SECRET}:blocktrust-ip`
+      : "dev-ip-salt-change-me");
+  return createHash("sha256").update(ip + salt).digest("hex");
 }
 
 /**

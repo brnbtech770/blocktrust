@@ -89,6 +89,29 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   } catch (error) {
     console.error('❌ Middleware error:', error)
+    // Fail-closed : ne pas bypasser l’auth si `auth()` lève (config, JWT, etc.)
+    const pathname = request.nextUrl.pathname
+    const isProtectedPage =
+      pathname.startsWith('/dashboard') || pathname.startsWith('/admin')
+    const isProtectedApi =
+      pathname.startsWith('/api/certificates') ||
+      pathname.startsWith('/api/entities') ||
+      pathname.startsWith('/api/stripe') ||
+      pathname === '/api/stats' ||
+      pathname === '/api/activity'
+
+    if (isProtectedApi) {
+      return NextResponse.json(
+        { error: 'Service temporairement indisponible' },
+        { status: 503 }
+      )
+    }
+    if (isProtectedPage) {
+      return new NextResponse('Service temporairement indisponible', {
+        status: 503,
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      })
+    }
     return NextResponse.next()
   }
 }

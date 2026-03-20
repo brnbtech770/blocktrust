@@ -19,6 +19,17 @@ BLOCKTRUST_JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-
 
 # Emails transactionnels (Resend) - optionnel en dev
 RESEND_API_KEY="re_..."
+
+# Sécurité / hachage IP (recommandé en prod)
+IP_HASH_SALT="secret-dédié-ne-pas-réutiliser-nextauth"
+
+# Liaison automatique Google ↔ compte même email (désactivé par défaut — risque takeover)
+# Mettre "true" seulement si vous en avez besoin explicitement
+# ALLOW_DANGEROUS_EMAIL_LINKING="true"
+
+# Stripe — webhooks
+STRIPE_WEBHOOK_SECRET="whsec_..."
+STRIPE_IDENTITY_WEBHOOK_SECRET="whsec_..."
 ```
 
 ## Comment générer NEXTAUTH_SECRET
@@ -66,7 +77,10 @@ Ou vérifiez manuellement dans votre `.env.local` :
 5. ✅ `BLOCKTRUST_JWT_PRIVATE_KEY` contient `BEGIN PRIVATE KEY` et `END PRIVATE KEY`
 6. ✅ `BLOCKTRUST_JWT_PUBLIC_KEY` contient `BEGIN PUBLIC KEY` et `END PUBLIC KEY`
 7. ✅ Les clés JWT utilisent `\n` (backslash + n) et non de vrais retours à la ligne
-8. ✅ `RESEND_API_KEY` (optionnel) : clé API Resend pour les emails transactionnels (bienvenue, certificat créé/révoqué, alerte fraude, paiement). Sans cette variable, les emails sont logués mais non envoyés.
+8. ✅ `RESEND_API_KEY` (optionnel) : emails transactionnels. Sans elle, les emails ne partent pas (mot de passe oublié **n’est pas** loggé en clair).
+9. ✅ `STRIPE_WEBHOOK_SECRET` et `STRIPE_IDENTITY_WEBHOOK_SECRET` en production.
+10. ✅ `IP_HASH_SALT` recommandé (sinon dérivation liée à `NEXTAUTH_SECRET` côté hash IP uniquement).
+11. ⚠️ `ALLOW_DANGEROUS_EMAIL_LINKING=true` : uniquement si vous devez lier Google à un compte email/mot de passe existant (voir `SECURITY.md`).
 
 ## Emails transactionnels (Resend)
 
@@ -79,7 +93,9 @@ Pour activer l’envoi d’emails (bienvenue, certificats, alerte fraude, paieme
    ```
 3. L’expéditeur par défaut est `BlockTrust <noreply@blocktrust.tech>` (à configurer côté Resend si besoin).
 
-Sans `RESEND_API_KEY`, l’app fonctionne normalement mais les envois d’emails sont uniquement logués en console.
+Sans `RESEND_API_KEY`, l’app fonctionne mais les envois d’e-mails ne sont pas effectués (aucun secret de reset en log).
+
+Voir aussi **`SECURITY.md`** pour l’audit et les choix de durcissement.
 
 ## Erreurs courantes
 

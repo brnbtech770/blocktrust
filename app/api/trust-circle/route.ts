@@ -16,6 +16,22 @@ export async function GET(req: NextRequest) {
   const userId = session.user.id
   const plan = (session.user as { plan?: string }).plan ?? 'ESSENTIEL'
 
+  const userRow = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { plan: true },
+  })
+
+  if (!userRow?.plan?.trustCircleEnabled) {
+    return NextResponse.json(
+      {
+        error: 'TRUST_CIRCLE_LOCKED',
+        message:
+          'Le Trust Circle est inclus dans nos offres Famille, Famille+ et certains forfaits B2B. Abonnez-vous pour y accéder.',
+      },
+      { status: 403 }
+    )
+  }
+
   const [mutual, unilateral, pending, manualEntries, quota] = await Promise.all([
     prisma.userTrustRelation.findMany({
       where: { fromUserId: userId, isMutual: true },

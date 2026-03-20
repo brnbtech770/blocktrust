@@ -27,6 +27,11 @@ function mapPriceIdToPlan(priceId: string): string {
 }
 
 export async function POST(req: NextRequest) {
+  if (!webhookSecret?.trim()) {
+    console.error('❌ STRIPE_WEBHOOK_SECRET manquant — refus du webhook')
+    return NextResponse.json({ error: 'Configuration serveur' }, { status: 500 })
+  }
+
   const body = await req.text()
   const signature = req.headers.get('stripe-signature')
 

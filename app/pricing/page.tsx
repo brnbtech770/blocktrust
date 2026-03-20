@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import Navbar from '@/app/components/landing/Navbar'
 import PricingToggle from '@/app/components/pricing/PricingToggle'
@@ -31,6 +31,27 @@ const FAQ = [
     a: 'Oui, notre offre B2B démarre à 29€/mois. Contactez-nous à commercial@blocktrust.tech pour un devis personnalisé.',
   },
 ]
+
+function PricingContextMessage() {
+  const searchParams = useSearchParams()
+  const message = searchParams.get('message')
+  if (!message?.trim()) return null
+  return (
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      <div
+        role="status"
+        className="rounded-xl border px-4 py-3 text-sm"
+        style={{
+          borderColor: 'rgba(0,212,255,0.45)',
+          background: 'rgba(0,212,255,0.1)',
+          color: 'var(--bt-text)',
+        }}
+      >
+        {message}
+      </div>
+    </div>
+  )
+}
 
 export default function PricingPage() {
   const router = useRouter()
@@ -76,6 +97,10 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bt-circuit-bg" style={{ background: 'var(--bt-navy)' }}>
       <Navbar />
+
+      <Suspense fallback={null}>
+        <PricingContextMessage />
+      </Suspense>
 
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-6">
