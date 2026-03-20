@@ -4,9 +4,9 @@ export const dynamic = 'force-dynamic'
 
 /**
  * Version logique des correctifs auth déployés (incr. à la main quand un fix critique part).
- * 6 : /auth/signin Google → navigation pleine page (fix client OAuth) + marqueur signinGoogleFullPageNav.
+ * 7 : redirect signin avec ?reason= (no-session-cookie | jwt-cookie-unreadable | user-not-in-db).
  */
-const AUTH_RELEASE = 6
+const AUTH_RELEASE = 7
 
 /** Préfixe du commit Git qui introduit le marqueur ci-dessus (à titre de référence humaine). */
 const EXPECTED_SIGNIN_FIX_COMMIT_PREFIX = '780d893'
@@ -23,10 +23,12 @@ export async function GET() {
       vercelGitCommitSha: sha || null,
       authRelease: AUTH_RELEASE,
       /** Présent seulement sur les builds contenant ce fichier ; vérifie que la prod n’est pas figée sur un vieux déploiement. */
-      signinGoogleFullPageNav: true,
-      expectedSigninFixCommitPrefix: EXPECTED_SIGNIN_FIX_COMMIT_PREFIX,
-      authReleaseHint:
-        'authRelease 6 : en prod, `signinGoogleFullPageNav` doit être true et `vercelGitCommitSha` doit être ≥780d893 (ou plus récent). Si vous voyez encore 5b4c46e, le déploiement Vercel n’a pas pris le dernier push sur la branche de prod.',
+    signinGoogleFullPageNav: true,
+    /** Présent à partir du commit qui ajoute ?reason= sur les redirects dashboard/admin. */
+    signinRedirectReason: true,
+    expectedSigninFixCommitPrefix: EXPECTED_SIGNIN_FIX_COMMIT_PREFIX,
+    authReleaseHint:
+      'authRelease 7 : comparer `vercelGitCommitSha` à `origin/main` sur GitHub — s’ils diffèrent, la prod n’a pas le dernier build (pas de ?reason= sur /auth/signin).',
       deployStaleWarning: looksLikePreSigninFix
         ? 'Ce SHA (5b4c46e) est antérieur au correctif Google sign-in pleine page. Redéployez depuis Git (main) ou vérifiez l’échec du build Vercel.'
         : null,
