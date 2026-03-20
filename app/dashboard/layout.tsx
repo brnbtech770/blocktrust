@@ -43,7 +43,7 @@ export default async function DashboardLayout({
   await writeAgentDebugLog({
     hypothesisId: 'H2',
     location: 'app/dashboard/layout.tsx:auth',
-    message: 'Dashboard auth vs session cookie',
+    message: 'Dashboard auth vs session cookie (pages sans getToken middleware)',
     runId: 'verify-layout',
     data: {
       hasSession,
