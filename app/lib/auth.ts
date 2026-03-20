@@ -270,12 +270,16 @@ export const authOptions: NextAuthConfig = {
       return baseUrl;
     },
   },
+  debug: true,
   logger: {
-    error: (code, ...message) => {
-      console.error('[NextAuth ERROR]', code, JSON.stringify(message));
+    error(code, ...message) {
+      console.error('[NEXTAUTH ERROR]', code, JSON.stringify(message));
     },
-    warn: (code) => {
-      console.warn('[NextAuth WARN]', code);
+    warn(code, ...message) {
+      console.warn('[NEXTAUTH WARN]', code, JSON.stringify(message));
+    },
+    debug(code, ...message) {
+      console.log('[NEXTAUTH DEBUG]', code, JSON.stringify(message));
     },
   },
   pages: {
