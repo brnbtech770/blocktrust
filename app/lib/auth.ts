@@ -51,9 +51,7 @@ const emailMagicLinkProvider = {
 
 // allowDangerousEmailAccountLinking : uniquement sur GoogleProvider (pas d’option globale Auth.js v5)
 export const authOptions: NextAuthConfig = {
-  // PrismaAdapter retiré : il cause OAuthAccountNotLinked même avec
-  // allowDangerousEmailAccountLinking. Le linking est géré manuellement
-  // dans le callback signIn ci-dessous.
+  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
