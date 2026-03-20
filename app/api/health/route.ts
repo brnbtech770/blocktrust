@@ -4,9 +4,9 @@ export const dynamic = 'force-dynamic'
 
 /**
  * Version logique des correctifs auth déployés (incr. à la main quand un fix critique part).
- * 7 : redirect signin avec ?reason= (no-session-cookie | jwt-cookie-unreadable | user-not-in-db).
+ * 8 : pas de redirect /auth/signin pendant préfetch RSC sur layouts dashboard/admin (évite faux « pas de session »).
  */
-const AUTH_RELEASE = 7
+const AUTH_RELEASE = 8
 
 /** Préfixe du commit Git qui introduit le marqueur ci-dessus (à titre de référence humaine). */
 const EXPECTED_SIGNIN_FIX_COMMIT_PREFIX = '780d893'
@@ -23,12 +23,14 @@ export async function GET() {
       vercelGitCommitSha: sha || null,
       authRelease: AUTH_RELEASE,
       /** Présent seulement sur les builds contenant ce fichier ; vérifie que la prod n’est pas figée sur un vieux déploiement. */
-    signinGoogleFullPageNav: true,
-    /** Présent à partir du commit qui ajoute ?reason= sur les redirects dashboard/admin. */
-    signinRedirectReason: true,
-    expectedSigninFixCommitPrefix: EXPECTED_SIGNIN_FIX_COMMIT_PREFIX,
-    authReleaseHint:
-      'authRelease 7 : comparer `vercelGitCommitSha` à `origin/main` sur GitHub — s’ils diffèrent, la prod n’a pas le dernier build (pas de ?reason= sur /auth/signin).',
+      signinGoogleFullPageNav: true,
+      /** Présent à partir du commit qui ajoute ?reason= sur les redirects dashboard/admin. */
+      signinRedirectReason: true,
+      /** Build avec bypass redirect signin si préfetch RSC (commit 2e792c9+). */
+      prefetchRscAuthBypass: true,
+      expectedSigninFixCommitPrefix: EXPECTED_SIGNIN_FIX_COMMIT_PREFIX,
+      authReleaseHint:
+        'authRelease 8 : attendre `prefetchRscAuthBypass` true + SHA ≥ 2e792c9 — sinon la prod n’a pas le correctif préfetch dashboard/admin.',
       deployStaleWarning: looksLikePreSigninFix
         ? 'Ce SHA (5b4c46e) est antérieur au correctif Google sign-in pleine page. Redéployez depuis Git (main) ou vérifiez l’échec du build Vercel.'
         : null,
