@@ -95,6 +95,8 @@ async function resolveDbUserAfterOAuth(user: {
 // allowDangerousEmailAccountLinking : uniquement sur GoogleProvider (pas d’option globale Auth.js v5)
 export const authOptions: NextAuthConfig = {
   ...authEdgeConfig,
+  /** Logs détaillés [auth] si AUTH_DEBUG=true sur Vercel (temporaire, diagnostic). */
+  debug: process.env.AUTH_DEBUG === "true",
   adapter: PrismaAdapter(prisma),
   providers: [
     ...authEdgeConfig.providers,

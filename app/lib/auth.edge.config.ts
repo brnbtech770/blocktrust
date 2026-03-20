@@ -25,7 +25,8 @@ const authEdgeConfig = {
   providers: [googleProvider],
   pages: {
     signIn: "/auth/signin",
-    error: "/auth/signin",
+    // Ne pas réutiliser la page sign-in : risque ErrorPageLoop / error=Configuration (voir Auth.js).
+    error: "/auth/error",
   },
   session: {
     strategy: "jwt" as const,
