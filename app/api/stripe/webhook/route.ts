@@ -14,14 +14,28 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// Mapping priceId → plan name
+// Mapping priceId → plan name (monthly + yearly, B2C + B2B)
 function mapPriceIdToPlan(priceId: string): string {
   const priceMap: Record<string, string> = {
-    [process.env.STRIPE_PRICE_ESSENTIEL || '']: 'ESSENTIEL',
-    [process.env.STRIPE_PRICE_PREMIUM || '']: 'PREMIUM',
-    [process.env.STRIPE_PRICE_FAMILLE || '']: 'FAMILLE',
-    [process.env.STRIPE_PRICE_FAMILLE_PLUS || '']: 'FAMILLE_PLUS',
+    // B2C
+    [process.env.STRIPE_PRICE_ESSENTIEL_MONTHLY || '']: 'ESSENTIEL',
+    [process.env.STRIPE_PRICE_ESSENTIEL_YEARLY || '']: 'ESSENTIEL',
+    [process.env.STRIPE_PRICE_PREMIUM_MONTHLY || '']: 'PREMIUM',
+    [process.env.STRIPE_PRICE_PREMIUM_YEARLY || '']: 'PREMIUM',
+    [process.env.STRIPE_PRICE_FAMILLE_MONTHLY || '']: 'FAMILLE',
+    [process.env.STRIPE_PRICE_FAMILLE_YEARLY || '']: 'FAMILLE',
+    [process.env.STRIPE_PRICE_FAMILLE_PLUS_MONTHLY || '']: 'FAMILLE_PLUS',
+    [process.env.STRIPE_PRICE_FAMILLE_PLUS_YEARLY || '']: 'FAMILLE_PLUS',
+    // B2B
+    [process.env.STRIPE_PRICE_STARTER_MONTHLY || '']: 'STARTER',
+    [process.env.STRIPE_PRICE_STARTER_YEARLY || '']: 'STARTER',
+    [process.env.STRIPE_PRICE_TEAM_MONTHLY || '']: 'TEAM',
+    [process.env.STRIPE_PRICE_TEAM_YEARLY || '']: 'TEAM',
+    [process.env.STRIPE_PRICE_BUSINESS_MONTHLY || '']: 'BUSINESS',
+    [process.env.STRIPE_PRICE_BUSINESS_YEARLY || '']: 'BUSINESS',
   }
+  // Remove empty key from fallback env vars
+  delete priceMap['']
 
   return priceMap[priceId] || 'ESSENTIEL'
 }
@@ -75,7 +89,7 @@ export async function POST(req: NextRequest) {
 
           if (!user) {
             console.error(`❌ User not found for customer ${customerId}`)
-            break
+            return NextResponse.json({ error: 'User not found' }, { status: 500 })
           }
 
           const currentPeriodEnd = new Date(sub.current_period_end * 1000)
