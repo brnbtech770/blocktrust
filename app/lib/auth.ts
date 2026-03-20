@@ -240,6 +240,37 @@ export const authOptions: NextAuthConfig = {
       }
       return token;
     },
+    async session({ session, token }) {
+      if (session.user) {
+        return {
+          ...session,
+          user: {
+            ...session.user,
+            id: (token.sub ?? (token as any).id ?? '') as string,
+            email: session.user.email ?? token.email ?? '',
+            plan: (token as any).plan ?? 'ESSENTIEL',
+            kycStatus: (token as any).kycStatus ?? 'PENDING',
+            accountType: (token as any).accountType ?? 'PERSONAL',
+          },
+        };
+      }
+      return session;
+    },
+    async redirect({ url, baseUrl }) {
+      try {
+        if (url.startsWith('/')) {
+          return `${baseUrl}${url}`;
+        }
+        const target = new URL(url);
+        const origin = new URL(baseUrl).origin;
+        if (target.origin === origin) {
+          return url;
+        }
+      } catch {
+        /* URL invalide */
+      }
+      return baseUrl;
+    },
   },
   logger: {
     error(code, ...message) {
@@ -249,6 +280,14 @@ export const authOptions: NextAuthConfig = {
       console.warn('[NEXTAUTH WARN]', code);
     },
   },
+  pages: {
+    signIn: "/auth/signin",
+    error: "/auth/signin",
+  },
+  session: {
+    strategy: "jwt",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
 };
 
 /**
