@@ -59,7 +59,15 @@ export default async function DashboardLayout({
   })
   // #endregion
 
-  // Garde-fou session : pas de middleware Edge (decoding JWT fragile) ; tout passe par auth() Node.
+  // Admin → /admin
+  if (session?.user?.email) {
+    const { isAdmin } = await import('@/app/lib/admin')
+    if (isAdmin(session.user.email)) {
+      redirect('/admin')
+    }
+  }
+
+  // Garde-fou session
   if (!session?.user?.email) {
     if (rscPrefetch) {
       return (
