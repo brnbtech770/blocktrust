@@ -112,13 +112,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/admin', request.url))
       }
 
-      const kycStatus = token?.kycStatus ?? 'PENDING'
-      if (kycStatus === 'PENDING') {
-        return NextResponse.redirect(new URL('/onboarding/pending', request.url))
-      }
-      if (kycStatus === 'REJECTED') {
-        return NextResponse.redirect(new URL('/onboarding/rejected', request.url))
-      }
+      // KYC informatif uniquement — ne bloque plus l'accès au dashboard
       return NextResponse.next()
     }
 
