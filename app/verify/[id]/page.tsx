@@ -9,7 +9,7 @@ import { prisma } from '@/app/lib/db'
 import { Logo } from '@/app/components/ui/Logo'
 import { hashIp } from '@/app/lib/auth'
 import { checkRateLimitVerify } from '@/lib/rate-limit-verify'
-import { sendEmailFireAndForget } from '@/lib/email'
+import { sendEmail } from '@/lib/email'
 import { FraudAlertEmail, subject as fraudAlertSubject } from '@/emails/FraudAlertEmail'
 import type { Metadata } from 'next'
 import type { Prisma } from '@prisma/client'
@@ -202,7 +202,7 @@ export default async function VerifyPublicPage({
     const entityName = entityDisplayName(entity)
     const revokeUrl = `${BASE_URL}/dashboard/certificate/${cert.id}`
     if (owner?.email) {
-      sendEmailFireAndForget({
+      await sendEmail({
         to: owner.email,
         subject: fraudAlertSubject,
         react: FraudAlertEmail({
@@ -212,6 +212,9 @@ export default async function VerifyPublicPage({
           ip,
           revokeUrl,
         }),
+      }).then(({ error }) => {
+        if (error) console.error('[Verify] Fraud alert email échoué:', { to: owner.email, error })
+        else console.log('[Verify] Fraud alert email envoyé à:', owner.email)
       })
     }
   }

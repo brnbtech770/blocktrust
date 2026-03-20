@@ -9,7 +9,7 @@ import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import QRCode from 'qrcode'
 import { checkCertificateQuota } from '@/lib/checkQuota'
-import { sendEmailFireAndForget } from '@/lib/email'
+import { sendEmail } from '@/lib/email'
 import { CertificateCreatedEmail, subject as certificateCreatedSubject } from '@/emails/CertificateCreatedEmail'
 
 // ─────────────────────────────────────────────
@@ -319,7 +319,7 @@ export async function POST(req: NextRequest) {
     // Email transactionnel : certificat créé (fire-and-forget)
     const recipientEmail = session.user.email
     if (recipientEmail) {
-      sendEmailFireAndForget({
+      await sendEmail({
         to: recipientEmail,
         subject: certificateCreatedSubject,
         react: CertificateCreatedEmail({
@@ -328,6 +328,9 @@ export async function POST(req: NextRequest) {
           qrCodeDataUrl: qrCodeDataUrl || undefined,
           embedSnippet: `<a href="${verifyUrl}" target="_blank" rel="noopener">Vérifier ce certificat BlockTrust</a>`,
         }),
+      }).then(({ error }) => {
+        if (error) console.error('[Certificate] Created email échoué:', { to: recipientEmail, error })
+        else console.log('[Certificate] Created email envoyé à:', recipientEmail)
       })
     }
 

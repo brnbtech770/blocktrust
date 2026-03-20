@@ -145,16 +145,19 @@ export const authOptions: NextAuthConfig = {
 
           // Email de bienvenue pour les nouveaux utilisateurs (fire-and-forget)
           if (!existingUser && dbUser.email) {
-            const { sendEmailFireAndForget } = await import('@/lib/email');
+            const { sendEmail } = await import('@/lib/email');
             const { WelcomeEmail, subject: welcomeSubject } = await import('@/emails/WelcomeEmail');
             const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech';
-            sendEmailFireAndForget({
+            await sendEmail({
               to: dbUser.email,
               subject: welcomeSubject,
               react: WelcomeEmail({
                 userName: dbUser.name,
                 dashboardUrl: `${baseUrl}/dashboard`,
               }),
+            }).then(({ error }) => {
+              if (error) console.error('[Auth] Welcome email échoué:', { to: dbUser.email, error })
+              else console.log('[Auth] Welcome email envoyé à:', dbUser.email)
             });
           }
         } catch (error) {

@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/app/lib/db'
-import { sendEmailFireAndForget } from '@/lib/email'
+import { sendEmail } from '@/lib/email'
 import { PaymentSuccessEmail, getPaymentSuccessSubject } from '@/emails/PaymentSuccessEmail'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
               }
             } catch (_) {}
             const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
-            sendEmailFireAndForget({
+            await sendEmail({
               to: user.email,
               subject: getPaymentSuccessSubject(plan),
               react: PaymentSuccessEmail({
@@ -126,6 +126,9 @@ export async function POST(req: NextRequest) {
                 currentPeriodEnd: currentPeriodEnd.toLocaleDateString('fr-FR', { dateStyle: 'long' }),
                 dashboardUrl: `${baseUrl}/dashboard`,
               }),
+            }).then(({ error }) => {
+              if (error) console.error('[Stripe] Payment email échoué:', { to: user.email, error })
+              else console.log('[Stripe] Payment email envoyé à:', user.email)
             })
           }
         }

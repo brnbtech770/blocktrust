@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
-import { sendEmailFireAndForget } from '@/lib/email'
+import { sendEmail } from '@/lib/email'
 import { CertificateRevokedEmail, subject as certificateRevokedSubject } from '@/emails/CertificateRevokedEmail'
 
 const certificateIdSchema = z.string().cuid()
@@ -108,7 +108,7 @@ export async function POST(
     const dashboardUrl = `${baseUrl}/dashboard/certificates`
     const owner = await prisma.user.findUnique({ where: { id: certificate.entity.userId } })
     if (owner?.email) {
-      sendEmailFireAndForget({
+      await sendEmail({
         to: owner.email,
         subject: certificateRevokedSubject,
         react: CertificateRevokedEmail({
@@ -117,6 +117,9 @@ export async function POST(
           revocationReason,
           dashboardUrl,
         }),
+      }).then(({ error }) => {
+        if (error) console.error('[Certificate] Revoked email échoué:', { to: owner.email, error })
+        else console.log('[Certificate] Revoked email envoyé à:', owner.email)
       })
     }
 

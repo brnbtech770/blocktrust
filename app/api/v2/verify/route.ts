@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { canonicalizeEmailContext, sha256Hex } from "@/lib/v2/context";
 import { verifyToken } from "@/lib/v2/jwt";
-import { sendEmailFireAndForget } from "@/lib/email";
+import { sendEmail } from "@/lib/email";
 import { FraudAlertEmail, subject as fraudAlertSubject } from "@/emails/FraudAlertEmail";
 
 const prisma = new PrismaClient();
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
             : certWithOwner!.entity.legalName || certWithOwner!.entity.email;
         const baseUrl =
           process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "https://blocktrust.tech";
-        sendEmailFireAndForget({
+        await sendEmail({
           to: ownerEmail,
           subject: fraudAlertSubject,
           react: FraudAlertEmail({
@@ -106,6 +106,9 @@ export async function POST(req: NextRequest) {
             ip: ip !== "unknown" ? ip : undefined,
             revokeUrl: `${baseUrl}/dashboard/certificate/${certificateId}`,
           }),
+        }).then(({ error }) => {
+          if (error) console.error('[Verify] Fraud alert email échoué:', { to: ownerEmail, error })
+          else console.log('[Verify] Fraud alert email envoyé à:', ownerEmail)
         });
       }
     }

@@ -3,7 +3,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
-import { sendEmailFireAndForget } from '@/lib/email'
+import { sendEmail } from '@/lib/email'
 import React from 'react'
 import { KYCApprovedEmail, subject as subjectApproved } from '@/emails/KYCApprovedEmail'
 import { KYCRejectedEmail, subject as subjectRejected } from '@/emails/KYCRejectedEmail'
@@ -18,13 +18,15 @@ export async function sendKYCApprovedEmail(userId: string): Promise<void> {
   })
   if (!user?.email) return
 
-  sendEmailFireAndForget({
+  const { error } = await sendEmail({
     to: user.email,
     subject: subjectApproved,
     react: React.createElement(KYCApprovedEmail, {
       userName: user.name || 'Utilisateur',
     }),
   })
+  if (error) console.error('[KYC] Approved email échoué:', { to: user.email, error })
+  else console.log('[KYC] Approved email envoyé à:', user.email)
 }
 
 export async function sendKYCRejectedEmail(userId: string, reason?: string): Promise<void> {
@@ -34,7 +36,7 @@ export async function sendKYCRejectedEmail(userId: string, reason?: string): Pro
   })
   if (!user?.email) return
 
-  sendEmailFireAndForget({
+  const { error } = await sendEmail({
     to: user.email,
     subject: subjectRejected,
     react: React.createElement(KYCRejectedEmail, {
@@ -42,6 +44,8 @@ export async function sendKYCRejectedEmail(userId: string, reason?: string): Pro
       reason,
     }),
   })
+  if (error) console.error('[KYC] Rejected email échoué:', { to: user.email, error })
+  else console.log('[KYC] Rejected email envoyé à:', user.email)
 }
 
 export async function sendKYCRetryEmail(
@@ -55,7 +59,7 @@ export async function sendKYCRetryEmail(
   if (!user?.email) return
 
   const url = verificationUrl || `${baseUrl}/onboarding/verify`
-  sendEmailFireAndForget({
+  const { error } = await sendEmail({
     to: user.email,
     subject: subjectRetry,
     react: React.createElement(KYCRetryEmail, {
@@ -63,4 +67,6 @@ export async function sendKYCRetryEmail(
       verificationUrl: url,
     }),
   })
+  if (error) console.error('[KYC] Retry email échoué:', { to: user.email, error })
+  else console.log('[KYC] Retry email envoyé à:', user.email)
 }
