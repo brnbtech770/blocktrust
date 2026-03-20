@@ -108,6 +108,29 @@ export const authOptions: NextAuthConfig = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === 'google') {
+        try {
+          await prisma.user.upsert({
+            where: { email: user.email! },
+            update: {
+              name: user.name,
+              image: user.image,
+            },
+            create: {
+              email: user.email!,
+              name: user.name,
+              image: user.image,
+              kycStatus: 'PENDING',
+              accountType: 'PERSONAL',
+            },
+          })
+        } catch (err) {
+          console.error('[signIn callback error]', err)
+        }
+      }
+      return true
+    },
     async jwt({ token, user, account }) {
       if (user) {
         if (account?.provider === "credentials") {
