@@ -1,6 +1,6 @@
 'use client'
 
-import { signIn } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import PlanCard from './PlanCard'
 import type { PlanB2B, BillingInterval } from '@/lib/pricing'
 
@@ -41,7 +41,13 @@ type Props = {
   onCheckout: (priceId: string) => void
 }
 
+function signinCheckoutCallbackUrl(priceId: string) {
+  const apiPath = `/api/stripe/create-checkout?priceId=${encodeURIComponent(priceId)}`
+  return `/auth/signin?callbackUrl=${encodeURIComponent(apiPath)}`
+}
+
 export default function PricingGridB2B({ plans, interval, currentPlan, isAuthenticated, loadingPlan, onCheckout }: Props) {
+  const router = useRouter()
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-[1200px] mx-auto px-6">
       {plans.map((plan) => {
@@ -74,7 +80,9 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
               plan.id === 'ENTERPRISE' || isCurrent
                 ? undefined
                 : !isAuthenticated
-                ? () => signIn('google', { callbackUrl: '/pricing' })
+                ? hasPrices && priceId
+                  ? () => router.push(signinCheckoutCallbackUrl(priceId))
+                  : () => router.push(`/auth/signin?callbackUrl=${encodeURIComponent('/pricing')}`)
                 : hasPrices
                 ? () => onCheckout(priceId)
                 : undefined

@@ -56,13 +56,30 @@ export async function middleware(request: NextRequest) {
     // ROUTES API PUBLIQUES (non listées dans config.matcher) :
     // /api/badge/*, /api/v2/verify/* — pas d'auth requise
     // ─────────────────────────────────────────────
+    // Retour après OAuth : callbackUrl peut pointer vers GET create-checkout
+    const isProtectedStripeApi =
+      pathname.startsWith('/api/stripe') && !pathname.includes('/webhook')
+    if (
+      isProtectedStripeApi &&
+      pathname === '/api/stripe/create-checkout' &&
+      request.method === 'GET' &&
+      !session?.user?.email
+    ) {
+      const signInUrl = new URL('/auth/signin', request.url)
+      signInUrl.searchParams.set(
+        'callbackUrl',
+        `${request.nextUrl.pathname}${request.nextUrl.search}`
+      )
+      return NextResponse.redirect(signInUrl)
+    }
+
     // PROTECTION ROUTES API (sauf webhook Stripe)
     if (
       pathname.startsWith('/api/certificates') ||
       pathname.startsWith('/api/entities') ||
       pathname === '/api/stats' ||
       pathname === '/api/activity' ||
-      (pathname.startsWith('/api/stripe') && !pathname.includes('/webhook'))
+      isProtectedStripeApi
     ) {
       if (!session?.user?.email) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
