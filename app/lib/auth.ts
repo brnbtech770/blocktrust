@@ -190,6 +190,13 @@ export const authOptions: NextAuthConfig = {
           (token as any).accountType = (user as any).accountType ?? 'PERSONAL';
         } else {
           // Connexion Google/OAuth — user vient de l'adapter (id DB + email)
+          // Fallback immédiat : toujours peupler le token avec les infos OAuth disponibles
+          // pour éviter un JWT vide si la requête DB échoue.
+          token.sub = (user as any).id ?? token.sub;
+          token.email = user.email ?? token.email;
+          token.name = user.name ?? token.name;
+          token.picture = (user as any).image ?? token.picture;
+
           try {
             const dbUser = await resolveDbUserAfterOAuth(user as any);
             if (dbUser) {
@@ -207,7 +214,8 @@ export const authOptions: NextAuthConfig = {
             }
           } catch (error) {
             console.error("❌ Error in JWT callback (OAuth):", error);
-            // Ne pas throw : sinon Auth.js annule toute la connexion (cookie / redirect cassés).
+            // Fallback déjà appliqué ci-dessus — la session sera fonctionnelle
+            // même si la requête DB échoue (cold start, timeout, etc.)
           }
         }
       }

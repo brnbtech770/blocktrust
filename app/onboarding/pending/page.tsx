@@ -6,18 +6,24 @@ import OnboardingPendingClient from './OnboardingPendingClient'
 
 export default async function OnboardingPendingPage() {
   const session = await auth()
-  if (!session?.user?.id) {
+  if (!session?.user?.id && !session?.user?.email) {
     redirect('/auth/signin?callbackUrl=/onboarding/pending')
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      kycStatus: true,
-      kycRejectedAt: true,
-      kycRejectedReason: true,
-    },
-  })
+  const userId = session.user.id
+  const userEmail = session.user.email
+
+  const user = userId
+    ? await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, kycStatus: true, kycRejectedAt: true, kycRejectedReason: true },
+      })
+    : userEmail
+      ? await prisma.user.findUnique({
+          where: { email: userEmail },
+          select: { id: true, kycStatus: true, kycRejectedAt: true, kycRejectedReason: true },
+        })
+      : null
 
   if (!user) redirect('/auth/signin')
 
@@ -30,7 +36,7 @@ export default async function OnboardingPendingPage() {
   }
 
   const verification = await prisma.kYCVerification.findFirst({
-    where: { userId: session.user.id },
+    where: { userId: user.id },
     orderBy: { createdAt: 'desc' },
     select: { stripeVerificationUrl: true, status: true },
   })
