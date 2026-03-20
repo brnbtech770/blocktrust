@@ -198,7 +198,28 @@ function SignInContent() {
 
   function handleGoogle() {
     // Auth.js v5 : flux sign-in OAuth via signIn() (POST/CSRF) — pas de GET /api/auth/signin/google.
-    signIn("google", { callbackUrl: googleCallbackUrl(callbackUrl) });
+    const cbNorm = googleCallbackUrl(callbackUrl);
+    // #region agent log
+    fetch("http://127.0.0.1:7242/ingest/bcf6afcf-d9fe-4562-9afc-d7d8113f78b5", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "467f2c" },
+      body: JSON.stringify({
+        sessionId: "467f2c",
+        runId: "post-fix",
+        hypothesisId: "H1-callback-relative",
+        location: "app/auth/signin/page.tsx:handleGoogle",
+        message: "google signIn callbackUrl normalized",
+        data: {
+          rawLen: callbackUrl.length,
+          rawLooksAbsolute: /^https?:\/\//i.test(callbackUrl.trim()),
+          normLen: cbNorm.length,
+          normRelative: cbNorm.startsWith("/"),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+    signIn("google", { callbackUrl: cbNorm });
   }
 
   return (
