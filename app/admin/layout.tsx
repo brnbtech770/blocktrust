@@ -64,6 +64,7 @@ function IconKyc() {
 }
 
 const navLinks = [
+  { href: '/dashboard', label: 'Vue client', Icon: IconClients },
   { href: '/admin', label: 'Tableau de bord', Icon: IconDashboard },
   { href: '/admin/certificates', label: 'Certificats', Icon: IconDemandes },
   { href: '/admin/kyc', label: 'KYC', Icon: IconKyc },

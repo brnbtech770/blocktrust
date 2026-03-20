@@ -4,6 +4,7 @@
 
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
+import { isAdmin } from '@/app/lib/admin'
 import SignOutButton from './SignOutButton'
 import { Logo } from '@/app/components/ui/Logo'
 import DashboardSidebarNav, { type SidebarItem } from './DashboardSidebarNav'
@@ -32,6 +33,7 @@ export default async function DashboardSidebar() {
     })
 
     const plan = user?.plan || null
+    const userIsAdmin = isAdmin(session.user.email)
 
   const menuItems: SidebarItem[] = [
     { name: 'Tableau de bord', href: '/dashboard', icon: 'Home' },
@@ -50,6 +52,9 @@ export default async function DashboardSidebar() {
         ]),
     { name: 'Facturation', href: '/dashboard/billing', icon: 'CreditCard' },
     { name: 'Paramètres', href: '/dashboard/settings', icon: 'Settings' },
+    ...(userIsAdmin
+      ? [{ name: 'Administration', href: '/admin', icon: 'Shield' as const }]
+      : []),
   ]
 
   return (
