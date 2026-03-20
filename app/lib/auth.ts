@@ -51,7 +51,9 @@ const emailMagicLinkProvider = {
 
 // allowDangerousEmailAccountLinking : uniquement sur GoogleProvider (pas d’option globale Auth.js v5)
 export const authOptions: NextAuthConfig = {
-  adapter: PrismaAdapter(prisma),
+  // PrismaAdapter retiré : il cause OAuthAccountNotLinked même avec
+  // allowDangerousEmailAccountLinking. Le linking est géré manuellement
+  // dans le callback signIn ci-dessous.
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -108,6 +110,52 @@ export const authOptions: NextAuthConfig = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account, profile }) {
+      // Pour Google : s'assurer que le Account est lié au bon User
+      if (account?.provider === "google" && user.email) {
+        try {
+          // Trouver ou créer le user
+          const dbUser = await prisma.user.upsert({
+            where: { email: user.email },
+            create: { email: user.email, name: user.name, image: user.image },
+            update: { name: user.name, image: user.image },
+          });
+          // Upsert le Account Google
+          await prisma.account.upsert({
+            where: {
+              provider_providerAccountId: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+              },
+            },
+            create: {
+              userId: dbUser.id,
+              type: account.type,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+              access_token: account.access_token as string | undefined,
+              refresh_token: account.refresh_token as string | undefined,
+              expires_at: account.expires_at as number | undefined,
+              token_type: account.token_type as string | undefined,
+              scope: account.scope as string | undefined,
+              id_token: account.id_token as string | undefined,
+              session_state: account.session_state as string | undefined,
+            },
+            update: {
+              userId: dbUser.id,
+              access_token: account.access_token as string | undefined,
+              refresh_token: account.refresh_token as string | undefined,
+              expires_at: account.expires_at as number | undefined,
+              id_token: account.id_token as string | undefined,
+            },
+          });
+        } catch (err) {
+          console.error('[Auth] signIn Google linking error:', err);
+          return false;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user, account }) {
       if (user) {
         if (account?.provider === "credentials") {
@@ -118,50 +166,21 @@ export const authOptions: NextAuthConfig = {
           (token as any).kycStatus = (user as any).kycStatus ?? 'PENDING';
           (token as any).accountType = (user as any).accountType ?? 'PERSONAL';
         } else {
-        // Première connexion Google - créer ou mettre à jour l'utilisateur en DB
+        // Connexion Google — récupérer le user DB
         try {
-          const existingUser = await prisma.user.findUnique({
+          const dbUser = await prisma.user.findUnique({
             where: { email: user.email! },
           });
-          const dbUser = await prisma.user.upsert({
-            where: { email: user.email! },
-            create: {
-              email: user.email!,
-              name: user.name,
-              image: user.image,
-            },
-            update: {
-              name: user.name,
-              image: user.image,
-            },
-          });
-          token.sub = dbUser.id;
-          token.email = dbUser.email;
-          token.name = dbUser.name;
-          token.picture = dbUser.image;
-          (token as any).kycStatus = (dbUser as any).kycStatus ?? 'PENDING';
-          (token as any).accountType = dbUser.accountType ?? 'PERSONAL';
-
-          // Email de bienvenue pour les nouveaux utilisateurs (fire-and-forget)
-          if (!existingUser && dbUser.email) {
-            const { sendEmail } = await import('@/lib/email');
-            const { WelcomeEmail, subject: welcomeSubject } = await import('@/emails/WelcomeEmail');
-            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech';
-            await sendEmail({
-              to: dbUser.email,
-              subject: welcomeSubject,
-              react: WelcomeEmail({
-                userName: dbUser.name,
-                dashboardUrl: `${baseUrl}/dashboard`,
-              }),
-            }).then(({ error }) => {
-              if (error) console.error('[Auth] Welcome email échoué:', { to: dbUser.email, error })
-              else console.log('[Auth] Welcome email envoyé à:', dbUser.email)
-            });
+          if (dbUser) {
+            token.sub = dbUser.id;
+            token.email = dbUser.email;
+            token.name = dbUser.name;
+            token.picture = dbUser.image;
+            (token as any).kycStatus = (dbUser as any).kycStatus ?? 'PENDING';
+            (token as any).accountType = dbUser.accountType ?? 'PERSONAL';
           }
         } catch (error) {
-          console.error('❌ Error creating/updating user in DB:', error);
-          // Fail-closed : pas de session sans enregistrement DB cohérent (évite token sans sub)
+          console.error('❌ Error in JWT callback:', error);
           throw error;
         }
         }
