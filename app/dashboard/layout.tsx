@@ -8,6 +8,7 @@ import { cookies, headers } from 'next/headers'
 import { prisma } from '@/app/lib/db'
 import DashboardSidebar from '@/app/components/DashboardSidebar'
 import { writeAgentDebugLog } from '@/app/lib/agent-debug-467f2c-log'
+import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
 
 /** Évite cache / flux RSC sans cookies → auth() null alors que l’utilisateur est connecté */
 export const dynamic = 'force-dynamic'
@@ -56,7 +57,11 @@ export default async function DashboardLayout({
 
   // Garde-fou session : pas de middleware Edge (decoding JWT fragile) ; tout passe par auth() Node.
   if (!session?.user?.email) {
-    redirect('/auth/signin?callbackUrl=/dashboard')
+    const cookiePresent = await hasAuthJsSessionCookie()
+    const reason = cookiePresent ? 'jwt-cookie-unreadable' : 'no-session-cookie'
+    redirect(
+      `/auth/signin?callbackUrl=${encodeURIComponent('/dashboard')}&reason=${reason}`
+    )
   }
 
   console.log('[DEBUG] Fetching user from database');
@@ -69,7 +74,9 @@ export default async function DashboardLayout({
 
   if (!user) {
     console.log('[DEBUG] Redirecting: no user');
-    redirect('/auth/signin?callbackUrl=/dashboard')
+    redirect(
+      `/auth/signin?callbackUrl=${encodeURIComponent('/dashboard')}&reason=user-not-in-db`
+    )
   }
 
   // Vérifier si l'utilisateur a un plan actif (optionnel pour le moment)

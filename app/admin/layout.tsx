@@ -4,6 +4,7 @@
 
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
+import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
 import { redirect } from 'next/navigation'
 import SignOutButton from '@/app/components/SignOutButton'
 import { Logo } from '@/app/components/ui/Logo'
@@ -78,7 +79,11 @@ export default async function AdminLayout({
   const session = await auth()
 
   if (!session?.user?.email) {
-    redirect('/auth/signin?callbackUrl=/admin')
+    const cookiePresent = await hasAuthJsSessionCookie()
+    const reason = cookiePresent ? 'jwt-cookie-unreadable' : 'no-session-cookie'
+    redirect(
+      `/auth/signin?callbackUrl=${encodeURIComponent('/admin')}&reason=${reason}`
+    )
   }
 
   if (!isAdmin(session.user.email)) {

@@ -67,15 +67,31 @@ function oauthErrorMessage(code: string | null): string | null {
   return map[code] ?? `Erreur : ${code}`;
 }
 
+/** Après redirect depuis dashboard/admin : raison technique (pour support / debug). */
+function signinReasonMessage(code: string | null): string | null {
+  if (!code) return null;
+  const map: Record<string, string> = {
+    "no-session-cookie":
+      "Aucun cookie de session détecté après la redirection. Réessayez Google, ou vérifiez bloqueurs / mode privé. Ensuite ouvrez /api/debug-auth dans cet onglet.",
+    "jwt-cookie-unreadable":
+      "Cookie de session présent mais non lu (JWT invalide, secret, chunk ou hôte). Ouvrez /api/debug-auth dans cet onglet et vérifiez jwtFromCookie + layoutDiagnostic.",
+    "user-not-in-db":
+      "Session avec email mais utilisateur introuvable en base. Contact support ou vérifiez la base.",
+  };
+  return map[code] ?? `Diagnostic : ${code}`;
+}
+
 function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const errorParam = searchParams.get("error");
+  const reasonParam = searchParams.get("reason");
   const oauthError =
     errorParam && errorParam !== "CredentialsSignin"
       ? oauthErrorMessage(errorParam)
       : null;
+  const reasonHint = signinReasonMessage(reasonParam);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -186,6 +202,37 @@ function SignInContent() {
             }}
           >
             {oauthError}
+          </p>
+        )}
+
+        {reasonHint && (
+          <p
+            role="status"
+            style={{
+              color: "rgba(232,234,240,0.85)",
+              marginBottom: "1.25rem",
+              fontSize: "0.85rem",
+              lineHeight: 1.45,
+              padding: "12px",
+              borderRadius: "8px",
+              background: "rgba(224,82,82,0.12)",
+              border: "1px solid rgba(224,82,82,0.35)",
+            }}
+          >
+            {reasonHint}
+            {reasonParam ? (
+              <span
+                style={{
+                  display: "block",
+                  marginTop: "8px",
+                  fontFamily: "monospace",
+                  fontSize: "0.75rem",
+                  opacity: 0.9,
+                }}
+              >
+                code&nbsp;: {reasonParam}
+              </span>
+            ) : null}
           </p>
         )}
 
