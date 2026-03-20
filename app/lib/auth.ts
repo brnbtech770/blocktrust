@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/db";
 import type { NextAuthConfig } from "next-auth";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
@@ -22,7 +23,33 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
   console.warn('   L\'authentification Google ne fonctionnera pas');
 }
 
+/** Magic link (email) — envoi via Resend (lib/email), id provider = "email" pour signIn("email", …) */
+const emailMagicLinkProvider = {
+  id: "email",
+  type: "email" as const,
+  name: "Email",
+  from: "BlockTrust <noreply@blocktrust.tech>",
+  maxAge: 24 * 60 * 60,
+  async sendVerificationRequest({
+    identifier,
+    url,
+  }: {
+    identifier: string;
+    url: string;
+  }) {
+    const { sendEmail } = await import("@/lib/email");
+    const ReactImport = await import("react");
+    const { MagicLinkEmail, subject } = await import("@/emails/MagicLinkEmail");
+    await sendEmail({
+      to: identifier,
+      subject,
+      react: ReactImport.createElement(MagicLinkEmail, { url }),
+    });
+  },
+};
+
 export const authOptions: NextAuthConfig = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -35,6 +62,7 @@ export const authOptions: NextAuthConfig = {
         },
       },
     }),
+    emailMagicLinkProvider,
     CredentialsProvider({
       name: "Email",
       credentials: {
