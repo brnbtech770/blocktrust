@@ -5,6 +5,7 @@
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
+import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
 import { redirect } from 'next/navigation'
 import SignOutButton from '@/app/components/SignOutButton'
 import { Logo } from '@/app/components/ui/Logo'
@@ -79,6 +80,18 @@ export default async function AdminLayout({
   const session = await auth()
 
   if (!session?.user?.email) {
+    if (await isRscPrefetchRequest()) {
+      return (
+        <div
+          className="flex min-h-screen items-center justify-center font-sans"
+          style={{ background: 'var(--bt-navy)' }}
+          aria-busy="true"
+          aria-label="Préchargement"
+        >
+          <div className="sr-only">Préchargement admin…</div>
+        </div>
+      )
+    }
     const cookiePresent = await hasAuthJsSessionCookie()
     const reason = cookiePresent ? 'jwt-cookie-unreadable' : 'no-session-cookie'
     redirect(

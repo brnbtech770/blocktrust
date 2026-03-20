@@ -9,6 +9,7 @@ import { prisma } from '@/app/lib/db'
 import DashboardSidebar from '@/app/components/DashboardSidebar'
 import { writeAgentDebugLog } from '@/app/lib/agent-debug-467f2c-log'
 import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
+import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
 
 /** Évite cache / flux RSC sans cookies → auth() null alors que l’utilisateur est connecté */
 export const dynamic = 'force-dynamic'
@@ -36,6 +37,7 @@ export default async function DashboardLayout({
     hdrs.get('Next-Router-Prefetch') === '1' ||
     hdrs.get('next-router-prefetch') === '1'
   const secPurpose = hdrs.get('sec-purpose') ?? hdrs.get('Sec-Purpose') ?? ''
+  const rscPrefetch = await isRscPrefetchRequest()
 
   // #region agent log
   await writeAgentDebugLog({
@@ -51,12 +53,25 @@ export default async function DashboardLayout({
       cookieHeaderLen,
       nextPrefetch,
       secPurposeLen: secPurpose ? secPurpose.length : 0,
+      rscPrefetch,
+      prefetchAuthBypass: rscPrefetch && !hasSession,
     },
   })
   // #endregion
 
   // Garde-fou session : pas de middleware Edge (decoding JWT fragile) ; tout passe par auth() Node.
   if (!session?.user?.email) {
+    if (rscPrefetch) {
+      return (
+        <div
+          className="min-h-screen bg-[var(--bt-navy)]"
+          aria-busy="true"
+          aria-label="Préchargement"
+        >
+          <div className="sr-only">Préchargement du tableau de bord…</div>
+        </div>
+      )
+    }
     const cookiePresent = await hasAuthJsSessionCookie()
     const reason = cookiePresent ? 'jwt-cookie-unreadable' : 'no-session-cookie'
     redirect(
