@@ -247,9 +247,82 @@ export async function GET(req: NextRequest) {
       'Host = www.* alors que NEXTAUTH_URL est en apex : risque de cookies session sur le mauvais host. Utiliser l’URL sans www ou déployer le middleware de redirection www→apex.'
   }
 
+  /** Pistes pour ?error=Configuration (assertConfig / callback URL / adapter email). */
+  function urlOriginPathSanity(raw: string | undefined): {
+    ok: boolean
+    pathname: string | null
+    hint: string | null
+  } {
+    if (raw == null || raw === '') {
+      return { ok: true, pathname: null, hint: null }
+    }
+    try {
+      const u = new URL(raw)
+      const p = u.pathname === '' ? '/' : u.pathname
+      if (p !== '/') {
+        return {
+          ok: false,
+          pathname: p,
+          hint:
+            'L’URL canonique ne doit pas contenir de chemin (ex. utiliser https://blocktrust.tech et non …/api/auth). Sinon Auth.js peut renvoyer error=Configuration.',
+        }
+      }
+      return { ok: true, pathname: p, hint: null }
+    } catch {
+      return {
+        ok: false,
+        pathname: null,
+        hint: 'Valeur illisible pour new URL() — risque error=Configuration.',
+      }
+    }
+  }
+
+  const nextauthSanity = urlOriginPathSanity(process.env.NEXTAUTH_URL)
+  const authUrlSanity = urlOriginPathSanity(process.env.AUTH_URL)
+  const adapterEmailMethodsOk = !!(
+    adapter?.createVerificationToken &&
+    adapter?.useVerificationToken &&
+    adapter?.getUserByEmail
+  )
+  const googleOAuthEnvOk = !!(
+    process.env.GOOGLE_CLIENT_ID?.trim() &&
+    process.env.GOOGLE_CLIENT_SECRET?.trim()
+  )
+  const authSecretOk = !!(
+    process.env.AUTH_SECRET?.length || process.env.NEXTAUTH_SECRET?.length
+  )
+
+  const configurationRiskHints: string[] = []
+  if (!nextauthSanity.ok && nextauthSanity.hint) configurationRiskHints.push(nextauthSanity.hint)
+  if (!authUrlSanity.ok && authUrlSanity.hint) configurationRiskHints.push(`AUTH_URL: ${authUrlSanity.hint}`)
+  if (!adapterEmailMethodsOk) {
+    configurationRiskHints.push(
+      'Adapter Prisma : méthodes email manquantes (magic link peut faire échouer assertConfig).'
+    )
+  }
+  if (!googleOAuthEnvOk) {
+    configurationRiskHints.push('GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET manquants ou vides.')
+  }
+  if (!authSecretOk) {
+    configurationRiskHints.push('AUTH_SECRET / NEXTAUTH_SECRET manquant — assertConfig MissingSecret.')
+  }
+
+  const authConfigSanity = {
+    nextauthUrlPathOk: nextauthSanity.ok,
+    nextauthUrlPathname: nextauthSanity.pathname,
+    authUrlPathOk: authUrlSanity.ok,
+    authUrlPathname: authUrlSanity.pathname,
+    prismaAdapterEmailMethods: adapterEmailMethodsOk,
+    googleOAuthEnvOk,
+    authSecretOk,
+    configurationRiskHints,
+    deployHint:
+      'Si ?error=Configuration persiste, lire les logs Vercel au moment du clic (cause réelle souvent InvalidCallbackUrl / assertConfig).',
+  }
+
   return NextResponse.json(
     {
-      debugAuthVersion: 7,
+      debugAuthVersion: 8,
       vercelGitCommitSha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
       authEnvShim,
       runtimeAuthSecretPresent: !!process.env.AUTH_SECRET,
@@ -267,6 +340,7 @@ export async function GET(req: NextRequest) {
       accounts,
       request: requestInfo,
       wwwVsCanonical,
+      authConfigSanity,
     },
     {
       status: 200,
