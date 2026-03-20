@@ -49,6 +49,47 @@ const emailMagicLinkProvider = {
   },
 };
 
+/**
+ * Résout l'utilisateur Prisma après OAuth : id renvoyé par l'adapter, email, ou upsert (aligné sur signIn Google).
+ * Évite un JWT sans `sub` si findUnique par email seul échoue (timing, casse, user.id déjà disponible).
+ */
+async function resolveDbUserAfterOAuth(user: {
+  id?: string | null;
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+}) {
+  if (user.id) {
+    const byId = await prisma.user.findUnique({ where: { id: user.id } });
+    if (byId) return byId;
+  }
+  const email = user.email?.trim();
+  if (!email) return null;
+
+  let dbUser = await prisma.user.findUnique({ where: { email } });
+  if (dbUser) return dbUser;
+
+  dbUser = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
+  });
+  if (dbUser) return dbUser;
+
+  return prisma.user.upsert({
+    where: { email },
+    update: {
+      name: user.name,
+      image: user.image,
+    },
+    create: {
+      email,
+      name: user.name,
+      image: user.image,
+      kycStatus: "PENDING",
+      accountType: "PERSONAL",
+    },
+  });
+}
+
 // allowDangerousEmailAccountLinking : uniquement sur GoogleProvider (pas d’option globale Auth.js v5)
 export const authOptions: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
@@ -111,26 +152,31 @@ export const authOptions: NextAuthConfig = {
     // Google OAuth : garantir un enregistrement User (avant JWT) — requis si l’adapter est en retard ou en échec partiel.
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
+        const email = user.email?.trim();
+        if (!email) {
+          console.warn('[signIn google] email absent du profil, connexion refusée');
+          return false;
+        }
         try {
           await prisma.user.upsert({
-            where: { email: user.email! },
+            where: { email },
             update: {
               name: user.name,
               image: user.image,
             },
             create: {
-              email: user.email!,
+              email,
               name: user.name,
               image: user.image,
               kycStatus: 'PENDING',
               accountType: 'PERSONAL',
             },
-          })
+          });
         } catch (err) {
-          console.error('[signIn callback error]', err)
+          console.error('[signIn callback error]', err);
         }
       }
-      return true
+      return true;
     },
     async jwt({ token, user, account }) {
       if (user) {
@@ -142,23 +188,26 @@ export const authOptions: NextAuthConfig = {
           (token as any).kycStatus = (user as any).kycStatus ?? 'PENDING';
           (token as any).accountType = (user as any).accountType ?? 'PERSONAL';
         } else {
-        // Connexion Google/OAuth — user vient de l'adapter
-        try {
-          const dbUser = await prisma.user.findUnique({
-            where: { email: user.email! },
-          });
-          if (dbUser) {
-            token.sub = dbUser.id;
-            token.email = dbUser.email;
-            token.name = dbUser.name;
-            token.picture = dbUser.image;
-            (token as any).kycStatus = (dbUser as any).kycStatus ?? 'PENDING';
-            (token as any).accountType = dbUser.accountType ?? 'PERSONAL';
+          // Connexion Google/OAuth — user vient de l'adapter (id DB + email)
+          try {
+            const dbUser = await resolveDbUserAfterOAuth(user as any);
+            if (dbUser) {
+              token.sub = dbUser.id;
+              token.email = dbUser.email ?? undefined;
+              token.name = dbUser.name ?? undefined;
+              token.picture = dbUser.image ?? undefined;
+              (token as any).kycStatus = (dbUser as any).kycStatus ?? "PENDING";
+              (token as any).accountType = dbUser.accountType ?? "PERSONAL";
+            } else {
+              console.error("[JWT OAuth] impossible de résoudre User en base", {
+                userId: (user as any).id,
+                email: (user as any).email,
+              });
+            }
+          } catch (error) {
+            console.error("❌ Error in JWT callback (OAuth):", error);
+            // Ne pas throw : sinon Auth.js annule toute la connexion (cookie / redirect cassés).
           }
-        } catch (error) {
-          console.error('❌ Error in JWT callback:', error);
-          throw error;
-        }
         }
       }
       // Rafraîchir plan + KYC à chaque requête
