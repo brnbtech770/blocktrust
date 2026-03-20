@@ -90,17 +90,26 @@ function KpiCard({
       }}
     >
       <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: topBorder }} />
-      <div className="flex items-start justify-between gap-2">
-        <div>
+      <div className="flex items-start justify-between gap-2 min-w-0">
+        <div className="min-w-0 flex-1 overflow-hidden">
           <p className="text-[10px] mb-1 font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
             {label}
           </p>
-          <p className="text-[28px] font-extrabold text-white tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <p
+            className="font-extrabold text-white tracking-tight"
+            style={{
+              fontFamily: 'var(--font-syne), sans-serif',
+              fontSize: 'clamp(14px, 3.5vw, 18px)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {value}
           </p>
-          <p className="text-[10px] mt-1" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>{sub}</p>
+          <p className="text-[10px] mt-1 truncate" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>{sub}</p>
         </div>
-        {icon}
+        <div className="shrink-0">{icon}</div>
       </div>
     </div>
   )

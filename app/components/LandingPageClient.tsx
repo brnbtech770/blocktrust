@@ -24,14 +24,15 @@ export default function LandingPageClient() {
             </div>
 
             <h1
-              className="text-[36px] md:text-[52px] font-extrabold leading-[1.1] mb-4"
-              style={{ fontFamily: 'var(--font-syne), sans-serif' }}
+              className="font-extrabold leading-[1.12] mb-4 max-w-[22ch] sm:max-w-none"
+              style={{
+                fontFamily: 'var(--font-syne), sans-serif',
+                fontSize: 'clamp(32px, 5vw, 52px)',
+              }}
             >
               <span className="text-white">Certificat d&apos;identité </span>
-              <br />
               <span style={{ color: '#00d4ff' }}>infalsifiable</span>
-              <span className="text-white"> sur</span>
-              <br />
+              <span className="text-white"> sur </span>
               <span style={{ color: 'var(--bt-gold)' }}>blockchain</span>
             </h1>
 
@@ -42,11 +43,11 @@ export default function LandingPageClient() {
 
             <div className="flex flex-wrap gap-4 mb-10">
               <a
-                href="/pricing"
+                href="/dashboard/create"
                 className="inline-flex items-center rounded-[10px] px-7 py-3.5 text-[15px] font-bold transition-transform hover:scale-[1.02] hover:brightness-110"
                 style={{ background: '#00d4ff', color: '#0a1628' }}
               >
-                Créer mon certificat →
+                Créer mon certificat
               </a>
               <a
                 href="/verify"
