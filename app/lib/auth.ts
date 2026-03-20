@@ -58,8 +58,7 @@ export const authOptions: NextAuthConfig = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       /** Permet de lier un compte Google à un utilisateur existant (même email, ex. email/password). */
       // Sécurité : ne lier automatiquement Google qu’au même email qu’avec opt-in explicite
-      allowDangerousEmailAccountLinking:
-        process.env.ALLOW_DANGEROUS_EMAIL_LINKING === 'true',
+      allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
           prompt: "select_account", // Force la sélection de compte à chaque connexion
