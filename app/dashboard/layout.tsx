@@ -21,7 +21,13 @@ export default async function DashboardLayout({
   const session = await auth()
   const rscPrefetch = await isRscPrefetchRequest()
 
-  // Admins : accès espace client + lien Administration dans la sidebar (pas de redirect forcé).
+  // Admin → /admin
+  if (session?.user?.email) {
+    const { isAdmin } = await import('@/app/lib/admin')
+    if (isAdmin(session.user.email)) {
+      redirect('/admin')
+    }
+  }
 
   if (!session?.user?.email) {
     if (rscPrefetch) {
