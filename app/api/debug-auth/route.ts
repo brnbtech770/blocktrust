@@ -3,6 +3,7 @@ import type { Session } from 'next-auth'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
+import { authEnvShim } from '@/app/lib/auth-env-shim'
 
 export const dynamic = 'force-dynamic'
 
@@ -131,7 +132,10 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json(
     {
-      debugAuthVersion: 2,
+      debugAuthVersion: 3,
+      vercelGitCommitSha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
+      authEnvShim,
+      runtimeAuthSecretPresent: !!process.env.AUTH_SECRET,
       session: sessionInfo,
       layoutDiagnostic,
       cookies,
