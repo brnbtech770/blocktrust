@@ -54,8 +54,6 @@ const separatorStyle: React.CSSProperties = {
 function oauthErrorMessage(code: string | null): string | null {
   if (!code) return null;
   const map: Record<string, string> = {
-    Configuration:
-      "Erreur côté Auth.js (souvent masquée sous « Configuration »). Essayez : supprimer les cookies pour ce site ; vérifier NEXTAUTH_URL / AUTH_URL = https://blocktrust.tech sans chemin ; redirect URI Google = https://blocktrust.tech/api/auth/callback/google ; consulter les logs Vercel [auth] au moment du clic.",
     AccessDenied: "Connexion refusée.",
     Verification: "Le lien de vérification a expiré ou a déjà été utilisé.",
     OAuthSignin: "Impossible de démarrer la connexion OAuth.",
@@ -105,7 +103,9 @@ function SignInContent() {
   const reasonParam = searchParams.get("reason");
   const clearedOAuth = searchParams.get("cleared") === "oauth";
   const oauthError =
-    errorParam && errorParam !== "CredentialsSignin"
+    errorParam &&
+    errorParam !== "CredentialsSignin" &&
+    errorParam !== "Configuration"
       ? oauthErrorMessage(errorParam)
       : null;
   const reasonHint = signinReasonMessage(reasonParam);
@@ -251,15 +251,58 @@ function SignInContent() {
         )}
 
         {errorParam === "Configuration" && (
-          <p style={{ marginBottom: "1.25rem", fontSize: "0.85rem", lineHeight: 1.45 }}>
-            <a
-              href="/api/auth/reset-oauth-cookies"
-              className="text-[#00d4ff] underline hover:brightness-110"
-            >
-              Réinitialiser les cookies du flux OAuth
-            </a>{" "}
-            (callback, état, PKCE) puis réessayez — utile si un cookie invalide déclenche cette erreur.
-          </p>
+          <div
+            role="alert"
+            style={{
+              color: "rgba(232,234,240,0.92)",
+              marginBottom: "1.25rem",
+              fontSize: "0.88rem",
+              lineHeight: 1.5,
+              padding: "14px 16px",
+              borderRadius: "10px",
+              background: "rgba(224,82,82,0.14)",
+              border: "1px solid rgba(224,82,82,0.4)",
+            }}
+          >
+            <p style={{ fontWeight: 700, marginBottom: "10px", color: "#ffb4b4" }}>
+              Erreur « Configuration » (Auth.js)
+            </p>
+            <p style={{ marginBottom: "10px", opacity: 0.95 }}>
+              La cause réelle est souvent dans les <strong>logs Vercel</strong> (filtrer{" "}
+              <code style={{ fontSize: "0.8rem" }}>[auth]</code> au moment où vous cliquez sur Google).
+            </p>
+            <ol style={{ margin: 0, paddingLeft: "1.2rem" }}>
+              <li style={{ marginBottom: "8px" }}>
+                <a
+                  href="/api/auth/reset-oauth-cookies"
+                  className="font-semibold text-[#00d4ff] underline hover:brightness-110"
+                >
+                  Réinitialiser les cookies du flux OAuth
+                </a>{" "}
+                (callback, état, PKCE) — recommandé en premier.
+              </li>
+              <li style={{ marginBottom: "8px" }}>
+                Google Cloud Console → identifiants OAuth : URI de redirection{" "}
+                <strong>exacte</strong> :{" "}
+                <code style={{ fontSize: "0.78rem", wordBreak: "break-all", display: "block", marginTop: "4px" }}>
+                  https://blocktrust.tech/api/auth/callback/google
+                </code>
+              </li>
+              <li style={{ marginBottom: "8px" }}>
+                Vercel : <code>NEXTAUTH_URL</code> = <code>AUTH_URL</code> ={" "}
+                <code>https://blocktrust.tech</code> (sans chemin, sans slash final obligatoire).
+              </li>
+              <li>
+                <a
+                  href="/api/debug-auth"
+                  className="text-[#00d4ff] underline hover:brightness-110"
+                >
+                  /api/debug-auth
+                </a>{" "}
+                — contrôle serveur (variables, adapter) dans ce navigateur.
+              </li>
+            </ol>
+          </div>
         )}
 
         {reasonHint && (
