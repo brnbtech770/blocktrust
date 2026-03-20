@@ -9,7 +9,6 @@
 - Recommandé : définir **`AUTH_URL`** = **`NEXTAUTH_URL`** (ex. `https://blocktrust.tech`) si vous n’utilisez que `NEXTAUTH_URL` ; le shim peut aussi recopier au démarrage.
 - **Ne pas** mettre de chemin dans l’URL canonique : utilisez `https://blocktrust.tech` et **pas** `https://blocktrust.tech/api/auth` (sinon `basePath` / validation `callbackUrl` peuvent casser et NextAuth renvoie **`?error=Configuration`**).
 - **Google** : utiliser **`signIn('google', { callbackUrl })`** depuis `next-auth/react` (flux POST / CSRF). Un **`GET`** direct vers `/api/auth/signin/google` est **invalide** sous Auth.js v5 (ex. `UnknownAction` / erreur masquée).
-- Optionnel : `BT_DEBUG_RING_SECRET` (≥16 caractères) pour lire `/api/debug/agent-log-recent` en prod avec `Authorization: Bearer …`.
 - Optionnel : **`AUTH_DEBUG=true`** (temporaire) pour des logs `[auth]` détaillés sur Vercel lors du clic Google — retirer après diagnostic.
 
 ## Variables requises pour NextAuth

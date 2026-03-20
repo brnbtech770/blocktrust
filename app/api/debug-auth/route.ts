@@ -46,9 +46,6 @@ export async function GET(req: NextRequest) {
     req.headers.get('next-router-prefetch') === '1'
   const secPurpose = req.headers.get('sec-purpose') ?? req.headers.get('Sec-Purpose') ?? ''
   const layoutDiagnostic = {
-    sessionId: '467f2c',
-    hypothesisId: 'H2',
-    message: 'parity with app/dashboard/layout.tsx auth probe',
     data: {
       hasSession,
       hasSessionCookie,
@@ -59,7 +56,6 @@ export async function GET(req: NextRequest) {
       secPurposePrefix: secPurpose ? secPurpose.slice(0, 24) : '',
     },
     timestamp: Date.now(),
-    runId: 'debug-auth-get',
   }
 
   // 2. Cookies present (+ indices chunk session JWT > 4ko)

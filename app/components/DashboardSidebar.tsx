@@ -10,11 +10,9 @@ import { Logo } from '@/app/components/ui/Logo'
 import DashboardSidebarNav, { type SidebarItem } from './DashboardSidebarNav'
 
 export default async function DashboardSidebar() {
-  console.log('[DEBUG] DashboardSidebar entry');
   try {
     const session = await auth()
-    console.log('[DEBUG] After auth() in sidebar', {hasSession: !!session, hasEmail: !!session?.user?.email});
-    
+
     if (!session?.user?.email) {
       return (
         <aside

@@ -1,10 +1,8 @@
 /**
  * Fragment de config NextAuth sans dépendances lourdes (Prisma, bcrypt).
- * `writeAgentDebugLog` utilise fs : ne pas importer ce fichier depuis du middleware Edge.
  */
 import type { NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { writeAgentDebugLog } from "@/app/lib/agent-debug-467f2c-log";
 
 export const googleProvider = GoogleProvider({
   clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -43,24 +41,6 @@ const authEdgeConfig = {
         const tokenEmail =
           typeof token.email === "string" ? token.email.trim() : "";
         const resolvedEmail = sessionEmail || tokenEmail || "";
-        const source = sessionEmail ? "session" : tokenEmail ? "token" : "none";
-
-        // #region agent log
-        await writeAgentDebugLog({
-          hypothesisId: "H1",
-          location: "auth.edge.config.ts:session",
-          message: "OAuth session email merge",
-          runId: "oauth-flow",
-          data: {
-            sessionEmailLen: sessionEmail.length,
-            tokenEmailLen: tokenEmail.length,
-            resolvedLen: resolvedEmail.length,
-            hasSub: Boolean(token.sub && String(token.sub).length > 0),
-            subLen: token.sub ? String(token.sub).length : 0,
-            source,
-          },
-        });
-        // #endregion
 
         return {
           ...session,
