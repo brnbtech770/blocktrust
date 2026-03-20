@@ -103,6 +103,7 @@ function SignInContent() {
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
   const errorParam = searchParams.get("error");
   const reasonParam = searchParams.get("reason");
+  const clearedOAuth = searchParams.get("cleared") === "oauth";
   const oauthError =
     errorParam && errorParam !== "CredentialsSignin"
       ? oauthErrorMessage(errorParam)
@@ -221,6 +222,20 @@ function SignInContent() {
           Connexion
         </h1>
 
+        {clearedOAuth && (
+          <p
+            role="status"
+            style={{
+              color: "#1DB87E",
+              marginBottom: "1.25rem",
+              fontSize: "0.9rem",
+              lineHeight: 1.45,
+            }}
+          >
+            Cookies du flux OAuth ont été effacés. Réessayez « Continuer avec Google ».
+          </p>
+        )}
+
         {oauthError && (
           <p
             role="alert"
@@ -232,6 +247,18 @@ function SignInContent() {
             }}
           >
             {oauthError}
+          </p>
+        )}
+
+        {errorParam === "Configuration" && (
+          <p style={{ marginBottom: "1.25rem", fontSize: "0.85rem", lineHeight: 1.45 }}>
+            <a
+              href="/api/auth/reset-oauth-cookies"
+              className="text-[#00d4ff] underline hover:brightness-110"
+            >
+              Réinitialiser les cookies du flux OAuth
+            </a>{" "}
+            (callback, état, PKCE) puis réessayez — utile si un cookie invalide déclenche cette erreur.
           </p>
         )}
 
