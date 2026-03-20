@@ -29,8 +29,7 @@ const authEdgeConfig = {
   session: {
     strategy: "jwt" as const,
   },
-  // Auth.js v5 : AUTH_SECRET documenté en premier ; garder les deux alignés en prod (voir ENV_CHECKLIST).
-  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     async session({ session, token }) {
       if (session.user) {
