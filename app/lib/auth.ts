@@ -92,6 +92,7 @@ async function resolveDbUserAfterOAuth(user: {
 
 // allowDangerousEmailAccountLinking : uniquement sur GoogleProvider (pas d’option globale Auth.js v5)
 export const authOptions: NextAuthConfig = {
+  trustHost: true,
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
