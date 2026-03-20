@@ -7,6 +7,7 @@
 - Déployer le **dernier commit** : `/api/debug-auth` doit inclure `debugAuthVersion: 2` et `layoutDiagnostic`. S’ils manquent, la prod n’a pas le code de debug récent.
 - Recommandé : définir **`AUTH_SECRET`** avec **la même valeur** que `NEXTAUTH_SECRET` (Auth.js v5 cite souvent `AUTH_SECRET` ; le shim runtime les aligne aussi au démarrage).
 - Recommandé : définir **`AUTH_URL`** = **`NEXTAUTH_URL`** (ex. `https://blocktrust.tech`) si vous n’utilisez que `NEXTAUTH_URL` ; le shim peut aussi recopier au démarrage.
+- **Ne pas** mettre de chemin dans l’URL canonique : utilisez `https://blocktrust.tech` et **pas** `https://blocktrust.tech/api/auth` (sinon `basePath` / validation `callbackUrl` peuvent casser et NextAuth renvoie **`?error=Configuration`**).
 - Optionnel : `BT_DEBUG_RING_SECRET` (≥16 caractères) pour lire `/api/debug/agent-log-recent` en prod avec `Authorization: Bearer …`.
 
 ## Variables requises pour NextAuth

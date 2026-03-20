@@ -54,7 +54,8 @@ const separatorStyle: React.CSSProperties = {
 function oauthErrorMessage(code: string | null): string | null {
   if (!code) return null;
   const map: Record<string, string> = {
-    Configuration: "Erreur de configuration serveur (vérifiez AUTH_URL / Google redirect URI).",
+    Configuration:
+      "Erreur côté Auth.js (souvent masquée sous « Configuration »). Essayez : supprimer les cookies pour ce site ; vérifier NEXTAUTH_URL / AUTH_URL = https://blocktrust.tech sans chemin ; redirect URI Google = https://blocktrust.tech/api/auth/callback/google ; consulter les logs Vercel [auth] au moment du clic.",
     AccessDenied: "Connexion refusée.",
     Verification: "Le lien de vérification a expiré ou a déjà été utilisé.",
     OAuthSignin: "Impossible de démarrer la connexion OAuth.",
@@ -178,8 +179,21 @@ function SignInContent() {
       raw.startsWith("http://") || raw.startsWith("https://")
         ? raw
         : `${window.location.origin}${raw.startsWith("/") ? raw : `/${raw}`}`;
+
+    // Même origine → préférer un chemin relatif pour callbackUrl (assertConfig : InvalidCallbackUrl / encodage).
+    let callbackForOAuth = absolute;
+    try {
+      const u = new URL(absolute);
+      if (u.origin === window.location.origin) {
+        const pathAndQuery = `${u.pathname}${u.search}${u.hash}`;
+        callbackForOAuth = pathAndQuery.length > 0 ? pathAndQuery : "/";
+      }
+    } catch {
+      callbackForOAuth = raw.startsWith("/") ? raw : `/${raw}`;
+    }
+
     window.location.assign(
-      `/api/auth/signin/google?callbackUrl=${encodeURIComponent(absolute)}`
+      `/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackForOAuth)}`
     );
   }
 
