@@ -132,7 +132,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json(
     {
-      debugAuthVersion: 3,
+      debugAuthVersion: 4,
       vercelGitCommitSha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
       authEnvShim,
       runtimeAuthSecretPresent: !!process.env.AUTH_SECRET,
