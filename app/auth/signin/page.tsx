@@ -81,6 +81,21 @@ function signinReasonMessage(code: string | null): string | null {
   return map[code] ?? `Diagnostic : ${code}`;
 }
 
+/** Résumé des query params pour support / debug (pas de secrets). */
+function urlQueryDiagnostic(sp: ReturnType<typeof useSearchParams>): string | null {
+  const error = sp.get("error");
+  const reason = sp.get("reason");
+  const cb = sp.get("callbackUrl");
+  const parts: string[] = [];
+  if (error) parts.push(`error=${error}`);
+  if (reason) parts.push(`reason=${reason}`);
+  if (cb) {
+    const s = cb.length > 96 ? `${cb.slice(0, 96)}…` : cb;
+    parts.push(`callbackUrl=${s}`);
+  }
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -92,6 +107,7 @@ function SignInContent() {
       ? oauthErrorMessage(errorParam)
       : null;
   const reasonHint = signinReasonMessage(reasonParam);
+  const urlDiagnosticLine = urlQueryDiagnostic(searchParams);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -235,6 +251,29 @@ function SignInContent() {
             ) : null}
           </p>
         )}
+
+        {urlDiagnosticLine ? (
+          <p
+            style={{
+              marginBottom: "1rem",
+              padding: "10px 12px",
+              borderRadius: "8px",
+              fontSize: "0.72rem",
+              lineHeight: 1.4,
+              fontFamily:
+                "var(--font-ibm-plex-mono, ui-monospace), monospace",
+              color: "rgba(232,234,240,0.65)",
+              background: "rgba(0,0,0,0.35)",
+              border: "1px solid rgba(0,212,255,0.12)",
+              wordBreak: "break-all",
+            }}
+          >
+            <span style={{ display: "block", marginBottom: "4px", opacity: 0.85 }}>
+              Diagnostic URL (copier pour support)
+            </span>
+            {urlDiagnosticLine}
+          </p>
+        ) : null}
 
         {/* 1. Google */}
         <button
