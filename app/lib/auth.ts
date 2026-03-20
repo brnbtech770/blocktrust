@@ -1,3 +1,4 @@
+import "./auth-env-shim";
 import { NextRequest } from "next/server";
 import { createHash } from "node:crypto";
 import { prisma } from "@/app/lib/db";

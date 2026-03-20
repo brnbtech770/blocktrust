@@ -2,6 +2,7 @@
 // Exporte auth() et handlers pour éviter les dépendances circulaires
 // ============================================================
 
+import "./auth-env-shim";
 import NextAuth from "next-auth";
 import { authOptions } from "./auth";
 
