@@ -139,7 +139,16 @@ function SignInContent() {
   }
 
   function handleGoogle() {
-    signIn("google", { callbackUrl });
+    if (typeof window === "undefined") return;
+    // Navigation pleine page (évite les cas où signIn() client laisse un flux OAuth incomplet sous Next 16).
+    const raw = (callbackUrl || "/dashboard").trim();
+    const absolute =
+      raw.startsWith("http://") || raw.startsWith("https://")
+        ? raw
+        : `${window.location.origin}${raw.startsWith("/") ? raw : `/${raw}`}`;
+    window.location.assign(
+      `/api/auth/signin/google?callbackUrl=${encodeURIComponent(absolute)}`
+    );
   }
 
   return (
