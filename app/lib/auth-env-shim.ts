@@ -5,6 +5,7 @@
 export const authEnvShim = {
   secretMirrored: false as boolean,
   authUrlMirrored: false as boolean,
+  trustHostMirrored: false as boolean,
 }
 
 if (typeof process !== 'undefined') {
@@ -15,5 +16,10 @@ if (typeof process !== 'undefined') {
   if (process.env.NEXTAUTH_URL && !process.env.AUTH_URL) {
     process.env.AUTH_URL = process.env.NEXTAUTH_URL
     authEnvShim.authUrlMirrored = true
+  }
+  // Aligné sur trustHost: true dans la config ; certaines lectures internes utilisent la variable.
+  if (!process.env.AUTH_TRUST_HOST) {
+    process.env.AUTH_TRUST_HOST = 'true'
+    authEnvShim.trustHostMirrored = true
   }
 }

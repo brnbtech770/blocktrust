@@ -4,9 +4,9 @@ export const dynamic = 'force-dynamic'
 
 /**
  * Version logique des correctifs auth déployés (incr. à la main quand un fix critique part).
- * >= 3 : inclut le fix JWT « pas de double Prisma au 1er OAuth » (ancêtre git dd9340f) + cet endpoint enrichi.
+ * 5 : shim AUTH_TRUST_HOST + debug-auth hostVsNextAuth (v5).
  */
-const AUTH_RELEASE = 3
+const AUTH_RELEASE = 5
 
 /** Vérif rapide du déploiement : commit Git exposé par Vercel (sans secrets). */
 export async function GET() {
@@ -16,7 +16,7 @@ export async function GET() {
     vercelGitCommitSha: sha || null,
     authRelease: AUTH_RELEASE,
     authReleaseHint:
-      'Prod doit afficher authRelease >= 3 si Vercel suit main ; sinon redeploy / erreur de build.',
-    debugAuthExpectedFields: ['debugAuthVersion', 'layoutDiagnostic'] as const,
+      'authRelease 5 : attendre debug-auth debugAuthVersion 5 + hostVsNextAuth.aligned true en prod.',
+    debugAuthExpectedFields: ['debugAuthVersion', 'layoutDiagnostic', 'hostVsNextAuth'] as const,
   })
 }

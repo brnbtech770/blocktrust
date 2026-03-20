@@ -130,12 +130,46 @@ export async function GET(req: NextRequest) {
     url: req.url,
   }
 
+  let hostVsNextAuth: {
+    aligned: boolean
+    requestHost: string | null
+    nextAuthHostname: string | null
+    hint: string | null
+  } = {
+    aligned: true,
+    requestHost: null,
+    nextAuthHostname: null,
+    hint: null,
+  }
+  try {
+    const rawHost = req.headers.get('host')
+    const requestHost = rawHost?.split(':')[0] ?? null
+    const na = process.env.NEXTAUTH_URL ? new URL(process.env.NEXTAUTH_URL) : null
+    const nextAuthHostname = na?.hostname ?? null
+    const aligned = !!(
+      requestHost &&
+      nextAuthHostname &&
+      requestHost.toLowerCase() === nextAuthHostname.toLowerCase()
+    )
+    hostVsNextAuth = {
+      aligned,
+      requestHost,
+      nextAuthHostname,
+      hint: aligned
+        ? null
+        : 'Host requête ≠ hostname NEXTAUTH_URL → risque de cookies/session (www vs apex, alias domaine).',
+    }
+  } catch {
+    hostVsNextAuth.hint = 'NEXTAUTH_URL illisible pour comparaison host.'
+  }
+
   return NextResponse.json(
     {
-      debugAuthVersion: 4,
+      debugAuthVersion: 5,
       vercelGitCommitSha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
       authEnvShim,
       runtimeAuthSecretPresent: !!process.env.AUTH_SECRET,
+      hostVsNextAuth,
       session: sessionInfo,
       layoutDiagnostic,
       cookies,
