@@ -173,29 +173,7 @@ function SignInContent() {
   }
 
   function handleGoogle() {
-    if (typeof window === "undefined") return;
-    // Navigation pleine page (évite les cas où signIn() client laisse un flux OAuth incomplet sous Next 16).
-    const raw = (callbackUrl || "/dashboard").trim();
-    const absolute =
-      raw.startsWith("http://") || raw.startsWith("https://")
-        ? raw
-        : `${window.location.origin}${raw.startsWith("/") ? raw : `/${raw}`}`;
-
-    // Même origine → préférer un chemin relatif pour callbackUrl (assertConfig : InvalidCallbackUrl / encodage).
-    let callbackForOAuth = absolute;
-    try {
-      const u = new URL(absolute);
-      if (u.origin === window.location.origin) {
-        const pathAndQuery = `${u.pathname}${u.search}${u.hash}`;
-        callbackForOAuth = pathAndQuery.length > 0 ? pathAndQuery : "/";
-      }
-    } catch {
-      callbackForOAuth = raw.startsWith("/") ? raw : `/${raw}`;
-    }
-
-    window.location.assign(
-      `/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackForOAuth)}`
-    );
+    signIn("google", { callbackUrl });
   }
 
   return (
