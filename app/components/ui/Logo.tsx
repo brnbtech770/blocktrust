@@ -7,6 +7,8 @@ interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'hero'
   withText?: boolean
   href?: string
+  /** Classes Tailwind (ex. taille responsive sur le conteneur image) */
+  className?: string
 }
 
 const sizes: Record<string, number> = {
@@ -20,16 +22,31 @@ export function Logo({
   size = 'md',
   withText = true,
   href = '/',
+  className = '',
 }: LogoProps) {
   const px = sizes[size] ?? sizes.md
+  const isHero = size === 'hero'
 
   const image = (
-    <div style={{ position: 'relative', width: px, height: px, flexShrink: 0 }}>
+    <div
+      className={`relative shrink-0 ${className}`.trim()}
+      style={
+        isHero
+          ? {
+              width: 'min(72vw, 380px)',
+              height: 'min(72vw, 380px)',
+              maxWidth: 380,
+              maxHeight: 380,
+            }
+          : { width: px, height: px }
+      }
+    >
       <Image
         src="/logo.png"
         alt="BlockTrust"
-        width={px}
-        height={px}
+        width={isHero ? 380 : px}
+        height={isHero ? 380 : px}
+        className={isHero ? 'h-full w-full object-contain' : undefined}
         style={{ mixBlendMode: 'screen' }}
         priority
       />
@@ -38,9 +55,9 @@ export function Logo({
 
   const text = withText && (
     <div style={{ minWidth: 0 }}>
-      <div style={{
+      <div className={isHero ? 'text-sm sm:text-lg md:text-[22px]' : ''} style={{
         fontFamily: 'var(--font-syne), sans-serif',
-        fontSize: size === 'lg' || size === 'hero' ? '22px' : size === 'md' ? '18px' : '11px',
+        fontSize: isHero ? undefined : size === 'lg' ? '22px' : size === 'md' ? '18px' : '11px',
         fontWeight: 800,
         color: 'var(--bt-cyan)',
         letterSpacing: size === 'sm' ? '0.04em' : '0.08em',
@@ -48,9 +65,9 @@ export function Logo({
       }}>
         BLOCKTRUST
       </div>
-      <div style={{
+      <div className={isHero ? 'text-[8px] sm:text-[9px]' : ''} style={{
         fontFamily: 'var(--font-mono-bt), monospace',
-        fontSize: size === 'sm' ? '8px' : '9px',
+        fontSize: isHero ? undefined : size === 'sm' ? '8px' : '9px',
         color: 'var(--bt-muted)',
         letterSpacing: '0.15em',
         marginTop: '2px',

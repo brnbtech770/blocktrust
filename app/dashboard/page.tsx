@@ -105,14 +105,14 @@ export default async function Dashboard({
     return (
       <DashboardLayout>
         {showSuccessMessage && (
-          <div className="mb-6 bg-gradient-to-r from-[var(--bt-success)]/20 to-cyan-500/20 border border-[var(--bt-success)]/30 rounded-2xl p-6 backdrop-blur-lg">
-            <div className="flex items-start gap-4">
-              <div className="text-4xl">🎉</div>
-              <div className="flex-1">
-                <h3 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <div className="mb-4 sm:mb-6 bg-gradient-to-r from-[var(--bt-success)]/20 to-cyan-500/20 border border-[var(--bt-success)]/30 rounded-2xl p-4 sm:p-6 backdrop-blur-lg">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="text-3xl sm:text-4xl shrink-0">🎉</div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg sm:text-2xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
                   Certificat créé avec succès !
                 </h3>
-                <p className="text-gray-300 text-base">
+                <p className="text-gray-300 text-sm sm:text-base">
                   Votre certificat est en attente de validation. Il sera activé sous peu.
                 </p>
               </div>
@@ -120,11 +120,11 @@ export default async function Dashboard({
           </div>
         )}
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white tracking-tight mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
             Bonjour {firstName} 👋
           </h1>
-          <p className="text-gray-400 text-base">
+          <p className="text-gray-400 text-sm sm:text-base">
             Voici un aperçu de votre activité BlockTrust
           </p>
         </div>
@@ -133,27 +133,27 @@ export default async function Dashboard({
           <StatsBlock />
         </Suspense>
 
-        <div className="rounded-xl border border-gray-700 bg-[var(--bt-navy)]/60 backdrop-blur-sm p-6 mb-8">
-          <h2 className="text-xl font-bold text-white mb-4 tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+        <div className="rounded-xl border border-gray-700 bg-[var(--bt-navy)]/60 backdrop-blur-sm p-4 sm:p-6 mb-6 sm:mb-8">
+          <h2 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
             Actions rapides
           </h2>
-          <div className="flex gap-4 flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <Link
               href="/dashboard/create"
-              className="bg-[var(--bt-gold)] text-[var(--bt-navy)] font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-opacity"
+              className="text-center bg-[var(--bt-gold)] text-[var(--bt-navy)] font-bold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg hover:opacity-90 transition-opacity text-sm sm:text-base"
             >
               ➕ Créer une entité
             </Link>
             <Link
               href="/dashboard/certificates"
-              className="border border-[var(--bt-gold)]/50 text-[var(--bt-gold)] font-semibold py-3 px-6 rounded-lg hover:bg-[var(--bt-gold)]/10 transition-colors"
+              className="text-center border border-[var(--bt-gold)]/50 text-[var(--bt-gold)] font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-[var(--bt-gold)]/10 transition-colors text-sm sm:text-base"
             >
               🛡️ Voir tous mes certificats
             </Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className="lg:col-span-2">
             <Suspense fallback={<CertificateTableSkeleton />}>
               <CertificateTable certificates={certificateTableItems} />

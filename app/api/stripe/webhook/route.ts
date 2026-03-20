@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
               }
             } catch (_) {}
             const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
-            await sendEmail({
+            const { error: emailErr } = await sendEmail({
               to: user.email,
               subject: getPaymentSuccessSubject(plan),
               react: PaymentSuccessEmail({
@@ -140,10 +140,12 @@ export async function POST(req: NextRequest) {
                 currentPeriodEnd: currentPeriodEnd.toLocaleDateString('fr-FR', { dateStyle: 'long' }),
                 dashboardUrl: `${baseUrl}/dashboard`,
               }),
-            }).then(({ error }) => {
-              if (error) console.error('[Stripe] Payment email échoué:', { to: user.email, error })
-              else console.log('[Stripe] Payment email envoyé à:', user.email)
             })
+            if (emailErr) {
+              console.error('[Stripe] Payment email échoué:', { to: user.email, error: emailErr })
+            } else {
+              console.log('[Stripe] Payment email envoyé à:', user.email)
+            }
           }
         }
         break
@@ -239,7 +241,7 @@ export async function POST(req: NextRequest) {
           },
         })
         const { sendKYCApprovedEmail } = await import('@/lib/kyc-email')
-        sendKYCApprovedEmail(userId).catch(console.error)
+        await sendKYCApprovedEmail(userId)
         console.log(`✅ KYC vérifié pour user ${userId}`)
         break
       }
@@ -261,7 +263,7 @@ export async function POST(req: NextRequest) {
           } catch (_) {}
         }
         const { sendKYCRetryEmail } = await import('@/lib/kyc-email')
-        sendKYCRetryEmail(userId, verificationUrl).catch(console.error)
+        await sendKYCRetryEmail(userId, verificationUrl)
         break
       }
 

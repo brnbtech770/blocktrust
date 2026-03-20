@@ -6,6 +6,7 @@ import { auth } from '@/app/lib/auth-server'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/app/lib/db'
 import DashboardSidebar from '@/app/components/DashboardSidebar'
+import DashboardChrome from '@/app/components/DashboardChrome'
 import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
 import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
 
@@ -20,13 +21,7 @@ export default async function DashboardLayout({
   const session = await auth()
   const rscPrefetch = await isRscPrefetchRequest()
 
-  // Admin → /admin
-  if (session?.user?.email) {
-    const { isAdmin } = await import('@/app/lib/admin')
-    if (isAdmin(session.user.email)) {
-      redirect('/admin')
-    }
-  }
+  // Admins : accès espace client + lien Administration dans la sidebar (pas de redirect forcé).
 
   if (!session?.user?.email) {
     if (rscPrefetch) {
@@ -59,11 +54,6 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bt-navy)]">
-      <DashboardSidebar />
-      <div className="ml-[220px]">
-        <main className="min-h-screen">{children}</main>
-      </div>
-    </div>
+    <DashboardChrome sidebar={<DashboardSidebar />}>{children}</DashboardChrome>
   )
 }

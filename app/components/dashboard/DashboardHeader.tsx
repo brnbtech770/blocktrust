@@ -14,7 +14,7 @@ export default function DashboardHeader() {
 
   return (
     <header
-      className="sticky top-0 z-40 h-[60px] flex items-center border-b px-6 md:px-8"
+      className="sticky top-0 z-40 min-h-[52px] sm:h-[60px] flex items-center border-b pl-12 pr-3 py-2 sm:pl-6 sm:pr-6 md:px-8"
       style={{
         background: 'rgba(6,14,26,0.95)',
         borderBottomColor: 'var(--bt-border)',

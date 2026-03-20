@@ -8,14 +8,6 @@ import { Logo } from "@/app/components/ui/Logo";
 
 const pageBg = "#0a1628";
 
-const cardStyle: React.CSSProperties = {
-  maxWidth: "420px",
-  margin: "0 auto",
-  padding: "32px",
-  border: "1px solid rgba(0,212,255,0.15)",
-  borderRadius: "16px",
-  backgroundColor: "rgba(13,31,60,0.85)",
-};
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -203,23 +195,22 @@ function SignInContent() {
 
   return (
     <div
-      className="min-h-screen px-4 py-12"
+      className="min-h-screen px-3 py-8 sm:px-4 sm:py-12"
       style={{
         background: pageBg,
         fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
       }}
     >
-      <div style={{ margin: "0 auto 24px", display: "flex", justifyContent: "center" }}>
-        <Logo size="lg" withText={true} href="/" />
+      <div className="mx-auto mb-6 flex justify-center sm:mb-8">
+        <div className="origin-center scale-[0.88] sm:scale-100">
+          <Logo size="lg" withText={true} href="/" />
+        </div>
       </div>
-      <div style={cardStyle}>
+      <div className="mx-auto w-full max-w-[420px] rounded-2xl border border-[rgba(0,212,255,0.15)] bg-[rgba(13,31,60,0.85)] p-5 sm:p-8">
         <h1
+          className="mb-4 text-xl font-bold text-white sm:mb-6 sm:text-2xl"
           style={{
             fontFamily: "var(--font-syne), sans-serif",
-            color: "#fff",
-            fontSize: "1.5rem",
-            marginBottom: "1.5rem",
-            fontWeight: 700,
           }}
         >
           Connexion

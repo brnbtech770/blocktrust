@@ -15,14 +15,21 @@ export default function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-50 h-16 flex items-center border-b backdrop-blur-[16px] px-4 sm:px-6 lg:px-10"
+      className="relative sticky top-0 z-50 h-14 sm:h-16 flex items-center border-b backdrop-blur-[16px] px-3 sm:px-6 lg:px-10"
       style={{
         background: 'rgba(10,22,40,0.92)',
         borderBottomColor: 'var(--bt-border)',
       }}
     >
       <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
-        <Logo size="md" withText={true} href="/" />
+        <div className="shrink-0 min-w-0">
+          <span className="sm:hidden">
+            <Logo size="sm" withText={true} href="/" />
+          </span>
+          <span className="hidden sm:inline-block">
+            <Logo size="md" withText={true} href="/" />
+          </span>
+        </div>
 
         {/* Desktop nav centre */}
         <nav className="hidden md:flex items-center gap-8">

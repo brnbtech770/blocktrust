@@ -16,7 +16,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen">
       <DashboardHeader />
       <BlockchainTicker />
-      <div className="p-6 md:p-8">{children}</div>
+      <div className="px-3 py-4 sm:px-5 sm:py-6 md:p-8">{children}</div>
     </div>
   )
 }

@@ -147,19 +147,19 @@ export default function TrustCirclePage() {
 
   return (
     <>
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-4xl font-bold text-white tracking-tight mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-6">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
               Mon Trust Circle
             </h1>
-            <p className="text-gray-400 text-base" style={{ fontFamily: 'var(--font-mono-bt), monospace' }}>
+            <p className="text-gray-400 text-sm sm:text-base" style={{ fontFamily: 'var(--font-mono-bt), monospace' }}>
               {data.stats.current} entités · {(data.mutual?.length ?? 0)} mutuelles
             </p>
           </div>
           <button
             onClick={() => setShowInviteModal(true)}
             disabled={!quotaAllowed}
-            className="bg-cyan-500/20 text-cyan-400 px-4 py-2 rounded-lg hover:bg-cyan-500/30 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="shrink-0 bg-cyan-500/20 text-cyan-400 px-4 py-2.5 rounded-lg hover:bg-cyan-500/30 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto text-sm sm:text-base"
           >
             <UserPlus size={18} />
             + Ajouter
@@ -174,12 +174,13 @@ export default function TrustCirclePage() {
           upgradeMessage={data.stats.upgradeMessage}
         />
 
-        <div className="flex gap-2 mb-6 border-b border-gray-700">
+        <div className="flex gap-1 sm:gap-2 mb-6 border-b border-gray-700 overflow-x-auto pb-0.5 -mx-1 px-1">
           {(['all', 'mutual', 'pending', 'manual'] as const).map((tab) => (
             <button
               key={tab}
+              type="button"
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 font-medium transition rounded-t ${
+              className={`shrink-0 px-3 sm:px-4 py-2 text-sm sm:text-base font-medium transition rounded-t whitespace-nowrap ${
                 activeTab === tab ? 'bg-cyan-500/20 text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400 hover:text-white border border-transparent'
               }`}
             >
@@ -191,7 +192,7 @@ export default function TrustCirclePage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
           {activeTab === 'all' && [
             ...(data.mutual || []).map((r: any) => (
               <Card key={r.id} type="mutual" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
@@ -264,7 +265,7 @@ function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pendi
   const email = data.toUser?.email || data.toEmail || data.entityEmail
   return (
     <div
-      className="p-4 rounded-xl border"
+      className="p-3 sm:p-4 rounded-xl border"
       style={{
         borderColor:
           type === 'mutual'
@@ -283,8 +284,8 @@ function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pendi
           {type === 'unilateral' && <span className="text-[9px] text-cyan-400/90 bg-cyan-500/10 px-2 py-0.5 rounded">Unilatérale</span>}
           {type === 'pending' && <span className="text-[9px] text-gray-400 bg-white/10 px-2 py-0.5 rounded">Invitation envoyée</span>}
           {type === 'manual' && <span className="text-[9px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded">Vérifié admin</span>}
-          <h3 className="text-lg font-bold text-white mt-1">{name}</h3>
-          {email && <p className="text-sm text-gray-400">{email}</p>}
+          <h3 className="text-base sm:text-lg font-bold text-white mt-1 break-words">{name}</h3>
+          {email && <p className="text-xs sm:text-sm text-gray-400 break-all">{email}</p>}
         </div>
         {onDelete && (
           <button

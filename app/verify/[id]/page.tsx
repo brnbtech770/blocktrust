@@ -308,26 +308,26 @@ function ValidView({
 
   return (
     <div className="min-h-screen bt-circuit-bg text-gray-100" style={{ fontFamily: 'var(--font-syne), sans-serif', background: 'var(--bt-navy)' }}>
-      <div className="max-w-xl mx-auto px-4 py-10">
-        <div className="rounded-2xl border p-6 md:p-8" style={{ borderColor: 'rgba(0,212,255,0.3)', background: 'rgba(13,31,60,0.8)' }}>
-          <div className="flex justify-center mb-6">
+      <div className="max-w-xl mx-auto px-3 py-6 sm:px-4 sm:py-10">
+        <div className="rounded-2xl border p-4 sm:p-6 md:p-8" style={{ borderColor: 'rgba(0,212,255,0.3)', background: 'rgba(13,31,60,0.8)' }}>
+          <div className="flex justify-center mb-4 sm:mb-6">
             <div className="relative">
-              <span className="text-6xl block animate-pulse" style={{ filter: 'drop-shadow(0 0 12px rgba(0,212,255,0.6))' }}>🛡️</span>
+              <span className="text-5xl sm:text-6xl block animate-pulse" style={{ filter: 'drop-shadow(0 0 12px rgba(0,212,255,0.6))' }}>🛡️</span>
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-center mb-2" style={{ color: '#00d4ff' }}>Certificat valide</h1>
-          <p className="text-center text-sm mb-8" style={{ color: 'var(--bt-muted)' }}>Vérifié par BlockTrust</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-center mb-2" style={{ color: '#00d4ff' }}>Certificat valide</h1>
+          <p className="text-center text-xs sm:text-sm mb-6 sm:mb-8" style={{ color: 'var(--bt-muted)' }}>Vérifié par BlockTrust</p>
 
           <div className="space-y-6">
             <div>
               <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--bt-muted)' }}>Entité</p>
-              <p className="text-white text-xl font-semibold">{name}</p>
-              <p className="text-sm mt-1" style={{ color: 'var(--bt-muted)' }}>
+              <p className="text-white text-lg sm:text-xl font-semibold break-words">{name}</p>
+              <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--bt-muted)' }}>
                 {entity.entityType === 'INDIVIDUAL' ? 'Particulier' : 'Entreprise'} · Niveau {level}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--bt-muted)' }}>Émis le</p>
                 <p className="text-white font-mono text-sm">{issued}</p>
@@ -384,7 +384,7 @@ function ValidView({
           </div>
         </div>
 
-        <footer className="mt-8 flex justify-center">
+        <footer className="mt-6 sm:mt-8 flex justify-center">
           <Logo size="sm" withText={true} />
         </footer>
       </div>
@@ -407,8 +407,8 @@ function FraudAlertView({
 
   return (
     <div className="min-h-screen bg-[#0d0505] text-gray-100" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
-      <div className="max-w-xl mx-auto px-4 py-10">
-        <div className="rounded-lg border-2 border-[#E05252] bg-[#0d0505] p-6 md:p-8">
+      <div className="max-w-xl mx-auto px-3 py-6 sm:px-4 sm:py-10">
+        <div className="rounded-lg border-2 border-[#E05252] bg-[#0d0505] p-4 sm:p-6 md:p-8">
           <div className="bg-[#E05252]/20 border border-[#E05252] rounded-lg px-4 py-3 mb-6 animate-pulse">
             <h1 className="text-xl font-bold text-[#E05252] text-center">FRAUDE DÉTECTÉE</h1>
           </div>
@@ -454,7 +454,7 @@ function FraudAlertView({
             </Link>
           </div>
         </div>
-        <footer className="mt-8 flex justify-center opacity-60">
+        <footer className="mt-6 sm:mt-8 flex justify-center opacity-60">
           <Logo size="sm" withText={false} />
         </footer>
       </div>

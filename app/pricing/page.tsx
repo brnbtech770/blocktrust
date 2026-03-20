@@ -103,16 +103,16 @@ export default function PricingPage() {
       </Suspense>
 
       {/* Hero */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-6">
+      <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-4 sm:pb-6">
         <h1
-          className="text-4xl md:text-5xl font-extrabold text-center mb-4"
+          className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-3 sm:mb-4"
           style={{ fontFamily: 'var(--font-syne), sans-serif' }}
         >
           <span className="text-white">Tarifs </span>
           <span style={{ color: 'var(--bt-gold)' }}>transparents</span>
         </h1>
         <p
-          className="text-center text-base max-w-2xl mx-auto mb-10"
+          className="text-center text-sm sm:text-base max-w-2xl mx-auto mb-6 sm:mb-10 px-1"
           style={{ color: 'var(--bt-muted)' }}
         >
           Choisissez le plan adapté à vos besoins. Annulez à tout moment.

@@ -27,7 +27,7 @@ export default function KpiGrid({
   fraudAlerts,
 }: KpiGridProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
       <KpiCard
         label="Certificats actifs"
         value={String(certs)}
@@ -83,7 +83,7 @@ function KpiCard({
           : 'var(--bt-cyan)'
   return (
     <div
-      className="rounded-xl border p-5 relative overflow-hidden"
+      className="rounded-xl border p-4 md:p-5 relative overflow-hidden"
       style={{
         background: 'rgba(13,31,60,0.8)',
         borderColor: 'var(--bt-border)',
