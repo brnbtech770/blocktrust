@@ -242,8 +242,17 @@ export const authOptions: NextAuthConfig = {
       return baseUrl;
     },
   },
+  logger: {
+    error: (code, ...message) => {
+      console.error('[NextAuth ERROR]', code, JSON.stringify(message));
+    },
+    warn: (code) => {
+      console.warn('[NextAuth WARN]', code);
+    },
+  },
   pages: {
     signIn: "/auth/signin",
+    error: "/auth/signin",
   },
   session: {
     strategy: "jwt",

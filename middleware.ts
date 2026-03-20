@@ -78,6 +78,16 @@ export async function middleware(request: NextRequest) {
     const email = token?.email ?? null
 
     // ─────────────────────────────────────────────
+    // LANDING PAGE : admin connecté → /admin
+    // ─────────────────────────────────────────────
+    if (pathname === '/') {
+      if (email && isAdmin(email)) {
+        return NextResponse.redirect(new URL('/admin', request.url))
+      }
+      return NextResponse.next()
+    }
+
+    // ─────────────────────────────────────────────
     // PROTECTION ROUTES ADMIN
     // ─────────────────────────────────────────────
     if (pathname.startsWith('/admin')) {
@@ -173,6 +183,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/',
     '/dashboard/:path*',
     '/admin/:path*',
     '/api/certificates/:path*',
