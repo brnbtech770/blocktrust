@@ -12,12 +12,82 @@ import { checkRateLimitVerify } from '@/lib/rate-limit-verify'
 import { sendEmailFireAndForget } from '@/lib/email'
 import { FraudAlertEmail, subject as fraudAlertSubject } from '@/emails/FraudAlertEmail'
 import type { Metadata } from 'next'
+import type { Prisma } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
 
 type Verdict = 'VALID' | 'FRAUD_ALERT' | 'NOT_FOUND' | 'RATE_LIMITED'
+
+const signatureVerifyInclude = {
+  certificate: {
+    include: {
+      entity: true,
+    },
+  },
+} as const
+
+/** Payload JWT uniquement (sans vérification de signature) pour récupérer jti si l’URL contient un token. */
+function tryJtiFromUnverifiedJwt(raw: string): string | null {
+  const parts = raw.split('.')
+  if (parts.length !== 3 || !parts[0] || !parts[1]) return null
+  try {
+    const json = Buffer.from(parts[1], 'base64url').toString('utf8')
+    const payload = JSON.parse(json) as { jti?: unknown }
+    if (typeof payload.jti === 'string' && payload.jti.length > 0) return payload.jti
+  } catch {
+    /* pas un JWT */
+  }
+  return null
+}
+
+type SignatureForVerify = Prisma.SignatureGetPayload<{ include: typeof signatureVerifyInclude }>
+
+/**
+ * Verdict basé sur la DB + ctxHash uniquement (aucune vérification cryptographique du JWT).
+ * Ordre : jti (évent. extrait du JWT) → certificateId interne → certificat par id / publicId.
+ */
+async function resolveSignatureForPublicVerify(rawId: string): Promise<SignatureForVerify | null> {
+  const lookupKey = tryJtiFromUnverifiedJwt(rawId) ?? rawId
+
+  let signature = await prisma.signature.findUnique({
+    where: { jti: lookupKey },
+    include: signatureVerifyInclude,
+  })
+
+  if (signature?.revoked) {
+    return null
+  }
+
+  if (!signature) {
+    signature = await prisma.signature.findFirst({
+      where: { certificateId: lookupKey, revoked: false },
+      orderBy: { issuedAt: 'desc' },
+      include: signatureVerifyInclude,
+    })
+  }
+
+  if (!signature) {
+    const cert = await prisma.certificate.findFirst({
+      where: { OR: [{ id: lookupKey }, { publicId: lookupKey }] },
+      select: { id: true },
+    })
+    if (cert) {
+      signature = await prisma.signature.findFirst({
+        where: { certificateId: cert.id, revoked: false },
+        orderBy: { issuedAt: 'desc' },
+        include: signatureVerifyInclude,
+      })
+    }
+  }
+
+  if (!signature || signature.revoked) {
+    return null
+  }
+
+  return signature
+}
 
 function entityDisplayName(entity: { entityType: string; legalName: string | null; tradeName: string | null; firstName: string | null; lastName: string | null; email: string }): string {
   if (entity.entityType === 'INDIVIDUAL') {
@@ -37,23 +107,7 @@ export async function generateMetadata({
   const { id } = await params
   const { h = '' } = await searchParams
 
-  let signature = await prisma.signature.findUnique({
-    where: { jti: id },
-    include: {
-      certificate: { include: { entity: true } },
-    },
-  })
-  if (!signature?.revoked) {
-    signature = signature ?? (await prisma.signature.findFirst({
-      where: { certificateId: id, revoked: false },
-      orderBy: { issuedAt: 'desc' },
-      include: {
-        certificate: { include: { entity: true } },
-      },
-    })) ?? null
-  } else {
-    signature = null
-  }
+  const signature = await resolveSignatureForPublicVerify(id)
 
   if (!signature) {
     return { title: 'Certificat introuvable — BlockTrust' }
@@ -97,33 +151,9 @@ export default async function VerifyPublicPage({
     return <RateLimitedView retryAfter={rate.retryAfter} />
   }
 
-  // Chercher d'abord par jti (Signature), puis par certificateId (accès direct / ancien QR)
-  let signature = await prisma.signature.findUnique({
-    where: { jti: id },
-    include: {
-      certificate: {
-        include: {
-          entity: true,
-        },
-      },
-    },
-  })
+  const signature = await resolveSignatureForPublicVerify(id)
 
   if (!signature) {
-    signature = await prisma.signature.findFirst({
-      where: { certificateId: id, revoked: false },
-      orderBy: { issuedAt: 'desc' },
-      include: {
-        certificate: {
-          include: {
-            entity: true,
-          },
-        },
-      },
-    })
-  }
-
-  if (!signature || signature.revoked) {
     return <NotFoundView />
   }
 
@@ -177,7 +207,7 @@ export default async function VerifyPublicPage({
         subject: fraudAlertSubject,
         react: FraudAlertEmail({
           entityName,
-          tokenId: id,
+          tokenId: signature.jti,
           timestamp: new Date().toLocaleString('fr-FR'),
           ip,
           revokeUrl,
@@ -209,7 +239,7 @@ export default async function VerifyPublicPage({
 
   return (
     <FraudAlertView
-      jti={id}
+      jti={signature.jti}
       expectedHash={expectedHash}
       receivedHash={ctxHashFromQuery}
       ip={ip}
