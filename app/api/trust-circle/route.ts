@@ -21,16 +21,9 @@ export async function GET(req: NextRequest) {
     include: { plan: true },
   })
 
-  if (!userRow?.plan?.trustCircleEnabled) {
-    return NextResponse.json(
-      {
-        error: 'TRUST_CIRCLE_LOCKED',
-        message:
-          'Le Trust Circle est inclus dans nos offres Famille, Famille+ et certains forfaits B2B. Abonnez-vous pour y accéder.',
-      },
-      { status: 403 }
-    )
-  }
+  // Trust Circle accessible à tous les utilisateurs vérifiés.
+  // Les quotas (checkTrustCircleQuota) limitent selon le plan.
+  // Pas de blocage 403 — le quota gère les limites.
 
   const [mutual, unilateral, pending, manualEntries, quota] = await Promise.all([
     prisma.userTrustRelation.findMany({
