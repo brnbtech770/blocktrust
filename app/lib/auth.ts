@@ -108,52 +108,6 @@ export const authOptions: NextAuthConfig = {
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      // Pour Google : s'assurer que le Account est lié au bon User
-      if (account?.provider === "google" && user.email) {
-        try {
-          // Trouver ou créer le user
-          const dbUser = await prisma.user.upsert({
-            where: { email: user.email },
-            create: { email: user.email, name: user.name, image: user.image },
-            update: { name: user.name, image: user.image },
-          });
-          // Upsert le Account Google
-          await prisma.account.upsert({
-            where: {
-              provider_providerAccountId: {
-                provider: account.provider,
-                providerAccountId: account.providerAccountId,
-              },
-            },
-            create: {
-              userId: dbUser.id,
-              type: account.type,
-              provider: account.provider,
-              providerAccountId: account.providerAccountId,
-              access_token: account.access_token as string | undefined,
-              refresh_token: account.refresh_token as string | undefined,
-              expires_at: account.expires_at as number | undefined,
-              token_type: account.token_type as string | undefined,
-              scope: account.scope as string | undefined,
-              id_token: account.id_token as string | undefined,
-              session_state: account.session_state as string | undefined,
-            },
-            update: {
-              userId: dbUser.id,
-              access_token: account.access_token as string | undefined,
-              refresh_token: account.refresh_token as string | undefined,
-              expires_at: account.expires_at as number | undefined,
-              id_token: account.id_token as string | undefined,
-            },
-          });
-        } catch (err) {
-          console.error('[Auth] signIn Google linking error:', err);
-          return false;
-        }
-      }
-      return true;
-    },
     async jwt({ token, user, account }) {
       if (user) {
         if (account?.provider === "credentials") {
@@ -164,7 +118,7 @@ export const authOptions: NextAuthConfig = {
           (token as any).kycStatus = (user as any).kycStatus ?? 'PENDING';
           (token as any).accountType = (user as any).accountType ?? 'PERSONAL';
         } else {
-        // Connexion Google — récupérer le user DB
+        // Connexion Google/OAuth — user vient de l'adapter
         try {
           const dbUser = await prisma.user.findUnique({
             where: { email: user.email! },

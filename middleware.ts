@@ -84,6 +84,7 @@ export async function middleware(request: NextRequest) {
       if (email && isAdmin(email)) {
         return NextResponse.redirect(new URL('/admin', request.url))
       }
+      // Landing : pas de redirection vers /pricing ni vers le dashboard
       return NextResponse.next()
     }
 
