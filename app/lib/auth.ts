@@ -48,12 +48,15 @@ const emailMagicLinkProvider = {
   },
 };
 
+// allowDangerousEmailAccountLinking : uniquement sur GoogleProvider (pas d’option globale Auth.js v5)
 export const authOptions: NextAuthConfig = {
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      /** Permet de lier un compte Google à un utilisateur existant (même email, ex. email/password). */
+      allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
           prompt: "select_account", // Force la sélection de compte à chaque connexion
