@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { Session } from 'next-auth'
+import { getToken } from 'next-auth/jwt'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
@@ -163,15 +164,93 @@ export async function GET(req: NextRequest) {
     hostVsNextAuth.hint = 'NEXTAUTH_URL illisible pour comparaison host.'
   }
 
+  /** Sonde JWT brute (même décode que la session) — longueurs uniquement, pas d’email en clair. */
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? ''
+  const secureFromEnv =
+    (process.env.NEXTAUTH_URL ?? '').startsWith('https://') ||
+    (process.env.AUTH_URL ?? '').startsWith('https://')
+  type JwtProbe = {
+    secureCookie: boolean
+    decoded: boolean
+    subLen: number
+    emailLen: number
+    exp: number | null
+  }
+  async function probeJwt(secureCookie: boolean): Promise<JwtProbe | null> {
+    if (!secret) return null
+    try {
+      const t = await getToken({ req, secret, secureCookie })
+      if (!t) {
+        return {
+          secureCookie,
+          decoded: false,
+          subLen: 0,
+          emailLen: 0,
+          exp: null,
+        }
+      }
+      return {
+        secureCookie,
+        decoded: true,
+        subLen: t.sub ? String(t.sub).length : 0,
+        emailLen: typeof t.email === 'string' ? t.email.length : 0,
+        exp: typeof t.exp === 'number' ? t.exp : null,
+      }
+    } catch {
+      return {
+        secureCookie,
+        decoded: false,
+        subLen: 0,
+        emailLen: 0,
+        exp: null,
+      }
+    }
+  }
+
+  const jwtPrimary = await probeJwt(secureFromEnv)
+  const jwtFallback =
+    jwtPrimary && !jwtPrimary.decoded && hasSessionCookie
+      ? await probeJwt(!secureFromEnv)
+      : null
+
+  let jwtHint: string | null = null
+  if (hasSessionCookie && jwtPrimary && !jwtPrimary.decoded) {
+    if (jwtFallback?.decoded) {
+      jwtHint =
+        'Cookie présent mais décodable seulement avec secureCookie alternatif → vérifier NEXTAUTH_URL / AUTH_URL (http vs https) vs préfixe __Secure- du cookie.'
+    } else {
+      jwtHint =
+        'Cookie session présent mais JWT illisible (secret erroné, cookie corrompu, ou chunk incomplet).'
+    }
+  }
+  if (
+    jwtPrimary?.decoded &&
+    jwtPrimary.emailLen === 0 &&
+    (jwtPrimary.subLen ?? 0) > 0
+  ) {
+    jwtHint =
+      'JWT décodé avec sub mais sans email → regarder callbacks jwt OAuth / merge session.'
+  }
+  if (jwtPrimary?.decoded && jwtPrimary.emailLen > 0 && !session?.user?.email) {
+    jwtHint =
+      'JWT contient un email (longueur > 0) mais auth() ne retourne pas session.user.email → session callback ou typage session.'
+  }
+
   return NextResponse.json(
     {
-      debugAuthVersion: 5,
+      debugAuthVersion: 6,
       vercelGitCommitSha: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
       authEnvShim,
       runtimeAuthSecretPresent: !!process.env.AUTH_SECRET,
       hostVsNextAuth,
       session: sessionInfo,
       layoutDiagnostic,
+      jwtFromCookie: {
+        secureFromEnv,
+        primary: jwtPrimary,
+        fallbackAlternateSecure: jwtFallback,
+        jwtHint,
+      },
       cookies,
       env: envCheck,
       accounts,

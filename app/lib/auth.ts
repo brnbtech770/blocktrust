@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { isAdmin } from "./admin";
 import authEdgeConfig from "./auth.edge.config";
+import { writeAgentDebugLog } from "@/app/lib/agent-debug-467f2c-log";
 
 /**
  * Configuration NextAuth avec Google OAuth
@@ -143,8 +144,32 @@ export const authOptions: NextAuthConfig = {
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
         const email = user.email?.trim();
+        // #region agent log
+        await writeAgentDebugLog({
+          hypothesisId: "H2",
+          location: "auth.ts:callbacks.signIn",
+          message: "Google signIn callback entry",
+          runId: "oauth-flow",
+          data: {
+            emailLen: email?.length ?? 0,
+            hasUserId: Boolean((user as { id?: string }).id),
+            userIdLen: (user as { id?: string }).id
+              ? String((user as { id?: string }).id).length
+              : 0,
+          },
+        });
+        // #endregion
         if (!email) {
           console.warn('[signIn google] email absent du profil, connexion refusée');
+          // #region agent log
+          await writeAgentDebugLog({
+            hypothesisId: "H2",
+            location: "auth.ts:callbacks.signIn",
+            message: "Google signIn rejected no email",
+            runId: "oauth-flow",
+            data: { rejected: true },
+          });
+          // #endregion
           return false;
         }
         try {
@@ -164,6 +189,18 @@ export const authOptions: NextAuthConfig = {
           });
         } catch (err) {
           console.error('[signIn callback error]', err);
+          // #region agent log
+          await writeAgentDebugLog({
+            hypothesisId: "H2",
+            location: "auth.ts:callbacks.signIn",
+            message: "Google upsert threw",
+            runId: "oauth-flow",
+            data: {
+              errName:
+                err instanceof Error ? err.name.slice(0, 80) : "non_error",
+            },
+          });
+          // #endregion
         }
       }
       return true;
@@ -181,6 +218,23 @@ export const authOptions: NextAuthConfig = {
           // Connexion Google/OAuth — user vient de l'adapter (id DB + email)
           // Fallback immédiat : toujours peupler le token avec les infos OAuth disponibles
           // pour éviter un JWT vide si la requête DB échoue.
+          const accProv =
+            account?.provider != null ? String(account.provider) : "unknown";
+          // #region agent log
+          await writeAgentDebugLog({
+            hypothesisId: "H3",
+            location: "auth.ts:jwt",
+            message: "OAuth jwt branch before DB resolve",
+            runId: "oauth-flow",
+            data: {
+              provider: accProv.slice(0, 32),
+              oauthSubLen: (user as { id?: string }).id
+                ? String((user as { id?: string }).id).length
+                : 0,
+              oauthEmailLen: user.email ? String(user.email).length : 0,
+            },
+          });
+          // #endregion
           token.sub = (user as any).id ?? token.sub;
           token.email = user.email ?? token.email;
           token.name = user.name ?? token.name;
@@ -201,8 +255,36 @@ export const authOptions: NextAuthConfig = {
                 email: (user as any).email,
               });
             }
+            // #region agent log
+            await writeAgentDebugLog({
+              hypothesisId: "H3",
+              location: "auth.ts:jwt",
+              message: "OAuth jwt after resolveDbUserAfterOAuth",
+              runId: "oauth-flow",
+              data: {
+                dbResolved: Boolean(dbUser),
+                tokenSubLen: token.sub ? String(token.sub).length : 0,
+                tokenEmailLen:
+                  token.email != null ? String(token.email).length : 0,
+              },
+            });
+            // #endregion
           } catch (error) {
             console.error("❌ Error in JWT callback (OAuth):", error);
+            // #region agent log
+            await writeAgentDebugLog({
+              hypothesisId: "H3",
+              location: "auth.ts:jwt",
+              message: "OAuth jwt DB resolve threw",
+              runId: "oauth-flow",
+              data: {
+                errName:
+                  error instanceof Error
+                    ? error.name.slice(0, 80)
+                    : "non_error",
+              },
+            });
+            // #endregion
             // Fallback déjà appliqué ci-dessus — la session sera fonctionnelle
             // même si la requête DB échoue (cold start, timeout, etc.)
           }

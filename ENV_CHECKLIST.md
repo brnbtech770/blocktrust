@@ -2,6 +2,8 @@
 
 ## Production (Vercel)
 
+- **Vérifier le déploiement réel** : ouvrir `https://blocktrust.tech/api/health` (ou votre domaine). Si `vercelGitCommitSha` reste sur `5b4c46e…` alors que `main` contient déjà `780d893` (Google sign-in pleine page), la prod **n’a pas** le dernier build : regarder les *Deployments* Vercel (échec de build, mauvaise branche, ou ancien déploiement « Promoted »).
+- Après un bon déploiement : `authRelease` doit être **6** et **`signinGoogleFullPageNav`: `true`** doit apparaître dans `/api/health`.
 - Déployer le **dernier commit** : `/api/debug-auth` doit inclure `debugAuthVersion: 2` et `layoutDiagnostic`. S’ils manquent, la prod n’a pas le code de debug récent.
 - Recommandé : définir **`AUTH_SECRET`** avec **la même valeur** que `NEXTAUTH_SECRET` (Auth.js v5 cite souvent `AUTH_SECRET` ; le shim runtime les aligne aussi au démarrage).
 - Recommandé : définir **`AUTH_URL`** = **`NEXTAUTH_URL`** (ex. `https://blocktrust.tech`) si vous n’utilisez que `NEXTAUTH_URL` ; le shim peut aussi recopier au démarrage.
