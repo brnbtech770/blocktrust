@@ -78,6 +78,8 @@ export async function GET(req: NextRequest) {
     GOOGLE_CLIENT_ID: !!process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: !!process.env.GOOGLE_CLIENT_SECRET,
     AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST ?? '(not set)',
+    STRIPE_SECRET_KEY: !!process.env.STRIPE_SECRET_KEY,
+    STRIPE_PRICE_ESSENTIEL_MONTHLY: process.env.STRIPE_PRICE_ESSENTIEL_MONTHLY ?? '(not set)',
   }
 
   // 4. DB accounts check

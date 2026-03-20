@@ -313,16 +313,16 @@ export function checkPlanFeature(plan: string | { type?: string; trustCircleEnab
 
 function checkPlanFeatureByType(planType: string, feature: string): boolean {
   const planFeatures: Record<string, string[]> = {
-    B2C_ESSENTIEL: ["basic"],
-    ESSENTIEL: ["basic"],
-    B2C_PREMIUM: ["basic", "advanced"],
-    PREMIUM: ["basic", "advanced"],
+    B2C_ESSENTIEL: ["basic", "trustCircle"],
+    ESSENTIEL: ["basic", "trustCircle"],
+    B2C_PREMIUM: ["basic", "advanced", "trustCircle"],
+    PREMIUM: ["basic", "advanced", "trustCircle"],
     B2C_FAMILLE: ["basic", "advanced", "trustCircle"],
     FAMILLE: ["basic", "advanced", "trustCircle"],
     B2C_FAMILLE_PLUS: ["basic", "advanced", "trustCircle", "unlimited"],
     "FAMILLE_PLUS": ["basic", "advanced", "trustCircle", "unlimited"],
-    B2B_STARTER: ["basic", "advanced"],
-    STARTER: ["basic", "advanced"],
+    B2B_STARTER: ["basic", "advanced", "trustCircle"],
+    STARTER: ["basic", "advanced", "trustCircle"],
     B2B_TEAM: ["basic", "advanced", "trustCircle"],
     TEAM: ["basic", "advanced", "trustCircle"],
     B2B_BUSINESS: ["basic", "advanced", "trustCircle", "unlimited"],
