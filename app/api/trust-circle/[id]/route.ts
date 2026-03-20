@@ -26,7 +26,10 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
     const type = body.type || new URL(req.url).searchParams.get('type') || 'mutual'
 
-    // User-centric: UserManualTrustEntry
+    // User-centric — body attendu : { type: 'manual' } | { type: 'relation' }
+    // (alias historique : 'mutual' = même traitement que 'relation')
+
+    // UserManualTrustEntry
     if (type === 'manual') {
       const userEntry = await prisma.userManualTrustEntry.findFirst({
         where: { id, requestedBy: user.id },
@@ -37,7 +40,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // User-centric: UserTrustRelation
+    // UserTrustRelation (mutuel, unilatéral, invitation PENDING, etc.)
     if (type === 'mutual' || type === 'relation') {
       const userRel = await prisma.userTrustRelation.findFirst({
         where: { id, fromUserId: user.id },

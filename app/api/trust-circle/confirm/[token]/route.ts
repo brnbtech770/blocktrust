@@ -66,7 +66,7 @@ export async function POST(
       }),
     ])
     const { sendMutualTrustEmail } = await import('@/lib/trust-circle-email')
-    sendMutualTrustEmail(session.user.id, relation.fromUserId).catch(console.error)
+    await sendMutualTrustEmail(session.user.id, relation.fromUserId).catch(console.error)
     return NextResponse.json({
       success:   true,
       trustType: 'MUTUAL',

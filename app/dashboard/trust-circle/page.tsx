@@ -7,8 +7,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Users, UserPlus, X, Check, XCircle } from 'lucide-react'
+import { UserPlus, Trash2 } from 'lucide-react'
 import TrustCircleInviteModal from '@/app/components/TrustCircleInviteModal'
 import TrustCircleManualModal from '@/app/components/TrustCircleManualModal'
 import { QuotaBanner } from '@/app/components/trust-circle/QuotaBanner'
@@ -37,6 +36,13 @@ export default function TrustCirclePage() {
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showManualModal, setShowManualModal] = useState(false)
   const [userEntities, setUserEntities] = useState<Array<{ id: string; name: string; entityType: string }>>([])
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!toastMessage) return
+    const t = window.setTimeout(() => setToastMessage(null), 3500)
+    return () => window.clearTimeout(t)
+  }, [toastMessage])
 
   useEffect(() => {
     if (sessionStatus === 'loading') return
@@ -92,16 +98,20 @@ export default function TrustCirclePage() {
     }
   }
 
-  const handleDelete = async (id: string, type: 'relation' | 'manual') => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ?')) return
+  const handleDelete = async (id: string, deleteType: 'relation' | 'manual') => {
+    if (!confirm('Supprimer cette entité du Trust Circle ?')) return
     try {
       const res = await fetch(`/api/trust-circle/${id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ type: type === 'relation' ? 'mutual' : type }),
+        body: JSON.stringify({ type: deleteType }),
       })
-      if (!res.ok) throw new Error('Erreur suppression')
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || 'Erreur suppression')
+      }
+      setToastMessage('Entité supprimée')
       await fetchTrustCircle()
     } catch (err: any) {
       alert(err.message)
@@ -190,7 +200,7 @@ export default function TrustCirclePage() {
               <Card key={r.id} type="unilateral" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
             )),
             ...(data.pending || []).map((r: any) => (
-              <Card key={r.id} type="pending" data={r} />
+              <Card key={r.id} type="pending" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
             )),
             ...(data.manualEntries || []).map((e: any) => (
               <Card key={e.id} type="manual" data={e} onDelete={() => handleDelete(e.id, 'manual')} />
@@ -200,7 +210,7 @@ export default function TrustCirclePage() {
             <Card key={r.id} type="mutual" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
           ))}
           {activeTab === 'pending' && (data.pending || []).map((r: any) => (
-            <Card key={r.id} type="pending" data={r} />
+            <Card key={r.id} type="pending" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
           ))}
           {activeTab === 'manual' && (data.manualEntries || []).map((e: any) => (
             <Card key={e.id} type="manual" data={e} onDelete={() => handleDelete(e.id, 'manual')} />
@@ -234,6 +244,17 @@ export default function TrustCirclePage() {
           onSuccess={fetchTrustCircle}
           userEntities={userEntities}
         />
+
+        {toastMessage ? (
+          <div
+            role="status"
+            aria-live="polite"
+            className="fixed bottom-6 left-1/2 z-[100] -translate-x-1/2 rounded-lg border border-emerald-500/35 bg-emerald-950/90 px-4 py-2.5 text-sm text-emerald-100 shadow-lg backdrop-blur-sm"
+            style={{ fontFamily: 'var(--font-inter), system-ui, sans-serif' }}
+          >
+            {toastMessage}
+          </div>
+        ) : null}
     </>
   )
 }
@@ -245,21 +266,35 @@ function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pendi
     <div
       className="p-4 rounded-xl border"
       style={{
-        borderColor: type === 'mutual' ? 'rgba(0,212,255,0.4)' : type === 'manual' ? 'rgba(29,184,126,0.3)' : 'rgba(255,255,255,0.1)',
+        borderColor:
+          type === 'mutual'
+            ? 'rgba(0,212,255,0.4)'
+            : type === 'unilateral'
+              ? 'rgba(0,212,255,0.25)'
+              : type === 'manual'
+                ? 'rgba(29,184,126,0.3)'
+                : 'rgba(255,255,255,0.1)',
         background: 'rgba(13,31,60,0.8)',
       }}
     >
       <div className="flex justify-between items-start">
         <div>
           {type === 'mutual' && <span className="text-[9px] font-mono text-green-500 bg-green-500/10 px-2 py-0.5 rounded">Mutuelle</span>}
+          {type === 'unilateral' && <span className="text-[9px] text-cyan-400/90 bg-cyan-500/10 px-2 py-0.5 rounded">Unilatérale</span>}
           {type === 'pending' && <span className="text-[9px] text-gray-400 bg-white/10 px-2 py-0.5 rounded">Invitation envoyée</span>}
           {type === 'manual' && <span className="text-[9px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded">Vérifié admin</span>}
           <h3 className="text-lg font-bold text-white mt-1">{name}</h3>
           {email && <p className="text-sm text-gray-400">{email}</p>}
         </div>
         {onDelete && (
-          <button onClick={onDelete} className="text-gray-400 hover:text-white p-1">
-            <X size={18} />
+          <button
+            type="button"
+            onClick={onDelete}
+            title="Supprimer du Trust Circle"
+            className="p-1.5 rounded-md text-red-400/55 hover:text-red-400 hover:bg-red-500/15 transition-colors shrink-0"
+            aria-label="Supprimer cette entité du Trust Circle"
+          >
+            <Trash2 size={15} strokeWidth={1.75} />
           </button>
         )}
       </div>

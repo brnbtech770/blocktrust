@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
         }),
       ])
       const { sendMutualTrustEmail } = await import('@/lib/trust-circle-email')
-      sendMutualTrustEmail(userId, targetUser.id).catch(console.error)
+      await sendMutualTrustEmail(userId, targetUser.id).catch(console.error)
       return NextResponse.json({
         success:   true,
         trustType: 'MUTUAL',
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { sendTrustCircleInviteEmail } = await import('@/lib/trust-circle-email')
-    sendTrustCircleInviteEmail(
+    await sendTrustCircleInviteEmail(
       targetUser.id,
       session.user.name ?? 'Un utilisateur BlockTrust',
       session.user.email ?? '',
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
     ).catch(console.error)
   } else {
     const { sendTrustCircleExternalInviteEmail } = await import('@/lib/trust-circle-email')
-    sendTrustCircleExternalInviteEmail(
+    await sendTrustCircleExternalInviteEmail(
       email,
       name,
       session.user.name ?? 'Un utilisateur BlockTrust',
