@@ -108,6 +108,7 @@ export const authOptions: NextAuthConfig = {
     }),
   ],
   callbacks: {
+    // Google OAuth : garantir un enregistrement User (avant JWT) — requis si l’adapter est en retard ou en échec partiel.
     async signIn({ user, account, profile }) {
       if (account?.provider === 'google') {
         try {
