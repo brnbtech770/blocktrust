@@ -3,11 +3,16 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import type Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/app/lib/db'
 import { btError, btErrorDevDetails, btLog } from '@/lib/prodLog'
 import { sendEmail } from '@/lib/email'
 import { PaymentSuccessEmail, getPaymentSuccessSubject } from '@/emails/PaymentSuccessEmail'
+import {
+  createKycSubmittedAdminAlertIfNew,
+  createNewPaymentAdminAlertIfNew,
+} from '@/lib/admin-alerts'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
@@ -39,6 +44,20 @@ function mapPriceIdToPlan(priceId: string): string {
   delete priceMap['']
 
   return priceMap[priceId] || 'ESSENTIEL'
+}
+
+function formatSubscriptionAmount(sub: Stripe.Subscription): string {
+  const price = sub.items.data[0]?.price
+  if (price?.unit_amount == null) return '—'
+  const currency = (price.currency || 'eur').toUpperCase()
+  const amount = price.unit_amount / 100
+  const formatted = new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency,
+  }).format(amount)
+  const interval = price.recurring?.interval
+  if (interval === 'year') return `${formatted}/an`
+  return `${formatted}/mois`
 }
 
 export async function POST(req: NextRequest) {
@@ -76,6 +95,36 @@ export async function POST(req: NextRequest) {
       // ─────────────────────────────────────────────
       // CHECKOUT SESSION COMPLETED
       // ─────────────────────────────────────────────
+      case 'customer.subscription.created': {
+        const sub = event.data.object as Stripe.Subscription
+        const customerId =
+          typeof sub.customer === 'string' ? sub.customer : sub.customer?.id
+        if (!customerId) break
+
+        const user = await prisma.user.findFirst({
+          where: { stripeCustomerId: customerId },
+        })
+        if (!user) {
+          btLog(
+            `ℹ️ NEW_PAYMENT skip — aucun user pour customer ${customerId}`,
+            'Subscription created — user not found'
+          )
+          break
+        }
+
+        const priceId = sub.items.data[0]?.price?.id
+        const plan = mapPriceIdToPlan(priceId || '')
+        const amountLabel = formatSubscriptionAmount(sub)
+        await createNewPaymentAdminAlertIfNew({
+          userId: user.id,
+          email: user.email,
+          plan,
+          amountLabel,
+          stripeSubscriptionId: sub.id,
+        })
+        break
+      }
+
       case 'checkout.session.completed': {
         const session = event.data.object as any
 
@@ -267,6 +316,15 @@ export async function POST(req: NextRequest) {
             kycStatus:     'VERIFIED',
             kycVerifiedAt: new Date(),
           },
+        })
+        const kycUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { email: true },
+        })
+        await createKycSubmittedAdminAlertIfNew({
+          userId,
+          email: kycUser?.email ?? null,
+          stripeSessionId: vs.id,
         })
         const { sendKYCApprovedEmail } = await import('@/lib/kyc-email')
         await sendKYCApprovedEmail(userId)

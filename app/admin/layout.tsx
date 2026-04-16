@@ -11,6 +11,7 @@ import SignOutButton from '@/app/components/SignOutButton'
 import { Logo } from '@/app/components/ui/Logo'
 import Link from 'next/link'
 import AdminPageHeader from '@/app/admin/AdminPageHeader'
+import { prisma } from '@/app/lib/db'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,6 +72,7 @@ const navLinks = [
   { href: '/admin/demandes', label: 'Demandes Trust', Icon: IconDemandes },
   { href: '/admin/users', label: 'Clients', Icon: IconClients },
   { href: '/admin/alerts', label: 'Alertes', Icon: IconAlertes },
+  { href: '/admin/ai-alerts', label: 'Alertes IA', Icon: IconAlertes },
 ]
 
 export default async function AdminLayout({
@@ -103,6 +105,10 @@ export default async function AdminLayout({
   if (!isAdmin(session.user.email)) {
     redirect('/dashboard')
   }
+
+  const unreadAdminAlerts = await prisma.adminAlert.count({
+    where: { read: false },
+  })
 
   return (
     <div
@@ -153,7 +159,15 @@ export default async function AdminLayout({
               style={{ color: 'var(--bt-muted)' }}
             >
               <Icon />
-              {label}
+              <span className="flex-1">{label}</span>
+              {href === '/admin/alerts' && unreadAdminAlerts > 0 ? (
+                <span
+                  className="min-w-[1.35rem] rounded-full px-1.5 py-0.5 text-center text-[10px] font-bold text-white"
+                  style={{ background: '#dc2626' }}
+                >
+                  {unreadAdminAlerts > 99 ? '99+' : unreadAdminAlerts}
+                </span>
+              ) : null}
             </Link>
           ))}
         </nav>

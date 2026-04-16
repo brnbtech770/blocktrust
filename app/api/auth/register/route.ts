@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { createAdminAlert } from "@/lib/admin-alerts";
 
 const registerSchema = z.object({
   firstName: z.string().min(1).max(50),
@@ -41,12 +42,19 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         name: `${firstName} ${lastName}`.trim(),
         email,
         password: hashedPassword,
       },
+    });
+
+    await createAdminAlert({
+      type: "NEW_USER",
+      title: "Nouvel utilisateur inscrit",
+      description: `${email} vient de créer un compte`,
+      userId: user.id,
     });
 
     return NextResponse.json({ success: true }, { status: 201 });

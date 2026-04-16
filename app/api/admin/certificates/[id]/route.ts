@@ -7,6 +7,7 @@ import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
+import { createAdminAlert } from '@/lib/admin-alerts'
 
 const actionSchema = z.object({
   action: z.enum(['activate', 'suspend', 'reactivate', 'revoke', 'reject']),
@@ -127,6 +128,24 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       where: { id },
       data: updateData,
     })
+
+    if (action === 'activate' || action === 'reactivate') {
+      await createAdminAlert({
+        type: 'CERT_ACTIVATED',
+        title: 'Certificat activé',
+        description: `Certificat ${id}`,
+        entityId: certificate.entityId,
+        metadata: { certificateId: id },
+      })
+    } else if (action === 'revoke' || action === 'reject') {
+      await createAdminAlert({
+        type: 'CERT_REVOKED',
+        title: 'Certificat révoqué',
+        description: `Certificat ${id}`,
+        entityId: certificate.entityId,
+        metadata: { certificateId: id },
+      })
+    }
 
     return NextResponse.json({
       success: true,

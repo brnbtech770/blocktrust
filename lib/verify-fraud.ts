@@ -3,7 +3,8 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
-import type { AdminAlertType, Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
+import { createAdminAlert } from '@/lib/admin-alerts'
 
 export const VERIFY_SECURITY_HEADERS = {
   'Cache-Control': 'no-store',
@@ -37,17 +38,29 @@ export async function logRateLimitedVerification(args: {
 }
 
 export async function createAdminFraudAlert(args: {
-  type: AdminAlertType
+  type: 'FRAUD_ALERT' | 'SUSPICIOUS_VOLUME' | 'SUSPICIOUS_SCANNING'
   entityId?: string | null
   certificateId?: string | null
   metadata?: Record<string, unknown>
 }) {
-  await prisma.adminAlert.create({
-    data: {
-      type: args.type,
-      entityId: args.entityId ?? null,
-      certificateId: args.certificateId ?? null,
-      metadata: (args.metadata ?? {}) as Prisma.InputJsonValue,
+  const titleByType = {
+    FRAUD_ALERT: 'Alerte fraude (vérification publique)',
+    SUSPICIOUS_VOLUME: 'Volume de vérifications suspect',
+    SUSPICIOUS_SCANNING: 'Scan multi-certificats suspect',
+  } as const
+
+  const parts: string[] = []
+  if (args.certificateId) parts.push(`Certificat ${args.certificateId}`)
+  if (args.entityId) parts.push(`Entité ${args.entityId}`)
+
+  await createAdminAlert({
+    type: args.type,
+    title: titleByType[args.type],
+    description: parts.length ? parts.join(' · ') : 'Anomalie détectée sur /verify',
+    entityId: args.entityId ?? undefined,
+    metadata: {
+      ...(args.metadata ?? {}),
+      ...(args.certificateId ? { certificateId: args.certificateId } : {}),
     },
   })
 }

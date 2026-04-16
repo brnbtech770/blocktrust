@@ -110,6 +110,7 @@ model User {
   userTrustFrom        UserTrustRelation[] @relation("UserTrustFrom")
   userTrustTo          UserTrustRelation[] @relation("UserTrustTo")
   userManualTrustEntries UserManualTrustEntry[]
+  adminAlerts            AdminAlert[]
 }
 
 enum AccountType {
@@ -417,7 +418,6 @@ model Certificate {
   interactionsAsA BadgeInteraction[] @relation("CertificateA")
   interactionsAsB BadgeInteraction[] @relation("CertificateB")
   aiAlerts        AIAlert[]
-  adminAlerts     AdminAlert[]
 
   @@index([entityId])
   @@index([status])
@@ -796,28 +796,22 @@ enum AlertStatus {
   ESCALATED
 }
 
-/// Alertes sécurité / anti-fraude (flux /verify, anomalies)
+/// Alertes opérationnelles admin (inscriptions, KYC, paiements, fraude, certificats…)
 model AdminAlert {
-  id              String   @id @default(cuid())
-  type            AdminAlertType
-  entityId        String?
-  entity          Entity?    @relation(fields: [entityId], references: [id], onDelete: SetNull)
-  certificateId   String?
-  certificate     Certificate? @relation(fields: [certificateId], references: [id], onDelete: SetNull)
-  metadata        Json?
-  read            Boolean  @default(false)
-  createdAt       DateTime @default(now())
+  id          String   @id @default(cuid())
+  type        String
+  title       String
+  description String   @db.Text
+  entityId    String?
+  entity      Entity?  @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  metadata    Json?
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
-  @@index([read])
+  @@index([read, createdAt])
   @@index([type])
-  @@index([createdAt])
-  @@index([certificateId])
-}
-
-enum AdminAlertType {
-  FRAUD_ALERT
-  SUSPICIOUS_VOLUME
-  SUSPICIOUS_SCANNING
 }
 
 // ============================================================

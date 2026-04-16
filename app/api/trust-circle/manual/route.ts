@@ -3,6 +3,7 @@ import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
 import { z } from 'zod'
+import { createAdminAlert } from '@/lib/admin-alerts'
 
 const schema = z.object({
   entityName:  z.string().min(1).max(200),
@@ -59,6 +60,21 @@ export async function POST(req: NextRequest) {
     entry.entityName,
     entry.entityType
   ).catch(console.error)
+
+  const requesterEmail =
+    session.user.email ??
+    (await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true },
+    }))?.email
+
+  await createAdminAlert({
+    type: 'MANUAL_TRUST_REQUEST',
+    title: 'Nouvelle demande Trust Circle manuelle',
+    description: `Demande de ${requesterEmail ?? session.user.id}`,
+    userId: session.user.id,
+    metadata: { entryId: entry.id, entityName: entry.entityName },
+  })
 
   return NextResponse.json({
     success:   true,

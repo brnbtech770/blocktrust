@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/app/lib/db'
 import { btError, btErrorDevDetails, btLog } from '@/lib/prodLog'
+import { createKycSubmittedAdminAlertIfNew } from '@/lib/admin-alerts'
 
 const identityWebhookSecret = process.env.STRIPE_IDENTITY_WEBHOOK_SECRET!
 
@@ -64,6 +65,15 @@ export async function POST(req: NextRequest) {
             kycStatus: 'VERIFIED',
             kycVerifiedAt: new Date(),
           },
+        })
+        const kycUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { email: true },
+        })
+        await createKycSubmittedAdminAlertIfNew({
+          userId,
+          email: kycUser?.email ?? null,
+          stripeSessionId: vs.id,
         })
         const { sendKYCApprovedEmail } = await import('@/lib/kyc-email')
         sendKYCApprovedEmail(userId).catch((e) =>
