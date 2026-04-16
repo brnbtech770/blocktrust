@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
 import Link from "next/link";
+import { UpgradePrompt } from "@/app/components/ui/UpgradePrompt";
+import { buildUpgradePromptProps } from "@/lib/upgradePromptProps";
 
 type EntityType = "INDIVIDUAL" | "BUSINESS";
 
@@ -67,6 +69,42 @@ export default function CreateCertificate() {
   const [error, setError] = useState("");
   const [createdEntity, setCreatedEntity] = useState<any>(null);
   const [createdCertificate, setCreatedCertificate] = useState<any>(null);
+  const [certQuota, setCertQuota] = useState<{
+    allowed: boolean;
+    plan: string;
+    max: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (step !== 2) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch("/api/quota/certificates", { credentials: "include" });
+        if (!r.ok) {
+          if (!cancelled) {
+            setCertQuota({ allowed: true, plan: "ESSENTIEL", max: 1 });
+          }
+          return;
+        }
+        const d = await r.json();
+        if (!cancelled) {
+          setCertQuota({
+            allowed: d.allowed,
+            plan: d.plan,
+            max: d.max,
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setCertQuota({ allowed: true, plan: "ESSENTIEL", max: 1 });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [step]);
 
   // Normaliser le website (ajouter https:// si manquant)
   const normalizeWebsite = (website: string | undefined | null): string | null => {
@@ -599,6 +637,12 @@ export default function CreateCertificate() {
               </div>
             </div>
 
+            {certQuota && !certQuota.allowed ? (
+              <UpgradePrompt
+                {...buildUpgradePromptProps(certQuota.plan, certQuota.max)}
+              />
+            ) : null}
+
             <div className="flex gap-4">
               <button
                 type="button"
@@ -607,14 +651,16 @@ export default function CreateCertificate() {
               >
                 ← Retour
               </button>
-              <button
-                type="button"
-                onClick={handleGenerateCertificate}
-                disabled={loading}
-                className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-4 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all disabled:opacity-50"
-              >
-                {loading ? "⏳ Génération en cours..." : "🛡️ Générer mon certificat"}
-              </button>
+              {certQuota && !certQuota.allowed ? null : (
+                <button
+                  type="button"
+                  onClick={handleGenerateCertificate}
+                  disabled={loading || certQuota === null}
+                  className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-4 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all disabled:opacity-50"
+                >
+                  {loading ? "⏳ Génération en cours..." : "🛡️ Générer mon certificat"}
+                </button>
+              )}
             </div>
           </div>
         )}

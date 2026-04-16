@@ -8,6 +8,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { UpgradePrompt } from "@/app/components/ui/UpgradePrompt";
+import { buildUpgradePromptProps } from "@/lib/upgradePromptProps";
 
 type CertificateStatus = "PENDING" | "ACTIVE" | "ANCHORED" | "SUSPENDED" | "REVOKED" | "EXPIRED";
 
@@ -43,6 +45,11 @@ export default function CertificatesPage() {
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [certQuota, setCertQuota] = useState<{
+    allowed: boolean;
+    plan: string;
+    max: number;
+  } | null>(null);
 
   useEffect(() => {
     if (sessionStatus === "loading") {
@@ -69,7 +76,23 @@ export default function CertificatesPage() {
       }
 
       const data = await response.json();
-      
+
+      try {
+        const qRes = await fetch("/api/quota/certificates", { credentials: "include" });
+        if (qRes.ok) {
+          const q = await qRes.json();
+          setCertQuota({
+            allowed: q.allowed,
+            plan: q.plan,
+            max: q.max,
+          });
+        } else {
+          setCertQuota({ allowed: true, plan: "ESSENTIEL", max: 1 });
+        }
+      } catch {
+        setCertQuota({ allowed: true, plan: "ESSENTIEL", max: 1 });
+      }
+
       // Récupérer les TrustScores pour chaque certificat
       const certificatesWithTrustScore = await Promise.all(
         data.map(async (cert: Certificate) => {
@@ -166,6 +189,15 @@ export default function CertificatesPage() {
 
   return (
     <>
+      {certQuota && !certQuota.allowed ? (
+        <div className="mb-6">
+          <UpgradePrompt
+            inline
+            {...buildUpgradePromptProps(certQuota.plan, certQuota.max)}
+          />
+        </div>
+      ) : null}
+
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -242,8 +274,12 @@ export default function CertificatesPage() {
                       </button>
                     </>
                   ) : certificate.status === "PENDING" ? (
-                    <p className="text-yellow-400 text-sm font-medium">
-                      ⏳ En attente de validation par BlockTrust
+                    <p
+                      className="text-sm mt-2 max-w-2xl leading-relaxed"
+                      style={{ color: "#BDA76B" }}
+                    >
+                      Votre certificat est en cours de validation par l&apos;équipe BlockTrust.
+                      Vous serez notifié par email sous 24–48h.
                     </p>
                   ) : (
                     <Link
