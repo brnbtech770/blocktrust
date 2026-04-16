@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { Logo } from "@/app/components/ui/Logo";
 const cardClass =
   "mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm sm:p-8";
 
-const inputStyle: React.CSSProperties = {
+const inputStyle: CSSProperties = {
   width: "100%",
   padding: "10px 12px",
   borderRadius: "8px",
@@ -28,6 +28,12 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const formLoadedAtRef = useRef<number | null>(null);
+  const websiteHoneypotRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    formLoadedAtRef.current = Date.now();
+  }, []);
 
   function validate(): boolean {
     const err: Record<string, string> = {};
@@ -58,6 +64,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
+      const website = websiteHoneypotRef.current?.value ?? "";
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,6 +73,8 @@ export default function RegisterPage() {
           lastName: lastName.trim(),
           email: email.trim(),
           password,
+          website,
+          formLoadedAt: formLoadedAtRef.current ?? Date.now(),
         }),
       });
       const data = await res.json();
@@ -96,27 +105,36 @@ export default function RegisterPage() {
         <h1 className="font-syne mb-6 text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
           Créer un compte
         </h1>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="on">
+          <input
+            ref={websiteHoneypotRef}
+            type="text"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            style={{ display: "none" }}
+          />
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Prénom</label>
-            <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} />
+            <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} autoComplete="given-name" />
           </div>
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Nom</label>
-            <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} />
+            <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} autoComplete="family-name" />
           </div>
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} autoComplete="email" />
           </div>
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Mot de passe</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} />
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} autoComplete="new-password" />
             {fieldError.password && <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>{fieldError.password}</p>}
           </div>
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Confirmer le mot de passe</label>
-            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} />
+            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} autoComplete="new-password" />
             {fieldError.confirmPassword && <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>{fieldError.confirmPassword}</p>}
           </div>
           {error && <p style={{ color: "#E05252", marginBottom: "1rem" }}>{error}</p>}

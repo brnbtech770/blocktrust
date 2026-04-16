@@ -5,6 +5,7 @@
 import { prisma } from '@/app/lib/db'
 import { isAdmin } from '@/app/lib/admin'
 import AdminUsersTable from '@/app/admin/users/AdminUsersTable'
+import { isSuspectUserForAdmin } from '@/lib/register-anti-bot'
 
 export default async function AdminUsersPage() {
   const users = await prisma.user.findMany({
@@ -38,6 +39,7 @@ export default async function AdminUsersPage() {
       }),
       hasActivePlan: Boolean(user.planId),
       isAdminUser: isAdmin(user.email),
+      isSuspect: isSuspectUserForAdmin(user.name, Boolean(user.planId)),
     }
   })
 

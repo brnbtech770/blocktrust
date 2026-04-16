@@ -3,18 +3,51 @@ import { prisma } from "@/app/lib/db";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { createAdminAlert } from "@/lib/admin-alerts";
+import { checkRateLimitRegister } from "@/lib/rate-limit-register";
+import {
+  isDisposableEmailDomain,
+  matchesBotEmailPattern,
+  validateRegisterNames,
+} from "@/lib/register-anti-bot";
+import { hashIp } from "@/app/lib/auth";
 
-const registerSchema = z.object({
-  firstName: z.string().min(1).max(50),
-  lastName: z.string().min(1).max(50),
-  email: z.string().email(),
-  password: z
-    .string()
-    .min(12, "Minimum 12 caractères")
-    .regex(/[A-Z]/, "Au moins 1 majuscule")
-    .regex(/[0-9]/, "Au moins 1 chiffre")
-    .regex(/[^a-zA-Z0-9]/, "Au moins 1 caractère spécial"),
-});
+const MIN_FORM_MS = 3000;
+
+const registerSchema = z
+  .object({
+    firstName: z.string().min(1).max(35),
+    lastName: z.string().min(1).max(35),
+    email: z.string().email().max(254),
+    password: z
+      .string()
+      .min(12, "Minimum 12 caractères")
+      .regex(/[A-Z]/, "Au moins 1 majuscule")
+      .regex(/[0-9]/, "Au moins 1 chiffre")
+      .regex(/[^a-zA-Z0-9]/, "Au moins 1 caractère spécial"),
+    /** Honeypot : doit rester vide */
+    website: z.string().max(500).optional(),
+    /** Date.now() côté client au montage du formulaire */
+    formLoadedAt: z.number().int().optional(),
+  })
+  .refine(
+    (d) => d.firstName.trim().length + d.lastName.trim().length + 1 <= 60,
+    { message: "Prénom et nom trop longs ensemble (max 60 caractères au total)." }
+  );
+
+function clientIp(req: NextRequest): string {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown"
+  );
+}
+
+function generic400() {
+  return NextResponse.json(
+    { error: "Une erreur est survenue. Vérifiez vos informations." },
+    { status: 400 }
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,12 +58,71 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message }, { status: 400 });
     }
 
-    const { firstName, lastName, email, password } = parsed.data;
+    const { firstName, lastName, email, password, website, formLoadedAt } =
+      parsed.data;
+    const ip = clientIp(req);
+    const hashedIP = hashIp(ip);
+
+    if (website != null && String(website).trim() !== "") {
+      return generic400();
+    }
+
+    if (
+      typeof formLoadedAt !== "number" ||
+      Number.isNaN(formLoadedAt) ||
+      Date.now() - formLoadedAt < MIN_FORM_MS
+    ) {
+      return generic400();
+    }
+
+    const rl = checkRateLimitRegister(ip);
+    if (!rl.ok) {
+      return NextResponse.json(
+        { error: "Trop de tentatives d'inscription. Réessayez plus tard." },
+        { status: 429 }
+      );
+    }
+
+    const emailNorm = email.trim().toLowerCase();
+
+    if (isDisposableEmailDomain(emailNorm)) {
+      await createAdminAlert({
+        type: "SUSPICIOUS_REGISTRATION",
+        title: "🤖 Tentative d'inscription suspecte bloquée",
+        description: `Email : ${emailNorm} — IP : ${hashedIP}`,
+        metadata: { email: emailNorm, reason: "disposable_domain" },
+      });
+      return generic400();
+    }
+
+    if (matchesBotEmailPattern(emailNorm)) {
+      await createAdminAlert({
+        type: "SUSPICIOUS_REGISTRATION",
+        title: "🤖 Tentative d'inscription suspecte bloquée",
+        description: `Email : ${emailNorm} — IP : ${hashedIP}`,
+        metadata: { email: emailNorm, reason: "bot_pattern" },
+      });
+      return generic400();
+    }
+
+    const nameCheck = validateRegisterNames(firstName, lastName);
+    if (!nameCheck.ok) {
+      if (nameCheck.code === "format") {
+        return NextResponse.json(
+          {
+            error:
+              "Indiquez un prénom et un nom valides (ex. Jean Dupont). Le nom complet ne doit pas dépasser 60 caractères.",
+          },
+          { status: 400 }
+        );
+      }
+      return generic400();
+    }
 
     await new Promise((r) => setTimeout(r, Math.random() * 400 + 100));
 
     const existing = await prisma.user.findUnique({
-      where: { email },
+      where: { email: emailNorm },
     });
 
     if (existing) {
@@ -45,7 +137,7 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.create({
       data: {
         name: `${firstName} ${lastName}`.trim(),
-        email,
+        email: emailNorm,
         password: hashedPassword,
       },
     });
@@ -53,8 +145,9 @@ export async function POST(req: NextRequest) {
     await createAdminAlert({
       type: "NEW_USER",
       title: "Nouvel utilisateur inscrit",
-      description: `${email} vient de créer un compte`,
+      description: `${emailNorm} vient de créer un compte`,
       userId: user.id,
+      metadata: { suspicious: false },
     });
 
     return NextResponse.json({ success: true }, { status: 201 });

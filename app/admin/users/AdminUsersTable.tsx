@@ -6,7 +6,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import { Trash2 } from 'lucide-react'
 
 export type AdminUserRow = {
@@ -19,15 +19,84 @@ export type AdminUserRow = {
   createdAtLabel: string
   hasActivePlan: boolean
   isAdminUser: boolean
+  isSuspect: boolean
 }
 
 export default function AdminUsersTable({ users: initialUsers }: { users: AdminUserRow[] }) {
   const router = useRouter()
   const [users, setUsers] = useState(initialUsers)
   const [confirmUser, setConfirmUser] = useState<AdminUserRow | null>(null)
+  const [bulkConfirm, setBulkConfirm] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
   const [error, setError] = useState<string | null>(null)
+  const [bulkError, setBulkError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [bulkPending, setBulkPending] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+
+  const selectableUsers = users.filter((u) => !u.isAdminUser)
+  const selectedBulkTargets = selectableUsers.filter((u) => selectedIds.has(u.id))
+  const selectAllCheckboxRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const el = selectAllCheckboxRef.current
+    if (!el) return
+    const n = selectableUsers.length
+    const sel = selectedBulkTargets.length
+    el.indeterminate = n > 0 && sel > 0 && sel < n
+  }, [selectableUsers.length, selectedBulkTargets.length])
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll(checked: boolean) {
+    setSelectedIds(() => {
+      if (!checked) return new Set()
+      return new Set(selectableUsers.map((u) => u.id))
+    })
+  }
+
+  async function confirmBulkDelete() {
+    const ids = selectedBulkTargets.map((u) => u.id)
+    if (ids.length === 0) return
+    setBulkError(null)
+    setBulkPending(true)
+    try {
+      const res = await fetch('/api/admin/users/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setBulkError(typeof data.error === 'string' ? data.error : 'Suppression impossible')
+        setBulkPending(false)
+        return
+      }
+      const deletedIds: string[] = Array.isArray(data.deletedIds) ? data.deletedIds : []
+      setUsers((prev) => prev.filter((u) => !deletedIds.includes(u.id)))
+      setSelectedIds(new Set())
+      setBulkConfirm(false)
+      const errList: string[] = Array.isArray(data.errors) ? data.errors : []
+      setToast(
+        errList.length > 0
+          ? `${deletedIds.length} supprimé(s). ${errList.length} erreur(s).`
+          : `${deletedIds.length} utilisateur(s) supprimé(s).`
+      )
+      startTransition(() => router.refresh())
+      window.setTimeout(() => setToast(null), 6000)
+    } catch {
+      setBulkError('Erreur réseau')
+    } finally {
+      setBulkPending(false)
+    }
+  }
 
   async function confirmDelete() {
     if (!confirmUser) return
@@ -39,6 +108,11 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
       return
     }
     setUsers((prev) => prev.filter((u) => u.id !== confirmUser.id))
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      next.delete(confirmUser.id)
+      return next
+    })
     setConfirmUser(null)
     setToast(`Utilisateur ${confirmUser.email ?? confirmUser.id} supprimé.`)
     startTransition(() => router.refresh())
@@ -65,6 +139,22 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
         Liste de tous les clients
       </p>
 
+      {selectedBulkTargets.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              setBulkError(null)
+              setBulkConfirm(true)
+            }}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-white transition"
+            style={{ background: '#b91c1c' }}
+          >
+            Supprimer la sélection ({selectedBulkTargets.length})
+          </button>
+        </div>
+      )}
+
       <div
         className="overflow-hidden rounded-xl border"
         style={{ background: 'rgba(13,31,60,0.5)', borderColor: 'var(--bt-border)' }}
@@ -77,6 +167,25 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
                 borderBottom: '1px solid var(--bt-border)',
               }}
             >
+              <th
+                className="w-10 px-4 py-4 text-left text-[10px] font-medium uppercase tracking-wider"
+                style={{
+                  fontFamily: 'var(--font-mono-bt), monospace',
+                  color: 'var(--bt-muted)',
+                }}
+              >
+                <input
+                  ref={selectAllCheckboxRef}
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-white/20 bg-transparent"
+                  aria-label="Tout sélectionner (hors admins)"
+                  checked={
+                    selectableUsers.length > 0 &&
+                    selectableUsers.every((u) => selectedIds.has(u.id))
+                  }
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                />
+              </th>
               <th
                 className="px-6 py-4 text-left text-[10px] font-medium uppercase tracking-wider"
                 style={{
@@ -158,11 +267,38 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
                 className="transition-colors hover:bg-[rgba(0,212,255,0.04)]"
                 style={{ borderTop: '1px solid var(--bt-border)' }}
               >
+                <td className="px-4 py-4 align-middle">
+                  {!user.isAdminUser ? (
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-white/20 bg-transparent"
+                      checked={selectedIds.has(user.id)}
+                      onChange={() => toggleSelect(user.id)}
+                      aria-label={`Sélectionner ${user.email ?? user.id}`}
+                    />
+                  ) : (
+                    <span className="inline-block w-4" aria-hidden />
+                  )}
+                </td>
                 <td className="px-6 py-4">
                   <p className="font-medium text-white">{user.email}</p>
                 </td>
                 <td className="px-6 py-4">
-                  <p style={{ color: 'var(--bt-muted)' }}>{user.name || '—'}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p style={{ color: 'var(--bt-muted)' }}>{user.name || '—'}</p>
+                    {user.isSuspect && (
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                        style={{
+                          background: 'rgba(234,179,8,0.15)',
+                          color: '#facc15',
+                        }}
+                        title="Sans abonnement et segment de nom long sans espace"
+                      >
+                        🤖 Suspect
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   {user.planName ? (
@@ -233,6 +369,62 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
           </tbody>
         </table>
       </div>
+
+      {bulkConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.65)' }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="bulk-delete-title"
+        >
+          <div
+            className="max-w-md rounded-xl border p-6 shadow-xl"
+            style={{
+              background: 'var(--bt-navy)',
+              borderColor: 'var(--bt-border)',
+            }}
+          >
+            <h2 id="bulk-delete-title" className="font-syne text-lg font-bold text-white">
+              Supprimer {selectedBulkTargets.length} utilisateur(s) ?
+            </h2>
+            <p className="mt-3 text-sm" style={{ color: 'var(--bt-muted)' }}>
+              Action irréversible pour chaque compte sélectionné (hors comptes admin, qui ne sont pas
+              listés).
+            </p>
+            {bulkError && (
+              <p className="mt-3 text-sm" style={{ color: 'var(--bt-danger, #e05252)' }}>
+                {bulkError}
+              </p>
+            )}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setBulkConfirm(false)
+                  setBulkError(null)
+                }}
+                className="rounded-lg px-4 py-2 text-sm font-medium transition"
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  color: 'var(--bt-muted)',
+                }}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={confirmBulkDelete}
+                disabled={bulkPending}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50"
+                style={{ background: '#b91c1c' }}
+              >
+                {bulkPending ? 'Suppression…' : 'Supprimer la sélection'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {confirmUser && (
         <div

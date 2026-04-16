@@ -72,3 +72,8 @@ export async function deleteAdminUserTransaction(
 
   await tx.user.delete({ where: { id: userId } })
 }
+
+/** Suppression complète hors transaction (ex. script one-shot). */
+export async function deleteUserAdmin(userId: string) {
+  await prisma.$transaction((tx) => deleteAdminUserTransaction(userId, tx))
+}

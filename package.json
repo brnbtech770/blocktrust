@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "cleanup-bots": "tsx scripts/cleanup-bots.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
