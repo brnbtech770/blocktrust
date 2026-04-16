@@ -1,25 +1,70 @@
 // app/api/verify/[id]/route.ts
-// Route publique de vérification V2
+// Route publique de vérification V2 — rate limit, anti-fraude, en-têtes no-store
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 import { hashIp } from '@/app/lib/auth'
-import { createHash, timingSafeEqual } from 'crypto'
+import { timingSafeEqual } from 'crypto'
+import { checkRateLimitVerify } from '@/lib/rate-limit-verify'
+import {
+  createAdminFraudAlert,
+  evaluateVerifyAnomalies,
+  logRateLimitedVerification,
+  verifyRateLimitHeaders,
+} from '@/lib/verify-fraud'
 
 interface RouteParams {
   params: Promise<{ id: string }>
 }
 
+function clientIp(req: NextRequest) {
+  return (
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip') ||
+    'unknown'
+  )
+}
+
 export async function GET(req: NextRequest, { params }: RouteParams) {
   const { id } = await params
   const { searchParams } = new URL(req.url)
-  
-  const sig = searchParams.get('sig') // JTI de la signature
-  const ctx = searchParams.get('ctx') // Hash contextuel (16 premiers chars)
+
+  const sig = searchParams.get('sig')
+  const ctx = searchParams.get('ctx')
+
+  const ip = clientIp(req)
+  const userAgent = req.headers.get('user-agent') || 'unknown'
+  const referer = req.headers.get('referer')
+  const hashedIp = hashIp(ip)
+
+  const rate = checkRateLimitVerify(ip)
+  if (!rate.ok) {
+    await logRateLimitedVerification({
+      ipHash: hashedIp,
+      userAgent,
+      referer,
+      jti: sig,
+    })
+    return NextResponse.json(
+      {
+        status: 'RATE_LIMITED',
+        message: 'Trop de requêtes',
+        code: 'RATE_LIMITED',
+      },
+      {
+        status: 429,
+        headers: {
+          ...verifyRateLimitHeaders(0),
+          ...(rate.retryAfter != null ? { 'Retry-After': String(rate.retryAfter) } : {}),
+        },
+      }
+    )
+  }
+
+  const rateHeaders = verifyRateLimitHeaders(rate.remaining)
 
   try {
-    // Récupérer le certificat par publicId ou id
     let certificate = await prisma.certificate.findUnique({
       where: { publicId: id },
       include: {
@@ -41,7 +86,6 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       },
     })
 
-    // Si pas trouvé par tokenId, essayer par id
     if (!certificate) {
       certificate = await prisma.certificate.findUnique({
         where: { id },
@@ -66,47 +110,57 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     }
 
     if (!certificate) {
-      return NextResponse.json({
-        status: 'NOT_FOUND',
-        message: 'Certificat introuvable',
-        code: 'CERTIFICATE_NOT_FOUND',
-      }, { status: 404 })
+      return NextResponse.json(
+        {
+          status: 'NOT_FOUND',
+          message: 'Certificat introuvable',
+          code: 'CERTIFICATE_NOT_FOUND',
+        },
+        { status: 404, headers: rateHeaders }
+      )
     }
 
-    // Vérifier le statut du certificat
     if (certificate.status === 'REVOKED') {
-      return NextResponse.json({
-        status: 'REVOKED',
-        message: 'Ce certificat a été révoqué',
-        code: 'CERTIFICATE_REVOKED',
-        // TODO: Ajouter revokedAt et revocationReason au modèle Certificate si nécessaire
-        // revokedAt: certificate.revokedAt,
-        // reason: certificate.revocationReason,
-      }, { status: 410 })
+      await prisma.verification.create({
+        data: {
+          certificateId: certificate.id,
+          ipHash: hashedIp,
+          userAgent: userAgent.slice(0, 500),
+          referer,
+          result: 'REVOKED',
+          signatureJti: sig,
+          metadata: {
+            verdict: 'REVOKED',
+            referer,
+            timestamp: new Date().toISOString(),
+          },
+        },
+      })
+      return NextResponse.json(
+        {
+          status: 'REVOKED',
+          message: 'Ce certificat a été révoqué',
+          code: 'CERTIFICATE_REVOKED',
+          revokedAt: certificate.revokedAt?.toISOString() ?? null,
+        },
+        { status: 410, headers: rateHeaders }
+      )
     }
-
-    // Vérifier l'expiration (si expiresAt existe dans le modèle)
-    // TODO: Ajouter expiresAt au modèle Certificate si nécessaire
-    // if (certificate.status === 'EXPIRED' || (certificate.expiresAt && certificate.expiresAt < new Date())) {
-    //   return NextResponse.json({
-    //     status: 'EXPIRED',
-    //     message: 'Ce certificat a expiré',
-    //     code: 'CERTIFICATE_EXPIRED',
-    //     expiredAt: certificate.expiresAt,
-    //   }, { status: 410 })
-    // }
 
     if (certificate.status === 'SUSPENDED') {
-      return NextResponse.json({
-        status: 'SUSPENDED',
-        message: 'Ce certificat est temporairement suspendu',
-        code: 'CERTIFICATE_SUSPENDED',
-      }, { status: 403 })
+      return NextResponse.json(
+        {
+          status: 'SUSPENDED',
+          message: 'Ce certificat est temporairement suspendu',
+          code: 'CERTIFICATE_SUSPENDED',
+        },
+        { status: 403, headers: rateHeaders }
+      )
     }
 
-    // Si une signature V2 est fournie, vérifier l'intégrité
-    let signatureVerification = null
+    let signatureVerification: Record<string, unknown> | null = null
     let fraudAlert = false
+    let qrExpired = false
 
     if (sig) {
       const signature = await prisma.signature.findUnique({
@@ -127,43 +181,37 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           reason: 'SIGNATURE_MISMATCH',
           message: 'Signature ne correspond pas au certificat',
         }
-      } else if (signature.expiresAt && signature.expiresAt < new Date()) {
-        signatureVerification = {
-          valid: false,
-          reason: 'SIGNATURE_EXPIRED',
-          message: 'Signature expirée',
-        }
       } else if (signature.revoked) {
+        qrExpired = true
         signatureVerification = {
           valid: false,
           reason: 'SIGNATURE_REVOKED',
-          message: 'Signature révoquée',
+          message: 'Signature révoquée ou invalide',
+        }
+      } else if (signature.expiresAt && signature.expiresAt < new Date()) {
+        qrExpired = true
+        signatureVerification = {
+          valid: false,
+          reason: 'SIGNATURE_EXPIRED',
+          message: 'Signature ou QR expiré',
         }
       } else if (ctx && signature.contextHash) {
-        // Vérifier le hash contextuel (détection de copie)
         const expectedCtx = signature.contextHash.slice(0, 16)
-        
-        // Comparaison timing-safe
         const ctxBuffer = Buffer.from(ctx)
         const expectedBuffer = Buffer.from(expectedCtx)
-        
+
         if (ctxBuffer.length !== expectedBuffer.length || !timingSafeEqual(ctxBuffer, expectedBuffer)) {
           fraudAlert = true
           signatureVerification = {
             valid: false,
             reason: 'CONTEXT_MISMATCH',
             message: 'Badge utilisé hors de son contexte original - ALERTE FRAUDE',
-            // TODO: Ajouter targetUrl au modèle Signature si nécessaire
-            // originalUrl: signature.targetUrl,
           }
         } else {
           signatureVerification = {
             valid: true,
             reason: 'VALID',
             message: 'Signature et contexte vérifiés',
-            // TODO: Ajouter purpose et targetUrl au modèle Signature si nécessaire
-            // purpose: signature.purpose,
-            // targetUrl: signature.targetUrl,
           }
         }
       } else {
@@ -175,46 +223,147 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Calculer le nombre de vérifications depuis la relation
     const verificationCount = await prisma.verification.count({
       where: { certificateId: certificate.id },
     })
 
-    // Logger la vérification
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
-               req.headers.get('x-real-ip') || 
-               'unknown'
-    const hashedIp = hashIp(ip)
-    const userAgent = req.headers.get('user-agent') || 'unknown'
-    const referer = req.headers.get('referer')
+    let responseStatus: 'VALID' | 'FRAUD_ALERT' | 'QR_EXPIRED' | 'SUSPICIOUS_VOLUME' | 'SUSPICIOUS_SCANNING' =
+      fraudAlert ? 'FRAUD_ALERT' : qrExpired ? 'QR_EXPIRED' : 'VALID'
 
-    // Créer l'enregistrement de vérification
+    let anomalyMeta: { kind: 'SUSPICIOUS_VOLUME' | 'SUSPICIOUS_SCANNING'; distinctIpCount?: number; distinctCertCount?: number } | null =
+      null
+
+    if (responseStatus === 'VALID') {
+      const anomaly = await evaluateVerifyAnomalies(certificate.id, hashedIp)
+      if (anomaly.kind === 'SUSPICIOUS_SCANNING') {
+        responseStatus = 'SUSPICIOUS_SCANNING'
+        anomalyMeta = {
+          kind: 'SUSPICIOUS_SCANNING',
+          distinctCertCount: anomaly.distinctCertCount,
+        }
+        await createAdminFraudAlert({
+          type: 'SUSPICIOUS_SCANNING',
+          entityId: certificate.entityId,
+          certificateId: certificate.id,
+          metadata: {
+            ipHash: hashedIp,
+            userAgent: userAgent.slice(0, 200),
+            count: anomaly.distinctCertCount,
+          },
+        })
+      } else if (anomaly.kind === 'SUSPICIOUS_VOLUME') {
+        responseStatus = 'SUSPICIOUS_VOLUME'
+        anomalyMeta = {
+          kind: 'SUSPICIOUS_VOLUME',
+          distinctIpCount: anomaly.distinctIpCount,
+        }
+        await createAdminFraudAlert({
+          type: 'SUSPICIOUS_VOLUME',
+          entityId: certificate.entityId,
+          certificateId: certificate.id,
+          metadata: {
+            ipHash: hashedIp,
+            userAgent: userAgent.slice(0, 200),
+            count: anomaly.distinctIpCount,
+          },
+        })
+      }
+    }
+
+    const dbResult =
+      responseStatus === 'FRAUD_ALERT'
+        ? 'FRAUD_ALERT'
+        : responseStatus === 'QR_EXPIRED'
+          ? 'QR_EXPIRED'
+          : responseStatus === 'SUSPICIOUS_SCANNING'
+            ? 'SUSPICIOUS_SCANNING'
+            : responseStatus === 'SUSPICIOUS_VOLUME'
+              ? 'SUSPICIOUS_VOLUME'
+              : 'VALID'
+
     await prisma.verification.create({
       data: {
         certificateId: certificate.id,
-        ipHash: hashedIp, // IP hashée pour RGPD
+        ipHash: hashedIp,
         userAgent: userAgent.slice(0, 500),
-        referer: referer || null,
-        result: fraudAlert ? 'FRAUD_ALERT' : 'VALID',
+        referer,
+        result: dbResult,
         signatureJti: sig || null,
+        metadata: {
+          jti: sig,
+          referer,
+          verdict: responseStatus,
+          timestamp: new Date().toISOString(),
+          userAgentShort: userAgent.slice(0, 120),
+          ...(anomalyMeta ? { anomaly: anomalyMeta } : {}),
+        },
       },
     })
 
-    // Construire la réponse
+    if (fraudAlert) {
+      await createAdminFraudAlert({
+        type: 'FRAUD_ALERT',
+        entityId: certificate.entityId,
+        certificateId: certificate.id,
+        metadata: {
+          ipHash: hashedIp,
+          userAgent: userAgent.slice(0, 200),
+          reason: (signatureVerification?.reason as string) ?? 'FRAUD_ALERT',
+        },
+      })
+    }
+
     const entityName = certificate.entity.legalName || certificate.entity.email
     const publicId = certificate.publicId || certificate.id
 
-    const response = {
-      status: fraudAlert ? 'FRAUD_ALERT' : 'VALID',
-      message: fraudAlert
-        ? '⚠️ ALERTE - Anomalie détectée sur ce badge'
-        : '✅ Certificat authentique et valide',
+    if (responseStatus === 'SUSPICIOUS_SCANNING') {
+      return NextResponse.json(
+        {
+          status: 'SUSPICIOUS_SCANNING',
+          message: 'Activité inhabituelle détectée',
+          code: 'SUSPICIOUS_SCANNING',
+          verifiedAt: new Date().toISOString(),
+        },
+        { status: 200, headers: rateHeaders }
+      )
+    }
+
+    if (responseStatus === 'QR_EXPIRED') {
+      return NextResponse.json(
+        {
+          status: 'QR_EXPIRED',
+          message: 'Ce lien ou QR de vérification a expiré',
+          code: 'QR_EXPIRED',
+          verifiedAt: new Date().toISOString(),
+        },
+        { status: 200, headers: rateHeaders }
+      )
+    }
+
+    if (responseStatus === 'FRAUD_ALERT') {
+      return NextResponse.json(
+        {
+          status: 'FRAUD_ALERT',
+          message: 'Certificat non reconnu ou potentiellement frauduleux',
+          code: 'FRAUD_ALERT',
+          verifiedAt: new Date().toISOString(),
+        },
+        { status: 200, headers: rateHeaders }
+      )
+    }
+
+    const responseBody = {
+      status: responseStatus,
+      message:
+        responseStatus === 'SUSPICIOUS_VOLUME'
+          ? 'Certificat authentique (volume de vérifications élevé — signalé aux équipes)'
+          : '✅ Certificat authentique et valide',
       certificate: {
         id: publicId,
         level: certificate.level,
         status: certificate.status,
         issuedAt: certificate.issuedAt,
-        expiresAt: null, // TODO: Ajouter expiresAt au modèle Certificate si nécessaire
+        expiresAt: certificate.expiresAt,
         verificationCount: verificationCount + 1,
       },
       entity: {
@@ -222,8 +371,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         email: certificate.entity.email,
         siret: certificate.entity.siret,
         website: certificate.entity.website,
-        logoUrl: null, // TODO: Ajouter logoUrl au modèle Entity si nécessaire
-        type: null, // TODO: Ajouter entityType au modèle Entity si nécessaire
+        logoUrl: null,
+        type: null,
         validationLevel: certificate.entity.validationLevel,
         kycStatus: certificate.entity.kycStatus,
       },
@@ -231,26 +380,30 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         ? {
             anchored: true,
             txHash: certificate.txHash,
-            blockNumber: null, // TODO: Ajouter blockNumber au modèle Certificate si nécessaire
-            anchoredAt: null, // TODO: Ajouter anchoredAt au modèle Certificate si nécessaire
+            blockNumber: certificate.blockNumber,
+            anchoredAt: certificate.anchoredAt,
           }
         : { anchored: false },
       signature: signatureVerification,
       verifiedAt: new Date().toISOString(),
+      ...(responseStatus === 'SUSPICIOUS_VOLUME' && anomalyMeta
+        ? { anomaly: { distinctIpCount: anomalyMeta.distinctIpCount } }
+        : {}),
     }
 
-    return NextResponse.json(response, {
-      status: 200, // On retourne 200 même pour FRAUD_ALERT car le certificat existe
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      },
+    return NextResponse.json(responseBody, {
+      status: 200,
+      headers: rateHeaders,
     })
   } catch (error) {
     console.error('❌ Verify error:', error)
-    return NextResponse.json({
-      status: 'ERROR',
-      message: 'Erreur de vérification',
-      code: 'INTERNAL_ERROR',
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        status: 'ERROR',
+        message: 'Erreur de vérification',
+        code: 'INTERNAL_ERROR',
+      },
+      { status: 500, headers: verifyRateLimitHeaders(0) }
+    )
   }
 }

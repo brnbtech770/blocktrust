@@ -35,6 +35,7 @@ export async function GET(
 
     const verifications = await prisma.verification.findMany({
       where: {
+        certificateId: { not: null },
         certificate: { entity: { userId: user.id } },
       },
       include: {
@@ -47,7 +48,7 @@ export async function GET(
     const events: VerificationEvent[] = verifications.map((v) => ({
       id: v.id,
       certificateId: v.certificateId,
-      certificatePublicId: v.certificate.publicId,
+      certificatePublicId: v.certificate?.publicId ?? null,
       result: v.result,
       verifiedAt: v.verifiedAt.toISOString(),
       country: v.country ?? undefined,

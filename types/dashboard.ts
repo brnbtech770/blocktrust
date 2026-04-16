@@ -28,11 +28,22 @@ export interface CertificateTableItem {
   }
 }
 
+export type VerificationResultType =
+  | 'VALID'
+  | 'FRAUD_ALERT'
+  | 'EXPIRED'
+  | 'REVOKED'
+  | 'NOT_FOUND'
+  | 'RATE_LIMITED'
+  | 'QR_EXPIRED'
+  | 'SUSPICIOUS_VOLUME'
+  | 'SUSPICIOUS_SCANNING'
+
 export interface VerificationEvent {
   id: string
-  certificateId: string
+  certificateId: string | null
   certificatePublicId: string | null
-  result: 'VALID' | 'FRAUD_ALERT' | 'EXPIRED' | 'REVOKED' | 'NOT_FOUND'
+  result: VerificationResultType
   verifiedAt: string
   country?: string | null
 }

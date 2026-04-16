@@ -342,7 +342,8 @@ model Entity {
   signatures      Signature[]
   trustScore      TrustScore?
   aiAlerts        AIAlert[]
-  
+  adminAlerts     AdminAlert[]
+
   // Trust Circle
   trustRequestsSent     TrustRelation[] @relation("TrustRequester")
   trustRequestsReceived TrustRelation[] @relation("TrustRequestee")
@@ -416,6 +417,7 @@ model Certificate {
   interactionsAsA BadgeInteraction[] @relation("CertificateA")
   interactionsAsB BadgeInteraction[] @relation("CertificateB")
   aiAlerts        AIAlert[]
+  adminAlerts     AdminAlert[]
 
   @@index([entityId])
   @@index([status])
@@ -480,8 +482,9 @@ model Signature {
 
 model Verification {
   id            String   @id @default(cuid())
-  certificateId String
-  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  /// Null pour événements hors certificat (ex. rate limit avant résolution)
+  certificateId String?
+  certificate   Certificate? @relation(fields: [certificateId], references: [id], onDelete: Cascade)
   
   ipHash        String?
   userAgent     String?
@@ -490,11 +493,13 @@ model Verification {
   
   result        VerificationResult @default(VALID)
   signatureJti  String?
+  metadata      Json?
   
   verifiedAt    DateTime @default(now())
   
   @@index([certificateId])
   @@index([verifiedAt])
+  @@index([ipHash, verifiedAt])
 }
 
 enum VerificationResult {
@@ -503,6 +508,10 @@ enum VerificationResult {
   EXPIRED
   REVOKED
   NOT_FOUND
+  RATE_LIMITED
+  QR_EXPIRED
+  SUSPICIOUS_VOLUME
+  SUSPICIOUS_SCANNING
 }
 
 // ============================================================
@@ -785,6 +794,30 @@ enum AlertStatus {
   RESOLVED
   DISMISSED
   ESCALATED
+}
+
+/// Alertes sécurité / anti-fraude (flux /verify, anomalies)
+model AdminAlert {
+  id              String   @id @default(cuid())
+  type            AdminAlertType
+  entityId        String?
+  entity          Entity?    @relation(fields: [entityId], references: [id], onDelete: SetNull)
+  certificateId   String?
+  certificate     Certificate? @relation(fields: [certificateId], references: [id], onDelete: SetNull)
+  metadata        Json?
+  read            Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@index([read])
+  @@index([type])
+  @@index([createdAt])
+  @@index([certificateId])
+}
+
+enum AdminAlertType {
+  FRAUD_ALERT
+  SUSPICIOUS_VOLUME
+  SUSPICIOUS_SCANNING
 }
 
 // ============================================================

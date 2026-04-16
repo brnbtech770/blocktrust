@@ -88,7 +88,10 @@ export default async function Dashboard({
 
     const initialActivity: VerificationEvent[] = (
       await prisma.verification.findMany({
-        where: { certificate: { entity: { userId: user.id } } },
+        where: {
+          certificateId: { not: null },
+          certificate: { entity: { userId: user.id } },
+        },
         include: { certificate: { select: { publicId: true } } },
         orderBy: { verifiedAt: 'desc' },
         take: 10,
@@ -96,7 +99,7 @@ export default async function Dashboard({
     ).map((v) => ({
       id: v.id,
       certificateId: v.certificateId,
-      certificatePublicId: v.certificate.publicId,
+      certificatePublicId: v.certificate?.publicId ?? null,
       result: v.result,
       verifiedAt: v.verifiedAt.toISOString(),
       country: v.country ?? undefined,

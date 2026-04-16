@@ -1,43 +1,90 @@
 // lib/rate-limit-verify.ts
-// Rate limiting 20 req/min par IP pour la page publique /verify/[id]
+// Rate limiting /verify : 10 req/min et 50 req/h par IP (mémoire par instance).
 // ============================================================
 //
-// ⚠️ Rate limit en mémoire — par instance Vercel uniquement.
-// Sur plusieurs instances (prod à charge), contournable.
-// TODO : migrer vers Upstash Redis avant 100 users actifs.
-// Doc : https://docs.upstash.com/redis/sdks/ratelimit
+// ⚠️ Limite en mémoire — par instance Vercel uniquement.
+// TODO : Upstash Redis en production multi-instances.
 //
 
-const LIMIT = 20
-const WINDOW_MS = 60_000
+const LIMIT_PER_MINUTE = 10
+const WINDOW_MINUTE_MS = 60_000
+const LIMIT_PER_HOUR = 50
+const WINDOW_HOUR_MS = 3_600_000
 
-type Entry = { count: number; resetAt: number }
+type Entry = {
+  minuteCount: number
+  minuteResetAt: number
+  hourCount: number
+  hourResetAt: number
+}
 
 const store = new Map<string, Entry>()
 
 function prune() {
   const now = Date.now()
-  for (const [key, entry] of store.entries()) {
-    if (entry.resetAt < now) store.delete(key)
+  for (const [key, e] of store.entries()) {
+    if (e.minuteResetAt < now && e.hourResetAt < now) store.delete(key)
   }
 }
 
-export function checkRateLimitVerify(ip: string): { ok: boolean; retryAfter?: number } {
+function initEntry(now: number): Entry {
+  return {
+    minuteCount: 0,
+    minuteResetAt: now + WINDOW_MINUTE_MS,
+    hourCount: 0,
+    hourResetAt: now + WINDOW_HOUR_MS,
+  }
+}
+
+export type RateLimitVerifyResult = {
+  ok: boolean
+  retryAfter?: number
+  /** Minimum des crédits restants (minute vs heure), après la requête si ok */
+  remaining: number
+}
+
+/**
+ * Consomme 1 requête pour cette IP si les deux fenêtres le permettent.
+ */
+export function checkRateLimitVerify(ip: string): RateLimitVerifyResult {
   prune()
   const now = Date.now()
-  let entry = store.get(ip)
-  if (!entry) {
-    store.set(ip, { count: 1, resetAt: now + WINDOW_MS })
-    return { ok: true }
+  let e = store.get(ip)
+  if (!e) {
+    e = initEntry(now)
+    store.set(ip, e)
   }
-  if (entry.resetAt < now) {
-    entry = { count: 1, resetAt: now + WINDOW_MS }
-    store.set(ip, entry)
-    return { ok: true }
+
+  if (e.minuteResetAt < now) {
+    e.minuteCount = 0
+    e.minuteResetAt = now + WINDOW_MINUTE_MS
   }
-  if (entry.count >= LIMIT) {
-    return { ok: false, retryAfter: Math.ceil((entry.resetAt - now) / 1000) }
+  if (e.hourResetAt < now) {
+    e.hourCount = 0
+    e.hourResetAt = now + WINDOW_HOUR_MS
   }
-  entry.count += 1
-  return { ok: true }
+
+  if (e.minuteCount >= LIMIT_PER_MINUTE) {
+    return {
+      ok: false,
+      retryAfter: Math.ceil((e.minuteResetAt - now) / 1000),
+      remaining: 0,
+    }
+  }
+  if (e.hourCount >= LIMIT_PER_HOUR) {
+    return {
+      ok: false,
+      retryAfter: Math.ceil((e.hourResetAt - now) / 1000),
+      remaining: 0,
+    }
+  }
+
+  e.minuteCount += 1
+  e.hourCount += 1
+
+  const remMinute = LIMIT_PER_MINUTE - e.minuteCount
+  const remHour = LIMIT_PER_HOUR - e.hourCount
+  const remaining = Math.min(remMinute, remHour)
+
+  return { ok: true, remaining }
 }

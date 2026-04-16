@@ -17,11 +17,14 @@ const POLL_INTERVAL_MS = 30_000
 function resultIcon(result: VerificationEvent['result']) {
   switch (result) {
     case 'VALID':
-      return <span className="w-2.5 h-2.5 rounded-full shrink-0 animate-pulse" style={{ background: '#00d4ff' }} aria-hidden />
+      return <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full" style={{ background: '#00d4ff' }} aria-hidden />
     case 'FRAUD_ALERT':
-      return <span className="w-2.5 h-2.5 rounded-full shrink-0 animate-pulse" style={{ background: '#E05252' }} aria-hidden />
+    case 'SUSPICIOUS_SCANNING':
+      return <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full" style={{ background: '#E05252' }} aria-hidden />
+    case 'SUSPICIOUS_VOLUME':
+      return <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" aria-hidden />
     default:
-      return <XCircle className="w-4 h-4 shrink-0" style={{ color: 'var(--bt-danger)' }} />
+      return <XCircle className="h-4 w-4 shrink-0" style={{ color: 'var(--bt-danger)' }} aria-hidden />
   }
 }
 
@@ -32,8 +35,12 @@ function resultLabel(result: VerificationEvent['result']) {
     EXPIRED: 'Expiré',
     REVOKED: 'Révoqué',
     NOT_FOUND: 'Non trouvé',
+    RATE_LIMITED: 'Limite atteinte',
+    QR_EXPIRED: 'QR expiré',
+    SUSPICIOUS_VOLUME: 'Volume suspect',
+    SUSPICIOUS_SCANNING: 'Scan suspect',
   }
-  return labels[result]
+  return labels[result] ?? result
 }
 
 export default function ActivityFeed({ initialEvents = [] }: ActivityFeedProps) {
@@ -88,7 +95,16 @@ export default function ActivityFeed({ initialEvents = [] }: ActivityFeedProps) 
                 <p className="text-sm text-white">
                   Certificat <span className="font-mono" style={{ color: 'var(--bt-cyan)' }}>{ev.certificatePublicId ?? ev.certificateId}</span>
                   {' · '}
-                  <span style={{ color: ev.result === 'VALID' ? '#1DB87E' : 'var(--bt-warn)' }}>
+                  <span
+                    style={{
+                      color:
+                        ev.result === 'VALID'
+                          ? '#1DB87E'
+                          : ev.result === 'SUSPICIOUS_VOLUME'
+                            ? 'var(--bt-warn)'
+                            : 'var(--bt-warn)',
+                    }}
+                  >
                     {resultLabel(ev.result)}
                   </span>
                 </p>
