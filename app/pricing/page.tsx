@@ -104,17 +104,11 @@ export default function PricingPage() {
 
       {/* Hero */}
       <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-4 sm:pb-6">
-        <h1
-          className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-3 sm:mb-4"
-          style={{ fontFamily: 'var(--font-syne), sans-serif' }}
-        >
+        <h1 className="font-syne text-center text-2xl font-bold text-white sm:text-3xl lg:text-4xl mb-3 sm:mb-4">
           <span className="text-white">Tarifs </span>
-          <span style={{ color: 'var(--bt-gold)' }}>transparents</span>
+          <span className="text-gold">transparents</span>
         </h1>
-        <p
-          className="text-center text-sm sm:text-base max-w-2xl mx-auto mb-6 sm:mb-10 px-1"
-          style={{ color: 'var(--bt-muted)' }}
-        >
+        <p className="mx-auto mb-6 max-w-2xl px-1 text-center font-sans text-sm leading-relaxed text-white/80 sm:mb-10 sm:text-base">
           Choisissez le plan adapté à vos besoins. Annulez à tout moment.
         </p>
 
@@ -204,21 +198,14 @@ export default function PricingPage() {
 
       {/* FAQ */}
       <section id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <h2
-          className="text-2xl font-bold text-center mb-8"
-          style={{ color: 'var(--bt-text)', fontFamily: 'var(--font-syne), sans-serif' }}
-        >
+        <h2 className="font-syne mb-8 text-center text-xl font-semibold text-white sm:text-2xl">
           Questions fréquentes
         </h2>
         <div className="space-y-2">
           {FAQ.map((item, i) => (
             <div
               key={i}
-              className="rounded-xl overflow-hidden border"
-              style={{
-                background: 'rgba(13,31,60,0.8)',
-                borderColor: 'var(--bt-border)',
-              }}
+              className="overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all hover:border-gold/30"
             >
               <button
                 type="button"

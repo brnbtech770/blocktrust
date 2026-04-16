@@ -105,14 +105,14 @@ export default async function Dashboard({
     return (
       <DashboardLayout>
         {showSuccessMessage && (
-          <div className="mb-4 sm:mb-6 bg-gradient-to-r from-[var(--bt-success)]/20 to-cyan-500/20 border border-[var(--bt-success)]/30 rounded-2xl p-4 sm:p-6 backdrop-blur-lg">
+          <div className="mb-4 sm:mb-6 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg transition-all hover:border-gold/30 sm:p-6">
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="text-3xl sm:text-4xl shrink-0">🎉</div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg sm:text-2xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+                <h3 className="font-syne text-xl font-semibold text-white sm:text-2xl mb-2">
                   Certificat créé avec succès !
                 </h3>
-                <p className="text-gray-300 text-sm sm:text-base">
+                <p className="font-sans text-sm text-white/80 sm:text-base leading-relaxed">
                   Votre certificat est en attente de validation. Il sera activé sous peu.
                 </p>
               </div>
@@ -121,10 +121,10 @@ export default async function Dashboard({
         )}
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <h1 className="font-syne text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl mb-2">
             Bonjour {firstName} 👋
           </h1>
-          <p className="text-gray-400 text-sm sm:text-base">
+          <p className="font-sans text-base leading-relaxed text-white/80">
             Voici un aperçu de votre activité BlockTrust
           </p>
         </div>
@@ -133,20 +133,20 @@ export default async function Dashboard({
           <StatsBlock />
         </Suspense>
 
-        <div className="rounded-xl border border-gray-700 bg-[var(--bt-navy)]/60 backdrop-blur-sm p-4 sm:p-6 mb-6 sm:mb-8">
-          <h2 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4 tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+        <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-gold/30 sm:p-6">
+          <h2 className="font-syne mb-3 text-xl font-semibold tracking-tight text-white sm:mb-4 sm:text-2xl">
             Actions rapides
           </h2>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/dashboard/create"
-              className="text-center bg-[var(--bt-gold)] text-[var(--bt-navy)] font-bold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg hover:opacity-90 transition-opacity text-sm sm:text-base"
+              className="inline-flex items-center justify-center rounded-lg bg-bt-cyan px-6 py-3 text-center font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:text-base"
             >
               ➕ Créer une entité
             </Link>
             <Link
               href="/dashboard/certificates"
-              className="text-center border border-[var(--bt-gold)]/50 text-[var(--bt-gold)] font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg hover:bg-[var(--bt-gold)]/10 transition-colors text-sm sm:text-base"
+              className="inline-flex items-center justify-center rounded-lg border border-white/20 px-6 py-3 text-center font-sans text-sm font-semibold text-white transition-all hover:border-white/40 sm:text-base"
             >
               🛡️ Voir tous mes certificats
             </Link>

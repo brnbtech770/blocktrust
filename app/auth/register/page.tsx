@@ -6,14 +6,8 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Logo } from "@/app/components/ui/Logo";
 
-const cardStyle: React.CSSProperties = {
-  maxWidth: "420px",
-  margin: "0 auto",
-  padding: "32px",
-  border: "1px solid var(--bt-border)",
-  borderRadius: "16px",
-  backgroundColor: "rgba(13,31,60,0.9)",
-};
+const cardClass =
+  "mx-auto w-full max-w-[420px] rounded-xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -98,15 +92,8 @@ export default function RegisterPage() {
       <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
         <Logo size="lg" withText={true} href="/" />
       </div>
-      <div style={cardStyle}>
-        <h1
-          style={{
-            fontFamily: "var(--font-syne), sans-serif",
-            color: "#fff",
-            fontSize: "1.5rem",
-            marginBottom: "1.5rem",
-          }}
-        >
+      <div className={cardClass}>
+        <h1 className="font-syne mb-6 text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
           Créer un compte
         </h1>
         <form onSubmit={handleSubmit}>

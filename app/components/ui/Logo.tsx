@@ -55,14 +55,17 @@ export function Logo({
 
   const text = withText && (
     <div style={{ minWidth: 0 }}>
-      <div className={isHero ? 'text-sm sm:text-lg md:text-[22px]' : ''} style={{
-        fontFamily: 'var(--font-syne), sans-serif',
-        fontSize: isHero ? undefined : size === 'lg' ? '22px' : size === 'md' ? '18px' : '11px',
-        fontWeight: 800,
-        color: 'var(--bt-cyan)',
-        letterSpacing: size === 'sm' ? '0.04em' : '0.08em',
-        lineHeight: 1,
-      }}>
+      <div
+        className={`font-syne font-extrabold leading-none tracking-wide text-bt-cyan ${
+          isHero
+            ? "text-sm sm:text-lg md:text-[22px]"
+            : size === "lg"
+              ? "text-[22px]"
+              : size === "md"
+                ? "text-lg"
+                : "text-[11px]"
+        } ${size === "sm" ? "tracking-[0.04em]" : "tracking-[0.08em]"}`}
+      >
         BLOCKTRUST
       </div>
       <div className={isHero ? 'text-[8px] sm:text-[9px]' : ''} style={{

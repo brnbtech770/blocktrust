@@ -206,13 +206,8 @@ function SignInContent() {
           <Logo size="lg" withText={true} href="/" />
         </div>
       </div>
-      <div className="mx-auto w-full max-w-[420px] rounded-2xl border border-[rgba(0,212,255,0.15)] bg-[rgba(13,31,60,0.85)] p-5 sm:p-8">
-        <h1
-          className="mb-4 text-xl font-bold text-white sm:mb-6 sm:text-2xl"
-          style={{
-            fontFamily: "var(--font-syne), sans-serif",
-          }}
-        >
+      <div className="mx-auto w-full max-w-[420px] rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-8">
+        <h1 className="font-syne mb-4 text-2xl font-bold text-white sm:mb-6 sm:text-3xl lg:text-4xl">
           Connexion
         </h1>
 

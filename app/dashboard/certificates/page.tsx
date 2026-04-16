@@ -133,14 +133,14 @@ export default function CertificatesPage() {
         return { emoji: "🟡", label: "En attente", color: "bg-yellow-500/20 text-yellow-400" };
       case "ACTIVE":
       case "ANCHORED":
-        return { emoji: "🟢", label: "Actif", color: "bg-green-500/20 text-green-400" };
+        return { emoji: "🟢", label: "Actif", color: "bg-bt-cyan/20 text-bt-cyan" };
       case "SUSPENDED":
         return { emoji: "🟠", label: "Suspendu", color: "bg-orange-500/20 text-orange-400" };
       case "REVOKED":
       case "EXPIRED":
         return { emoji: "🔴", label: "Révoqué", color: "bg-red-500/20 text-red-400" };
       default:
-        return { emoji: "⚪", label: status, color: "bg-gray-500/20 text-gray-400" };
+        return { emoji: "⚪", label: status, color: "bg-white/10 text-white/60" };
     }
   };
 
@@ -199,14 +199,18 @@ export default function CertificatesPage() {
       ) : null}
 
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-white tracking-tight mb-2">Mes Certificats</h1>
-          <p className="text-gray-400 text-base">Gérez vos badges de certification</p>
+          <h1 className="font-syne text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl mb-2">
+            Mes Certificats
+          </h1>
+          <p className="font-sans text-base leading-relaxed text-white/80">
+            Gérez vos badges de certification
+          </p>
         </div>
         <Link
           href="/dashboard/create"
-          className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
+          className="inline-flex shrink-0 items-center justify-center rounded-lg bg-bt-cyan px-6 py-3 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
         >
           + Créer un certificat
         </Link>
@@ -222,11 +226,13 @@ export default function CertificatesPage() {
             return (
               <div
                 key={certificate.id}
-                className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6 hover:border-cyan-500/50 transition-all"
+                className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30"
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="mb-4 flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-white mb-2">{entityName}</h3>
+                    <h3 className="font-syne text-xl font-semibold text-white sm:text-2xl mb-2">
+                      {entityName}
+                    </h3>
                     <div className="flex items-center gap-4 mb-2">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusBadge.color}`}>
                         {statusBadge.emoji} {statusBadge.label}
@@ -236,11 +242,11 @@ export default function CertificatesPage() {
                       </span>
                     </div>
                     {certificate.trustScore && (
-                      <p className="text-cyan-400 text-base font-semibold">
+                      <p className="font-mono text-sm font-semibold text-bt-cyan">
                         TrustScore: {certificate.trustScore.score}/100 ({certificate.trustScore.level})
                       </p>
                     )}
-                    <p className="text-gray-400 text-sm mt-2">
+                    <p className="mt-2 font-sans text-sm text-white/60">
                       Créé le {new Date(certificate.issuedAt).toLocaleDateString("fr-FR", {
                         day: "numeric",
                         month: "long",
@@ -255,20 +261,23 @@ export default function CertificatesPage() {
                   {certificate.status === "ACTIVE" || certificate.status === "ANCHORED" ? (
                     <>
                       <button
+                        type="button"
                         onClick={() => handleVerify(certificate)}
-                        className="bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 px-4 py-2 rounded-lg transition text-sm font-medium"
+                        className="rounded-lg bg-bt-cyan/20 px-4 py-2 text-sm font-medium text-bt-cyan transition hover:bg-bt-cyan/30"
                       >
                         🔍 Vérifier
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleCopyEmbed(certificate)}
-                        className="bg-gray-700/50 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg transition text-sm font-medium"
+                        className="rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40"
                       >
                         📋 Copier embed
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleDownloadQR(certificate)}
-                        className="bg-gray-700/50 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg transition text-sm font-medium"
+                        className="rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40"
                       >
                         📱 QR Code
                       </button>
@@ -284,7 +293,7 @@ export default function CertificatesPage() {
                   ) : (
                     <Link
                       href={`/dashboard/badge/${certificate.id}`}
-                      className="bg-gray-700/50 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-lg transition text-sm font-medium"
+                      className="inline-flex rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40"
                     >
                       Voir détails
                     </Link>
@@ -295,13 +304,13 @@ export default function CertificatesPage() {
           })}
         </div>
       ) : (
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-12 text-center">
-          <div className="text-6xl mb-4">📭</div>
-          <h3 className="text-2xl font-bold text-white mb-2">Aucun certificat</h3>
-          <p className="text-gray-400 text-base mb-6">Créez votre premier certificat pour commencer</p>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-lg transition-all hover:border-gold/30">
+          <div className="mb-4 text-6xl">📭</div>
+          <h3 className="font-syne mb-2 text-xl font-semibold text-white sm:text-2xl">Aucun certificat</h3>
+          <p className="mb-6 font-sans text-base text-white/80">Créez votre premier certificat pour commencer</p>
           <Link
             href="/dashboard/create"
-            className="inline-block bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-cyan-600 transition"
+            className="inline-flex rounded-lg bg-bt-cyan px-6 py-3 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
           >
             Créer mon premier certificat
           </Link>

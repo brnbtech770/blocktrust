@@ -278,30 +278,37 @@ export default function CreateCertificate() {
   const summary = getSummaryData();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-8">
-      <div className="max-w-3xl mx-auto">
-        <Link href="/dashboard" className="text-cyan-400 hover:text-cyan-300 mb-4 inline-block">
+    <div className="min-h-screen bg-navy p-8">
+      <div className="mx-auto max-w-3xl">
+        <Link
+          href="/dashboard"
+          className="mb-4 inline-block font-sans text-sm font-medium text-bt-cyan/90 hover:text-bt-cyan"
+        >
           ← Retour au dashboard
         </Link>
-        
+
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">Créer un certificat</h1>
-          <p className="text-gray-400 text-base mb-6">Remplissez les informations de votre entité</p>
+          <h1 className="font-syne text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl mb-2">
+            Créer un certificat
+          </h1>
+          <p className="mb-6 font-sans text-base leading-relaxed text-white/80">
+            Remplissez les informations de votre entité
+          </p>
           
           {/* Indicateur d'étapes */}
           <div className="flex items-center gap-4 mb-8">
-            <div className={`flex items-center gap-2 ${step >= 1 ? "text-cyan-400" : "text-gray-600"}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                step >= 1 ? "bg-cyan-500 text-white" : "bg-gray-700 text-gray-400"
+            <div className={`flex items-center gap-2 ${step >= 1 ? "text-bt-cyan" : "text-white/40"}`}>
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
+                step >= 1 ? "bg-bt-cyan text-navy" : "bg-white/10 text-white/50"
               }`}>
                 1
               </div>
               <span className="font-medium">Informations</span>
             </div>
-            <div className={`flex-1 h-1 ${step >= 2 ? "bg-cyan-500" : "bg-gray-700"}`} />
-            <div className={`flex items-center gap-2 ${step >= 2 ? "text-cyan-400" : "text-gray-600"}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                step >= 2 ? "bg-cyan-500 text-white" : "bg-gray-700 text-gray-400"
+            <div className={`h-1 flex-1 ${step >= 2 ? "bg-bt-cyan" : "bg-white/10"}`} />
+            <div className={`flex items-center gap-2 ${step >= 2 ? "text-bt-cyan" : "text-white/40"}`}>
+              <div className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
+                step >= 2 ? "bg-bt-cyan text-navy" : "bg-white/10 text-white/50"
               }`}>
                 2
               </div>
@@ -327,10 +334,10 @@ export default function CreateCertificate() {
                 <button
                   type="button"
                   onClick={() => setEntityType("INDIVIDUAL")}
-                  className={`flex-1 py-3 px-6 rounded-lg font-medium transition ${
+                  className={`flex-1 rounded-lg px-6 py-3 font-sans font-medium transition ${
                     entityType === "INDIVIDUAL"
-                      ? "bg-cyan-500 text-white"
-                      : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                      ? "bg-bt-cyan text-navy"
+                      : "border border-white/20 bg-white/5 text-white/70 hover:border-white/40"
                   }`}
                 >
                   👤 Particulier
@@ -338,10 +345,10 @@ export default function CreateCertificate() {
                 <button
                   type="button"
                   onClick={() => setEntityType("BUSINESS")}
-                  className={`flex-1 py-3 px-6 rounded-lg font-medium transition ${
+                  className={`flex-1 rounded-lg px-6 py-3 font-sans font-medium transition ${
                     entityType === "BUSINESS"
-                      ? "bg-cyan-500 text-white"
-                      : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                      ? "bg-bt-cyan text-navy"
+                      : "border border-white/20 bg-white/5 text-white/70 hover:border-white/40"
                   }`}
                 >
                   🏢 Entreprise
@@ -572,7 +579,7 @@ export default function CreateCertificate() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-4 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
+              className="w-full rounded-lg bg-bt-cyan py-4 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
             >
               Continuer →
             </button>
@@ -580,13 +587,17 @@ export default function CreateCertificate() {
         ) : (
           <div className="space-y-6">
             {/* Récapitulatif */}
-            <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
-              <h2 className="text-2xl font-bold text-white mb-6 tracking-tight">Récapitulatif</h2>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
+              <h2 className="font-syne mb-6 text-xl font-semibold tracking-tight text-white sm:text-2xl">
+                Récapitulatif
+              </h2>
               
               <div className="space-y-4">
                 <div>
-                  <span className="text-gray-400 text-sm font-medium">Type d'entité :</span>
-                  <p className="text-white font-semibold">{summary.type}</p>
+                  <span className="font-sans text-sm font-medium uppercase tracking-wider text-white/60">
+                    Type d&apos;entité :
+                  </span>
+                  <p className="font-sans font-semibold text-white">{summary.type}</p>
                 </div>
 
                 {entityType === "INDIVIDUAL" ? (
@@ -647,7 +658,7 @@ export default function CreateCertificate() {
               <button
                 type="button"
                 onClick={handleBack}
-                className="flex-1 bg-gray-700 text-white font-semibold py-4 rounded-lg hover:bg-gray-600 transition-all"
+                className="flex-1 rounded-lg border border-white/20 py-4 font-sans font-semibold text-white transition-all hover:border-white/40"
               >
                 ← Retour
               </button>
@@ -656,7 +667,7 @@ export default function CreateCertificate() {
                   type="button"
                   onClick={handleGenerateCertificate}
                   disabled={loading || certQuota === null}
-                  className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-4 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all disabled:opacity-50"
+                  className="flex-1 rounded-lg bg-bt-cyan py-4 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90 disabled:opacity-50"
                 >
                   {loading ? "⏳ Génération en cours..." : "🛡️ Générer mon certificat"}
                 </button>

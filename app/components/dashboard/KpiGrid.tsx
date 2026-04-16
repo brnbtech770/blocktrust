@@ -32,7 +32,7 @@ export default function KpiGrid({
         label="Certificats actifs"
         value={String(certs)}
         sub="actifs / total"
-        icon={<Shield className="w-5 h-5 shrink-0" style={{ color: 'var(--bt-cyan)' }} />}
+        icon={<Shield className="w-5 h-5 shrink-0 text-bt-cyan" />}
         accent="gold"
       />
       <KpiCard
@@ -46,7 +46,7 @@ export default function KpiGrid({
         label="Blockchain"
         value={statusLabel[blockchainStatus]}
         sub="Polygon"
-        icon={<Link2 className="w-5 h-5 shrink-0" style={{ color: 'var(--bt-gold)' }} />}
+        icon={<Link2 className="w-5 h-5 shrink-0 text-gold" />}
         accent="gold"
       />
       <KpiCard
@@ -82,32 +82,17 @@ function KpiCard({
           ? 'var(--bt-warn)'
           : 'var(--bt-cyan)'
   return (
-    <div
-      className="rounded-xl border p-4 md:p-5 relative overflow-hidden"
-      style={{
-        background: 'rgba(13,31,60,0.8)',
-        borderColor: 'var(--bt-border)',
-      }}
-    >
+    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-4 transition-all hover:border-gold/30 md:p-5">
       <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: topBorder }} />
       <div className="flex items-start justify-between gap-2 min-w-0">
         <div className="min-w-0 flex-1 overflow-hidden">
-          <p className="text-[10px] mb-1 font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
+          <p className="font-sans text-xs font-medium uppercase tracking-wider text-white/50 mb-1">
             {label}
           </p>
-          <p
-            className="font-extrabold text-white tracking-tight"
-            style={{
-              fontFamily: 'var(--font-syne), sans-serif',
-              fontSize: 'clamp(14px, 3.5vw, 18px)',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
+          <p className="font-mono text-3xl font-bold text-white tabular-nums tracking-tight overflow-hidden text-ellipsis whitespace-nowrap">
             {value}
           </p>
-          <p className="text-[10px] mt-1 truncate" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>{sub}</p>
+          <p className="font-mono text-[10px] mt-1 truncate text-white/50">{sub}</p>
         </div>
         <div className="shrink-0">{icon}</div>
       </div>

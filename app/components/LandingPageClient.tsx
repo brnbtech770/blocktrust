@@ -23,35 +23,28 @@ export default function LandingPageClient() {
               ✦ Technologie <span className="font-bold ml-1" style={{ color: '#00d4ff' }}>Polygon</span> Blockchain
             </div>
 
-            <h1
-              className="font-extrabold leading-[1.12] mb-3 sm:mb-4 max-w-[22ch] sm:max-w-none text-[1.65rem] sm:text-4xl md:text-5xl"
-              style={{
-                fontFamily: 'var(--font-syne), sans-serif',
-              }}
-            >
+            <h1 className="font-syne mb-3 max-w-[22ch] text-4xl font-bold leading-[1.1] text-white sm:mb-4 sm:max-w-none sm:text-6xl lg:text-8xl">
               <span className="text-white">Certificat d&apos;identité </span>
-              <span style={{ color: '#00d4ff' }}>infalsifiable</span>
+              <span className="text-bt-cyan">infalsifiable</span>
               <span className="text-white"> sur </span>
-              <span style={{ color: 'var(--bt-gold)' }}>blockchain</span>
+              <span className="text-gold">blockchain</span>
             </h1>
 
-            <p className="text-sm sm:text-base mb-6 sm:mb-8" style={{ color: 'var(--bt-muted)' }}>
+            <p className="mb-6 font-sans text-sm leading-relaxed text-white/80 sm:mb-8 sm:text-base">
               Badge vérifié. QR code scannable.{" "}
-              <span className="font-semibold" style={{ color: '#00d4ff' }}>Impossible à copier.</span>
+              <span className="font-semibold text-bt-cyan">Impossible à copier.</span>
             </p>
 
             <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-8 sm:mb-10">
               <a
                 href="/dashboard/create"
-                className="inline-flex justify-center items-center rounded-[10px] px-5 py-3 sm:px-7 sm:py-3.5 text-sm sm:text-[15px] font-bold transition-transform hover:scale-[1.02] hover:brightness-110 w-full sm:w-auto"
-                style={{ background: '#00d4ff', color: '#0a1628' }}
+                className="inline-flex w-full items-center justify-center rounded-lg bg-bt-cyan px-6 py-3 font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:text-[15px]"
               >
                 Créer mon certificat
               </a>
               <a
                 href="/verify"
-                className="inline-flex justify-center items-center rounded-[10px] px-5 py-3 sm:px-7 sm:py-3.5 text-sm sm:text-[15px] font-medium border-2 transition-colors hover:bg-[var(--bt-gold-dim)] w-full sm:w-auto"
-                style={{ borderColor: 'var(--bt-gold)', color: 'var(--bt-gold)' }}
+                className="inline-flex w-full items-center justify-center rounded-lg border border-white/20 px-6 py-3 font-sans text-sm font-semibold text-white transition-all hover:border-white/40 sm:w-auto sm:text-[15px]"
               >
                 Voir une démo
               </a>
@@ -86,48 +79,30 @@ export default function LandingPageClient() {
       {/* Features Section */}
       <section className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-12 sm:py-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
-          <div
-            className="p-4 sm:p-6 rounded-2xl border backdrop-blur-lg transition-colors hover:border-[var(--bt-cyan)]/40"
-            style={{
-              background: 'rgba(13,31,60,0.8)',
-              borderColor: 'var(--bt-border)',
-            }}
-          >
-            <div className="text-4xl mb-4">🔐</div>
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg transition-all hover:border-gold/30 sm:p-6">
+            <div className="mb-4 text-4xl">🔐</div>
+            <h3 className="font-syne mb-2 text-lg font-semibold text-white sm:text-xl">
               Sécurité maximale
             </h3>
-            <p className="text-sm sm:text-base" style={{ color: 'var(--bt-muted)' }}>
+            <p className="font-sans text-sm leading-relaxed text-white/80 sm:text-base">
               Certificats cryptographiques vérifiables avec signatures JWT et ancrage blockchain.
             </p>
           </div>
-          <div
-            className="p-4 sm:p-6 rounded-2xl border backdrop-blur-lg transition-colors hover:border-[var(--bt-cyan)]/40"
-            style={{
-              background: 'rgba(13,31,60,0.8)',
-              borderColor: 'var(--bt-border)',
-            }}
-          >
-            <div className="text-4xl mb-4">⚡</div>
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg transition-all hover:border-gold/30 sm:p-6">
+            <div className="mb-4 text-4xl">⚡</div>
+            <h3 className="font-syne mb-2 text-lg font-semibold text-white sm:text-xl">
               Vérification instantanée
             </h3>
-            <p className="text-sm sm:text-base" style={{ color: 'var(--bt-muted)' }}>
+            <p className="font-sans text-sm leading-relaxed text-white/80 sm:text-base">
               QR codes et badges intégrables pour une vérification rapide et fiable.
             </p>
           </div>
-          <div
-            className="p-4 sm:p-6 rounded-2xl border backdrop-blur-lg transition-colors hover:border-[var(--bt-cyan)]/40"
-            style={{
-              background: 'rgba(13,31,60,0.8)',
-              borderColor: 'var(--bt-border)',
-            }}
-          >
-            <div className="text-4xl mb-4">🛡️</div>
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg transition-all hover:border-gold/30 sm:p-6">
+            <div className="mb-4 text-4xl">🛡️</div>
+            <h3 className="font-syne mb-2 text-lg font-semibold text-white sm:text-xl">
               Protection anti-fraude
             </h3>
-            <p className="text-sm sm:text-base" style={{ color: 'var(--bt-muted)' }}>
+            <p className="font-sans text-sm leading-relaxed text-white/80 sm:text-base">
               Détection automatique des tentatives de falsification et alertes en temps réel.
             </p>
           </div>
@@ -143,16 +118,15 @@ export default function LandingPageClient() {
             borderColor: 'var(--bt-cyan-border)',
           }}
         >
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-3 sm:mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <h2 className="font-syne mb-3 text-xl font-semibold text-white sm:mb-4 sm:text-2xl md:text-3xl">
             Prêt à sécuriser votre identité ?
           </h2>
-          <p className="text-sm sm:text-base px-1" style={{ color: 'var(--bt-muted)', marginBottom: '2rem' }}>
+          <p className="mb-8 px-1 font-sans text-sm leading-relaxed text-white/80 sm:text-base">
             Rejoignez BlockTrust et protégez votre réputation en ligne.
           </p>
           <a
             href="/pricing"
-            className="inline-block rounded-lg px-8 py-3 font-bold text-[15px] transition-all hover:brightness-110"
-            style={{ background: '#00d4ff', color: '#0a1628' }}
+            className="inline-block rounded-lg bg-bt-cyan px-8 py-3 font-sans text-[15px] font-semibold text-navy transition-all hover:bg-bt-cyan/90"
           >
             Voir les tarifs
           </a>

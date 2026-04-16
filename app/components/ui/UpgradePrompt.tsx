@@ -88,10 +88,7 @@ export function UpgradePrompt({
           />
         </div>
         <div className="flex-1 space-y-4">
-          <h2
-            className="text-xl sm:text-2xl text-white tracking-tight"
-            style={{ fontFamily: "var(--font-syne), sans-serif", fontWeight: 800 }}
-          >
+          <h2 className="font-syne text-xl font-bold tracking-tight text-white sm:text-2xl">
             Envie de faire plus ?
           </h2>
           <p

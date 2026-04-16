@@ -149,17 +149,17 @@ export default function TrustCirclePage() {
     <>
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-6">
           <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+            <h1 className="font-syne text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl mb-2">
               Mon Trust Circle
             </h1>
-            <p className="text-gray-400 text-sm sm:text-base" style={{ fontFamily: 'var(--font-mono-bt), monospace' }}>
+            <p className="font-mono text-sm text-bt-cyan sm:text-base">
               {data.stats.current} entités · {(data.mutual?.length ?? 0)} mutuelles
             </p>
           </div>
           <button
             onClick={() => setShowInviteModal(true)}
             disabled={!quotaAllowed}
-            className="shrink-0 bg-cyan-500/20 text-cyan-400 px-4 py-2.5 rounded-lg hover:bg-cyan-500/30 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto text-sm sm:text-base"
+            className="flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-bt-cyan/20 px-4 py-2.5 text-sm font-sans font-semibold text-bt-cyan transition hover:bg-bt-cyan/30 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:text-base"
           >
             <UserPlus size={18} />
             + Ajouter
@@ -181,7 +181,9 @@ export default function TrustCirclePage() {
               type="button"
               onClick={() => setActiveTab(tab)}
               className={`shrink-0 px-3 sm:px-4 py-2 text-sm sm:text-base font-medium transition rounded-t whitespace-nowrap ${
-                activeTab === tab ? 'bg-cyan-500/20 text-cyan-400 border-b-2 border-cyan-400' : 'text-gray-400 hover:text-white border border-transparent'
+                activeTab === tab
+                  ? 'border-b-2 border-bt-cyan bg-bt-cyan/20 text-bt-cyan'
+                  : 'border border-transparent text-white/60 hover:text-white'
               }`}
             >
               {tab === 'all' && `Toutes (${totalEntites})`}

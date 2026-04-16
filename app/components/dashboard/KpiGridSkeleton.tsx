@@ -10,7 +10,7 @@ export default function KpiGridSkeleton() {
       {[1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="rounded-xl border border-gray-700 bg-[var(--bt-navy)]/60 p-5 animate-pulse"
+          className="animate-pulse rounded-xl border border-white/10 bg-white/5 p-5"
         >
           <div className="h-4 w-24 bg-gray-700 rounded mb-3" />
           <div className="h-8 w-16 bg-gray-700 rounded mb-2" />

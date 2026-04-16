@@ -254,10 +254,10 @@ function RateLimitedView({ retryAfter }: { retryAfter?: number }) {
   return (
     <div className="min-h-screen bg-[#001a33] flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center rounded-2xl border border-[#BDA76B]/30 bg-[#001a33]/90 p-8">
-        <h1 className="text-2xl font-bold text-[#BDA76B] mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+        <h1 className="font-syne mb-4 text-2xl font-bold text-gold">
           Trop de requêtes
         </h1>
-        <p className="text-gray-400 mb-6">
+        <p className="mb-6 font-sans text-base text-white/80">
           Veuillez réessayer dans {retryAfter ? `${retryAfter} seconde(s)` : '1 minute'}.
         </p>
         <Link href={BASE_URL} className="text-[#BDA76B] hover:underline text-sm">
@@ -272,7 +272,7 @@ function NotFoundView() {
   return (
     <div className="min-h-screen bg-[#001a33] flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center rounded-2xl border border-gray-700 bg-[#001a33]/90 p-8">
-        <p className="text-xl text-gray-300 mb-6" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+        <p className="font-syne mb-6 text-xl font-semibold text-white/80">
           Certificat introuvable ou révoqué
         </p>
         <Link
@@ -294,7 +294,14 @@ function ValidView({
   verificationsLast30Days,
 }: {
   entity: { entityType: string; legalName: string | null; tradeName: string | null; firstName: string | null; lastName: string | null; email: string }
-  certificate: { level: string; status: string; issuedAt: Date; expiresAt: Date | null; publicId: string | null }
+  certificate: {
+    id: string
+    level: string
+    status: string
+    issuedAt: Date
+    expiresAt: Date | null
+    publicId: string | null
+  }
   signature: { contextHash: string | null }
   verificationsLast30Days: number
 }) {
@@ -307,22 +314,29 @@ function ValidView({
   const hashDisplay = signature.contextHash ?? '—'
 
   return (
-    <div className="min-h-screen bt-circuit-bg text-gray-100" style={{ fontFamily: 'var(--font-syne), sans-serif', background: 'var(--bt-navy)' }}>
-      <div className="max-w-xl mx-auto px-3 py-6 sm:px-4 sm:py-10">
-        <div className="rounded-2xl border p-4 sm:p-6 md:p-8" style={{ borderColor: 'rgba(0,212,255,0.3)', background: 'rgba(13,31,60,0.8)' }}>
+    <div className="min-h-screen bg-navy font-sans text-white/80 bt-circuit-bg">
+      <div className="mx-auto max-w-xl px-3 py-6 sm:px-4 sm:py-10">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-gold/30 sm:p-6 md:p-8">
           <div className="flex justify-center mb-4 sm:mb-6">
             <div className="relative">
               <span className="text-5xl sm:text-6xl block animate-pulse" style={{ filter: 'drop-shadow(0 0 12px rgba(0,212,255,0.6))' }}>🛡️</span>
             </div>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-center mb-2" style={{ color: '#00d4ff' }}>Certificat valide</h1>
-          <p className="text-center text-xs sm:text-sm mb-6 sm:mb-8" style={{ color: 'var(--bt-muted)' }}>Vérifié par BlockTrust</p>
+          <h1 className="font-syne mb-2 text-center text-2xl font-bold text-bt-cyan">
+            Certificat valide
+          </h1>
+          <p className="mb-2 text-center font-mono text-xs text-white/60 sm:text-sm">
+            ID {certificate.publicId ?? certificate.id}
+          </p>
+          <p className="mb-6 text-center text-xs text-white/60 sm:mb-8 sm:text-sm">
+            Vérifié par BlockTrust
+          </p>
 
           <div className="space-y-6">
             <div>
               <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--bt-muted)' }}>Entité</p>
-              <p className="text-white text-lg sm:text-xl font-semibold break-words">{name}</p>
-              <p className="text-xs sm:text-sm mt-1" style={{ color: 'var(--bt-muted)' }}>
+              <p className="break-words text-lg font-semibold text-white sm:text-xl">{name}</p>
+              <p className="mt-1 font-sans text-xs text-white/60 sm:text-sm">
                 {entity.entityType === 'INDIVIDUAL' ? 'Particulier' : 'Entreprise'} · Niveau {level}
               </p>
             </div>
@@ -330,27 +344,29 @@ function ValidView({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--bt-muted)' }}>Émis le</p>
-                <p className="text-white font-mono text-sm">{issued}</p>
+                <p className="font-mono text-sm text-bt-cyan">{issued}</p>
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--bt-muted)' }}>Expire le</p>
-                <p className="text-white font-mono text-sm">{expires ?? '—'}</p>
+                <p className="font-mono text-sm text-bt-cyan">{expires ?? "—"}</p>
               </div>
             </div>
 
             <div>
               <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--bt-muted)' }}>Contact officiel</p>
-              <p className="font-mono text-sm break-all" style={{ color: 'var(--bt-gold)' }}>{entity.email}</p>
+              <p className="break-all font-mono text-sm text-gold">{entity.email}</p>
             </div>
 
             <div>
               <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--bt-muted)' }}>Vérifications (30 derniers jours)</p>
-              <p className="text-white font-mono text-lg">{verificationsLast30Days}</p>
+              <p className="font-mono text-lg text-bt-cyan">{verificationsLast30Days}</p>
             </div>
 
             <div>
               <p className="text-xs uppercase tracking-wider mb-1" style={{ color: '#00d4ff' }}>Hash SHA-256 (contexte)</p>
-              <p className="font-mono text-xs break-all px-3 py-2 rounded" style={{ color: 'rgba(0,212,255,0.35)', background: 'rgba(0,0,0,0.3)' }}>{hashDisplay}</p>
+              <p className="break-all rounded bg-black/30 px-3 py-2 font-mono text-xs text-bt-cyan/80">
+                {hashDisplay}
+              </p>
             </div>
 
             <ul className="space-y-2 text-sm text-gray-300">
@@ -406,18 +422,18 @@ function FraudAlertView({
   const verifyUrl = `${BASE_URL}/verify/${jti}`
 
   return (
-    <div className="min-h-screen bg-[#0d0505] text-gray-100" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
-      <div className="max-w-xl mx-auto px-3 py-6 sm:px-4 sm:py-10">
-        <div className="rounded-lg border-2 border-[#E05252] bg-[#0d0505] p-4 sm:p-6 md:p-8">
-          <div className="bg-[#E05252]/20 border border-[#E05252] rounded-lg px-4 py-3 mb-6 animate-pulse">
-            <h1 className="text-xl font-bold text-[#E05252] text-center">FRAUDE DÉTECTÉE</h1>
+    <div className="min-h-screen bg-[#0d0505] font-sans text-white/80">
+      <div className="mx-auto max-w-xl px-3 py-6 sm:px-4 sm:py-10">
+        <div className="rounded-xl border-2 border-red-500 bg-[#0d0505] p-4 sm:p-6 md:p-8">
+          <div className="mb-6 animate-pulse rounded-lg border border-red-500 bg-red-500/20 px-4 py-3">
+            <h1 className="font-syne text-center text-2xl font-bold text-red-400">FRAUDE DÉTECTÉE</h1>
           </div>
 
-          <p className="text-gray-300 text-sm mb-6">
+          <p className="mb-6 font-sans text-sm leading-relaxed text-white/80">
             Le contexte de vérification ne correspond pas au certificat officiel. Ne faites pas confiance à ce support.
           </p>
 
-          <div className="space-y-4 mb-6 font-mono text-xs bg-black/40 rounded-lg p-4">
+          <div className="mb-6 space-y-4 rounded-lg bg-black/40 p-4 font-mono text-xs text-bt-cyan/90">
             <div>
               <p className="text-gray-500 mb-1">Hash attendu</p>
               <p className="text-gray-300 break-all">{expectedHash}</p>
