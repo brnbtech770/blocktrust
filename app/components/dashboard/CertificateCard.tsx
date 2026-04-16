@@ -35,7 +35,7 @@ export default function CertificateCard({ certificate, onRevoke }: CertificateCa
     PENDING: 'bg-orange-500/20 text-orange-400 border-orange-500/50',
     REVOKED: 'bg-red-500/20 text-red-400 border-red-500/50',
     SUSPENDED: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
-    ANCHORED: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50',
+    ANCHORED: 'border border-bt-cyan/40 bg-bt-cyan/20 text-bt-cyan',
     EXPIRED: 'bg-gray-500/20 text-gray-400 border-gray-500/50',
   }
 
@@ -50,7 +50,7 @@ export default function CertificateCard({ certificate, onRevoke }: CertificateCa
   const levelColor = levelColors[certificate.level as keyof typeof levelColors] || levelColors.BRONZE
 
   return (
-    <div className="bg-white/5 backdrop-blur-lg rounded-xl border border-gray-700 p-6 hover:border-gray-600 transition-colors">
+    <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-white mb-1">{entityName}</h3>
@@ -85,7 +85,7 @@ export default function CertificateCard({ certificate, onRevoke }: CertificateCa
       <div className="flex gap-3">
         <Link
           href={`/dashboard/certificate/${certificate.id}`}
-          className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold py-2.5 px-4 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all text-center"
+          className="flex-1 rounded-lg bg-bt-cyan py-2.5 px-4 text-center font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
         >
           Voir
         </Link>

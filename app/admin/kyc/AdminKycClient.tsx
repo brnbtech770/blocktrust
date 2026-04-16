@@ -66,8 +66,10 @@ export default function AdminKycClient({ users }: { users: User[] }) {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-              filter === f ? 'bg-cyan-500/30 text-cyan-400 border border-cyan-500/50' : 'bg-white/5 text-gray-400 border border-white/10'
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+              filter === f
+                ? 'border border-bt-cyan/50 bg-bt-cyan/20 text-bt-cyan'
+                : 'border border-white/10 bg-white/5 text-white/50'
             }`}
           >
             {f === 'all' ? 'Tous' : f}

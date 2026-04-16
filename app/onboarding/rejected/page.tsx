@@ -21,23 +21,13 @@ export default async function OnboardingRejectedPage() {
       <div className="flex justify-center pt-8 pb-6">
         <Logo size="lg" withText={false} href="/" />
       </div>
-      <div
-        style={{
-          maxWidth: 480,
-          margin: '0 auto',
-          background: 'rgba(13,31,60,0.8)',
-          border: '1px solid rgba(224,82,82,0.3)',
-          borderRadius: 16,
-          padding: 32,
-          textAlign: 'center',
-        }}
-      >
+      <div className="mx-auto max-w-[480px] rounded-xl border border-red-500/30 bg-white/5 p-8 text-center backdrop-blur-sm transition-all hover:border-gold/30">
         <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
           <svg className="w-10 h-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </div>
-        <h1 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+        <h1 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">
           Vérification refusée
         </h1>
         {user.kycRejectedReason && (

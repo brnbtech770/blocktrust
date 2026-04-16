@@ -151,7 +151,7 @@ export default function CertificateBadgeSection({
       {/* Colonne gauche — Configuration */}
       <div className="lg:col-span-5 space-y-6">
         <div style={cardStyle}>
-          <h2 className="text-base font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <h2 className="font-syne mb-4 text-base font-bold tracking-tight text-white">
             Configuration du badge
           </h2>
           <div className="mb-4">
@@ -185,7 +185,7 @@ export default function CertificateBadgeSection({
             </div>
           </div>
 
-          <div className="border-t border-gray-700/50 pt-4 mt-4">
+          <div className="border-t border-white/10 pt-4 mt-4">
             <button
               type="button"
               onClick={() => setScriptOpen(!scriptOpen)}
@@ -203,7 +203,7 @@ export default function CertificateBadgeSection({
             )}
           </div>
 
-          <div className="border-t border-gray-700/50 pt-4 mt-4">
+          <div className="border-t border-white/10 pt-4 mt-4">
             <button
               type="button"
               onClick={() => setIframeOpen(!iframeOpen)}
@@ -225,7 +225,7 @@ export default function CertificateBadgeSection({
         {/* Paramètres QR dynamique */}
         {signature && (
           <div style={cardStyle}>
-            <h2 className="text-base font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+            <h2 className="font-syne mb-4 text-base font-bold tracking-tight text-white">
               Paramètres du QR dynamique
             </h2>
             <div className="mb-4">
@@ -283,7 +283,7 @@ export default function CertificateBadgeSection({
       {/* Colonne droite — Aperçu */}
       <div className="lg:col-span-7">
         <div style={cardStyle}>
-          <h2 className="text-base font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <h2 className="font-syne mb-4 text-base font-bold tracking-tight text-white">
             Aperçu en direct
           </h2>
           <div

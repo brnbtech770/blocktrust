@@ -34,9 +34,9 @@ export default async function VerifyQRTokenPage({
   if (!rate.ok) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: '#0a1628' }}>
-        <div className="max-w-md w-full text-center rounded-2xl border border-[#BDA76B]/30 bg-[#001a33]/90 p-8">
-          <h1 className="text-2xl font-bold text-[#BDA76B] mb-4">Trop de requêtes</h1>
-          <p className="text-gray-400 mb-6">Veuillez réessayer dans {rate.retryAfter ? `${rate.retryAfter} seconde(s)` : '1 minute'}.</p>
+        <div className="w-full max-w-md rounded-xl border border-gold/30 bg-white/5 p-8 text-center backdrop-blur-lg">
+          <h1 className="font-syne mb-4 text-2xl font-bold tracking-tight text-gold">Trop de requêtes</h1>
+          <p className="mb-6 text-white/60">Veuillez réessayer dans {rate.retryAfter ? `${rate.retryAfter} seconde(s)` : '1 minute'}.</p>
           <Link href={BASE_URL} className="text-[#BDA76B] hover:underline text-sm">Retour à blocktrust.tech</Link>
         </div>
       </div>
@@ -82,9 +82,9 @@ export default async function VerifyQRTokenPage({
     })
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bt-navy)' }}>
-        <div className="max-w-md w-full text-center rounded-2xl border border-red-500/30 bg-[#001a33]/90 p-8">
-          <h1 className="text-2xl font-bold text-red-400 mb-4">Alerte fraude</h1>
-          <p className="text-gray-400 mb-6">Le lien de vérification ne correspond pas au certificat.</p>
+        <div className="w-full max-w-md rounded-xl border border-red-500/30 bg-white/5 p-8 text-center backdrop-blur-lg">
+          <h1 className="font-syne mb-4 text-2xl font-bold tracking-tight text-red-400">Alerte fraude</h1>
+          <p className="mb-6 text-white/60">Le lien de vérification ne correspond pas au certificat.</p>
           <Link href={BASE_URL} className="text-[#BDA76B] hover:underline text-sm">Retour à blocktrust.tech</Link>
         </div>
       </div>
@@ -129,24 +129,24 @@ function QRExpiredView({ reason }: { reason: string }) {
   const isMaxScans = reason === 'max_scans'
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bt-navy)' }}>
-      <div className="max-w-md w-full text-center rounded-2xl border border-[#BDA76B]/30 p-8" style={{ background: 'rgba(13,31,60,0.8)' }}>
-        <div className="text-5xl mb-4">⏰</div>
-        <h1 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+      <div className="w-full max-w-md rounded-xl border border-gold/30 bg-white/5 p-8 text-center backdrop-blur-lg">
+        <div className="mb-4 text-5xl">⏰</div>
+        <h1 className="font-syne mb-2 text-2xl font-bold tracking-tight text-white">
           QR code expiré
         </h1>
-        <p className="text-gray-400 mb-4">
+        <p className="mb-4 text-white/60">
           {isMaxScans
             ? 'Ce QR code a atteint son nombre maximum d\'utilisations.'
             : 'Ce lien de vérification n\'est plus valide.'}
         </p>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="mb-6 text-sm text-white/45">
           {isMaxScans
             ? 'Contactez le propriétaire du certificat pour obtenir un nouveau QR code.'
             : 'Demandez un nouveau QR code au propriétaire du certificat.'}
         </p>
         <Link
           href={BASE_URL}
-          className="inline-block rounded-lg px-4 py-2 text-sm font-medium text-[#00d4ff] border border-[#00d4ff]/30 hover:bg-[#00d4ff]/10 transition-colors"
+          className="inline-block rounded-lg border border-bt-cyan/40 px-4 py-2 text-sm font-medium text-bt-cyan transition-colors hover:bg-bt-cyan/10"
         >
           Retour à blocktrust.tech
         </Link>

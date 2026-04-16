@@ -103,7 +103,7 @@ export default async function CertificateDetailPage({
       PENDING: 'bg-orange-500/20 text-orange-400 border-orange-500/50',
       REVOKED: 'bg-red-500/20 text-red-400 border-red-500/50',
       SUSPENDED: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50',
-      ANCHORED: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50',
+      ANCHORED: 'border border-bt-cyan/40 bg-bt-cyan/20 text-bt-cyan',
       EXPIRED: 'bg-gray-500/20 text-gray-400 border-gray-500/50',
     };
 
@@ -179,7 +179,7 @@ export default async function CertificateDetailPage({
           {/* Colonne gauche : Informations */}
           <div className="space-y-6">
             {/* Informations de l'entité */}
-            <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
               <h2 className="text-xl font-bold text-white mb-4">Informations de l'entité</h2>
               <div className="space-y-3">
                 <div>
@@ -249,7 +249,7 @@ export default async function CertificateDetailPage({
             </div>
 
             {/* Informations du certificat */}
-            <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
               <h2 className="text-xl font-bold text-white mb-4">Informations du certificat</h2>
               <div className="space-y-3">
                 <div>
@@ -293,7 +293,7 @@ export default async function CertificateDetailPage({
           {/* Colonne droite : QR code, intégration, historique, actions */}
           <div className="space-y-6">
             {/* QR code */}
-            <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
               <h2 className="text-xl font-bold text-white mb-4">QR Code de vérification</h2>
               <div className="flex justify-center mb-4">
                 <div className="bg-white p-4 rounded-xl">
@@ -304,7 +304,7 @@ export default async function CertificateDetailPage({
             </div>
 
             {/* Code HTML */}
-            <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
               <h2 className="text-xl font-bold text-white mb-4">Intégrer le badge sur votre site</h2>
               <p className="text-gray-400 text-sm mb-4">
                 Copiez-collez ce code HTML sur votre site web pour afficher le badge de certification :
@@ -328,7 +328,7 @@ export default async function CertificateDetailPage({
             </div>
 
             {/* Historique des vérifications */}
-            <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
               <h2 className="text-xl font-bold text-white mb-4">
                 Historique des vérifications ({certificate.verifications.length})
               </h2>
@@ -337,7 +337,7 @@ export default async function CertificateDetailPage({
                   {certificate.verifications.map((verification) => (
                     <div
                       key={verification.id}
-                      className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700"
+                      className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3"
                     >
                       <div>
                         <p className="text-white text-sm font-semibold">
@@ -369,7 +369,7 @@ export default async function CertificateDetailPage({
 
             {/* Actions */}
             {certificate.status !== 'REVOKED' && (
-              <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
+              <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
                 <h2 className="text-xl font-bold text-white mb-4">Actions</h2>
                 <CertificateDetailClient certificateId={certificate.id} />
               </div>

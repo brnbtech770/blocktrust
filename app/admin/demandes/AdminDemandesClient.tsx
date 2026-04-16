@@ -72,7 +72,7 @@ export default function AdminDemandesClient({ entries }: { entries: Entry[] }) {
               <td className="px-4 py-3 text-sm text-gray-400">{e.siret || '—'}</td>
               <td className="px-4 py-3">
                 {docs(e.documents).map((url) => (
-                  <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="block text-xs text-cyan-400 hover:underline truncate max-w-[120px]">
+                  <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="block max-w-[120px] truncate text-xs text-bt-cyan hover:underline">
                     Voir
                   </a>
                 ))}

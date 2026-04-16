@@ -8,23 +8,14 @@ export default function OnboardingPendingClient({
   verificationUrl: string | null
 }) {
   return (
-    <div
-      style={{
-        maxWidth: 480,
-        margin: '0 auto',
-        background: 'rgba(13,31,60,0.8)',
-        border: '1px solid rgba(0,212,255,0.2)',
-        borderRadius: 16,
-        padding: 32,
-      }}
-    >
+    <div className="mx-auto max-w-[480px] rounded-xl border border-bt-cyan/20 bg-white/5 p-8 backdrop-blur-sm transition-all hover:border-gold/30">
       <div className="flex items-center gap-4 mb-6">
         <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">✓</div>
         <span className="text-sm" style={{ color: 'var(--bt-muted)' }}>Paiement confirmé</span>
       </div>
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center">
-          <div className="animate-spin w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-bt-cyan/20">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-bt-cyan border-t-transparent" />
         </div>
         <span className="text-sm" style={{ color: 'var(--bt-muted)' }}>Vérification identité</span>
       </div>
@@ -33,7 +24,7 @@ export default function OnboardingPendingClient({
         <span className="text-sm" style={{ color: 'var(--bt-muted)' }}>Activation du compte</span>
       </div>
 
-      <h1 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+      <h1 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">
         Vérification en cours
       </h1>
       <p className="text-sm mb-6" style={{ color: 'var(--bt-muted)' }}>

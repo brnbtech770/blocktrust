@@ -5,14 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/app/components/ui/Logo";
 
-const cardStyle = {
-  maxWidth: "420px",
-  margin: "0 auto",
-  padding: "24px",
-  border: "1px solid rgba(189,167,107,0.2)",
-  borderRadius: "12px",
-  backgroundColor: "rgba(0,34,68,0.85)",
-};
+const cardClass =
+  "mx-auto max-w-[420px] rounded-xl border border-gold/20 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-gold/40";
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -95,8 +89,8 @@ function ResetPasswordContent() {
         <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
           <Logo size="lg" withText={true} href="/" />
         </div>
-        <div style={cardStyle}>
-          <h1 style={{ fontFamily: "var(--font-syne), sans-serif", color: "#BDA76B", marginBottom: "1rem" }}>
+        <div className={cardClass}>
+          <h1 className="font-syne mb-4 text-xl font-bold tracking-tight text-gold">
             Lien invalide ou expiré
           </h1>
           <p style={{ color: "#e8eaf0", marginBottom: "1rem" }}>
@@ -117,15 +111,8 @@ function ResetPasswordContent() {
       <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
         <Logo size="lg" withText={true} href="/" />
       </div>
-      <div style={cardStyle}>
-        <h1
-          style={{
-            fontFamily: "var(--font-syne), sans-serif",
-            color: "#BDA76B",
-            fontSize: "1.5rem",
-            marginBottom: "1.5rem",
-          }}
-        >
+      <div className={cardClass}>
+        <h1 className="font-syne mb-6 text-2xl font-bold tracking-tight text-gold">
           Nouveau mot de passe
         </h1>
         <form onSubmit={handleSubmit}>
@@ -138,14 +125,7 @@ function ResetPasswordContent() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1px solid rgba(189,167,107,0.3)",
-                backgroundColor: "#001a33",
-                color: "#e8eaf0",
-              }}
+              className="w-full rounded-lg border border-gold/30 bg-white/5 px-3 py-2.5 text-white placeholder:text-white/40 focus:border-gold/50 focus:outline-none focus:ring-2 focus:ring-gold/20"
             />
             {fieldError.password && (
               <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>{fieldError.password}</p>
@@ -160,14 +140,7 @@ function ResetPasswordContent() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                border: "1px solid rgba(189,167,107,0.3)",
-                backgroundColor: "#001a33",
-                color: "#e8eaf0",
-              }}
+              className="w-full rounded-lg border border-gold/30 bg-white/5 px-3 py-2.5 text-white placeholder:text-white/40 focus:border-gold/50 focus:outline-none focus:ring-2 focus:ring-gold/20"
             />
             {fieldError.confirmPassword && (
               <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>
@@ -179,16 +152,7 @@ function ResetPasswordContent() {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: "100%",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "none",
-              backgroundColor: "#BDA76B",
-              color: "#001a33",
-              fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer",
-            }}
+            className="w-full cursor-pointer rounded-lg bg-gold py-3 font-semibold text-navy transition hover:bg-gold/90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Enregistrement..." : "Réinitialiser le mot de passe"}
           </button>

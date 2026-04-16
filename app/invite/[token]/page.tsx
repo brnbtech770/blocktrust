@@ -21,7 +21,7 @@ export default async function InvitePage({
     return (
       <div className="min-h-screen bt-circuit-bg flex flex-col items-center justify-center p-6" style={{ background: 'var(--bt-navy)' }}>
         <Logo size="lg" withText={false} href="/" />
-        <h1 className="text-xl font-bold text-white mt-8 mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+        <h1 className="font-syne mt-8 mb-2 text-xl font-bold tracking-tight text-white">
           Invitation introuvable
         </h1>
         <p className="text-sm" style={{ color: 'var(--bt-muted)' }}>Ce lien n&apos;existe pas ou a été révoqué.</p>
@@ -34,7 +34,7 @@ export default async function InvitePage({
       <div className="min-h-screen bt-circuit-bg flex flex-col items-center justify-center p-6" style={{ background: 'var(--bt-navy)' }}>
         <Logo size="lg" withText={false} href="/" />
         <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mt-8 text-amber-400 text-4xl">🕐</div>
-        <h1 className="text-xl font-bold text-white mt-6 mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+        <h1 className="font-syne mt-6 mb-2 text-xl font-bold tracking-tight text-white">
           Cette invitation a expiré
         </h1>
         <p className="text-sm text-center max-w-sm" style={{ color: 'var(--bt-muted)' }}>
@@ -53,21 +53,14 @@ export default async function InvitePage({
         <Logo size="lg" withText={false} href="/" />
       </div>
 
-      <div
-        className="w-full max-w-[480px] mt-10 rounded-2xl p-8 md:p-10 text-center"
-        style={{
-          border: '1px solid rgba(0,212,255,0.2)',
-          borderRadius: 16,
-          background: 'rgba(13,31,60,0.8)',
-        }}
-      >
+      <div className="mt-10 w-full max-w-[480px] rounded-xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-sm transition-all hover:border-gold/30 md:p-10">
         <div
           className="w-[60px] h-[60px] rounded-full mx-auto flex items-center justify-center text-xl font-bold text-white mb-4"
           style={{ background: 'rgba(0,212,255,0.2)' }}
         >
           {initiales}
         </div>
-        <h1 className="text-2xl font-extrabold text-white mb-3" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+        <h1 className="font-syne mb-3 text-2xl font-extrabold tracking-tight text-white">
           {fromName} vous fait confiance sur BlockTrust
         </h1>
         <p className="text-[15px] mb-6" style={{ color: 'var(--bt-muted)' }}>
@@ -78,16 +71,15 @@ export default async function InvitePage({
 
         <p className="text-sm font-semibold text-white mb-3">Pourquoi rejoindre ?</p>
         <ul className="text-left text-sm space-y-2 mb-6" style={{ color: 'var(--bt-muted)' }}>
-          <li className="flex items-center gap-2"><span style={{ color: '#00d4ff' }}>✓</span> Identité certifiée et infalsifiable</li>
-          <li className="flex items-center gap-2"><span style={{ color: '#00d4ff' }}>✓</span> Badge QR vérifiable partout</li>
-          <li className="flex items-center gap-2"><span style={{ color: '#00d4ff' }}>✓</span> Protection contre l&apos;usurpation d&apos;identité</li>
-          <li className="flex items-center gap-2"><span style={{ color: '#00d4ff' }}>✓</span> Alertes fraude en temps réel</li>
+          <li className="flex items-center gap-2"><span className="text-bt-cyan">✓</span> Identité certifiée et infalsifiable</li>
+          <li className="flex items-center gap-2"><span className="text-bt-cyan">✓</span> Badge QR vérifiable partout</li>
+          <li className="flex items-center gap-2"><span className="text-bt-cyan">✓</span> Protection contre l&apos;usurpation d&apos;identité</li>
+          <li className="flex items-center gap-2"><span className="text-bt-cyan">✓</span> Alertes fraude en temps réel</li>
         </ul>
 
         <Link
           href={`/pricing?ref=${token}`}
-          className="block w-full py-4 px-8 rounded-[10px] font-bold text-base text-center transition hover:brightness-110"
-          style={{ background: '#00d4ff', color: '#0a1628', fontFamily: 'var(--font-syne), sans-serif' }}
+          className="font-syne block w-full rounded-[10px] bg-bt-cyan py-4 px-8 text-center text-base font-bold text-navy transition hover:bg-bt-cyan/90"
         >
           Rejoindre BlockTrust — 4,99€/mois
         </Link>

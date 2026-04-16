@@ -29,10 +29,7 @@ export default function AdminPageHeader() {
         borderBottomColor: 'var(--bt-border)',
       }}
     >
-      <h1
-        className="text-xl font-extrabold text-white tracking-tight"
-        style={{ fontFamily: 'var(--font-syne), sans-serif' }}
-      >
+      <h1 className="font-syne text-xl font-extrabold tracking-tight text-white">
         {title}
       </h1>
     </header>

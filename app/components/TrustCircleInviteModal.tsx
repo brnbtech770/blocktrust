@@ -69,12 +69,13 @@ export default function TrustCircleInviteModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 max-w-md w-full">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-white">Inviter une entité</h3>
+      <div className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg">
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="font-syne text-xl font-bold tracking-tight text-white">Inviter une entité</h3>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition"
+            className="text-white/50 transition hover:text-white"
           >
             <X size={24} />
           </button>
@@ -88,37 +89,37 @@ export default function TrustCircleInviteModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+            <label className="mb-2 block text-sm font-medium text-white/70">Email</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" size={18} />
               <input
                 type="email"
                 value={toEmail}
                 onChange={(e) => setToEmail(e.target.value)}
                 required
                 placeholder="contact@example.com"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg pl-10 pr-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                className="w-full rounded-lg border border-white/10 bg-white/5 py-2 pl-10 pr-4 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-bt-cyan/40"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Nom</label>
+            <label className="mb-2 block text-sm font-medium text-white/70">Nom</label>
             <input
               type="text"
               value={toName}
               onChange={(e) => setToName(e.target.value)}
               placeholder="Nom ou raison sociale"
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-bt-cyan/40"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Type d&apos;entité</label>
+            <label className="mb-2 block text-sm font-medium text-white/70">Type d&apos;entité</label>
             <select
               value={entityType}
               onChange={(e) => setEntityType(e.target.value as any)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-bt-cyan/40"
             >
               <option value="INDIVIDUAL">Particulier</option>
               <option value="BUSINESS">Entreprise</option>
@@ -128,14 +129,14 @@ export default function TrustCircleInviteModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Note (optionnel)</label>
+            <label className="mb-2 block text-sm font-medium text-white/70">Note (optionnel)</label>
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Message ou note..."
               rows={2}
               maxLength={500}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none"
+              className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-bt-cyan/40"
             />
           </div>
 
@@ -143,21 +144,21 @@ export default function TrustCircleInviteModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-700 text-white font-medium py-2 px-4 rounded-lg hover:bg-gray-600 transition"
+              className="flex-1 rounded-lg border border-white/20 py-2 px-4 font-medium text-white/90 transition hover:bg-white/5"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-cyan-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-cyan-600 transition flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-bt-cyan py-2 px-4 font-medium text-navy transition hover:bg-bt-cyan/90 disabled:opacity-50"
             >
               {loading ? (
                 'Envoi...'
               ) : (
                 <>
                   <Send size={18} />
-                  Envoyer l'invitation
+                  Envoyer l&apos;invitation
                 </>
               )}
             </button>

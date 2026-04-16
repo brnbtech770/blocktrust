@@ -66,9 +66,9 @@ export default function ActivityFeed({ initialEvents = [] }: ActivityFeedProps) 
   }, [])
 
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--bt-border)', background: 'rgba(13,31,60,0.5)' }}>
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all hover:border-gold/30">
       <div className="border-b px-4 py-3 flex items-center justify-between" style={{ borderColor: 'var(--bt-border)' }}>
-        <h2 className="text-lg font-bold text-white" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+        <h2 className="font-syne text-lg font-bold tracking-tight text-white">
           Activité récente
         </h2>
         {loading && (

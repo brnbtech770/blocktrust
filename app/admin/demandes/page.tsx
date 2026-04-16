@@ -18,7 +18,7 @@ export default async function AdminDemandesPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-white mb-6" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+      <h1 className="font-syne mb-6 text-2xl font-bold tracking-tight text-white">
         Demandes de vérification manuelle
       </h1>
       <AdminDemandesClient entries={entries} />

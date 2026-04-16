@@ -94,12 +94,13 @@ export default function TrustCircleManualModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-gray-800 rounded-2xl border border-gray-700 p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-white">Ajouter une entrée manuelle</h3>
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg">
+        <div className="mb-6 flex items-center justify-between">
+          <h3 className="font-syne text-xl font-bold tracking-tight text-white">Ajouter une entrée manuelle</h3>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition"
+            className="text-white/50 transition hover:text-white"
           >
             <X size={24} />
           </button>
@@ -113,32 +114,32 @@ export default function TrustCircleManualModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Nom de l&apos;entité <span className="text-red-400">*</span></label>
+            <label className="mb-2 block text-sm font-medium text-white/70">Nom de l&apos;entité <span className="text-red-400">*</span></label>
             <input
               type="text"
               value={entityName}
               onChange={(e) => setEntityName(e.target.value)}
               required
               placeholder="Nom entreprise ou personne"
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-bt-cyan/40"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Email (optionnel)</label>
+            <label className="mb-2 block text-sm font-medium text-white/70">Email (optionnel)</label>
             <input
               type="email"
               value={entityEmail}
               onChange={(e) => setEntityEmail(e.target.value)}
               placeholder="contact@example.com"
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-bt-cyan/40"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Type</label>
+            <label className="mb-2 block text-sm font-medium text-white/70">Type</label>
             <select
               value={entityType}
               onChange={(e) => setEntityType(e.target.value as any)}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-bt-cyan/40"
             >
               <option value="INDIVIDUAL">Particulier</option>
               <option value="BUSINESS">Entreprise</option>
@@ -147,52 +148,52 @@ export default function TrustCircleManualModal({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">SIRET (optionnel, 14 chiffres)</label>
+            <label className="mb-2 block text-sm font-medium text-white/70">SIRET (optionnel, 14 chiffres)</label>
             <input
               type="text"
               value={siret}
               onChange={(e) => setSiret(e.target.value.replace(/\D/g, '').slice(0, 14))}
               placeholder="12345678901234"
               maxLength={14}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-bt-cyan/40"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Documents <span className="text-red-400">*</span> (JPG, PNG, PDF, max 10 Mo)</label>
+            <label className="mb-2 block text-sm font-medium text-white/70">Documents <span className="text-red-400">*</span> (JPG, PNG, PDF, max 10 Mo)</label>
             <input
               type="file"
               accept="image/jpeg,image/png,application/pdf"
               onChange={onFileChange}
               disabled={uploading}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:bg-cyan-500 file:text-white"
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white file:mr-2 file:rounded file:border-0 file:bg-bt-cyan file:px-3 file:py-1 file:font-medium file:text-navy"
             />
             {documents.length > 0 && <p className="text-xs text-green-400 mt-1">{documents.length} fichier(s) joint(s)</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Note pour l&apos;admin (optionnel)</label>
+            <label className="mb-2 block text-sm font-medium text-white/70">Note pour l&apos;admin (optionnel)</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Ajoutez des notes..."
               rows={3}
               maxLength={1000}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 resize-none"
+              className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-bt-cyan/40"
             />
-            <p className="text-xs text-gray-500 mt-1">{notes.length}/1000</p>
+            <p className="mt-1 text-xs text-white/40">{notes.length}/1000</p>
           </div>
 
           <div className="flex gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 bg-gray-700 text-white font-medium py-2 px-4 rounded-lg hover:bg-gray-600 transition"
+              className="flex-1 rounded-lg border border-white/20 py-2 px-4 font-medium text-white/90 transition hover:bg-white/5"
             >
               Annuler
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-purple-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-purple-600 transition flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gold/40 bg-gold/20 py-2 px-4 font-medium text-gold transition hover:border-gold/60 hover:bg-gold/30 disabled:opacity-50"
             >
               {loading ? (
                 'Ajout...'

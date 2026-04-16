@@ -4,24 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/app/components/ui/Logo";
 
-const cardStyle: React.CSSProperties = {
-  maxWidth: "420px",
-  margin: "0 auto",
-  padding: "32px",
-  border: "1px solid var(--bt-border)",
-  borderRadius: "16px",
-  backgroundColor: "rgba(13,31,60,0.9)",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: "8px",
-  border: "1px solid var(--bt-border)",
-  backgroundColor: "rgba(6,14,26,0.8)",
-  color: "#fff",
-};
-
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -44,36 +26,39 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div style={{ padding: "48px 16px" }}>
-      <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
+    <div className="px-4 py-12">
+      <div className="mb-6 flex justify-center">
         <Logo size="lg" withText={true} href="/" />
       </div>
-      <div style={cardStyle}>
-        <h1
-          style={{
-            fontFamily: "var(--font-syne), sans-serif",
-            color: "#fff",
-            fontSize: "1.5rem",
-            marginBottom: "1.5rem",
-          }}
-        >
+      <div className="mx-auto max-w-[420px] rounded-xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm transition-all hover:border-gold/30">
+        <h1 className="font-syne mb-6 text-2xl font-bold tracking-tight text-white">
           Mot de passe oublié
         </h1>
         {sent ? (
-          <p style={{ color: "var(--bt-text)" }}>Si cet email existe, un lien vous a été envoyé.</p>
+          <p className="text-white/80">Si cet email existe, un lien vous a été envoyé.</p>
         ) : (
           <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: "1rem" }}>
-              <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} />
+            <div className="mb-4">
+              <label className="mb-1 block text-sm text-white/60">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none focus:ring-2 focus:ring-bt-cyan/20"
+              />
             </div>
-            <button type="submit" disabled={loading} className="w-full py-3 rounded-lg font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed" style={{ background: "#00d4ff", color: "#0a1628" }}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg bg-bt-cyan py-3 font-bold text-navy transition hover:bg-bt-cyan/90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
               {loading ? "Envoi..." : "Envoyer le lien"}
             </button>
           </form>
         )}
-        <p style={{ color: "var(--bt-muted)", marginTop: "1.5rem", fontSize: "0.875rem" }}>
-          <Link href="/auth/signin" className="text-[#00d4ff] hover:underline">
+        <p className="mt-6 text-sm text-white/50">
+          <Link href="/auth/signin" className="text-bt-cyan hover:underline">
             Retour à la connexion
           </Link>
         </p>

@@ -65,7 +65,7 @@ export default function CertificateTable({ certificates }: CertificateTableProps
 
   return (
     <>
-      <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--bt-border)', background: 'rgba(13,31,60,0.5)' }}>
+      <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all hover:border-gold/30">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -135,8 +135,8 @@ export default function CertificateTable({ certificates }: CertificateTableProps
 
       {revokeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="mx-4 w-full max-w-md rounded-xl border border-gray-700 bg-[var(--bt-navy)] p-6 shadow-xl">
-            <h3 className="text-lg font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <div className="mx-4 w-full max-w-md rounded-xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-lg">
+            <h3 className="font-syne mb-2 text-lg font-bold tracking-tight text-white">
               Révoquer le certificat ?
             </h3>
             <p className="text-gray-400 text-sm mb-4">
@@ -147,7 +147,7 @@ export default function CertificateTable({ certificates }: CertificateTableProps
                 type="button"
                 onClick={() => setRevokeModal(null)}
                 disabled={revoking}
-                className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors disabled:opacity-50"
+                className="rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 disabled:opacity-50"
               >
                 Annuler
               </button>

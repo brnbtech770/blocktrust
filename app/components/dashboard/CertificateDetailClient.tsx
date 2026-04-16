@@ -134,7 +134,7 @@ export default function CertificateDetailClient({
       {htmlCode && (
         <button
           onClick={handleCopyHTML}
-          className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold py-2.5 px-4 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
+          className="w-full rounded-lg bg-bt-cyan py-2.5 px-4 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
         >
           {copied ? '✓ Code copié !' : '📋 Copier le code HTML'}
         </button>

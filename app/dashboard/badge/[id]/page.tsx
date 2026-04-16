@@ -144,15 +144,15 @@ export default function DashboardBadgePage() {
 
   if (sessionStatus === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Chargement...</div>
+      <div className="flex min-h-screen items-center justify-center bg-[var(--bt-navy)]">
+        <div className="text-xl text-white/80">Chargement...</div>
       </div>
     )
   }
 
   if (error || !badgeData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[var(--bt-navy)]">
         <div className="text-red-400">{error || 'Badge non trouvé'}</div>
       </div>
     )
@@ -162,26 +162,26 @@ export default function DashboardBadgePage() {
   const verifyUrl = `${window.location.origin}/verify/${badgeId}`
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+    <div className="min-h-screen bg-[var(--bt-navy)]">
       <DashboardSidebarClient />
 
       <main className="ml-64 p-8">
         <div className="mb-8">
           <a
             href="/dashboard/certificates"
-            className="text-cyan-400 hover:text-cyan-300 mb-4 inline-block"
+            className="mb-4 inline-block text-bt-cyan hover:text-bt-cyan/90"
           >
             ← Retour aux certificats
           </a>
-          <h1 className="text-4xl font-bold text-white tracking-tight mb-2">Mon Badge</h1>
-          <p className="text-gray-400 text-base">ID: {badgeId}</p>
+          <h1 className="font-syne mb-2 text-4xl font-bold tracking-tight text-white">Mon Badge</h1>
+          <p className="font-mono text-base text-white/60">ID: {badgeId}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-6">
           {/* Aperçu du badge */}
-          <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
-            <h2 className="text-2xl font-bold text-white mb-4 tracking-tight">Aperçu du badge</h2>
-            <div className="bg-gray-800 rounded-xl p-6 text-center">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
+            <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">Aperçu du badge</h2>
+            <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
               <div className="mb-4">
                 <img
                   src={`/api/badge/${badgeId}`}
@@ -189,10 +189,10 @@ export default function DashboardBadgePage() {
                   className="mx-auto max-w-full h-auto"
                 />
               </div>
-              <p className="text-gray-400 text-base mb-2">{getBadgeText()}</p>
+              <p className="mb-2 text-base text-white/60">{getBadgeText()}</p>
               <p className="text-white font-bold text-lg">{getEntityName()}</p>
               {badgeData.trustScore && (
-                <p className="text-cyan-400 text-base mt-2 font-semibold">
+                <p className="mt-2 text-base font-semibold text-bt-cyan">
                   TrustScore: {badgeData.trustScore.score}/100 ({badgeData.trustScore.level})
                 </p>
               )}
@@ -200,16 +200,16 @@ export default function DashboardBadgePage() {
           </div>
 
           {/* Code embed */}
-          <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
-            <h2 className="text-2xl font-bold text-white mb-4 tracking-tight">Code embed HTML</h2>
-            <div className="bg-gray-900 rounded-lg p-4 mb-4">
-              <pre className="text-xs text-gray-300 overflow-auto">
+          <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
+            <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">Code embed HTML</h2>
+            <div className="mb-4 rounded-lg border border-white/10 bg-black/30 p-4">
+              <pre className="overflow-auto text-xs text-white/70">
                 <code>{getEmbedCode()}</code>
               </pre>
             </div>
             <button
               onClick={handleCopyEmbed}
-              className="w-full bg-cyan-500/20 text-cyan-400 px-4 py-2 rounded-lg hover:bg-cyan-500/30 transition flex items-center justify-center gap-2"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 px-4 py-2 text-bt-cyan transition hover:bg-bt-cyan/25"
             >
               {copied ? (
                 <>
@@ -227,8 +227,8 @@ export default function DashboardBadgePage() {
         </div>
 
         {/* QR Code */}
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6 mb-6">
-            <h2 className="text-2xl font-bold text-white mb-4 tracking-tight">QR Code</h2>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30 mb-6">
+            <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">QR Code</h2>
           <div className="flex items-center gap-6">
             <div className="bg-white p-4 rounded-xl">
               <img
@@ -239,7 +239,7 @@ export default function DashboardBadgePage() {
               />
             </div>
             <div className="flex-1">
-              <p className="text-gray-400 text-base mb-4">
+              <p className="mb-4 text-base text-white/60">
                 Scannez ce QR code pour vérifier l'authenticité du certificat
               </p>
               <div className="flex gap-3">
@@ -263,15 +263,15 @@ export default function DashboardBadgePage() {
         </div>
 
         {/* Stats */}
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
-            <h2 className="text-2xl font-bold text-white mb-4 tracking-tight">Statistiques</h2>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
+            <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">Statistiques</h2>
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <p className="text-gray-400 text-base font-medium mb-2">Nombre de vérifications</p>
+                <p className="mb-2 text-base font-medium text-white/60">Nombre de vérifications</p>
                 <p className="text-4xl font-bold text-white tracking-tight">{badgeData.verificationCount || 0}</p>
               </div>
               <div>
-                <p className="text-gray-400 text-base font-medium mb-2">Dernière vérification</p>
+                <p className="mb-2 text-base font-medium text-white/60">Dernière vérification</p>
                 <p className="text-white text-lg">
                   {badgeData.lastVerifiedAt
                     ? new Date(badgeData.lastVerifiedAt).toLocaleDateString('fr-FR', {
@@ -283,12 +283,12 @@ export default function DashboardBadgePage() {
                 </p>
               </div>
             <div>
-                <p className="text-gray-400 text-base font-medium mb-2">Lien de vérification</p>
+                <p className="mb-2 text-base font-medium text-white/60">Lien de vérification</p>
               <a
                 href={verifyUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1"
+                className="flex items-center gap-1 text-sm text-bt-cyan hover:text-bt-cyan/90"
               >
                 Ouvrir <ExternalLink size={14} />
               </a>

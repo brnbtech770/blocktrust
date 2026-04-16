@@ -6,8 +6,8 @@
 
 export default function ActivityFeedSkeleton() {
   return (
-    <div className="rounded-xl border border-gray-700 bg-[var(--bt-navy)]/60 overflow-hidden">
-      <div className="border-b border-gray-700 px-4 py-3">
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
+      <div className="border-b border-white/10 px-4 py-3">
         <div className="h-5 w-40 bg-gray-700 rounded animate-pulse" />
       </div>
       <ul className="divide-y divide-gray-800">

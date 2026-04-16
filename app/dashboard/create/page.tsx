@@ -372,7 +372,7 @@ export default function CreateCertificate() {
                         setIndividualData({ ...individualData, firstName: e.target.value })
                       }
                       placeholder="Jean"
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                     />
                   </div>
                   <div>
@@ -387,7 +387,7 @@ export default function CreateCertificate() {
                         setIndividualData({ ...individualData, lastName: e.target.value })
                       }
                       placeholder="Dupont"
-                      className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                      className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                     />
                   </div>
                 </div>
@@ -404,7 +404,7 @@ export default function CreateCertificate() {
                       setIndividualData({ ...individualData, email: e.target.value })
                     }
                     placeholder="jean.dupont@email.com"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                 </div>
 
@@ -419,7 +419,7 @@ export default function CreateCertificate() {
                       setIndividualData({ ...individualData, phone: e.target.value })
                     }
                     placeholder="+33 6 12 34 56 78"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                 </div>
 
@@ -434,7 +434,7 @@ export default function CreateCertificate() {
                       setIndividualData({ ...individualData, website: e.target.value })
                     }
                     placeholder="www.linkedin.com/in/jeandupont ou www.monsite.fr"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                 </div>
 
@@ -449,7 +449,7 @@ export default function CreateCertificate() {
                     }
                     placeholder="Décrivez votre activité professionnelle..."
                     rows={4}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 resize-none"
+                    className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                 </div>
               </>
@@ -468,7 +468,7 @@ export default function CreateCertificate() {
                       setBusinessData({ ...businessData, legalName: e.target.value })
                     }
                     placeholder="Ex: BRNB TECH SAS"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                 </div>
 
@@ -483,7 +483,7 @@ export default function CreateCertificate() {
                       setBusinessData({ ...businessData, tradeName: e.target.value })
                     }
                     placeholder="Ex: BlockTrust"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                 </div>
 
@@ -503,7 +503,7 @@ export default function CreateCertificate() {
                     }}
                     placeholder="12345678900014"
                     maxLength={14}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     14 chiffres uniquement — les espaces sont retirés automatiquement (ex. coller « 123 456 789 000 14 » devient 12345678900014).
@@ -522,7 +522,7 @@ export default function CreateCertificate() {
                       setBusinessData({ ...businessData, email: e.target.value })
                     }
                     placeholder="contact@entreprise.fr"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                 </div>
 
@@ -537,7 +537,7 @@ export default function CreateCertificate() {
                       setBusinessData({ ...businessData, phone: e.target.value })
                     }
                     placeholder="+33 1 23 45 67 89"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                 </div>
 
@@ -553,7 +553,7 @@ export default function CreateCertificate() {
                       setBusinessData({ ...businessData, website: e.target.value })
                     }
                     placeholder="www.votresite.fr"
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500"
+                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     L'URL sera automatiquement complétée avec https:// si nécessaire
@@ -571,7 +571,7 @@ export default function CreateCertificate() {
                     }
                     placeholder="Décrivez votre activité..."
                     rows={4}
-                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 resize-none"
+                    className="w-full resize-none rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                 </div>
               </>

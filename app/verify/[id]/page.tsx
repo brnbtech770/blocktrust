@@ -271,7 +271,7 @@ function RateLimitedView({ retryAfter }: { retryAfter?: number }) {
 function NotFoundView() {
   return (
     <div className="min-h-screen bg-[#001a33] flex items-center justify-center p-4">
-      <div className="max-w-md w-full text-center rounded-2xl border border-gray-700 bg-[#001a33]/90 p-8">
+      <div className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-lg">
         <p className="font-syne mb-6 text-xl font-semibold text-white/80">
           Certificat introuvable ou révoqué
         </p>

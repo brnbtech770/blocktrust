@@ -24,7 +24,7 @@ async function calculateMRR(): Promise<number> {
       if (!priceId) continue
 
       const price = await stripe.prices.retrieve(priceId)
-      
+
       if (price.recurring?.interval === 'month') {
         // Abonnement mensuel
         mrr += price.unit_amount! / 100 // Convertir centimes en euros
@@ -39,6 +39,30 @@ async function calculateMRR(): Promise<number> {
     console.error('❌ Erreur calcul MRR:', error)
     return 0
   }
+}
+
+function KpiCard({
+  label,
+  value,
+  accentClass,
+  topBar,
+}: {
+  label: string
+  value: string
+  accentClass: string
+  topBar: string
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-gold/30">
+      <div className="absolute left-0 right-0 top-0 h-0.5" style={{ background: topBar }} />
+      <p className="mb-2 font-sans text-[10px] font-medium uppercase tracking-wider text-white/50">
+        {label}
+      </p>
+      <p className={`font-mono text-3xl font-bold tabular-nums tracking-tight ${accentClass}`}>
+        {value}
+      </p>
+    </div>
+  )
 }
 
 export default async function AdminDashboard() {
@@ -66,60 +90,64 @@ export default async function AdminDashboard() {
   ])
 
   return (
-    <div className="font-sans">
-      <p className="mb-8 text-sm" style={{ color: 'var(--bt-muted)' }}>Vue d'ensemble de la plateforme</p>
+    <div className="font-sans text-base leading-relaxed text-white/80">
+      <p className="mb-8 text-sm text-white/60">Vue d&apos;ensemble de la plateforme</p>
 
       {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-        <div className="p-6 rounded-xl border relative overflow-hidden" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
-          <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'var(--bt-gold)' }} />
-          <p className="text-[10px] font-medium mb-2 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Demandes en attente</p>
-          <p className="text-[28px] font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif', color: 'var(--bt-gold)' }}>{pendingCertificates}</p>
-        </div>
-        <div className="p-6 rounded-xl border relative overflow-hidden" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
-          <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'var(--bt-success)' }} />
-          <p className="text-[10px] font-medium mb-2 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Utilisateurs actifs</p>
-          <p className="text-[28px] font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif', color: '#1DB87E' }}>{activeUsers}</p>
-        </div>
-        <div className="p-6 rounded-xl border relative overflow-hidden" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
-          <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'var(--bt-cyan)' }} />
-          <p className="text-[10px] font-medium mb-2 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Revenus MRR</p>
-          <p className="text-[28px] font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif', color: 'var(--bt-cyan)' }}>{mrr.toFixed(2)}€</p>
-        </div>
-        <div className="p-6 rounded-xl border relative overflow-hidden" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
-          <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'var(--bt-cyan)' }} />
-          <p className="text-[10px] font-medium mb-2 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Total utilisateurs</p>
-          <p className="text-[28px] font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif', color: 'var(--bt-cyan)' }}>{totalUsers}</p>
-        </div>
-        <div className="p-6 rounded-xl border relative overflow-hidden" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
-          <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'var(--bt-cyan)' }} />
-          <p className="text-[10px] font-medium mb-2 uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>Certificats actifs</p>
-          <p className="text-[28px] font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif', color: 'var(--bt-cyan)' }}>{activeCertificates}</p>
-        </div>
+      <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
+        <KpiCard
+          label="Demandes en attente"
+          value={String(pendingCertificates)}
+          accentClass="text-gold"
+          topBar="var(--bt-gold)"
+        />
+        <KpiCard
+          label="Utilisateurs actifs"
+          value={String(activeUsers)}
+          accentClass="text-[var(--bt-success)]"
+          topBar="var(--bt-success)"
+        />
+        <KpiCard
+          label="Revenus MRR"
+          value={`${mrr.toFixed(2)}€`}
+          accentClass="text-bt-cyan"
+          topBar="var(--bt-cyan)"
+        />
+        <KpiCard
+          label="Total utilisateurs"
+          value={String(totalUsers)}
+          accentClass="text-bt-cyan"
+          topBar="var(--bt-cyan)"
+        />
+        <KpiCard
+          label="Certificats actifs"
+          value={String(activeCertificates)}
+          accentClass="text-bt-cyan"
+          topBar="var(--bt-cyan)"
+        />
       </div>
 
       {/* Actions rapides */}
-      <div className="rounded-xl border p-6" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
-        <h2 className="text-xl font-bold text-white mb-4 tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Actions rapides</h2>
+      <div className="rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-gold/30">
+        <h2 className="font-syne mb-4 text-xl font-semibold tracking-tight text-white">
+          Actions rapides
+        </h2>
         <div className="flex flex-wrap gap-3">
           <a
             href="/admin/certificates?status=PENDING"
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90"
-            style={{ background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)' }}
+            className="rounded-lg border border-gold/40 px-4 py-2 text-sm font-medium text-gold transition-all hover:border-gold/60 hover:bg-gold/10"
           >
             Voir les demandes en attente
           </a>
           <a
             href="/admin/users"
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90"
-            style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' }}
+            className="rounded-lg border border-bt-cyan/40 px-4 py-2 text-sm font-medium text-bt-cyan transition-all hover:border-bt-cyan/60 hover:bg-bt-cyan/10"
           >
             Gérer les utilisateurs
           </a>
           <a
             href="/admin/alerts"
-            className="px-4 py-2 rounded-lg text-sm font-medium transition-colors hover:opacity-90"
-            style={{ background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' }}
+            className="rounded-lg border border-red-400/40 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:border-red-400/60 hover:bg-red-500/10"
           >
             Voir les alertes
           </a>

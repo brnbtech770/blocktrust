@@ -5,17 +5,6 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/app/components/ui/Logo";
 
-const pageBg = "#0a1628";
-
-const cardStyle: React.CSSProperties = {
-  maxWidth: "480px",
-  margin: "0 auto",
-  padding: "32px",
-  border: "1px solid rgba(0,212,255,0.15)",
-  borderRadius: "16px",
-  backgroundColor: "rgba(13,31,60,0.85)",
-};
-
 function shortMessage(code: string | null): string {
   if (!code) return "Une erreur d’authentification s’est produite.";
   const m: Record<string, string> = {
@@ -39,26 +28,12 @@ function ErrorContent() {
   const callbackUrl = searchParams.get("callbackUrl");
 
   return (
-    <div
-      className="min-h-screen px-4 py-12"
-      style={{
-        background: pageBg,
-        fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
-      }}
-    >
-      <div style={{ margin: "0 auto 24px", display: "flex", justifyContent: "center" }}>
+    <div className="min-h-screen bg-navy px-4 py-12 font-sans">
+      <div className="mb-6 flex justify-center">
         <Logo size="lg" withText={true} href="/" />
       </div>
-      <div style={cardStyle}>
-        <h1
-          style={{
-            fontFamily: "var(--font-syne), sans-serif",
-            color: "#fff",
-            fontSize: "1.35rem",
-            marginBottom: "12px",
-            fontWeight: 700,
-          }}
-        >
+      <div className="mx-auto max-w-[480px] rounded-xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm transition-all hover:border-gold/30">
+        <h1 className="font-syne mb-3 text-[1.35rem] font-bold tracking-tight text-white">
           Connexion interrompue
         </h1>
         <p style={{ color: "rgba(232,234,240,0.85)", fontSize: "0.95rem", lineHeight: 1.45 }}>
@@ -129,7 +104,7 @@ function ErrorContent() {
                 ? `/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`
                 : "/auth/signin"
             }
-            className="block w-full rounded-lg bg-[#00d4ff] py-3 text-center text-sm font-bold text-[#0a1628] hover:brightness-110"
+            className="block w-full rounded-lg bg-bt-cyan py-3 text-center text-sm font-bold text-navy transition hover:bg-bt-cyan/90"
           >
             Réessayer la connexion
           </Link>
@@ -146,10 +121,7 @@ export default function AuthErrorPage() {
   return (
     <Suspense
       fallback={
-        <div
-          className="min-h-screen px-4 py-12 text-center"
-          style={{ background: pageBg, color: "#e8eaf0" }}
-        >
+        <div className="min-h-screen bg-navy px-4 py-12 text-center text-white/80">
           Chargement…
         </div>
       }

@@ -54,7 +54,7 @@ export default async function EntitiesPage() {
           className={`font-bold py-3 px-6 rounded-lg transition-all ${
             limitReached
               ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg hover:shadow-cyan-500/50"
+              : "bg-bt-cyan text-navy hover:bg-bt-cyan/90"
           }`}
           aria-disabled={limitReached}
         >
@@ -73,7 +73,7 @@ export default async function EntitiesPage() {
             return (
               <div
                 key={entity.id}
-                className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6 hover:border-cyan-500/50 transition-all"
+                className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
@@ -92,7 +92,7 @@ export default async function EntitiesPage() {
                 {entity.siret && (
                   <div className="mb-4">
                     <p className="text-gray-400 text-base mb-1 font-medium">SIRET</p>
-                    <code className="text-cyan-400 bg-cyan-500/10 px-3 py-1.5 rounded text-base font-mono">
+                    <code className="rounded bg-bt-cyan/10 px-3 py-1.5 font-mono text-base text-bt-cyan">
                       {entity.siret}
                     </code>
                   </div>
@@ -120,7 +120,7 @@ export default async function EntitiesPage() {
                 <div className="flex gap-2">
                   <Link
                     href={`/dashboard/badge/${entity.certificates[0]?.id || entity.id}`}
-                    className="flex-1 text-center bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 py-2 px-4 rounded-lg transition-colors text-sm font-medium"
+                    className="flex-1 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 py-2 px-4 text-center text-sm font-medium text-bt-cyan transition-colors hover:bg-bt-cyan/25"
                   >
                     Voir
                   </Link>
@@ -136,13 +136,13 @@ export default async function EntitiesPage() {
           })}
         </div>
       ) : (
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-12 text-center">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-lg transition-all hover:border-gold/30">
           <div className="text-6xl mb-4">📭</div>
           <h3 className="text-2xl font-bold text-white mb-2">Aucune entité</h3>
           <p className="text-gray-400 text-base mb-6">Créez votre première entité pour commencer</p>
           <Link
             href="/dashboard/create"
-            className="inline-block bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-cyan-600 transition"
+            className="inline-block rounded-lg bg-bt-cyan py-3 px-6 font-bold text-navy transition hover:bg-bt-cyan/90"
           >
             Créer ma première entité
           </Link>

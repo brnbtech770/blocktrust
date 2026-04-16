@@ -174,7 +174,7 @@ export default function TrustCirclePage() {
           upgradeMessage={data.stats.upgradeMessage}
         />
 
-        <div className="flex gap-1 sm:gap-2 mb-6 border-b border-gray-700 overflow-x-auto pb-0.5 -mx-1 px-1">
+        <div className="-mx-1 mb-6 flex gap-1 overflow-x-auto border-b border-white/10 px-1 pb-0.5 sm:gap-2">
           {(['all', 'mutual', 'pending', 'manual'] as const).map((tab) => (
             <button
               key={tab}
@@ -221,14 +221,14 @@ export default function TrustCirclePage() {
         </div>
 
         {totalEntites === 0 && (
-          <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-12 text-center">
-            <div className="text-6xl mb-4">🔗</div>
-            <h3 className="text-xl font-bold text-white mb-2">Aucune entité</h3>
-            <p className="text-gray-400 mb-6">Ajoutez des contacts à votre cercle de confiance</p>
+          <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-lg transition-all hover:border-gold/30">
+            <div className="mb-4 text-6xl">🔗</div>
+            <h3 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">Aucune entité</h3>
+            <p className="mb-6 text-white/60">Ajoutez des contacts à votre cercle de confiance</p>
             <button
               onClick={() => setShowInviteModal(true)}
               disabled={!quotaAllowed}
-              className="bg-cyan-500 text-white font-bold py-3 px-6 rounded-lg disabled:opacity-50"
+              className="rounded-lg bg-bt-cyan py-3 px-6 font-sans font-bold text-navy transition-all hover:bg-bt-cyan/90 disabled:opacity-50"
             >
               + Ajouter
             </button>
@@ -283,7 +283,7 @@ function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pendi
       <div className="flex justify-between items-start">
         <div>
           {type === 'mutual' && <span className="text-[9px] font-mono text-green-500 bg-green-500/10 px-2 py-0.5 rounded">Mutuelle</span>}
-          {type === 'unilateral' && <span className="text-[9px] text-cyan-400/90 bg-cyan-500/10 px-2 py-0.5 rounded">Unilatérale</span>}
+          {type === 'unilateral' && <span className="rounded bg-bt-cyan/10 px-2 py-0.5 text-[9px] text-bt-cyan/90">Unilatérale</span>}
           {type === 'pending' && <span className="text-[9px] text-gray-400 bg-white/10 px-2 py-0.5 rounded">Invitation envoyée</span>}
           {type === 'manual' && <span className="text-[9px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded">Vérifié admin</span>}
           <h3 className="text-base sm:text-lg font-bold text-white mt-1 break-words">{name}</h3>

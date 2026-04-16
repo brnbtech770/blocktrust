@@ -51,8 +51,8 @@ export default async function AdminCertificateDetailPage({
     return certificate.entity.legalName || certificate.entity.tradeName || certificate.entity.email
   }
 
-  const cardCls = 'rounded-xl border p-6'
-  const cardStyle = { background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }
+  const cardCls =
+    'rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-gold/30'
   const labelCls = 'text-sm'
   const labelStyle = { color: 'var(--bt-muted)' }
 
@@ -66,8 +66,8 @@ export default async function AdminCertificateDetailPage({
       </div>
 
       <div className="grid grid-cols-2 gap-6 mb-6">
-        <div className={cardCls} style={cardStyle}>
-          <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Informations entité</h2>
+        <div className={cardCls}>
+          <h2 className="font-syne mb-4 text-xl font-bold tracking-tight text-white">Informations entité</h2>
           <div className="space-y-3">
             <div><p className={labelCls} style={labelStyle}>Nom</p><p className="text-white">{getEntityName()}</p></div>
             <div><p className={labelCls} style={labelStyle}>Type</p><p className="text-white">{certificate.entity.entityType === 'INDIVIDUAL' ? 'Particulier' : 'Entreprise'}</p></div>
@@ -77,8 +77,8 @@ export default async function AdminCertificateDetailPage({
           </div>
         </div>
 
-        <div className={cardCls} style={cardStyle}>
-          <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Informations certificat</h2>
+        <div className={cardCls}>
+          <h2 className="font-syne mb-4 text-xl font-bold tracking-tight text-white">Informations certificat</h2>
           <div className="space-y-3">
             <div>
               <p className={labelCls} style={labelStyle}>Statut</p>
@@ -103,8 +103,8 @@ export default async function AdminCertificateDetailPage({
         </div>
       </div>
 
-      <div className={cardCls} style={cardStyle}>
-        <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Actions</h2>
+      <div className={cardCls}>
+        <h2 className="font-syne mb-4 text-xl font-bold tracking-tight text-white">Actions</h2>
         <CertificateActions certificateId={certificate.id} currentStatus={certificate.status} />
       </div>
     </div>

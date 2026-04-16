@@ -81,7 +81,7 @@ function VerifyContent() {
         )}
         
         {tokenFixApplied && (
-          <div className="bg-cyan-500/20 border border-cyan-500/50 text-cyan-400 px-4 py-3 rounded-lg mb-4 text-center">
+          <div className="mb-4 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 px-4 py-3 text-center text-bt-cyan">
             <p>Lien corrigé automatiquement (token encodé).</p>
           </div>
         )}

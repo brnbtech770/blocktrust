@@ -146,8 +146,7 @@ export default async function AdminAlertsPage({
           {alerts.map((alert) => (
             <div
               key={alert.id}
-              className="rounded-xl border p-6"
-              style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}
+              className="rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-gold/30"
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
@@ -162,7 +161,7 @@ export default async function AdminAlertsPage({
                       {alert.alertType.replace(/_/g, ' ')}
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>{alert.title}</h3>
+                  <h3 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">{alert.title}</h3>
                   <p className="text-sm mb-4" style={{ color: 'var(--bt-muted)' }}>{alert.description}</p>
                 </div>
                 <span className="text-xs" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>
@@ -235,9 +234,9 @@ export default async function AdminAlertsPage({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border p-12 text-center" style={{ background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }}>
-          <div className="text-6xl mb-4">✅</div>
-          <h3 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Aucune alerte</h3>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center transition-all hover:border-gold/30">
+          <div className="mb-4 text-6xl">✅</div>
+          <h3 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">Aucune alerte</h3>
           <p style={{ color: 'var(--bt-muted)' }}>Toutes les alertes sont résolues ou il n'y a pas d'alerte en cours.</p>
         </div>
       )}

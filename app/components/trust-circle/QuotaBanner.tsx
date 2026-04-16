@@ -89,16 +89,10 @@ export function QuotaBanner({
           </span>
           <Link
             href="/pricing"
+            className="font-syne whitespace-nowrap rounded-md px-3.5 py-1 text-[11px] font-bold no-underline"
             style={{
-              padding:        '5px 14px',
-              background:     pct >= 1 ? '#E05252' : '#E8943A',
-              color:          '#0a1628',
-              borderRadius:   '6px',
-              fontSize:       '11px',
-              fontWeight:     700,
-              textDecoration: 'none',
-              whiteSpace:     'nowrap',
-              fontFamily:     'var(--font-syne), sans-serif',
+              background: pct >= 1 ? '#E05252' : '#E8943A',
+              color: '#0a1628',
             }}
           >
             Upgrader →

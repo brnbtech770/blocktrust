@@ -70,14 +70,8 @@ export function OnboardingVerifyClient() {
     }
   }
 
-  const cardStyle = {
-    maxWidth: 480,
-    margin: '0 auto',
-    background: 'rgba(13,31,60,0.8)',
-    border: '1px solid rgba(0,212,255,0.2)',
-    borderRadius: 16,
-    padding: 32,
-  }
+  const cardClass =
+    'mx-auto max-w-[480px] rounded-xl border border-bt-cyan/20 bg-white/5 p-8 backdrop-blur-sm transition-all hover:border-gold/30'
 
   return (
     <div className="min-h-screen bt-circuit-bg" style={{ background: 'var(--bt-navy)', padding: 24 }}>
@@ -86,8 +80,8 @@ export function OnboardingVerifyClient() {
       </div>
 
       {step === 'select' && (
-        <div style={cardStyle}>
-          <h1 className="text-2xl font-extrabold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+        <div className={cardClass}>
+          <h1 className="font-syne mb-2 text-2xl font-extrabold tracking-tight text-white">
             Vérification d&apos;identité
           </h1>
           <p className="text-sm mb-6" style={{ color: 'var(--bt-muted)' }}>
@@ -142,8 +136,7 @@ export function OnboardingVerifyClient() {
           <button
             type="button"
             onClick={() => { if (accountType === 'BUSINESS') setStep('siret'); else startVerification(); }}
-            className="w-full py-3 rounded-lg font-bold text-white"
-            style={{ background: '#00d4ff', color: '#0a1628' }}
+            className="w-full rounded-lg bg-bt-cyan py-3 font-bold text-navy transition hover:bg-bt-cyan/90"
           >
             {accountType === 'BUSINESS' ? 'Continuer' : 'Démarrer la vérification'}
           </button>
@@ -151,7 +144,7 @@ export function OnboardingVerifyClient() {
       )}
 
       {step === 'siret' && (
-        <div style={cardStyle}>
+        <div className={cardClass}>
           <button
             type="button"
             onClick={() => setStep('select')}
@@ -160,7 +153,7 @@ export function OnboardingVerifyClient() {
           >
             ← Retour
           </button>
-          <h2 className="text-lg font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <h2 className="font-syne mb-4 text-lg font-bold tracking-tight text-white">
             SIRET entreprise
           </h2>
           <input
@@ -170,8 +163,7 @@ export function OnboardingVerifyClient() {
             value={siret}
             onChange={(e) => { setSiret(e.target.value.replace(/\D/g, '')); setSiretStatus('idle') }}
             onBlur={checkSiret}
-            className="w-full px-4 py-3 rounded-lg border mb-2"
-            style={{ background: 'rgba(255,255,255,0.08)', borderColor: 'var(--bt-border)', color: 'white' }}
+            className="mb-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40"
           />
           {siretStatus === 'ok' && <p className="text-sm text-green-500 mb-2">✓ {companyName}</p>}
           {siretStatus === 'error' && <p className="text-sm text-red-400 mb-2">{siretError}</p>}
@@ -179,8 +171,7 @@ export function OnboardingVerifyClient() {
             type="button"
             onClick={startVerification}
             disabled={siret.length !== 14 || siretStatus !== 'ok'}
-            className="w-full py-3 rounded-lg font-bold disabled:opacity-50"
-            style={{ background: '#00d4ff', color: '#0a1628' }}
+            className="w-full rounded-lg bg-bt-cyan py-3 font-bold text-navy transition hover:bg-bt-cyan/90 disabled:opacity-50"
           >
             Démarrer la vérification
           </button>
@@ -188,18 +179,18 @@ export function OnboardingVerifyClient() {
       )}
 
       {step === 'launching' && (
-        <div style={cardStyle} className="text-center">
+        <div className={`${cardClass} text-center`}>
           <p className="text-white">Redirection vers Stripe Identity...</p>
-          <div className="animate-spin w-8 h-8 border-2 border-cyan-500 border-t-transparent rounded-full mx-auto mt-4" />
+          <div className="mx-auto mt-4 h-8 w-8 animate-spin rounded-full border-2 border-bt-cyan border-t-transparent" />
         </div>
       )}
 
       {step === 'complete' && (
-        <div style={cardStyle} className="text-center">
+        <div className={`${cardClass} text-center`}>
           <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
             <CheckIcon className="w-10 h-10 text-green-400" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>
+          <h2 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">
             Vérification soumise
           </h2>
           <p className="text-sm mb-6" style={{ color: 'var(--bt-muted)' }}>
@@ -208,8 +199,7 @@ export function OnboardingVerifyClient() {
           <button
             type="button"
             onClick={() => router.push('/onboarding/pending')}
-            className="w-full py-3 rounded-lg font-bold text-white"
-            style={{ background: '#00d4ff', color: '#0a1628' }}
+            className="w-full rounded-lg bg-bt-cyan py-3 font-bold text-navy transition hover:bg-bt-cyan/90"
           >
             Vérifier le statut
           </button>

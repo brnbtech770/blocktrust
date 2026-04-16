@@ -64,8 +64,8 @@ export default async function AdminUserDetailPage({
     0
   )
 
-  const cardCls = 'rounded-xl border p-6'
-  const cardStyle = { background: 'rgba(13,31,60,0.8)', borderColor: 'var(--bt-border)' }
+  const cardCls =
+    'rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-gold/30'
   const labelStyle = { color: 'var(--bt-muted)' }
 
   return (
@@ -78,8 +78,8 @@ export default async function AdminUserDetailPage({
       </div>
 
       <div className="grid grid-cols-2 gap-6 mb-6">
-        <div className={cardCls} style={cardStyle}>
-          <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Informations profil</h2>
+        <div className={cardCls}>
+          <h2 className="font-syne mb-4 text-xl font-bold tracking-tight text-white">Informations profil</h2>
           <div className="space-y-3">
             <div><p className="text-sm" style={labelStyle}>Nom</p><p className="text-white">{user.name || '—'}</p></div>
             <div><p className="text-sm" style={labelStyle}>Email</p><p className="text-white">{user.email}</p></div>
@@ -88,8 +88,8 @@ export default async function AdminUserDetailPage({
           </div>
         </div>
 
-        <div className={cardCls} style={cardStyle}>
-          <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Plan actuel</h2>
+        <div className={cardCls}>
+          <h2 className="font-syne mb-4 text-xl font-bold tracking-tight text-white">Plan actuel</h2>
           <div className="space-y-3">
             {user.plan ? (
               <>
@@ -111,8 +111,8 @@ export default async function AdminUserDetailPage({
         </div>
       </div>
 
-      <div className={cardCls} style={cardStyle}>
-        <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Usage</h2>
+      <div className={cardCls}>
+        <h2 className="font-syne mb-4 text-xl font-bold tracking-tight text-white">Usage</h2>
         <div className="grid grid-cols-3 gap-4">
           <div><p className="text-sm" style={labelStyle}>Entités</p><p className="text-2xl font-bold text-white">{user.entities.length}{user.plan && ` / ${user.plan.maxEntities}`}</p></div>
           <div><p className="text-sm" style={labelStyle}>Certificats</p><p className="text-2xl font-bold text-white">{totalCertificates}{user.plan && ` / ${user.plan.maxCertificates}`}</p></div>
@@ -120,8 +120,8 @@ export default async function AdminUserDetailPage({
         </div>
       </div>
 
-      <div className={cardCls} style={cardStyle}>
-        <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Entités et certificats</h2>
+      <div className={cardCls}>
+        <h2 className="font-syne mb-4 text-xl font-bold tracking-tight text-white">Entités et certificats</h2>
         {user.entities.length > 0 ? (
           <div className="space-y-4">
             {user.entities.map((entity) => (
@@ -171,8 +171,8 @@ export default async function AdminUserDetailPage({
 
       {/* Factures Stripe */}
       {invoices.length > 0 && (
-        <div className={cardCls} style={cardStyle}>
-          <h2 className="text-xl font-bold text-white mb-4" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>Factures Stripe</h2>
+        <div className={cardCls}>
+          <h2 className="font-syne mb-4 text-xl font-bold tracking-tight text-white">Factures Stripe</h2>
           <div className="space-y-2">
             {invoices.map((invoice) => (
               <div

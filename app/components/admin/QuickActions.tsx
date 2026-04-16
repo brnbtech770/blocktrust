@@ -126,7 +126,7 @@ export default function QuickActions({ certificateId, currentStatus }: QuickActi
       {showRevokeModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="rounded-2xl border p-6 max-w-md w-full mx-4" style={{ background: 'rgba(13,31,60,0.95)', borderColor: 'var(--bt-border)' }}>
-            <h3 className="text-2xl font-bold text-white mb-4 tracking-tight" style={{ fontFamily: 'var(--font-syne), sans-serif' }}>⚠️ Confirmer l'action</h3>
+            <h3 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">⚠️ Confirmer l&apos;action</h3>
             <p className="text-base mb-4" style={{ color: 'var(--bt-muted)' }}>
               Vous êtes sur le point de {currentStatus === 'PENDING' ? 'rejeter' : 'révoquer'} ce certificat.
               Cette action est <strong style={{ color: 'var(--bt-danger)' }}>irréversible</strong>.

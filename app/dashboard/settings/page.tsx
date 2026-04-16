@@ -66,10 +66,10 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[40vh] items-center justify-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement...</p>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-2 border-bt-cyan border-t-transparent" />
+          <p className="mt-4 text-sm text-white/60">Chargement...</p>
         </div>
       </div>
     )
@@ -77,12 +77,13 @@ export default function SettingsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="flex min-h-[40vh] items-center justify-center py-12">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="mb-4 text-red-400">{error}</p>
           <button
+            type="button"
             onClick={fetchUserData}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="rounded-lg bg-bt-cyan px-4 py-2 text-sm font-semibold text-navy transition hover:bg-bt-cyan/90"
           >
             Réessayer
           </button>
@@ -95,129 +96,114 @@ export default function SettingsPage() {
     return null
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8 tracking-tight">Paramètres</h1>
+  const toggleTrack =
+    'relative h-6 w-11 shrink-0 rounded-full bg-white/15 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-white/20 after:bg-white after:transition-all after:content-[""] peer-checked:bg-bt-cyan peer-checked:after:translate-x-full peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-bt-cyan/25 peer-focus:ring-offset-2 peer-focus:ring-offset-[var(--bt-navy)]'
 
-        {/* Profil */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Informations du profil</h2>
+  return (
+    <div className="py-8 text-white/80">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <h1 className="font-syne mb-8 text-4xl font-bold tracking-tight text-white">Paramètres</h1>
+
+        <div className="mb-6 rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-gold/30">
+          <h2 className="font-syne mb-4 text-2xl font-semibold tracking-tight text-white">Informations du profil</h2>
           <div className="space-y-4">
-            {/* Image de profil */}
             <div className="flex items-center space-x-4">
               {user.image ? (
                 <img
                   src={user.image}
                   alt="Avatar"
-                  className="w-16 h-16 rounded-full"
+                  className="h-16 w-16 rounded-full"
                 />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-2xl text-gray-600">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10">
+                  <span className="text-2xl text-white/80">
                     {user.name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
                   </span>
                 </div>
               )}
               <div>
-                <button className="px-4 py-2 text-sm bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                <button
+                  type="button"
+                  className="rounded-lg border border-white/20 px-4 py-2 text-sm text-white/90 transition hover:bg-white/5"
+                >
                   Changer la photo
                 </button>
-                <p className="text-xs text-gray-500 mt-1">
-                  JPG, PNG ou GIF. Max 1MB.
-                </p>
+                <p className="mt-1 text-xs text-white/45">JPG, PNG ou GIF. Max 1MB.</p>
               </div>
             </div>
 
-            {/* Nom */}
             <div>
-              <label className="block text-base font-semibold text-gray-700 mb-2">
-                Nom
-              </label>
+              <label className="mb-2 block text-base font-semibold text-white/90">Nom</label>
               <input
                 type="text"
                 value={user.name || ''}
                 readOnly
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white"
                 placeholder="Votre nom"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                TODO: Implémenter la modification du nom
-              </p>
+              <p className="mt-1 text-xs text-white/45">TODO: Implémenter la modification du nom</p>
             </div>
 
-            {/* Email */}
             <div>
-              <label className="block text-base font-semibold text-gray-700 mb-2">
-                Email
-              </label>
+              <label className="mb-2 block text-base font-semibold text-white/90">Email</label>
               <input
                 type="email"
                 value={user.email}
                 readOnly
-                className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                L'email ne peut pas être modifié
-              </p>
+              <p className="mt-1 text-xs text-white/45">L&apos;email ne peut pas être modifié</p>
             </div>
           </div>
         </div>
 
-        {/* Préférences de notification */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+        <div className="mb-6 rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-gold/30">
+          <h2 className="font-syne mb-4 text-2xl font-semibold tracking-tight text-white">
             Préférences de notification
           </h2>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-base font-semibold text-gray-700">Emails de facturation</p>
-                <p className="text-sm text-gray-500">
-                  Recevoir des emails concernant vos factures
-                </p>
+                <p className="text-base font-semibold text-white/90">Emails de facturation</p>
+                <p className="text-sm text-white/50">Recevoir des emails concernant vos factures</p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" defaultChecked />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <label className="relative inline-flex cursor-pointer items-center">
+                <input type="checkbox" className="peer sr-only" defaultChecked />
+                <div className={toggleTrack} />
               </label>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-base font-semibold text-gray-700">Notifications produit</p>
-                <p className="text-sm text-gray-500">
-                  Recevoir des mises à jour sur les nouvelles fonctionnalités
-                </p>
+                <p className="text-base font-semibold text-white/90">Notifications produit</p>
+                <p className="text-sm text-white/50">Recevoir des mises à jour sur les nouvelles fonctionnalités</p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" defaultChecked />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <label className="relative inline-flex cursor-pointer items-center">
+                <input type="checkbox" className="peer sr-only" defaultChecked />
+                <div className={toggleTrack} />
               </label>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-base font-semibold text-gray-700">Alertes de sécurité</p>
-                <p className="text-sm text-gray-500">
-                  Recevoir des alertes pour les activités suspectes
-                </p>
+                <p className="text-base font-semibold text-white/90">Alertes de sécurité</p>
+                <p className="text-sm text-white/50">Recevoir des alertes pour les activités suspectes</p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" defaultChecked />
-                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              <label className="relative inline-flex cursor-pointer items-center">
+                <input type="checkbox" className="peer sr-only" defaultChecked />
+                <div className={toggleTrack} />
               </label>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-4">
-            ⚠️ Les préférences de notification sont des placeholders pour l'instant
+          <p className="mt-4 text-xs text-white/45">
+            Les préférences de notification sont des placeholders pour l&apos;instant
           </p>
         </div>
 
-        {/* Bouton déconnexion */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">Danger Zone</h2>
+        <div className="rounded-xl border border-red-500/30 bg-white/5 p-6 transition-all hover:border-red-500/50">
+          <h2 className="font-syne mb-4 text-2xl font-semibold tracking-tight text-white">Zone sensible</h2>
           <button
+            type="button"
             onClick={handleLogout}
-            className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            className="rounded-lg bg-red-600 px-6 py-2 text-white transition hover:bg-red-700"
           >
             Se déconnecter
           </button>

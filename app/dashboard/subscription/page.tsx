@@ -66,7 +66,7 @@ export default async function SubscriptionPage() {
         </div>
 
         {/* Carte abonnement actuel */}
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6 mb-6">
+        <div className="mb-6 rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
           <div className="flex items-start justify-between mb-6">
             <div>
               <h2 className="text-2xl font-bold text-white mb-2">Plan actuel</h2>
@@ -100,7 +100,7 @@ export default async function SubscriptionPage() {
                 <SubscriptionClient />
                 <Link
                   href="/pricing"
-                  className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
+                  className="rounded-lg bg-bt-cyan py-3 px-6 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
                 >
                   Changer de plan
                 </Link>
@@ -108,7 +108,7 @@ export default async function SubscriptionPage() {
             ) : (
               <Link
                 href="/pricing"
-                className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold py-3 px-6 rounded-lg hover:shadow-lg hover:shadow-cyan-500/50 transition-all"
+                className="rounded-lg bg-bt-cyan py-3 px-6 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
               >
                 Choisir un plan
               </Link>
@@ -117,7 +117,7 @@ export default async function SubscriptionPage() {
         </div>
 
         {/* Informations du plan */}
-        <div className="bg-white/5 backdrop-blur-lg rounded-2xl border border-gray-700 p-6">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
           <h2 className="text-xl font-bold text-white mb-4">Détails du plan</h2>
           <div className="space-y-3">
             <div className="flex justify-between">

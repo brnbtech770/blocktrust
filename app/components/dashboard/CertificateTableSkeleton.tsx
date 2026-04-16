@@ -6,8 +6,8 @@
 
 export default function CertificateTableSkeleton() {
   return (
-    <div className="rounded-xl border border-gray-700 bg-[var(--bt-navy)]/60 overflow-hidden">
-      <div className="border-b border-gray-700 px-4 py-3 flex gap-4">
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
+      <div className="flex gap-4 border-b border-white/10 px-4 py-3">
         {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="h-4 bg-gray-700 rounded w-24 animate-pulse" />
         ))}

@@ -89,10 +89,7 @@ export default function PlanCard({
           </svg>
         </div>
         <div>
-          <h3
-            className="text-lg font-bold"
-            style={{ color: 'white', fontFamily: 'var(--font-syne), sans-serif' }}
-          >
+          <h3 className="font-syne text-lg font-bold text-white">
             {name}
           </h3>
           <p className="text-sm" style={{ color: 'var(--bt-muted)' }}>
@@ -104,10 +101,7 @@ export default function PlanCard({
       <div className="mt-4 mb-2">
         {typeof price === 'number' ? (
           <>
-            <span
-              className="text-[42px] md:text-4xl font-extrabold tabular-nums"
-              style={{ fontFamily: 'var(--font-syne), sans-serif', color: 'white' }}
-            >
+            <span className="font-mono text-[42px] font-extrabold tabular-nums text-white md:text-4xl">
               {price.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
             </span>
             <span className="text-base ml-1" style={{ color: 'var(--bt-muted)' }}>
@@ -115,10 +109,7 @@ export default function PlanCard({
             </span>
           </>
         ) : (
-          <span
-            className="text-2xl md:text-3xl font-extrabold"
-            style={{ fontFamily: 'var(--font-syne), sans-serif', color: 'var(--bt-gold)' }}
-          >
+          <span className="font-syne text-2xl font-extrabold text-gold md:text-3xl">
             {price}
           </span>
         )}
