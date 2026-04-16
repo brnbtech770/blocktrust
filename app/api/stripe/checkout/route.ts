@@ -4,7 +4,7 @@ import { getAuthUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/db";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-01-28.clover",
+  apiVersion: "2026-02-25.clover",
 });
 
 export async function POST(req: NextRequest) {
