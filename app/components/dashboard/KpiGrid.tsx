@@ -27,7 +27,7 @@ export default function KpiGrid({
   fraudAlerts,
 }: KpiGridProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
+    <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 md:mb-8">
       <KpiCard
         label="Certificats actifs"
         value={String(certs)}
@@ -89,7 +89,7 @@ function KpiCard({
           <p className="font-sans text-xs font-medium uppercase tracking-wider text-white/50 mb-1">
             {label}
           </p>
-          <p className="font-mono text-3xl font-bold text-white tabular-nums tracking-tight overflow-hidden text-ellipsis whitespace-nowrap">
+          <p className="font-mono text-3xl font-bold tabular-nums tracking-tight text-white">
             {value}
           </p>
           <p className="font-mono text-[10px] mt-1 truncate text-white/50">{sub}</p>

@@ -9,7 +9,6 @@ import { prisma } from "@/app/lib/db";
 import { auth } from "@/app/lib/auth-server";
 import Link from "next/link";
 import type { CertificateTableItem, VerificationEvent } from "@/types/dashboard";
-import DashboardLayout from "@/app/components/dashboard/DashboardLayout";
 import StatsBlock from "@/app/components/dashboard/StatsBlock";
 import CertificateTable from "@/app/components/dashboard/CertificateTable";
 import ActivityFeed from "@/app/components/dashboard/ActivityFeed";
@@ -106,7 +105,7 @@ export default async function Dashboard({
     }));
 
     return (
-      <DashboardLayout>
+      <>
         {showSuccessMessage && (
           <div className="mb-4 sm:mb-6 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg transition-all hover:border-gold/30 sm:p-6">
             <div className="flex items-start gap-3 sm:gap-4">
@@ -143,13 +142,13 @@ export default async function Dashboard({
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/dashboard/create"
-              className="inline-flex items-center justify-center rounded-lg bg-bt-cyan px-6 py-3 text-center font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:text-base"
+              className="inline-flex min-w-0 w-full items-center justify-center rounded-lg bg-bt-cyan px-4 py-3 text-center font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:px-6 sm:text-base"
             >
               ➕ Créer une entité
             </Link>
             <Link
               href="/dashboard/certificates"
-              className="inline-flex items-center justify-center rounded-lg border border-white/20 px-6 py-3 text-center font-sans text-sm font-semibold text-white transition-all hover:border-white/40 sm:text-base"
+              className="inline-flex min-w-0 w-full items-center justify-center rounded-lg border border-white/20 px-4 py-3 text-center font-sans text-sm font-semibold text-white transition-all hover:border-white/40 sm:w-auto sm:px-6 sm:text-base"
             >
               🛡️ Voir tous mes certificats
             </Link>
@@ -168,7 +167,7 @@ export default async function Dashboard({
             </Suspense>
           </div>
         </div>
-      </DashboardLayout>
+      </>
     );
   } catch (error: any) {
     console.error('❌ Erreur dans Dashboard:', error);

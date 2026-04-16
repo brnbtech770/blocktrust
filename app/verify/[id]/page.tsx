@@ -524,7 +524,9 @@ function ValidView({
           <p className="mb-1 text-center text-3xl text-bt-cyan" aria-hidden>
             ✓
           </p>
-          <h1 className="font-syne mb-4 text-center text-2xl font-bold text-white">{name}</h1>
+          <h1 className="font-syne mb-4 text-center text-xl font-bold leading-tight text-white sm:text-2xl lg:text-3xl">
+            {name}
+          </h1>
           <p className="mb-2 text-center font-mono text-xs text-white/60 sm:text-sm">
             ID {certificate.publicId ?? certificate.id}
           </p>
@@ -611,7 +613,7 @@ function FraudAlertView() {
           <p className="mb-4 text-center text-4xl" aria-hidden>
             ⚠️
           </p>
-          <h1 className="font-syne mb-4 text-center text-xl font-bold text-red-300">
+          <h1 className="font-syne mb-4 text-center text-lg font-bold leading-snug text-red-300 sm:text-xl lg:text-2xl">
             Certificat non reconnu ou potentiellement frauduleux
           </h1>
           <p className="mb-4 text-center text-sm leading-relaxed text-white/75">

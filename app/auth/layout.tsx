@@ -22,7 +22,7 @@ export default async function AuthLayout({
 }) {
   return (
     <div
-      className={`${syne.variable} ${ibmPlexMono.variable} min-h-screen bt-circuit-bg`}
+      className={`${syne.variable} ${ibmPlexMono.variable} min-h-screen overflow-x-hidden bt-circuit-bg`}
       style={{ background: 'var(--bt-navy)' }}
     >
       {children}

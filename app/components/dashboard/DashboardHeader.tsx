@@ -6,30 +6,39 @@
 
 import { signOut } from 'next-auth/react'
 import { useSession } from 'next-auth/react'
+import { Logo } from '@/app/components/ui/Logo'
 
 export default function DashboardHeader() {
   const { data: session } = useSession()
-  
-  const firstName = session?.user?.name?.split(' ')[0] || session?.user?.email?.split('@')[0] || 'Utilisateur'
+
+  const firstName =
+    session?.user?.name?.split(' ')[0] || session?.user?.email?.split('@')[0] || 'Utilisateur'
 
   return (
     <header
-      className="sticky top-0 z-40 min-h-[52px] sm:h-[60px] flex items-center border-b pl-12 pr-3 py-2 sm:pl-6 sm:pr-6 md:px-8"
+      className="sticky top-0 z-40 flex min-h-[52px] items-center border-b py-2 pl-12 pr-3 sm:min-h-[60px] sm:pl-14 sm:pr-4 md:pl-16 md:pr-6 lg:px-8"
       style={{
         background: 'rgba(6,14,26,0.95)',
         borderBottomColor: 'var(--bt-border)',
       }}
     >
-      <div className="flex items-center justify-end w-full">
-        <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block">
-            <p className="text-xs" style={{ color: 'var(--bt-muted)' }}>Connecté</p>
-            <p className="text-sm font-semibold text-white">{firstName}</p>
+      <div className="mx-auto flex w-full max-w-7xl min-w-0 items-center justify-between gap-2 sm:gap-4 lg:px-0">
+        <div className="min-w-0 shrink">
+          <span className="inline-flex max-w-[min(100%,200px)] sm:max-w-none">
+            <Logo size="sm" withText={true} href="/dashboard" className="max-w-full" />
+          </span>
+        </div>
+        <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-4">
+          <div className="hidden text-right sm:block">
+            <p className="text-xs" style={{ color: 'var(--bt-muted)' }}>
+              Connecté
+            </p>
+            <p className="truncate text-sm font-semibold text-white">{firstName}</p>
           </div>
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: '/' })}
-            className="px-4 py-2 rounded-lg border text-sm font-medium transition-colors hover:bg-[rgba(0,212,255,0.08)]"
+            className="min-w-0 shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-[rgba(0,212,255,0.08)] sm:px-4 sm:text-base"
             style={{ borderColor: 'var(--bt-border)', color: 'white' }}
           >
             Déconnexion

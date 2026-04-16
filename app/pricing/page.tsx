@@ -95,7 +95,7 @@ export default function PricingPage() {
   const isAuthenticated = status === 'authenticated'
 
   return (
-    <div className="min-h-screen bt-circuit-bg" style={{ background: 'var(--bt-navy)' }}>
+    <div className="min-h-screen overflow-x-hidden bt-circuit-bg" style={{ background: 'var(--bt-navy)' }}>
       <Navbar />
 
       <Suspense fallback={null}>
@@ -115,11 +115,11 @@ export default function PricingPage() {
         <PricingToggle mode={mode} setMode={setMode} />
 
         {/* Toggle Mensuel / Annuel */}
-        <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
+        <div className="mb-4 flex max-w-full flex-wrap items-center justify-center gap-2 px-1 sm:gap-3">
           <button
             type="button"
             onClick={() => setInterval('monthly')}
-            className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            className="min-w-0 shrink rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:px-5 sm:text-base"
             style={{
               background: interval === 'monthly' ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.06)',
               color: interval === 'monthly' ? '#00d4ff' : 'var(--bt-muted)',
@@ -131,7 +131,7 @@ export default function PricingPage() {
           <button
             type="button"
             onClick={() => setInterval('yearly')}
-            className="px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            className="min-w-0 shrink rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:px-5 sm:text-base"
             style={{
               background: interval === 'yearly' ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.06)',
               color: interval === 'yearly' ? '#00d4ff' : 'var(--bt-muted)',
@@ -228,7 +228,7 @@ export default function PricingPage() {
 
       {/* B2B CTA */}
       <section
-        className="max-w-7xl mx-auto mx-4 sm:mx-6 lg:mx-8 mb-16 rounded-xl py-6 px-6 text-center border"
+        className="mx-auto mb-16 max-w-7xl rounded-xl border px-4 py-6 text-center sm:px-6 lg:px-8"
         style={{
           background: 'rgba(13,31,60,0.8)',
           borderColor: 'var(--bt-border)',

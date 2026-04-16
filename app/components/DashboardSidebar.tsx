@@ -6,7 +6,6 @@ import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import SignOutButton from './SignOutButton'
-import { Logo } from '@/app/components/ui/Logo'
 import DashboardSidebarNav, { type SidebarItem } from './DashboardSidebarNav'
 
 function shellClass() {
@@ -20,9 +19,6 @@ export default async function DashboardSidebar() {
     if (!session?.user?.email) {
       return (
         <div className={shellClass()}>
-          <div className="mb-6 shrink-0">
-            <Logo size="sm" withText={true} href="/dashboard" />
-          </div>
           <div className="text-red-400 text-sm">Session non trouvée</div>
         </div>
       )
@@ -60,9 +56,6 @@ export default async function DashboardSidebar() {
 
     return (
       <div className={shellClass()}>
-        <div className="mb-6 shrink-0">
-          <Logo size="md" withText={true} href="/dashboard" />
-        </div>
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
           <DashboardSidebarNav items={menuItems} />
         </div>
@@ -78,9 +71,6 @@ export default async function DashboardSidebar() {
     console.error('❌ Erreur dans DashboardSidebar:', error)
     return (
       <div className={shellClass()}>
-        <div className="mb-6 shrink-0">
-          <Logo size="sm" withText={true} href="/dashboard" />
-        </div>
         <div className="text-red-400 text-sm">Erreur de chargement</div>
       </div>
     )

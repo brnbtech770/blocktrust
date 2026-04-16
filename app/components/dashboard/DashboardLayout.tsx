@@ -13,10 +13,10 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       <DashboardHeader />
       <BlockchainTicker />
-      <div className="px-3 py-4 sm:px-5 sm:py-6 md:p-8 font-sans text-base leading-relaxed text-white/80">
+      <div className="mx-auto max-w-7xl px-4 py-4 font-sans text-base leading-relaxed text-white/80 sm:px-6 sm:py-5 md:py-6 lg:px-8">
         {children}
       </div>
     </div>

@@ -278,7 +278,7 @@ export default function CreateCertificate() {
   const summary = getSummaryData();
 
   return (
-    <div className="min-h-screen bg-navy p-8">
+    <div className="bg-navy px-4 py-6 sm:p-8">
       <div className="mx-auto max-w-3xl">
         <Link
           href="/dashboard"
@@ -296,23 +296,23 @@ export default function CreateCertificate() {
           </p>
           
           {/* Indicateur d'étapes */}
-          <div className="flex items-center gap-4 mb-8">
+          <div className="mb-8 flex items-center gap-2 sm:gap-4">
             <div className={`flex items-center gap-2 ${step >= 1 ? "text-bt-cyan" : "text-white/40"}`}>
-              <div className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                 step >= 1 ? "bg-bt-cyan text-navy" : "bg-white/10 text-white/50"
               }`}>
                 1
               </div>
-              <span className="font-medium">Informations</span>
+              <span className="hidden font-medium sm:inline">Informations</span>
             </div>
-            <div className={`h-1 flex-1 ${step >= 2 ? "bg-bt-cyan" : "bg-white/10"}`} />
+            <div className={`h-1 min-w-[1rem] flex-1 ${step >= 2 ? "bg-bt-cyan" : "bg-white/10"}`} />
             <div className={`flex items-center gap-2 ${step >= 2 ? "text-bt-cyan" : "text-white/40"}`}>
-              <div className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                 step >= 2 ? "bg-bt-cyan text-navy" : "bg-white/10 text-white/50"
               }`}>
                 2
               </div>
-              <span className="font-medium">Récapitulatif</span>
+              <span className="hidden font-medium sm:inline">Récapitulatif</span>
             </div>
           </div>
         </div>
@@ -334,7 +334,7 @@ export default function CreateCertificate() {
                 <button
                   type="button"
                   onClick={() => setEntityType("INDIVIDUAL")}
-                  className={`flex-1 rounded-lg px-6 py-3 font-sans font-medium transition ${
+                  className={`min-w-0 flex-1 rounded-lg px-4 py-3 text-sm font-medium transition sm:px-6 sm:text-base ${
                     entityType === "INDIVIDUAL"
                       ? "bg-bt-cyan text-navy"
                       : "border border-white/20 bg-white/5 text-white/70 hover:border-white/40"
@@ -345,7 +345,7 @@ export default function CreateCertificate() {
                 <button
                   type="button"
                   onClick={() => setEntityType("BUSINESS")}
-                  className={`flex-1 rounded-lg px-6 py-3 font-sans font-medium transition ${
+                  className={`min-w-0 flex-1 rounded-lg px-4 py-3 text-sm font-medium transition sm:px-6 sm:text-base ${
                     entityType === "BUSINESS"
                       ? "bg-bt-cyan text-navy"
                       : "border border-white/20 bg-white/5 text-white/70 hover:border-white/40"
@@ -359,7 +359,7 @@ export default function CreateCertificate() {
             {entityType === "INDIVIDUAL" ? (
               <>
                 {/* Formulaire Particulier */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label className="block text-base font-semibold text-gray-300 mb-2">
                       Prénom *
@@ -579,7 +579,7 @@ export default function CreateCertificate() {
 
             <button
               type="submit"
-              className="w-full rounded-lg bg-bt-cyan py-4 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
+              className="min-w-0 w-full rounded-lg bg-bt-cyan py-4 text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:text-base"
             >
               Continuer →
             </button>
@@ -654,11 +654,11 @@ export default function CreateCertificate() {
               />
             ) : null}
 
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
               <button
                 type="button"
                 onClick={handleBack}
-                className="flex-1 rounded-lg border border-white/20 py-4 font-sans font-semibold text-white transition-all hover:border-white/40"
+                className="min-w-0 w-full rounded-lg border border-white/20 py-4 text-sm font-semibold text-white transition-all hover:border-white/40 sm:flex-1 sm:text-base"
               >
                 ← Retour
               </button>
@@ -667,7 +667,7 @@ export default function CreateCertificate() {
                   type="button"
                   onClick={handleGenerateCertificate}
                   disabled={loading || certQuota === null}
-                  className="flex-1 rounded-lg bg-bt-cyan py-4 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90 disabled:opacity-50"
+                  className="min-w-0 w-full rounded-lg bg-bt-cyan py-4 text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 disabled:opacity-50 sm:flex-1 sm:text-base"
                 >
                   {loading ? "⏳ Génération en cours..." : "🛡️ Générer mon certificat"}
                 </button>

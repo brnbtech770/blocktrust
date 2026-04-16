@@ -81,12 +81,15 @@ export function Logo({
   )
 
   const content = (
-    <div style={{
+    <div
+      className="min-w-0"
+      style={{
       display: 'flex',
       alignItems: 'center',
       gap: size === 'lg' || size === 'hero' ? '14px' : '10px',
       textDecoration: 'none',
-    }}>
+    }}
+    >
       {image}
       {text}
     </div>
@@ -95,7 +98,7 @@ export function Logo({
   if (!href) return content
 
   return (
-    <Link href={href} style={{ textDecoration: 'none' }}>
+    <Link href={href} className="min-w-0 max-w-full" style={{ textDecoration: 'none' }}>
       {content}
     </Link>
   )

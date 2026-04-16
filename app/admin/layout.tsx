@@ -123,12 +123,12 @@ export default async function AdminLayout({
 
   return (
     <div
-      className="flex h-screen overflow-hidden font-sans"
+      className="flex h-screen overflow-hidden overflow-x-hidden font-sans"
       style={{ background: 'var(--bt-navy)' }}
     >
       {/* Sidebar fixe */}
       <aside
-        className="flex w-[220px] flex-shrink-0 flex-col overflow-y-auto border-r"
+        className="flex w-[min(220px,85vw)] min-w-0 flex-shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r md:w-[220px]"
         style={{
           height: '100vh',
           background: 'rgba(6,14,26,0.9)',
@@ -207,8 +207,8 @@ export default async function AdminLayout({
       {/* Zone contenu */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <AdminPageHeader />
-        <div className="flex-1 overflow-y-auto p-8">
-          {children}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto max-w-7xl">{children}</div>
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ import { Logo } from "@/app/components/ui/Logo";
 
 export default function LandingPageClient() {
   return (
-    <div className="min-h-screen bt-circuit-bg" style={{ background: 'var(--bt-navy)' }}>
+    <div className="min-h-screen overflow-x-hidden bt-circuit-bg" style={{ background: 'var(--bt-navy)' }}>
       <Navbar />
 
       {/* Hero — 2 colonnes 60% texte / 40% logo */}
@@ -23,28 +23,28 @@ export default function LandingPageClient() {
               ✦ Technologie <span className="font-bold ml-1" style={{ color: '#00d4ff' }}>Polygon</span> Blockchain
             </div>
 
-            <h1 className="font-syne mb-3 max-w-[22ch] text-4xl font-bold leading-[1.1] text-white sm:mb-4 sm:max-w-none sm:text-6xl lg:text-8xl">
+            <h1 className="font-syne mb-3 max-w-[22ch] text-3xl font-bold leading-[1.1] text-white sm:mb-4 sm:max-w-none sm:text-5xl lg:text-7xl">
               <span className="text-white">Certificat d&apos;identité </span>
               <span className="text-bt-cyan">infalsifiable</span>
               <span className="text-white"> sur </span>
               <span className="text-gold">blockchain</span>
             </h1>
 
-            <p className="mb-6 font-sans text-sm leading-relaxed text-white/80 sm:mb-8 sm:text-base">
+            <p className="mb-6 font-sans text-base leading-relaxed text-white/80 sm:mb-8 sm:text-lg lg:text-xl">
               Badge vérifié. QR code scannable.{" "}
               <span className="font-semibold text-bt-cyan">Impossible à copier.</span>
             </p>
 
-            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 mb-8 sm:mb-10">
+            <div className="mb-8 flex flex-col flex-wrap gap-3 sm:mb-10 sm:flex-row sm:gap-4">
               <a
                 href="/dashboard/create"
-                className="inline-flex w-full items-center justify-center rounded-lg bg-bt-cyan px-6 py-3 font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:text-[15px]"
+                className="inline-flex min-w-0 w-full items-center justify-center rounded-lg bg-bt-cyan px-6 py-3 text-center font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:text-base"
               >
                 Créer mon certificat
               </a>
               <a
                 href="/verify"
-                className="inline-flex w-full items-center justify-center rounded-lg border border-white/20 px-6 py-3 font-sans text-sm font-semibold text-white transition-all hover:border-white/40 sm:w-auto sm:text-[15px]"
+                className="inline-flex min-w-0 w-full items-center justify-center rounded-lg border border-white/20 px-6 py-3 text-center font-sans text-sm font-semibold text-white transition-all hover:border-white/40 sm:w-auto sm:text-base"
               >
                 Voir une démo
               </a>
@@ -68,8 +68,8 @@ export default function LandingPageClient() {
           </div>
 
           {/* Colonne droite — logo 380px */}
-          <div className="lg:col-span-2 flex justify-center lg:justify-end mt-8 lg:mt-0">
-            <div className="logo-hero flex flex-col items-center">
+          <div className="mt-8 flex justify-center lg:col-span-2 lg:mt-0 lg:justify-end">
+            <div className="logo-hero mx-auto flex max-w-[200px] flex-col items-center sm:max-w-md lg:max-w-none">
               <Logo size="hero" withText={false} href="/" />
             </div>
           </div>
@@ -118,7 +118,7 @@ export default function LandingPageClient() {
             borderColor: 'var(--bt-cyan-border)',
           }}
         >
-          <h2 className="font-syne mb-3 text-xl font-semibold text-white sm:mb-4 sm:text-2xl md:text-3xl">
+          <h2 className="font-syne mb-3 text-2xl font-semibold text-white sm:mb-4 sm:text-3xl lg:text-4xl">
             Prêt à sécuriser votre identité ?
           </h2>
           <p className="mb-8 px-1 font-sans text-sm leading-relaxed text-white/80 sm:text-base">
@@ -126,7 +126,7 @@ export default function LandingPageClient() {
           </p>
           <a
             href="/pricing"
-            className="inline-block rounded-lg bg-bt-cyan px-8 py-3 font-sans text-[15px] font-semibold text-navy transition-all hover:bg-bt-cyan/90"
+            className="inline-flex min-w-0 w-full items-center justify-center rounded-lg bg-bt-cyan px-8 py-3 font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:inline-block sm:w-auto sm:text-base"
           >
             Voir les tarifs
           </a>

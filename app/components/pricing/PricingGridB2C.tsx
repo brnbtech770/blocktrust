@@ -56,7 +56,7 @@ function signinCheckoutCallbackUrl(priceId: string) {
 export default function PricingGridB2C({ plans, interval, currentPlan, isAuthenticated, loadingPlan, onCheckout }: Props) {
   const router = useRouter()
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-[1200px] mx-auto px-3 sm:px-6">
+    <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-4 lg:px-8">
       {plans.map((plan) => {
         const isCurrent = isAuthenticated && currentPlan === plan.id
         const priceInfo = plan.prices[interval]

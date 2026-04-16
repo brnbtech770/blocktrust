@@ -22,14 +22,13 @@ export default function AdminPageHeader() {
 
   return (
     <header
-      className="flex-shrink-0 flex items-center px-8 border-b"
+      className="flex h-[52px] shrink-0 items-center border-b px-4 sm:h-[60px] sm:px-6 lg:px-8"
       style={{
-        height: 60,
         background: 'rgba(6,14,26,0.95)',
         borderBottomColor: 'var(--bt-border)',
       }}
     >
-      <h1 className="font-syne text-xl font-extrabold tracking-tight text-white">
+      <h1 className="font-syne min-w-0 truncate text-lg font-extrabold tracking-tight text-white sm:text-2xl lg:text-3xl">
         {title}
       </h1>
     </header>

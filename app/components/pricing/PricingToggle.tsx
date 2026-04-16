@@ -10,7 +10,7 @@ type Props = {
 export default function PricingToggle({ mode, setMode }: Props) {
   return (
     <div
-      className="flex rounded-[10px] p-1 gap-1 w-fit mx-auto mb-10"
+      className="mx-auto mb-10 flex w-full max-w-md flex-wrap justify-center gap-1 rounded-[10px] p-1 sm:w-fit sm:max-w-none sm:flex-nowrap"
       style={{
         background: 'rgba(255,255,255,0.05)',
         border: '1px solid var(--bt-border)',
@@ -19,7 +19,7 @@ export default function PricingToggle({ mode, setMode }: Props) {
       <button
         type="button"
         onClick={() => setMode('B2B')}
-        className="flex items-center gap-2 rounded-lg py-2.5 px-6 font-semibold transition"
+        className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition sm:flex-initial sm:px-6 sm:text-base"
         style={
           mode === 'B2B'
             ? { background: '#00d4ff', color: '#0a1628' }
@@ -42,7 +42,7 @@ export default function PricingToggle({ mode, setMode }: Props) {
       <button
         type="button"
         onClick={() => setMode('B2C')}
-        className="flex items-center gap-2 rounded-lg py-2.5 px-6 font-semibold transition"
+        className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition sm:flex-initial sm:px-6 sm:text-base"
         style={
           mode === 'B2C'
             ? { background: '#00d4ff', color: '#0a1628' }

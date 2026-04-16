@@ -34,7 +34,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className="dark">
       <body
-        className={`${inter.variable} ${ibmPlexMono.variable} ${syne.variable} font-sans antialiased bg-navy text-gray-100`}
+        className={`${inter.variable} ${ibmPlexMono.variable} ${syne.variable} font-sans antialiased bg-navy text-gray-100 overflow-x-hidden`}
       >
         <Providers>{children}</Providers>
       </body>

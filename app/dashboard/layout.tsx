@@ -7,13 +7,14 @@ import { redirect } from 'next/navigation'
 import { prisma } from '@/app/lib/db'
 import DashboardSidebar from '@/app/components/DashboardSidebar'
 import DashboardChrome from '@/app/components/DashboardChrome'
+import DashboardPageChrome from '@/app/components/dashboard/DashboardLayout'
 import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
 import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
 
 /** Évite cache / flux RSC sans cookies → auth() null alors que l'utilisateur est connecté */
 export const dynamic = 'force-dynamic'
 
-export default async function DashboardLayout({
+export default async function DashboardSegmentLayout({
   children,
 }: {
   children: React.ReactNode
@@ -60,6 +61,8 @@ export default async function DashboardLayout({
   }
 
   return (
-    <DashboardChrome sidebar={<DashboardSidebar />}>{children}</DashboardChrome>
+    <DashboardChrome sidebar={<DashboardSidebar />}>
+      <DashboardPageChrome>{children}</DashboardPageChrome>
+    </DashboardChrome>
   )
 }

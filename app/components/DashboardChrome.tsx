@@ -21,7 +21,7 @@ export default function DashboardChrome({
   }, [pathname])
 
   return (
-    <div className="min-h-screen bg-[var(--bt-navy)]">
+    <div className="min-h-screen overflow-x-hidden bg-[var(--bt-navy)]">
       <button
         type="button"
         className="md:hidden fixed top-3 left-3 z-[60] flex h-11 w-11 items-center justify-center rounded-lg border text-white shadow-lg"
@@ -56,7 +56,7 @@ export default function DashboardChrome({
 
       <aside
         id="dashboard-sidebar-panel"
-        className={`fixed left-0 top-0 z-50 h-full w-[220px] max-w-[85vw] transition-transform duration-200 ease-out md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed left-0 top-0 z-50 h-full w-[min(220px,85vw)] max-w-[85vw] transition-transform duration-200 ease-out md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{
           background: 'rgba(6,14,26,0.98)',
           borderRight: '1px solid var(--bt-border)',
@@ -66,7 +66,7 @@ export default function DashboardChrome({
         {sidebar}
       </aside>
 
-      <div className="min-h-screen pt-14 md:pt-0 md:ml-[220px]">
+      <div className="min-h-screen pt-14 md:ml-[220px] md:pt-0">
         {children}
       </div>
     </div>

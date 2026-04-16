@@ -15,14 +15,14 @@ export default function Navbar() {
 
   return (
     <header
-      className="relative sticky top-0 z-50 h-14 sm:h-16 flex items-center border-b backdrop-blur-[16px] px-3 sm:px-6 lg:px-10"
+      className="relative sticky top-0 z-50 flex h-14 items-center overflow-x-hidden border-b px-3 backdrop-blur-[16px] sm:h-16 sm:px-6 lg:px-8"
       style={{
         background: 'rgba(10,22,40,0.92)',
         borderBottomColor: 'var(--bt-border)',
       }}
     >
-      <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
-        <div className="shrink-0 min-w-0">
+      <div className="mx-auto flex w-full min-w-0 max-w-7xl items-center justify-between gap-2">
+        <div className="min-w-0 shrink-0">
           <span className="sm:hidden">
             <Logo size="sm" withText={true} href="/" />
           </span>
@@ -70,7 +70,7 @@ export default function Navbar() {
           type="button"
           aria-label="Menu"
           aria-expanded={menuOpen}
-          className="md:hidden p-2 rounded-lg border text-white"
+          className="shrink-0 rounded-lg border p-2 text-white md:hidden"
           style={{ borderColor: 'var(--bt-border)' }}
           onClick={() => setMenuOpen((o) => !o)}
         >
@@ -87,7 +87,7 @@ export default function Navbar() {
       {/* Mobile drawer */}
       {menuOpen && (
         <div
-          className="absolute inset-x-0 top-16 border-b backdrop-blur-[16px] md:hidden"
+          className="absolute inset-x-0 top-full z-40 border-b backdrop-blur-[16px] md:hidden"
           style={{
             background: 'rgba(10,22,40,0.98)',
             borderBottomColor: 'var(--bt-border)',

@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Logo } from "@/app/components/ui/Logo";
 
 const cardClass =
-  "mx-auto w-full max-w-[420px] rounded-xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm";
+  "mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm sm:p-8";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -88,7 +88,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div style={{ padding: "48px 16px" }}>
+    <div className="overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12">
       <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
         <Logo size="lg" withText={true} href="/" />
       </div>

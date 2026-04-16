@@ -200,8 +200,8 @@ export default function CertificatesPage() {
 
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="font-syne text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl mb-2">
+        <div className="min-w-0">
+          <h1 className="font-syne mb-2 text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
             Mes Certificats
           </h1>
           <p className="font-sans text-base leading-relaxed text-white/80">
@@ -210,7 +210,7 @@ export default function CertificatesPage() {
         </div>
         <Link
           href="/dashboard/create"
-          className="inline-flex shrink-0 items-center justify-center rounded-lg bg-bt-cyan px-6 py-3 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
+          className="inline-flex w-full shrink-0 items-center justify-center rounded-lg bg-bt-cyan px-3 py-2 text-center text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:px-6 sm:py-3 sm:text-base"
         >
           + Créer un certificat
         </Link>
@@ -226,7 +226,7 @@ export default function CertificatesPage() {
             return (
               <div
                 key={certificate.id}
-                className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30"
+                className="w-full max-w-full rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg transition-all hover:border-gold/30 sm:p-6"
               >
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex-1">

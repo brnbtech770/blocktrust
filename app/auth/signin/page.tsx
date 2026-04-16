@@ -195,7 +195,7 @@ function SignInContent() {
 
   return (
     <div
-      className="min-h-screen px-3 py-8 sm:px-4 sm:py-12"
+      className="min-h-screen overflow-x-hidden px-3 py-8 sm:px-4 sm:py-12"
       style={{
         background: pageBg,
         fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
@@ -206,7 +206,7 @@ function SignInContent() {
           <Logo size="lg" withText={true} href="/" />
         </div>
       </div>
-      <div className="mx-auto w-full max-w-[420px] rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-8">
+      <div className="mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-8">
         <h1 className="font-syne mb-4 text-2xl font-bold text-white sm:mb-6 sm:text-3xl lg:text-4xl">
           Connexion
         </h1>
