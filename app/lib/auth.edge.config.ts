@@ -7,7 +7,8 @@ import GoogleProvider from "next-auth/providers/google";
 export const googleProvider = GoogleProvider({
   clientId: process.env.GOOGLE_CLIENT_ID!,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-  allowDangerousEmailAccountLinking: true,
+  allowDangerousEmailAccountLinking:
+    process.env.ALLOW_DANGEROUS_EMAIL_LINKING === "true",
   authorization: {
     params: {
       prompt: "select_account",

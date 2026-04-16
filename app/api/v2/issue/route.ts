@@ -1,13 +1,17 @@
-﻿import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/app/lib/auth-server";
+import { prisma } from "@/app/lib/db";
 import { canonicalizeEmailContext, sha256Hex } from "@/lib/v2/context";
 import { signToken } from "@/lib/v2/jwt";
 import crypto from "crypto";
 
-const prisma = new PrismaClient();
-
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
 
     // Expected input (V2):
@@ -25,13 +29,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing entityId/certificateId/context" }, { status: 400 });
     }
 
+    const certificate = await prisma.certificate.findUnique({
+      where: { id: certificateId },
+      include: { entity: true },
+    });
+
+    if (!certificate) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    if (certificate.entity.userId !== session.user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const canonical = canonicalizeEmailContext(context);
     const ctxHash = sha256Hex(canonical);
 
     const jti = crypto.randomUUID();
     const expiresInSeconds = Number(body.expiresInSeconds || 3600);
 
-    // Persist signature metadata
     const signature = await prisma.signature.create({
       data: {
         jti,
@@ -60,7 +76,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ token, verifyUrl, signatureId: signature.id });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || "issue_failed" }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }

@@ -23,14 +23,15 @@ function getPrivateKey() {
     // Convertir la string PEM en KeyObject
     const privateKeyPem = process.env.BLOCKTRUST_JWT_PRIVATE_KEY.replace(/\\n/g, '\n')
     return createPrivateKey(privateKeyPem)
-  } else {
-    // Fallback: générer une clé temporaire (non recommandé en production)
-    console.warn('⚠️ BLOCKTRUST_JWT_PRIVATE_KEY non définie, génération d\'une clé temporaire')
-    const { privateKey: pk } = generateKeyPairSync('ec', {
-      namedCurve: 'P-256',
-    })
-    return pk
   }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('BLOCKTRUST_JWT_PRIVATE_KEY manquante en production — requête refusée')
+  }
+  console.warn('⚠️ BLOCKTRUST_JWT_PRIVATE_KEY non définie, génération d\'une clé temporaire')
+  const { privateKey: pk } = generateKeyPairSync('ec', {
+    namedCurve: 'P-256',
+  })
+  return pk
 }
 
 export async function POST(req: NextRequest) {

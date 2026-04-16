@@ -8,7 +8,7 @@ import { prisma } from '@/app/lib/db';
 import { z } from 'zod';
 
 const actionSchema = z.object({
-  action: z.enum(['activate', 'suspend', 'reactivate', 'revoke']),
+  action: z.enum(['suspend', 'reactivate', 'revoke']),
   reason: z.string().optional(),
 });
 
@@ -27,6 +27,14 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
     const body = await req.json();
+
+    if (body?.action === 'activate') {
+      return NextResponse.json(
+        { error: "L'activation est réservée à l'administration BlockTrust" },
+        { status: 403 }
+      );
+    }
+
     const parsed = actionSchema.safeParse(body);
 
     if (!parsed.success) {
@@ -72,16 +80,6 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const currentStatus = certificate.status;
 
     switch (action) {
-      case 'activate':
-        if (currentStatus !== 'PENDING') {
-          return NextResponse.json(
-            { error: `Impossible d'activer un certificat avec le statut ${currentStatus}` },
-            { status: 400 }
-          );
-        }
-        newStatus = 'ACTIVE';
-        break;
-
       case 'suspend':
         if (currentStatus !== 'ACTIVE' && currentStatus !== 'ANCHORED') {
           return NextResponse.json(
