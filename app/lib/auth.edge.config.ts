@@ -51,6 +51,7 @@ const authEdgeConfig = {
             plan: (token as any).plan ?? "ESSENTIEL",
             kycStatus: (token as any).kycStatus ?? "PENDING",
             accountType: (token as any).accountType ?? "PERSONAL",
+            cookieConsent: (token as any).cookieConsent ?? false,
           },
         };
       }

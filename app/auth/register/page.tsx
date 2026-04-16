@@ -28,6 +28,7 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [acceptCgu, setAcceptCgu] = useState(false);
   const formLoadedAtRef = useRef<number | null>(null);
   const websiteHoneypotRef = useRef<HTMLInputElement>(null);
 
@@ -60,6 +61,12 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
     setFieldError({});
+    if (!acceptCgu) {
+      setError(
+        "Vous devez accepter les conditions générales et la politique de confidentialité."
+      );
+      return;
+    }
     if (!validate()) return;
 
     setLoading(true);
@@ -75,6 +82,7 @@ export default function RegisterPage() {
           password,
           website,
           formLoadedAt: formLoadedAtRef.current ?? Date.now(),
+          acceptCgu: true,
         }),
       });
       const data = await res.json();
@@ -137,8 +145,27 @@ export default function RegisterPage() {
             <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} autoComplete="new-password" />
             {fieldError.confirmPassword && <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>{fieldError.confirmPassword}</p>}
           </div>
+          <label className="mb-4 flex cursor-pointer items-start gap-3 text-sm" style={{ color: "var(--bt-muted)" }}>
+            <input
+              type="checkbox"
+              checked={acceptCgu}
+              onChange={(e) => setAcceptCgu(e.target.checked)}
+              className="mt-1 h-4 w-4 shrink-0 rounded border-white/20 bg-transparent accent-[#00d4ff]"
+            />
+            <span>
+              J&apos;accepte les{" "}
+              <Link href="/cgu" className="text-[#00d4ff] hover:underline" target="_blank" rel="noopener noreferrer">
+                CGU
+              </Link>{" "}
+              et la{" "}
+              <Link href="/privacy" className="text-[#00d4ff] hover:underline" target="_blank" rel="noopener noreferrer">
+                Politique de confidentialité
+              </Link>
+              .
+            </span>
+          </label>
           {error && <p style={{ color: "#E05252", marginBottom: "1rem" }}>{error}</p>}
-          <button type="submit" disabled={loading} className="w-full py-3 rounded-lg font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed" style={{ background: "#00d4ff", color: "#0a1628" }}>
+          <button type="submit" disabled={loading || !acceptCgu} className="w-full py-3 rounded-lg font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed" style={{ background: "#00d4ff", color: "#0a1628" }}>
             {loading ? "Création..." : "Créer mon compte"}
           </button>
         </form>

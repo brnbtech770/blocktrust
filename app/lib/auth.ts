@@ -133,6 +133,7 @@ export const authOptions: NextAuthConfig = {
           plan,
           kycStatus: (user as any).kycStatus ?? 'PENDING',
           accountType: (user as any).accountType ?? 'PERSONAL',
+          cookieConsent: user.cookieConsent ?? false,
         };
       },
     }),
@@ -177,6 +178,7 @@ export const authOptions: NextAuthConfig = {
           (token as any).plan = (user as any).plan ?? null;
           (token as any).kycStatus = (user as any).kycStatus ?? 'PENDING';
           (token as any).accountType = (user as any).accountType ?? 'PERSONAL';
+          (token as any).cookieConsent = (user as any).cookieConsent ?? false;
         } else {
           // Connexion Google/OAuth — user vient de l'adapter (id DB + email)
           // Fallback immédiat : toujours peupler le token avec les infos OAuth disponibles
@@ -195,6 +197,7 @@ export const authOptions: NextAuthConfig = {
               token.picture = dbUser.image ?? undefined;
               (token as any).kycStatus = (dbUser as any).kycStatus ?? "PENDING";
               (token as any).accountType = dbUser.accountType ?? "PERSONAL";
+              (token as any).cookieConsent = dbUser.cookieConsent ?? false;
             } else {
               console.error("[JWT OAuth] impossible de résoudre User en base", {
                 userId: (user as any).id,
@@ -220,7 +223,12 @@ export const authOptions: NextAuthConfig = {
             }),
             prisma.user.findUnique({
               where: { id: token.sub },
-              select: { email: true, kycStatus: true, accountType: true },
+              select: {
+                email: true,
+                kycStatus: true,
+                accountType: true,
+                cookieConsent: true,
+              },
             }),
           ]);
           (token as any).plan = sub?.plan ?? null;
@@ -230,6 +238,7 @@ export const authOptions: NextAuthConfig = {
             }
             (token as any).kycStatus = dbUser.kycStatus ?? 'PENDING';
             (token as any).accountType = dbUser.accountType ?? 'PERSONAL';
+            (token as any).cookieConsent = dbUser.cookieConsent ?? false;
           }
         } catch (err) {
           console.error('[JWT callback error]', err);
@@ -250,6 +259,7 @@ export const authOptions: NextAuthConfig = {
             plan: (token as any).plan ?? 'ESSENTIEL',
             kycStatus: (token as any).kycStatus ?? 'PENDING',
             accountType: (token as any).accountType ?? 'PERSONAL',
+            cookieConsent: (token as any).cookieConsent ?? false,
           },
         };
       }

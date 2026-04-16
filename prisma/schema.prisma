@@ -88,6 +88,11 @@ model User {
   stripeIdentityId   String?   @unique
   siret              String?
   companyName        String?
+
+  cguAcceptedAt    DateTime?
+  cguVersion       String?   @default("1.0")
+  cookieConsent    Boolean   @default(false)
+  cookieConsentAt  DateTime?
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

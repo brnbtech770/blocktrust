@@ -11,12 +11,14 @@ declare module "next-auth" {
       plan: string;
       kycStatus?: string;
       accountType?: string;
+      cookieConsent?: boolean;
     };
   }
   interface User {
     plan?: string;
     kycStatus?: string;
     accountType?: string;
+    cookieConsent?: boolean;
   }
 }
 
@@ -26,5 +28,6 @@ declare module "next-auth/jwt" {
     plan?: string;
     kycStatus?: string;
     accountType?: string;
+    cookieConsent?: boolean;
   }
 }

@@ -28,6 +28,12 @@ const registerSchema = z
     website: z.string().max(500).optional(),
     /** Date.now() côté client au montage du formulaire */
     formLoadedAt: z.number().int().optional(),
+    acceptCgu: z
+      .boolean()
+      .refine((v) => v === true, {
+        message:
+          "Vous devez accepter les conditions générales et la politique de confidentialité.",
+      }),
   })
   .refine(
     (d) => d.firstName.trim().length + d.lastName.trim().length + 1 <= 60,
@@ -139,6 +145,8 @@ export async function POST(req: NextRequest) {
         name: `${firstName} ${lastName}`.trim(),
         email: emailNorm,
         password: hashedPassword,
+        cguAcceptedAt: new Date(),
+        cguVersion: "1.0",
       },
     });
 
