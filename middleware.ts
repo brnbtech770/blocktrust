@@ -1,11 +1,12 @@
 // middleware.ts
-// Edge : www→apex + garde API (getToken). Pages /dashboard et /admin : auth via layouts + auth() Node uniquement
-// (évite divergences JWT Edge vs Node / cookies chunkés).
+// Edge : www→apex + redirections admin/client (getToken) + garde API.
+// Authentification pages : layouts + auth() Node (évite divergences JWT Edge / cookies chunkés).
 // ============================================================
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
+import { isAdmin } from '@/app/lib/admin'
 
 function inferSecureCookie(req: NextRequest): boolean {
   const proto = (req.headers.get('x-forwarded-proto') ?? '')
@@ -64,7 +65,28 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Pages (/, /dashboard/*, /admin/*) : pas de getToken ici — évite faux « non connecté » vs auth().
+  // Redirections admin / client (JWT Edge aligné avec layouts)
+  const isUnderAdmin = pathname === '/admin' || pathname.startsWith('/admin/')
+  const isClientDashboardRoot = pathname === '/dashboard'
+
+  if (isUnderAdmin || isClientDashboardRoot) {
+    try {
+      const email = await getEmailFromSession(request)
+      if (email) {
+        if (isAdmin(email) && isClientDashboardRoot) {
+          return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+        }
+        if (!isAdmin(email) && isUnderAdmin) {
+          return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+      }
+    } catch (error) {
+      console.error('❌ Middleware redirect admin/client:', error)
+    }
+    return NextResponse.next()
+  }
+
+  // Pages (/, /dashboard/*, /admin/*) hors garde ci-dessus : pas de getToken pour le reste — évite faux « non connecté » vs auth().
   if (!isProtectedApi(pathname)) {
     return NextResponse.next()
   }
@@ -114,7 +136,9 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/',
+    '/dashboard',
     '/dashboard/:path*',
+    '/admin',
     '/admin/:path*',
     '/api/certificates/:path*',
     '/api/entities/:path*',

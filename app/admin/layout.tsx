@@ -76,7 +76,7 @@ function IconSurveillance() {
 
 const navLinks = [
   { href: '/dashboard', label: 'Vue client', Icon: IconClients },
-  { href: '/admin', label: 'Tableau de bord', Icon: IconDashboard },
+  { href: '/admin/dashboard', label: 'Tableau de bord', Icon: IconDashboard },
   { href: '/admin/certificates', label: 'Certificats', Icon: IconDemandes },
   { href: '/admin/kyc', label: 'KYC', Icon: IconKyc },
   { href: '/admin/demandes', label: 'Demandes Trust', Icon: IconDemandes },
@@ -109,7 +109,7 @@ export default async function AdminLayout({
     const cookiePresent = await hasAuthJsSessionCookie()
     const reason = cookiePresent ? 'jwt-cookie-unreadable' : 'no-session-cookie'
     redirect(
-      `/auth/signin?callbackUrl=${encodeURIComponent('/admin')}&reason=${reason}`
+      `/auth/signin?callbackUrl=${encodeURIComponent('/admin/dashboard')}&reason=${reason}`
     )
   }
 
@@ -143,7 +143,7 @@ export default async function AdminLayout({
             borderBottomColor: 'var(--bt-border)',
           }}
         >
-          <Logo size="sm" withText={true} href="/admin" />
+          <Logo size="sm" withText={true} href="/admin/dashboard" />
           <span
             className="rounded font-bold uppercase tracking-widest"
             style={{

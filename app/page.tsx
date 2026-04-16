@@ -10,7 +10,7 @@ export default async function HomePage() {
   const session = await auth();
   const email = session?.user?.email ?? null;
   if (email && isAdmin(email)) {
-    redirect("/admin");
+    redirect("/admin/dashboard");
   }
   return <LandingPageClient />;
 }

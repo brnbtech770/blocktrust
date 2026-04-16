@@ -50,7 +50,7 @@ export default async function DashboardSidebar() {
       { name: 'Facturation', href: '/dashboard/billing', icon: 'CreditCard' },
       { name: 'Paramètres', href: '/dashboard/settings', icon: 'Settings' },
       ...(userIsAdmin
-        ? [{ name: 'Administration', href: '/admin', icon: 'Shield' as const }]
+        ? [{ name: 'Administration', href: '/admin/dashboard', icon: 'Shield' as const }]
         : []),
     ]
 
