@@ -9,6 +9,7 @@ import { prisma } from '@/app/lib/db'
 import { btError, btErrorDevDetails, btLog } from '@/lib/prodLog'
 import { sendEmail } from '@/lib/email'
 import { PaymentSuccessEmail, getPaymentSuccessSubject } from '@/emails/PaymentSuccessEmail'
+import { PaymentConfirmationEmail } from '@/emails/PaymentConfirmationEmail'
 import {
   createKycSubmittedAdminAlertIfNew,
   createNewPaymentAdminAlertIfNew,
@@ -58,6 +59,99 @@ function formatSubscriptionAmount(sub: Stripe.Subscription): string {
   const interval = price.recurring?.interval
   if (interval === 'year') return `${formatted}/an`
   return `${formatted}/mois`
+}
+
+const PAYMENT_CONFIRMATION_DASHBOARD_URL = 'https://blocktrust.tech/dashboard'
+
+function displayPlanLabel(planCode: string): string {
+  if (!planCode?.trim()) return 'BlockTrust'
+  return planCode
+    .split('_')
+    .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+    .join(' ')
+}
+
+/** Montant unitaire affiché (sans /mois — la période est indiquée à part). */
+function formatStripeSubscriptionUnitAmount(sub: Stripe.Subscription): string {
+  const price = sub.items.data[0]?.price
+  if (price?.unit_amount == null) return '—'
+  return new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: (price.currency || 'eur').toUpperCase(),
+  }).format(price.unit_amount / 100)
+}
+
+function billingPeriodFromSubscription(sub: Stripe.Subscription): 'mensuel' | 'annuel' {
+  const interval = sub.items.data[0]?.price?.recurring?.interval
+  return interval === 'year' ? 'annuel' : 'mensuel'
+}
+
+function formatSubscriptionPeriodEndLong(sub: Stripe.Subscription): string {
+  const end = (sub as unknown as { current_period_end: number }).current_period_end
+  return new Date(end * 1000).toLocaleDateString('fr-FR', {
+    dateStyle: 'long',
+  })
+}
+
+async function hostedInvoiceUrlFromSubscription(
+  sub: Stripe.Subscription
+): Promise<string | undefined> {
+  const latest = sub.latest_invoice
+  if (!latest) return undefined
+  try {
+    const id = typeof latest === 'string' ? latest : latest.id
+    const inv = await stripe.invoices.retrieve(id)
+    return inv.hosted_invoice_url ?? undefined
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Email de confirmation d’abonnement (template sombre BlockTrust).
+ * Les erreurs d’envoi sont loguées sans faire échouer le webhook.
+ */
+async function sendPaymentConfirmationEmailForSubscription(
+  user: { id: string; email: string | null; name: string | null },
+  sub: Stripe.Subscription,
+  planCode: string,
+  opts?: { amount?: string; invoiceUrl?: string | null }
+) {
+  if (!user.email?.trim()) return
+
+  const planName = displayPlanLabel(planCode)
+  const amount = opts?.amount ?? formatStripeSubscriptionUnitAmount(sub)
+  const billingPeriod = billingPeriodFromSubscription(sub)
+  const nextBillingDate = formatSubscriptionPeriodEndLong(sub)
+  const invoiceUrl =
+    opts?.invoiceUrl ??
+    (await hostedInvoiceUrlFromSubscription(sub))
+
+  const { error: emailErr } = await sendEmail({
+    to: user.email,
+    subject: `✓ Votre abonnement BlockTrust ${planName} est activé`,
+    react: PaymentConfirmationEmail({
+      userName: user.name?.trim() || user.email,
+      planName,
+      amount,
+      billingPeriod,
+      nextBillingDate,
+      invoiceUrl,
+      dashboardUrl: PAYMENT_CONFIRMATION_DASHBOARD_URL,
+    }),
+  })
+
+  if (emailErr) {
+    btErrorDevDetails(
+      { context: 'PaymentConfirmation email', to: user.email, error: emailErr },
+      'Payment confirmation email failed'
+    )
+  } else {
+    btLog(
+      `[Stripe] PaymentConfirmation email → ${user.email}`,
+      'Payment confirmation email sent'
+    )
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -122,6 +216,8 @@ export async function POST(req: NextRequest) {
           amountLabel,
           stripeSubscriptionId: sub.id,
         })
+
+        await sendPaymentConfirmationEmailForSubscription(user, sub, plan)
         break
       }
 
@@ -223,7 +319,13 @@ export async function POST(req: NextRequest) {
       // INVOICE PAYMENT SUCCEEDED
       // ─────────────────────────────────────────────
       case 'invoice.payment_succeeded': {
-        const invoice = event.data.object as any
+        const invoice = event.data.object as Stripe.Invoice & {
+          subscription?: string | null
+          billing_reason?: string | null
+          hosted_invoice_url?: string | null
+          amount_paid?: number | null
+          currency?: string | null
+        }
 
         if (invoice.subscription) {
           const subscription = await stripe.subscriptions.retrieve(
@@ -244,6 +346,29 @@ export async function POST(req: NextRequest) {
             `💰 Paiement réussi - Subscription ${subObj.id} prolongée`,
             'Invoice payment succeeded — subscription renewed'
           )
+
+          // Renouvellements : évite le doublon avec la première facture (subscription_create) déjà couverte par customer.subscription.created
+          if (invoice.billing_reason === 'subscription_cycle') {
+            const stripeSub = subscription as Stripe.Subscription
+            const priceId = stripeSub.items.data[0]?.price?.id
+            const plan = mapPriceIdToPlan(priceId || '')
+            let paidAmount: string | undefined
+            if (invoice.amount_paid != null && invoice.currency) {
+              paidAmount = new Intl.NumberFormat('fr-FR', {
+                style: 'currency',
+                currency: invoice.currency.toUpperCase(),
+              }).format(invoice.amount_paid / 100)
+            }
+            const paidUser = await prisma.user.findFirst({
+              where: { stripeCustomerId: customerId },
+            })
+            if (paidUser) {
+              await sendPaymentConfirmationEmailForSubscription(paidUser, stripeSub, plan, {
+                amount: paidAmount,
+                invoiceUrl: invoice.hosted_invoice_url,
+              })
+            }
+          }
         }
         break
       }
