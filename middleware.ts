@@ -65,6 +65,24 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  const isVerifyPath = pathname === '/verify' || pathname.startsWith('/verify/')
+  if (isVerifyPath) {
+    try {
+      const email = await getEmailFromSession(request)
+      if (!email) {
+        const signInUrl = new URL('/auth/signin', request.url)
+        signInUrl.searchParams.set(
+          'callbackUrl',
+          `${pathname}${request.nextUrl.search}`
+        )
+        return NextResponse.redirect(signInUrl)
+      }
+    } catch (error) {
+      console.error('❌ Middleware verify redirect:', error)
+    }
+    return NextResponse.next()
+  }
+
   // Redirections admin / client (JWT Edge aligné avec layouts)
   const isUnderAdmin = pathname === '/admin' || pathname.startsWith('/admin/')
   const isClientDashboardRoot = pathname === '/dashboard'
@@ -140,6 +158,8 @@ export const config = {
     '/dashboard/:path*',
     '/admin',
     '/admin/:path*',
+    '/verify',
+    '/verify/:path*',
     '/api/certificates/:path*',
     '/api/entities/:path*',
     '/api/stripe/:path*',

@@ -8,9 +8,12 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import crypto from 'crypto'
 import { prisma } from '@/app/lib/db'
+import { auth } from '@/app/lib/auth-server'
+import { isAdmin } from '@/app/lib/admin'
 import { Logo } from '@/app/components/ui/Logo'
 import { hashIp } from '@/app/lib/auth'
 import { checkRateLimitVerify } from '@/lib/rate-limit-verify'
+import { peekVerifyQuota } from '@/lib/verify-quotas'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +28,12 @@ export default async function VerifyQRTokenPage({
 }) {
   const { token } = await params
   const { h: ctxHashFromQuery = '' } = await searchParams
+
+  const session = await auth()
+  if (!session?.user?.id) {
+    const cb = `/verify/qr/${encodeURIComponent(token)}${ctxHashFromQuery ? `?h=${encodeURIComponent(ctxHashFromQuery)}` : ''}`
+    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(cb)}`)
+  }
 
   const headersList = await headers()
   const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || headersList.get('x-real-ip') || 'unknown'
@@ -41,6 +50,58 @@ export default async function VerifyQRTokenPage({
         </div>
       </div>
     )
+  }
+
+  const userIsAdmin = isAdmin(session.user.email)
+  if (!userIsAdmin) {
+    const subscription = await prisma.subscription.findUnique({
+      where: { userId: session.user.id },
+    })
+    if (!subscription || subscription.status !== 'active') {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-[#0a1628] p-4">
+          <div className="w-full max-w-md rounded-xl border border-[#BDA76B]/40 bg-white/5 p-8 text-center">
+            <p className="mb-4 text-4xl" aria-hidden>
+              🔒
+            </p>
+            <h1 className="font-syne mb-4 text-xl font-bold text-white">Vérification réservée aux abonnés</h1>
+            <p className="mb-6 text-sm text-white/70">
+              La vérification de badges BlockTrust est disponible à partir du forfait Essentiel.
+            </p>
+            <Link
+              href="/pricing"
+              className="inline-block rounded-lg px-5 py-2 text-sm font-bold text-[#0a1628]"
+              style={{ background: '#00d4ff' }}
+            >
+              Voir les forfaits
+            </Link>
+          </div>
+        </div>
+      )
+    }
+    const peek = await peekVerifyQuota(session.user.id, subscription.plan, false)
+    if (!peek.allowed) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-[#0a1628] p-4">
+          <div className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 p-8 text-center">
+            <p className="mb-4 text-4xl" aria-hidden>
+              ⏱️
+            </p>
+            <h1 className="font-syne mb-4 text-xl font-bold text-white">Limite mensuelle atteinte</h1>
+            <p className="mb-6 text-sm text-white/70">
+              Vous avez utilisé vos {peek.limit} vérifications ce mois-ci.
+            </p>
+            <Link
+              href="/pricing"
+              className="inline-block rounded-lg px-5 py-2 text-sm font-bold text-[#0a1628]"
+              style={{ background: '#00d4ff' }}
+            >
+              Upgrader mon forfait
+            </Link>
+          </div>
+        </div>
+      )
+    }
   }
 
   const signature = await prisma.signature.findUnique({

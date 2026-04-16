@@ -5,14 +5,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 import { hashIp } from '@/app/lib/auth'
+import { auth } from '@/app/lib/auth-server'
+import { isAdmin } from '@/app/lib/admin'
 import { timingSafeEqual } from 'crypto'
 import { checkRateLimitVerify } from '@/lib/rate-limit-verify'
+import { checkAndIncrementVerifyQuota } from '@/lib/verify-quotas'
 import {
   createAdminFraudAlert,
   evaluateVerifyAnomalies,
   logRateLimitedVerification,
   verifyRateLimitHeaders,
 } from '@/lib/verify-fraud'
+
+function quotaJson(remaining: number, limit: number) {
+  const unlimited = limit === Number.POSITIVE_INFINITY
+  return {
+    remaining: unlimited ? null : remaining,
+    limit: unlimited ? null : limit,
+  }
+}
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -65,6 +76,47 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const rateHeaders = verifyRateLimitHeaders(rate.remaining)
 
   try {
+    const session = await auth()
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'AUTH_REQUIRED', redirectUrl: '/auth/signin' },
+        { status: 401, headers: rateHeaders }
+      )
+    }
+
+    const userIsAdmin = isAdmin(session.user.email)
+    let quotaForResponse: { remaining: number | null; limit: number | null } | undefined
+
+    if (!userIsAdmin) {
+      const subscription = await prisma.subscription.findUnique({
+        where: { userId: session.user.id },
+      })
+      if (!subscription || subscription.status !== 'active') {
+        return NextResponse.json(
+          { error: 'SUBSCRIPTION_REQUIRED', redirectUrl: '/pricing' },
+          { status: 403, headers: rateHeaders }
+        )
+      }
+      const quota = await checkAndIncrementVerifyQuota(
+        session.user.id,
+        subscription.plan,
+        false
+      )
+      if (!quota.allowed) {
+        return NextResponse.json(
+          {
+            error: 'QUOTA_EXCEEDED',
+            message: `Limite de ${quota.limit} vérifications/mois atteinte`,
+            redirectUrl: '/pricing',
+          },
+          { status: 403, headers: rateHeaders }
+        )
+      }
+      quotaForResponse = quotaJson(quota.remaining, quota.limit)
+    } else {
+      quotaForResponse = { remaining: null, limit: null }
+    }
+
     let certificate = await prisma.certificate.findUnique({
       where: { publicId: id },
       include: {
@@ -115,6 +167,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           status: 'NOT_FOUND',
           message: 'Certificat introuvable',
           code: 'CERTIFICATE_NOT_FOUND',
+          quota: quotaForResponse,
         },
         { status: 404, headers: rateHeaders }
       )
@@ -142,6 +195,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           message: 'Ce certificat a été révoqué',
           code: 'CERTIFICATE_REVOKED',
           revokedAt: certificate.revokedAt?.toISOString() ?? null,
+          quota: quotaForResponse,
         },
         { status: 410, headers: rateHeaders }
       )
@@ -153,6 +207,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           status: 'SUSPENDED',
           message: 'Ce certificat est temporairement suspendu',
           code: 'CERTIFICATE_SUSPENDED',
+          quota: quotaForResponse,
         },
         { status: 403, headers: rateHeaders }
       )
@@ -323,6 +378,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           message: 'Activité inhabituelle détectée',
           code: 'SUSPICIOUS_SCANNING',
           verifiedAt: new Date().toISOString(),
+          quota: quotaForResponse,
         },
         { status: 200, headers: rateHeaders }
       )
@@ -335,6 +391,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           message: 'Ce lien ou QR de vérification a expiré',
           code: 'QR_EXPIRED',
           verifiedAt: new Date().toISOString(),
+          quota: quotaForResponse,
         },
         { status: 200, headers: rateHeaders }
       )
@@ -347,6 +404,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           message: 'Certificat non reconnu ou potentiellement frauduleux',
           code: 'FRAUD_ALERT',
           verifiedAt: new Date().toISOString(),
+          quota: quotaForResponse,
         },
         { status: 200, headers: rateHeaders }
       )
@@ -389,6 +447,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       ...(responseStatus === 'SUSPICIOUS_VOLUME' && anomalyMeta
         ? { anomaly: { distinctIpCount: anomalyMeta.distinctIpCount } }
         : {}),
+      quota: quotaForResponse,
     }
 
     return NextResponse.json(responseBody, {

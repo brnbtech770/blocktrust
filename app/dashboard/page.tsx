@@ -7,7 +7,10 @@ export const dynamic = 'force-dynamic';
 import { Suspense } from 'react';
 import { prisma } from "@/app/lib/db";
 import { auth } from "@/app/lib/auth-server";
+import { isAdmin } from "@/app/lib/admin";
+import { getVerifyQuotaDisplay } from "@/lib/verify-quotas";
 import Link from "next/link";
+import VerifyBadgeCard from "@/app/components/dashboard/VerifyBadgeCard";
 import type { CertificateTableItem, VerificationEvent } from "@/types/dashboard";
 import StatsBlock from "@/app/components/dashboard/StatsBlock";
 import CertificateTable from "@/app/components/dashboard/CertificateTable";
@@ -52,6 +55,18 @@ export default async function Dashboard({
     }
 
     const firstName = user.name?.split(' ')[0] || user.email?.split('@')[0] || 'Utilisateur';
+
+    const userIsAdmin = isAdmin(session.user.email);
+    const subscription = await prisma.subscription.findUnique({
+      where: { userId: user.id },
+    });
+    let quotaLabel: string | null = null;
+    if (!userIsAdmin && subscription?.status === "active") {
+      const d = await getVerifyQuotaDisplay(user.id, subscription.plan);
+      quotaLabel = d.unlimited
+        ? "Illimité ce mois"
+        : `${d.remaining}/${d.limit} vérifications ce mois`;
+    }
 
     const certificates = await prisma.certificate.findMany({
       where: {
@@ -139,6 +154,9 @@ export default async function Dashboard({
           <h2 className="font-syne mb-3 text-xl font-semibold tracking-tight text-white sm:mb-4 sm:text-2xl">
             Actions rapides
           </h2>
+          <div className="mb-6">
+            <VerifyBadgeCard quotaLabel={quotaLabel} isAdmin={userIsAdmin} />
+          </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/dashboard/create"

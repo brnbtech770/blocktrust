@@ -4,6 +4,7 @@
 
 import { prisma } from '@/app/lib/db'
 import Stripe from 'stripe'
+import VerifyBadgeCard from '@/app/components/dashboard/VerifyBadgeCard'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-02-25.clover',
@@ -132,6 +133,9 @@ export default async function AdminDashboard() {
         <h2 className="font-syne mb-4 text-xl font-semibold tracking-tight text-white">
           Actions rapides
         </h2>
+        <div className="mb-6">
+          <VerifyBadgeCard quotaLabel={null} isAdmin />
+        </div>
         <div className="flex flex-wrap gap-3">
           <a
             href="/admin/certificates?status=PENDING"

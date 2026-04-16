@@ -6,9 +6,12 @@
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { prisma } from '@/app/lib/db'
+import { auth } from '@/app/lib/auth-server'
+import { isAdmin } from '@/app/lib/admin'
 import { Logo } from '@/app/components/ui/Logo'
 import { hashIp } from '@/app/lib/auth'
 import { checkRateLimitVerify } from '@/lib/rate-limit-verify'
+import { checkAndIncrementVerifyQuota } from '@/lib/verify-quotas'
 import {
   createAdminFraudAlert,
   evaluateVerifyAnomalies,
@@ -107,37 +110,11 @@ function entityDisplayName(entity: {
   return entity.legalName || entity.tradeName || entity.email
 }
 
-export async function generateMetadata({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>
-  searchParams: Promise<{ h?: string }>
-}): Promise<Metadata> {
-  const { id } = await params
-  const { h = '' } = await searchParams
-
-  const signature = await resolveSignatureForPublicVerify(id)
-
-  if (!signature) {
-    return { title: 'Certificat introuvable — BlockTrust' }
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: 'Vérification — BlockTrust',
+    description: 'Vérifiez un certificat BlockTrust (réservé aux abonnés).',
   }
-
-  if (signature.revoked || (signature.expiresAt && signature.expiresAt < new Date())) {
-    return { title: 'Lien expiré — BlockTrust' }
-  }
-
-  const expectedHash = signature.contextHash ?? ''
-  const verdict: PageVerdict = !h ? 'VALID' : expectedHash === h ? 'VALID' : 'FRAUD_ALERT'
-  const entityName = entityDisplayName(signature.certificate.entity)
-
-  if (verdict === 'VALID') {
-    return { title: `${entityName} — Certifié BlockTrust ✓` }
-  }
-  if (verdict === 'FRAUD_ALERT') {
-    return { title: 'Alerte sécurité — BlockTrust' }
-  }
-  return { title: 'Certificat introuvable — BlockTrust' }
 }
 
 export default async function VerifyPublicPage({
@@ -147,6 +124,11 @@ export default async function VerifyPublicPage({
   params: Promise<{ id: string }>
   searchParams: Promise<{ h?: string }>
 }) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    return <VerifySignInFallbackView />
+  }
+
   const resolvedParams = await params
   const resolvedSearchParams = await searchParams
   const id = resolvedParams.id
@@ -160,6 +142,29 @@ export default async function VerifyPublicPage({
   const userAgent = headersList.get('user-agent') || 'unknown'
   const referer = headersList.get('referer')
   const hashedIp = hashIp(ip)
+
+  const userIsAdmin = isAdmin(session.user.email)
+  let quotaFooter: { remaining: number; limit: number } | null = null
+
+  if (!userIsAdmin) {
+    const subscription = await prisma.subscription.findUnique({
+      where: { userId: session.user.id },
+    })
+    if (!subscription || subscription.status !== 'active') {
+      return <SubscriptionRequiredVerifyView />
+    }
+    const quota = await checkAndIncrementVerifyQuota(
+      session.user.id,
+      subscription.plan,
+      false
+    )
+    if (!quota.allowed) {
+      return <QuotaExceededVerifyView limit={quota.limit} />
+    }
+    if (quota.limit !== Number.POSITIVE_INFINITY) {
+      quotaFooter = { remaining: quota.remaining, limit: quota.limit }
+    }
+  }
 
   const rate = checkRateLimitVerify(ip)
   if (!rate.ok) {
@@ -372,7 +377,78 @@ export default async function VerifyPublicPage({
       certificate={cert}
       signature={signature}
       verificationsLast30Days={verificationsLast30Days}
+      quotaFooter={quotaFooter}
     />
+  )
+}
+
+function VerifySignInFallbackView() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#0a1628] p-4">
+      <div className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-lg">
+        <p className="font-syne mb-4 text-lg text-white/90">Connexion requise</p>
+        <Link
+          href="/auth/signin"
+          className="inline-block rounded-lg px-4 py-2 text-sm font-semibold text-[#0a1628]"
+          style={{ background: '#00d4ff' }}
+        >
+          Se connecter
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+function SubscriptionRequiredVerifyView() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#0a1628] p-4 font-sans">
+      <div className="w-full max-w-md rounded-xl border border-[#BDA76B]/40 bg-[#0a1628]/95 p-8 text-center backdrop-blur-md">
+        <p className="mb-4 text-4xl" aria-hidden>
+          🔒
+        </p>
+        <h1 className="font-syne mb-4 text-2xl font-bold text-white">
+          Vérification réservée aux abonnés
+        </h1>
+        <p className="mb-8 text-sm leading-relaxed text-white/70">
+          La vérification de badges BlockTrust est disponible à partir de notre forfait Essentiel à 4,99€/mois.
+        </p>
+        <Link
+          href="/pricing"
+          className="inline-block rounded-lg px-6 py-3 text-sm font-bold text-[#0a1628] transition hover:brightness-110"
+          style={{ background: '#00d4ff' }}
+        >
+          Voir les forfaits
+        </Link>
+        <p className="mt-6 text-xs text-white/40">
+          <Link href={BASE_URL} className="text-[#BDA76B] hover:underline">
+            blocktrust.tech
+          </Link>
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function QuotaExceededVerifyView({ limit }: { limit: number }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#0a1628] p-4 font-sans">
+      <div className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-lg">
+        <p className="mb-4 text-4xl" aria-hidden>
+          ⏱️
+        </p>
+        <h1 className="font-syne mb-4 text-2xl font-bold text-white">Limite mensuelle atteinte</h1>
+        <p className="mb-8 text-sm leading-relaxed text-white/70">
+          Vous avez utilisé vos {limit} vérifications ce mois-ci. Passez à un forfait supérieur pour continuer.
+        </p>
+        <Link
+          href="/pricing"
+          className="inline-block rounded-lg px-6 py-3 text-sm font-bold text-[#0a1628] transition hover:brightness-110"
+          style={{ background: '#00d4ff' }}
+        >
+          Upgrader mon forfait
+        </Link>
+      </div>
+    </div>
   )
 }
 
@@ -475,6 +551,7 @@ function ValidView({
   certificate,
   signature,
   verificationsLast30Days,
+  quotaFooter,
 }: {
   entity: Prisma.EntityGetPayload<{ include: { trustScore: true } }>
   certificate: {
@@ -488,6 +565,7 @@ function ValidView({
   }
   signature: { contextHash: string | null; dynamicToken: string | null; maxScans: number }
   verificationsLast30Days: number
+  quotaFooter?: { remaining: number; limit: number } | null
 }) {
   const name = entityDisplayName(entity)
   const level = certificate.level
@@ -596,6 +674,12 @@ function ValidView({
             </ul>
           </div>
         </div>
+
+        {quotaFooter ? (
+          <p className="mt-4 text-center font-mono text-xs text-white/40">
+            {quotaFooter.remaining} vérification(s) restante(s) ce mois sur {quotaFooter.limit}
+          </p>
+        ) : null}
 
         <footer className="mt-6 flex justify-center sm:mt-8">
           <Logo size="sm" withText={true} />

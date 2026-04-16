@@ -93,6 +93,9 @@ model User {
   cguVersion       String?   @default("1.0")
   cookieConsent    Boolean   @default(false)
   cookieConsentAt  DateTime?
+
+  verifyCount      Int       @default(0)
+  verifyCountReset DateTime  @default(now())
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
