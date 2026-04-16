@@ -64,6 +64,16 @@ function IconKyc() {
   )
 }
 
+function IconSurveillance() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0" aria-hidden>
+      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M8 2v2M8 12v2M2 8h2M12 8h2M4 4l1.5 1.5M10.5 10.5L12 12M12 4l-1.5 1.5M4 12l1.5-1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <circle cx="8" cy="8" r="2" fill="currentColor" />
+    </svg>
+  )
+}
+
 const navLinks = [
   { href: '/dashboard', label: 'Vue client', Icon: IconClients },
   { href: '/admin', label: 'Tableau de bord', Icon: IconDashboard },
@@ -73,6 +83,7 @@ const navLinks = [
   { href: '/admin/users', label: 'Clients', Icon: IconClients },
   { href: '/admin/alerts', label: 'Alertes', Icon: IconAlertes },
   { href: '/admin/ai-alerts', label: 'Alertes IA', Icon: IconAlertes },
+  { href: '/admin/surveillance', label: 'Surveillance IA', Icon: IconSurveillance },
 ]
 
 export default async function AdminLayout({
