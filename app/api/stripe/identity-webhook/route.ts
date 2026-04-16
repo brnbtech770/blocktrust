@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/app/lib/db'
+import { btError, btErrorDevDetails, btLog } from '@/lib/prodLog'
 
 const identityWebhookSecret = process.env.STRIPE_IDENTITY_WEBHOOK_SECRET!
 
@@ -21,7 +22,10 @@ export async function POST(req: NextRequest) {
   }
 
   if (!identityWebhookSecret) {
-    console.error('❌ STRIPE_IDENTITY_WEBHOOK_SECRET manquant')
+    btError(
+      '❌ STRIPE_IDENTITY_WEBHOOK_SECRET manquant',
+      'STRIPE_IDENTITY_WEBHOOK_SECRET manquant'
+    )
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 })
   }
 
@@ -30,7 +34,10 @@ export async function POST(req: NextRequest) {
     event = stripe.webhooks.constructEvent(body, signature, identityWebhookSecret)
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Invalid signature'
-    console.error('❌ Identity webhook signature verification failed:', message)
+    btError(
+      `❌ Identity webhook signature verification failed: ${message}`,
+      'Identity webhook signature verification failed'
+    )
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
@@ -38,7 +45,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true })
   }
 
-  console.log(`📩 Identity webhook: ${event.type}`)
+  btLog(`📩 Identity webhook: ${event.type}`, `Identity webhook: ${event.type}`)
 
   try {
     switch (event.type) {
@@ -59,8 +66,13 @@ export async function POST(req: NextRequest) {
           },
         })
         const { sendKYCApprovedEmail } = await import('@/lib/kyc-email')
-        sendKYCApprovedEmail(userId).catch(console.error)
-        console.log(`✅ KYC vérifié pour user ${userId}`)
+        sendKYCApprovedEmail(userId).catch((e) =>
+          btErrorDevDetails(e, 'KYC approved email failed')
+        )
+        btLog(
+          `✅ KYC vérifié pour user ${userId}`,
+          'KYC verified (identity webhook)'
+        )
         break
       }
 
@@ -87,7 +99,9 @@ export async function POST(req: NextRequest) {
           }
         }
         const { sendKYCRetryEmail } = await import('@/lib/kyc-email')
-        sendKYCRetryEmail(userId, verificationUrl).catch(console.error)
+        sendKYCRetryEmail(userId, verificationUrl).catch((e) =>
+          btErrorDevDetails(e, 'KYC retry email failed')
+        )
         break
       }
 
@@ -101,12 +115,15 @@ export async function POST(req: NextRequest) {
       }
 
       default:
-        console.log(`ℹ️ Événement Identity non géré: ${event.type}`)
+        btLog(
+          `ℹ️ Événement Identity non géré: ${event.type}`,
+          `Identity webhook event not handled: ${event.type}`
+        )
     }
 
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('❌ Identity webhook handler error:', error)
+    btErrorDevDetails(error, 'Identity webhook handler error')
     return NextResponse.json(
       { error: 'Webhook handler failed' },
       { status: 500 }

@@ -4,6 +4,7 @@ import { canonicalizeEmailContext, sha256Hex } from "@/lib/v2/context";
 import { verifyToken } from "@/lib/v2/jwt";
 import { sendEmail } from "@/lib/email";
 import { FraudAlertEmail, subject as fraudAlertSubject } from "@/emails/FraudAlertEmail";
+import { btErrorDevDetails, btLog } from "@/lib/prodLog";
 
 const prisma = new PrismaClient();
 
@@ -107,8 +108,17 @@ export async function POST(req: NextRequest) {
             revokeUrl: `${baseUrl}/dashboard/certificate/${certificateId}`,
           }),
         }).then(({ error }) => {
-          if (error) console.error('[Verify] Fraud alert email échoué:', { to: ownerEmail, error })
-          else console.log('[Verify] Fraud alert email envoyé à:', ownerEmail)
+          if (error) {
+            btErrorDevDetails(
+              { context: "Fraud alert email", to: ownerEmail, error },
+              "Fraud alert email failed"
+            );
+          } else {
+            btLog(
+              `[Verify] Fraud alert email envoyé à: ${ownerEmail}`,
+              "Fraud alert email sent"
+            );
+          }
         });
       }
     }

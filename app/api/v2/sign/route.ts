@@ -7,6 +7,7 @@ import { getAuthUser } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/db'
 import { createHash, createSign, generateKeyPairSync, createPrivateKey } from 'crypto'
 import { z } from 'zod'
+import { btErrorDevDetails } from '@/lib/prodLog'
 
 const signSchema = z.object({
   certificateId: z.string().cuid(),
@@ -170,7 +171,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('❌ V2 Sign error:', error)
+    btErrorDevDetails(error, 'V2 sign error')
     return NextResponse.json(
       { error: 'Erreur génération signature' },
       { status: 500 }

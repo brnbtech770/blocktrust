@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/app/lib/db'
+import { btError, btErrorDevDetails, btLog } from '@/lib/prodLog'
 import { sendEmail } from '@/lib/email'
 import { PaymentSuccessEmail, getPaymentSuccessSubject } from '@/emails/PaymentSuccessEmail'
 
@@ -42,7 +43,10 @@ function mapPriceIdToPlan(priceId: string): string {
 
 export async function POST(req: NextRequest) {
   if (!webhookSecret?.trim()) {
-    console.error('❌ STRIPE_WEBHOOK_SECRET manquant — refus du webhook')
+    btError(
+      '❌ STRIPE_WEBHOOK_SECRET manquant — refus du webhook',
+      'STRIPE_WEBHOOK_SECRET manquant — refus du webhook'
+    )
     return NextResponse.json({ error: 'Configuration serveur' }, { status: 500 })
   }
 
@@ -58,11 +62,14 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
   } catch (err: any) {
-    console.error('❌ Webhook signature verification failed:', err.message)
+    btError(
+      `❌ Webhook signature verification failed: ${err?.message ?? err}`,
+      'Webhook signature verification failed'
+    )
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  console.log(`📩 Webhook reçu: ${event.type}`)
+  btLog(`📩 Webhook reçu: ${event.type}`, `Webhook reçu: ${event.type}`)
 
   try {
     switch (event.type) {
@@ -88,7 +95,10 @@ export async function POST(req: NextRequest) {
           })
 
           if (!user) {
-            console.error(`❌ User not found for customer ${customerId}`)
+            btError(
+              `❌ User not found for customer ${customerId}`,
+              'User not found for Stripe customer'
+            )
             return NextResponse.json({ error: 'User not found' }, { status: 500 })
           }
 
@@ -113,7 +123,10 @@ export async function POST(req: NextRequest) {
           },
         })
 
-          console.log(`✅ Subscription créée/activée pour user ${user.id} - Plan: ${plan}`)
+          btLog(
+            `✅ Subscription créée/activée pour user ${user.id} - Plan: ${plan}`,
+            `Subscription créée/activée — plan: ${plan}`
+          )
 
           // Email transactionnel : paiement réussi
           if (user.email) {
@@ -142,9 +155,15 @@ export async function POST(req: NextRequest) {
               }),
             })
             if (emailErr) {
-              console.error('[Stripe] Payment email échoué:', { to: user.email, error: emailErr })
+              btErrorDevDetails(
+                { context: 'Payment email', to: user.email, error: emailErr },
+                'Payment confirmation email failed'
+              )
             } else {
-              console.log('[Stripe] Payment email envoyé à:', user.email)
+              btLog(
+                `[Stripe] Payment email envoyé à: ${user.email}`,
+                'Payment confirmation email sent'
+              )
             }
           }
         }
@@ -172,7 +191,10 @@ export async function POST(req: NextRequest) {
             },
           })
 
-          console.log(`💰 Paiement réussi - Subscription ${subObj.id} prolongée`)
+          btLog(
+            `💰 Paiement réussi - Subscription ${subObj.id} prolongée`,
+            'Invoice payment succeeded — subscription renewed'
+          )
         }
         break
       }
@@ -193,7 +215,10 @@ export async function POST(req: NextRequest) {
           },
         })
 
-        console.log(`❌ Subscription supprimée: ${subscription.id}`)
+        btLog(
+          `❌ Subscription supprimée: ${subscription.id}`,
+          'Subscription deleted'
+        )
         break
       }
 
@@ -217,7 +242,10 @@ export async function POST(req: NextRequest) {
           },
         })
 
-        console.log(`🔄 Subscription mise à jour: ${subscription.id} - Plan: ${plan}`)
+        btLog(
+          `🔄 Subscription mise à jour: ${subscription.id} - Plan: ${plan}`,
+          `Subscription updated — plan: ${plan}`
+        )
         break
       }
 
@@ -242,7 +270,10 @@ export async function POST(req: NextRequest) {
         })
         const { sendKYCApprovedEmail } = await import('@/lib/kyc-email')
         await sendKYCApprovedEmail(userId)
-        console.log(`✅ KYC vérifié pour user ${userId}`)
+        btLog(
+          `✅ KYC vérifié pour user ${userId}`,
+          'KYC verification session verified'
+        )
         break
       }
 
@@ -277,12 +308,15 @@ export async function POST(req: NextRequest) {
       }
 
       default:
-        console.log(`ℹ️ Événement non géré: ${event.type}`)
+        btLog(
+          `ℹ️ Événement non géré: ${event.type}`,
+          `Événement webhook non géré: ${event.type}`
+        )
     }
 
     return NextResponse.json({ received: true })
   } catch (error: any) {
-    console.error('❌ Erreur webhook:', error)
+    btErrorDevDetails(error, 'Stripe webhook handler error')
     return NextResponse.json(
       { error: 'Webhook handler failed' },
       { status: 500 }

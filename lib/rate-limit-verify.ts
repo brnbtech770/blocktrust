@@ -1,6 +1,12 @@
 // lib/rate-limit-verify.ts
 // Rate limiting 20 req/min par IP pour la page publique /verify/[id]
 // ============================================================
+//
+// ⚠️ Rate limit en mémoire — par instance Vercel uniquement.
+// Sur plusieurs instances (prod à charge), contournable.
+// TODO : migrer vers Upstash Redis avant 100 users actifs.
+// Doc : https://docs.upstash.com/redis/sdks/ratelimit
+//
 
 const LIMIT = 20
 const WINDOW_MS = 60_000
