@@ -8,7 +8,6 @@ import { stripe } from '@/lib/stripe'
 import { prisma } from '@/app/lib/db'
 import { btError, btErrorDevDetails, btLog } from '@/lib/prodLog'
 import { sendEmail } from '@/lib/email'
-import { PaymentSuccessEmail, getPaymentSuccessSubject } from '@/emails/PaymentSuccessEmail'
 import { PaymentConfirmationEmail } from '@/emails/PaymentConfirmationEmail'
 import {
   createKycSubmittedAdminAlertIfNew,
@@ -273,44 +272,7 @@ export async function POST(req: NextRequest) {
             `Subscription créée/activée — plan: ${plan}`
           )
 
-          // Email transactionnel : paiement réussi
-          if (user.email) {
-            let amountFormatted: string | undefined
-            try {
-              const invoiceId = sub.latest_invoice
-              if (invoiceId && typeof invoiceId === 'string') {
-                const invoice = await stripe.invoices.retrieve(invoiceId)
-                if (invoice.amount_paid != null && invoice.currency) {
-                  amountFormatted = new Intl.NumberFormat('fr-FR', {
-                    style: 'currency',
-                    currency: (invoice.currency || 'eur').toUpperCase(),
-                  }).format(invoice.amount_paid / 100)
-                }
-              }
-            } catch (_) {}
-            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
-            const { error: emailErr } = await sendEmail({
-              to: user.email,
-              subject: getPaymentSuccessSubject(plan),
-              react: PaymentSuccessEmail({
-                planName: plan,
-                amountFormatted,
-                currentPeriodEnd: currentPeriodEnd.toLocaleDateString('fr-FR', { dateStyle: 'long' }),
-                dashboardUrl: `${baseUrl}/dashboard`,
-              }),
-            })
-            if (emailErr) {
-              btErrorDevDetails(
-                { context: 'Payment email', to: user.email, error: emailErr },
-                'Payment confirmation email failed'
-              )
-            } else {
-              btLog(
-                `[Stripe] Payment email envoyé à: ${user.email}`,
-                'Payment confirmation email sent'
-              )
-            }
-          }
+          // Email de confirmation : uniquement via customer.subscription.created (PaymentConfirmationEmail)
         }
         break
       }
