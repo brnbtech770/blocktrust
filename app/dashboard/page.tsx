@@ -29,7 +29,7 @@ export default async function Dashboard({
     const session = await auth();
     const resolvedSearchParams = await searchParams;
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id || !session?.user?.email) {
       return (
         <div className="p-8">
           <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
@@ -39,9 +39,9 @@ export default async function Dashboard({
       );
     }
 
-    // Récupérer l'utilisateur
+    // Récupérer l'utilisateur (id session = périmètre données)
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       include: { plan: true },
     });
     

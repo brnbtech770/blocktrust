@@ -17,16 +17,11 @@ export async function GET(
 ): Promise<NextResponse<VerificationEvent[] | { error: string }>> {
   try {
     const session = await auth()
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    })
-    if (!user) {
-      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 })
-    }
+    const userId = session.user.id
 
     const limit = Math.min(
       parseInt(req.nextUrl.searchParams.get('limit') ?? String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT,
@@ -36,7 +31,7 @@ export async function GET(
     const verifications = await prisma.verification.findMany({
       where: {
         certificateId: { not: null },
-        certificate: { entity: { userId: user.id } },
+        certificate: { entity: { userId } },
       },
       include: {
         certificate: { select: { publicId: true } },

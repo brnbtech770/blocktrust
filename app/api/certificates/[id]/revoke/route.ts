@@ -19,18 +19,11 @@ export async function POST(
     // Vérifier l'authentification
     const session = await auth()
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    // Récupérer l'utilisateur
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 })
-    }
+    const userId = session.user.id
 
     // Valider l'ID du certificat
     const resolvedParams = await params
@@ -45,9 +38,11 @@ export async function POST(
 
     const certificateId = parsed.data
 
-    // Récupérer le certificat avec l'entité (et user pour email) pour vérifier la propriété
-    const certificate = await prisma.certificate.findUnique({
-      where: { id: certificateId },
+    const certificate = await prisma.certificate.findFirst({
+      where: {
+        id: certificateId,
+        entity: { userId },
+      },
       include: {
         entity: {
           select: {
@@ -66,14 +61,6 @@ export async function POST(
       return NextResponse.json(
         { error: 'Certificat non trouvé' },
         { status: 404 }
-      )
-    }
-
-    // Vérifier que l'entité appartient à l'utilisateur
-    if (certificate.entity.userId !== user.id) {
-      return NextResponse.json(
-        { error: 'Non autorisé : ce certificat ne vous appartient pas' },
-        { status: 403 }
       )
     }
 
@@ -98,7 +85,9 @@ export async function POST(
     })
 
     // Logger l'événement
-    console.log(`[REVOKE] Certificat ${certificateId} révoqué par utilisateur ${user.id} (${user.email})`)
+    console.log(
+      `[REVOKE] Certificat ${certificateId} révoqué par utilisateur ${userId} (${session.user.email ?? ''})`
+    )
 
     // Email transactionnel : certificat révoqué
     const entityName = certificate.entity.entityType === 'INDIVIDUAL'

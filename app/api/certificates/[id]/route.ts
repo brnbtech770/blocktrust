@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     // Vérifier l'authentification
     const user = await getAuthUser(req);
     
-    if (!user?.email) {
+    if (!user?.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
@@ -46,9 +46,11 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     const { action, reason } = parsed.data;
 
-    // Récupérer le certificat et vérifier qu'il appartient à l'utilisateur
-    const certificate = await prisma.certificate.findUnique({
-      where: { id },
+    const certificate = await prisma.certificate.findFirst({
+      where: {
+        id,
+        entity: { userId: user.id },
+      },
       include: {
         entity: {
           select: {
@@ -66,13 +68,6 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     if (!certificate) {
       return NextResponse.json({ error: 'Certificat non trouvé' }, { status: 404 });
-    }
-
-    if (certificate.entity.userId !== user.id) {
-      return NextResponse.json(
-        { error: 'Non autorisé à modifier ce certificat' },
-        { status: 403 }
-      );
     }
 
     // Déterminer le nouveau statut selon l'action et le statut actuel

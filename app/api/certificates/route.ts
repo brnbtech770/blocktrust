@@ -19,24 +19,17 @@ export async function GET(req: NextRequest) {
   try {
     // Vérifier l'authentification avec NextAuth v5
     const session = await auth()
-    
-    if (!session?.user?.email) {
+
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    // Récupérer l'utilisateur depuis la base de données
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 })
-    }
+    const userId = session.user.id
 
     // Récupérer les certificats via les entités de l'utilisateur
     const certificates = await prisma.certificate.findMany({
       where: {
-        entity: { userId: user.id },
+        entity: { userId },
       },
       include: {
         entity: {
@@ -106,13 +99,13 @@ export async function POST(req: NextRequest) {
     // Vérifier l'authentification avec NextAuth v5
     const session = await auth()
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    // Récupérer l'utilisateur depuis la base de données
+    // Récupérer l'utilisateur depuis la base de données (id session = source de vérité)
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       include: { plan: true },
     })
 
@@ -229,6 +222,7 @@ export async function POST(req: NextRequest) {
     const existingActive = await prisma.certificate.findFirst({
       where: {
         entityId,
+        entity: { userId: user.id },
         status: { in: ['ACTIVE', 'PENDING', 'ANCHORED'] },
       },
       include: {

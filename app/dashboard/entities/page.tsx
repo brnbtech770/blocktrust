@@ -9,13 +9,13 @@ import Link from "next/link";
 export default async function EntitiesPage() {
   const session = await auth();
   
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return null;
   }
 
   // Récupérer l'utilisateur avec son plan
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
+    where: { id: session.user.id },
     include: { plan: true },
   });
 

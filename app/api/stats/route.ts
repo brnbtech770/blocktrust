@@ -12,21 +12,16 @@ export const dynamic = 'force-dynamic'
 export async function GET(): Promise<NextResponse<DashboardStats | { error: string }>> {
   try {
     const session = await auth()
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    })
-    if (!user) {
-      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 })
-    }
+    const userId = session.user.id
 
     const [activeCerts, verifications7d, fraudAlertsCount] = await Promise.all([
       prisma.certificate.count({
         where: {
-          entity: { userId: user.id },
+          entity: { userId },
           status: { in: ['ACTIVE', 'ANCHORED'] },
         },
       }),
@@ -35,18 +30,18 @@ export async function GET(): Promise<NextResponse<DashboardStats | { error: stri
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
         return prisma.verification.count({
           where: {
-            certificate: { entity: { userId: user.id } },
+            certificate: { entity: { userId } },
             verifiedAt: { gte: sevenDaysAgo },
           },
         })
       })(),
-      prisma.aIAlert.count({
+      prisma.adminAlert.count({
         where: {
-          status: { in: ['PENDING', 'INVESTIGATING', 'ESCALATED'] },
-          OR: [
-            { entity: { userId: user.id } },
-            { certificate: { entity: { userId: user.id } } },
-          ],
+          userId,
+          read: false,
+          type: {
+            in: ['FRAUD_ALERT', 'SUSPICIOUS_VOLUME', 'SUSPICIOUS_SCANNING'],
+          },
         },
       }),
     ])

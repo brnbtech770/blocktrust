@@ -20,7 +20,7 @@ export default async function CertificateDetailPage({
     const resolvedParams = await params;
     const certificateId = resolvedParams.id;
 
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return (
         <div className="p-8">
           <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
@@ -30,24 +30,11 @@ export default async function CertificateDetailPage({
       );
     }
 
-    // Récupérer l'utilisateur
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return (
-        <div className="p-8">
-          <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
-            <p className="text-red-400">Erreur : Utilisateur non trouvé.</p>
-          </div>
-        </div>
-      );
-    }
-
-    // Récupérer le certificat avec l'entité et la dernière signature (pour badge / verify URL)
-    const certificate = await prisma.certificate.findUnique({
-      where: { id: certificateId },
+    const certificate = await prisma.certificate.findFirst({
+      where: {
+        id: certificateId,
+        entity: { userId: session.user.id },
+      },
       include: {
         entity: true,
         signatures: {
@@ -64,17 +51,6 @@ export default async function CertificateDetailPage({
 
     if (!certificate) {
       notFound();
-    }
-
-    // Vérifier que le certificat appartient à l'utilisateur
-    if (certificate.entity.userId !== user.id) {
-      return (
-        <div className="p-8">
-          <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
-            <p className="text-red-400">Erreur : Ce certificat ne vous appartient pas.</p>
-          </div>
-        </div>
-      );
     }
 
     const entity = certificate.entity;

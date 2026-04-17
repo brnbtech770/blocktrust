@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       cookies: req.cookies.getAll().map(c => c.name)
     });
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       console.error('❌ No session found:', { 
         session, 
         cookies: req.cookies.getAll(),
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     // Récupérer l'utilisateur depuis la base de données
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+      where: { id: session.user.id },
       include: { 
         entities: true,
         plan: true,
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
-      console.error('❌ User not found in database:', session.user.email);
+      console.error('❌ User not found in database:', session.user.id);
       return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
     }
 
@@ -293,26 +293,12 @@ export async function GET(req: NextRequest) {
     // Vérifier l'authentification avec NextAuth v5
     const session = await auth();
     
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    // Récupérer l'utilisateur depuis la base de données
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: { 
-        entities: true,
-        plan: true,
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
-    }
-
-    // Récupérer les entités de l'utilisateur
     const entities = await prisma.entity.findMany({
-      where: { userId: user.id },
+      where: { userId: session.user.id },
       include: {
         certificates: true,
       },

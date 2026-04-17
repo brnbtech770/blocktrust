@@ -15,23 +15,16 @@ export async function POST(
 ) {
   try {
     const session = await auth()
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
     const { certId } = await params
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: { id: true },
-    })
-    if (!user) {
-      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 })
-    }
 
     const certificate = await prisma.certificate.findFirst({
       where: {
         id: certId,
-        entity: { userId: user.id },
+        entity: { userId: session.user.id },
       },
       select: { id: true },
     })

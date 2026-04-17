@@ -12,27 +12,18 @@ export async function GET(
 ) {
   try {
     const session = await auth()
-    
-    if (!session?.user?.email) {
+
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
     const resolvedParams = await params
     const entityId = resolvedParams.id
 
-    // Vérifier que l'entité appartient à l'utilisateur
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 })
-    }
-
     const entity = await prisma.entity.findFirst({
       where: {
         id: entityId,
-        userId: user.id,
+        userId: session.user.id,
       },
     })
 
