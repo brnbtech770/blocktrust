@@ -8,8 +8,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth()
-  if (!session?.user?.email) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-  if (!isAdmin(session.user.email)) return NextResponse.json({ error: 'Admin requis' }, { status: 403 })
+  if (!session?.user?.email || !isAdmin(session.user.email)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const { id } = await params
   const body = await req.json().catch(() => ({}))

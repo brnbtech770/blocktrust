@@ -11,11 +11,8 @@ import { z } from 'zod'
 export async function GET(req: NextRequest) {
   try {
     const session = await auth()
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-    }
-    if (!isAdmin(session.user.email)) {
-      return NextResponse.json({ error: 'Accès admin requis' }, { status: 403 })
+    if (!session?.user?.email || !isAdmin(session.user.email)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { searchParams } = new URL(req.url)
@@ -47,11 +44,8 @@ const patchSchema = z.object({
 export async function PATCH(req: NextRequest) {
   try {
     const session = await auth()
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-    }
-    if (!isAdmin(session.user.email)) {
-      return NextResponse.json({ error: 'Accès admin requis' }, { status: 403 })
+    if (!session?.user?.email || !isAdmin(session.user.email)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const body = await req.json()

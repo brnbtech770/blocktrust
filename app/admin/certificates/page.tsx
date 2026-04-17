@@ -3,6 +3,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import { requireAdminPage } from '@/app/lib/require-admin-page'
 import Link from 'next/link'
 import QuickActions from '@/app/components/admin/QuickActions'
 
@@ -18,6 +19,8 @@ export default async function AdminCertificatesPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
+  await requireAdminPage()
+
   const resolvedSearchParams = await searchParams
   const statusFilter = resolvedSearchParams.status as string | undefined
   const typeFilter = resolvedSearchParams.type as string | undefined

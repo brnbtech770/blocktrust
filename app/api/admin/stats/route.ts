@@ -11,13 +11,8 @@ export async function GET(req: NextRequest) {
   try {
     // Vérifier l'authentification et les droits admin
     const session = await auth()
-    
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
-    }
-
-    if (!isAdmin(session.user.email)) {
-      return NextResponse.json({ error: 'Accès admin requis' }, { status: 403 })
+    if (!session?.user?.email || !isAdmin(session.user.email)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     // Calculer les KPIs

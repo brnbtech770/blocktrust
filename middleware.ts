@@ -65,6 +65,32 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // ─── Protection stricte : toutes les routes /admin (JWT Edge : email session)
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    try {
+      const email = await getEmailFromSession(request)
+      if (!email || !isAdmin(email)) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+    } catch (error) {
+      console.error('Middleware admin guard:', error)
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  }
+
+  // ─── Protection stricte : toutes les API /api/admin/*
+  if (pathname.startsWith('/api/admin')) {
+    try {
+      const email = await getEmailFromSession(request)
+      if (!email || !isAdmin(email)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    } catch (error) {
+      console.error('Middleware admin API guard:', error)
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
   const isVerifyPath = pathname === '/verify' || pathname.startsWith('/verify/')
   if (isVerifyPath) {
     try {
@@ -78,30 +104,21 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(signInUrl)
       }
     } catch (error) {
-      console.error('❌ Middleware verify redirect:', error)
+      console.error('Middleware verify redirect:', error)
     }
     return NextResponse.next()
   }
 
-  // Redirections admin / client (JWT Edge aligné avec layouts)
-  const isUnderAdmin = pathname === '/admin' || pathname.startsWith('/admin/')
-  const isClientDashboardRoot = pathname === '/dashboard'
-
-  if (isUnderAdmin || isClientDashboardRoot) {
+  // Admin connecté : racine /dashboard → back-office
+  if (pathname === '/dashboard') {
     try {
       const email = await getEmailFromSession(request)
-      if (email) {
-        if (isAdmin(email) && isClientDashboardRoot) {
-          return NextResponse.redirect(new URL('/admin/dashboard', request.url))
-        }
-        if (!isAdmin(email) && isUnderAdmin) {
-          return NextResponse.redirect(new URL('/dashboard', request.url))
-        }
+      if (email && isAdmin(email)) {
+        return NextResponse.redirect(new URL('/admin/dashboard', request.url))
       }
     } catch (error) {
-      console.error('❌ Middleware redirect admin/client:', error)
+      console.error('Middleware admin redirect from dashboard:', error)
     }
-    return NextResponse.next()
   }
 
   // Pages (/, /dashboard/*, /admin/*) hors garde ci-dessus : pas de getToken pour le reste — évite faux « non connecté » vs auth().
@@ -143,7 +160,7 @@ export async function middleware(request: NextRequest) {
 
     return NextResponse.next()
   } catch (error) {
-    console.error('❌ Middleware error:', error)
+    console.error('Middleware error:', error)
     return NextResponse.json(
       { error: 'Service temporairement indisponible' },
       { status: 503 }
@@ -165,5 +182,6 @@ export const config = {
     '/api/stripe/:path*',
     '/api/stats',
     '/api/activity',
+    '/api/admin/:path*',
   ],
 }

@@ -3,6 +3,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import { requireAdminPage } from '@/app/lib/require-admin-page'
 import { notFound } from 'next/navigation'
 import Stripe from 'stripe'
 
@@ -15,6 +16,8 @@ export default async function AdminUserDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  await requireAdminPage()
+
   const { id } = await params
 
   const user = await prisma.user.findUnique({

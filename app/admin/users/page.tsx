@@ -4,10 +4,13 @@
 
 import { prisma } from '@/app/lib/db'
 import { isAdmin } from '@/app/lib/admin'
+import { requireAdminPage } from '@/app/lib/require-admin-page'
 import AdminUsersTable from '@/app/admin/users/AdminUsersTable'
 import { isSuspectUserForAdmin } from '@/lib/register-anti-bot'
 
 export default async function AdminUsersPage() {
+  await requireAdminPage()
+
   const users = await prisma.user.findMany({
     include: {
       plan: true,

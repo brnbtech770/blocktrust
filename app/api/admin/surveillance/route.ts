@@ -18,7 +18,7 @@ function startOfHour(d: Date): Date {
 export async function GET() {
   const session = await auth()
   if (!session?.user?.email || !isAdmin(session.user.email)) {
-    return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   const now = new Date()

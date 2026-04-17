@@ -2,8 +2,10 @@
 // Dashboard Surveillance IA (admin)
 // ============================================================
 
+import { requireAdminPage } from '@/app/lib/require-admin-page'
 import SurveillanceDashboard from '@/app/admin/surveillance/SurveillanceDashboard'
 
-export default function AdminSurveillancePage() {
+export default async function AdminSurveillancePage() {
+  await requireAdminPage()
   return <SurveillanceDashboard />
 }

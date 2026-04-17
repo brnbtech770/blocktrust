@@ -1,13 +1,9 @@
-import { auth } from '@/app/lib/auth-server'
-import { redirect } from 'next/navigation'
-import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
+import { requireAdminPage } from '@/app/lib/require-admin-page'
 import AdminKycClient from './AdminKycClient'
 
 export default async function AdminKycPage() {
-  const session = await auth()
-  if (!session?.user?.email) redirect('/auth/signin')
-  if (!isAdmin(session.user.email)) redirect('/dashboard')
+  await requireAdminPage()
 
   const users = await prisma.user.findMany({
     where: { email: { not: null } },

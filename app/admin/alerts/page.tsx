@@ -3,6 +3,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import { requireAdminPage } from '@/app/lib/require-admin-page'
 import AdminAlertsClient from '@/app/admin/alerts/AdminAlertsClient'
 
 type SearchParams = { type?: string }
@@ -12,6 +13,8 @@ export default async function AdminOperationalAlertsPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
+  await requireAdminPage()
+
   const { type: typeParam } = await searchParams
   const typeFilter = typeParam && typeParam !== 'ALL' ? typeParam : 'ALL'
 

@@ -3,6 +3,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import { requireAdminPage } from '@/app/lib/require-admin-page'
 import { notFound } from 'next/navigation'
 import CertificateActions from '@/app/components/admin/CertificateActions'
 
@@ -11,6 +12,8 @@ export default async function AdminCertificateDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  await requireAdminPage()
+
   const { id } = await params
 
   const certificate = await prisma.certificate.findUnique({

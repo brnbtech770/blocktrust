@@ -3,6 +3,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import { requireAdminPage } from '@/app/lib/require-admin-page'
 
 type SearchParams = {
   status?: string
@@ -15,6 +16,8 @@ export default async function AdminAiAlertsPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
+  await requireAdminPage()
+
   const resolvedSearchParams = await searchParams
   const statusFilter = resolvedSearchParams.status as string | undefined
   const severityFilter = resolvedSearchParams.severity as string | undefined

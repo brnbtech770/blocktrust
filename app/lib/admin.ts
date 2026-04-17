@@ -2,7 +2,10 @@
 // Gestion des administrateurs
 // ============================================================
 
-const adminEmailsRaw = process.env.ADMIN_EMAILS ?? "brnbtech@gmail.com";
+// Liste stricte : en prod, surcharger avec ADMIN_EMAILS (ex. brnbtech@gmail.com,laurianne@blocktrust.tech).
+const adminEmailsRaw =
+  process.env.ADMIN_EMAILS ??
+  'brnbtech@gmail.com,laurianne@blocktrust.tech'
 
 export const ADMIN_EMAILS = adminEmailsRaw
   .split(",")

@@ -3,6 +3,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import { requireAdminPage } from '@/app/lib/require-admin-page'
 import Stripe from 'stripe'
 import VerifyBadgeCard from '@/app/components/dashboard/VerifyBadgeCard'
 
@@ -67,6 +68,8 @@ function KpiCard({
 }
 
 export default async function AdminDashboard() {
+  await requireAdminPage()
+
   // KPIs
   const [
     pendingCertificates,
