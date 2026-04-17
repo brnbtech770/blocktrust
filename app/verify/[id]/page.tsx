@@ -21,6 +21,11 @@ import { sendEmail } from '@/lib/email'
 import { FraudAlertEmail, subject as fraudAlertSubject } from '@/emails/FraudAlertEmail'
 import type { Metadata } from 'next'
 import type { Prisma } from '@prisma/client'
+import {
+  getTrustScoreColor,
+  getTrustScoreLabel,
+  persistUserTrustScore,
+} from '@/lib/trustscore'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,7 +43,7 @@ type PageVerdict =
 const signatureVerifyInclude = {
   certificate: {
     include: {
-      entity: { include: { trustScore: true } },
+      entity: { include: { user: { select: { trustScore: true } } } },
     },
   },
 } as const
@@ -263,12 +268,14 @@ export default async function VerifyPublicPage({
       type: 'FRAUD_ALERT',
       entityId: entity.id,
       certificateId: cert.id,
+      userId: entity.userId,
       metadata: {
         ipHash: hashedIp,
         userAgent: userAgent.slice(0, 200),
         reason: 'CONTEXT_MISMATCH_PUBLIC_VERIFY',
       },
     })
+    await persistUserTrustScore(entity.userId)
     const owner = await prisma.user.findUnique({
       where: { id: entity.userId },
       select: { email: true },
@@ -553,7 +560,7 @@ function ValidView({
   verificationsLast30Days,
   quotaFooter,
 }: {
-  entity: Prisma.EntityGetPayload<{ include: { trustScore: true } }>
+  entity: Prisma.EntityGetPayload<{ include: { user: { select: { trustScore: true } } } }>
   certificate: {
     id: string
     level: string
@@ -584,6 +591,9 @@ function ValidView({
   const hashDisplay = signature.contextHash ?? '—'
   const anchored = Boolean(certificate.txHash)
   const rotatingQr = signature.dynamicToken != null
+  const holderTrustScore = entity.user?.trustScore ?? 0
+  const holderLabel = getTrustScoreLabel(holderTrustScore)
+  const holderColor = getTrustScoreColor(holderTrustScore)
 
   return (
     <div className="bt-circuit-bg min-h-screen bg-navy font-sans text-white/80">
@@ -613,14 +623,16 @@ function ValidView({
             {anchored ? ' — Ancré sur Polygon' : ''}
           </p>
 
-          {entity.trustScore && (
-            <div className="mb-6 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center">
-              <p className="text-xs uppercase tracking-wider text-white/50">TrustScore</p>
-              <p className="font-mono text-xl font-semibold text-bt-cyan">
-                {entity.trustScore.score}/100 <span className="text-sm text-white/70">({entity.trustScore.level})</span>
-              </p>
-            </div>
-          )}
+          <div className="mb-6 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center">
+            <p className="text-xs uppercase tracking-wider text-white/50">TrustScore (titulaire)</p>
+            <p
+              className="font-mono text-xl font-semibold"
+              style={{ color: holderColor }}
+            >
+              {holderTrustScore}/100{' '}
+              <span className="text-sm text-white/70">({holderLabel})</span>
+            </p>
+          </div>
 
           <div className="space-y-6">
             <div>

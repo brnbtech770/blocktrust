@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
+import { persistUserTrustScore } from '@/lib/trustscore'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -107,6 +108,8 @@ export async function POST(req: NextRequest) {
           },
         }),
       ])
+      await persistUserTrustScore(userId)
+      await persistUserTrustScore(targetUser.id)
       const { sendMutualTrustEmail } = await import('@/lib/trust-circle-email')
       await sendMutualTrustEmail(userId, targetUser.id).catch(console.error)
       return NextResponse.json({

@@ -8,6 +8,7 @@ import { stripe } from '@/lib/stripe'
 import { prisma } from '@/app/lib/db'
 import { btError, btErrorDevDetails, btLog } from '@/lib/prodLog'
 import { createKycSubmittedAdminAlertIfNew } from '@/lib/admin-alerts'
+import { persistUserTrustScore } from '@/lib/trustscore'
 
 const identityWebhookSecret = process.env.STRIPE_IDENTITY_WEBHOOK_SECRET!
 
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest) {
             kycVerifiedAt: new Date(),
           },
         })
+        await persistUserTrustScore(userId)
         const kycUser = await prisma.user.findUnique({
           where: { id: userId },
           select: { email: true },

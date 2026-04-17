@@ -8,6 +8,7 @@ import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import { createAdminAlert } from '@/lib/admin-alerts'
+import { persistUserTrustScore } from '@/lib/trustscore'
 
 const actionSchema = z.object({
   action: z.enum(['activate', 'suspend', 'reactivate', 'revoke', 'reject']),
@@ -47,6 +48,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     // Récupérer le certificat
     const certificate = await prisma.certificate.findUnique({
       where: { id },
+      select: { id: true, entityId: true, status: true },
     })
 
     if (!certificate) {
@@ -137,6 +139,13 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         entityId: certificate.entityId,
         metadata: { certificateId: id },
       })
+      const ownerEntity = await prisma.entity.findUnique({
+        where: { id: certificate.entityId },
+        select: { userId: true },
+      })
+      if (ownerEntity) {
+        await persistUserTrustScore(ownerEntity.userId)
+      }
     } else if (action === 'revoke' || action === 'reject') {
       await createAdminAlert({
         type: 'CERT_REVOKED',

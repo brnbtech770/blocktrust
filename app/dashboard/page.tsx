@@ -18,6 +18,7 @@ import ActivityFeed from "@/app/components/dashboard/ActivityFeed";
 import KpiGridSkeleton from "@/app/components/dashboard/KpiGridSkeleton";
 import CertificateTableSkeleton from "@/app/components/dashboard/CertificateTableSkeleton";
 import ActivityFeedSkeleton from "@/app/components/dashboard/ActivityFeedSkeleton";
+import { getTrustScoreColor, getTrustScoreLabel } from "@/lib/trustscore";
 
 export default async function Dashboard({
   searchParams,
@@ -55,6 +56,12 @@ export default async function Dashboard({
     }
 
     const firstName = user.name?.split(' ')[0] || user.email?.split('@')[0] || 'Utilisateur';
+
+    const trustScoreValue = user.trustScore ?? 0;
+    const trustScoreLabel = getTrustScoreLabel(trustScoreValue);
+    const trustScoreColor = getTrustScoreColor(trustScoreValue);
+    const showKycTrustHint =
+      trustScoreValue < 50 && user.kycStatus !== "VERIFIED";
 
     const userIsAdmin = isAdmin(session.user.email);
     const subscription = await prisma.subscription.findUnique({
@@ -144,6 +151,35 @@ export default async function Dashboard({
           <p className="font-sans text-base leading-relaxed text-white/80">
             Voici un aperçu de votre activité BlockTrust
           </p>
+        </div>
+
+        <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+            <h2 className="font-syne text-lg font-semibold tracking-tight text-white sm:text-xl">
+              TrustScore
+            </h2>
+            <p className="font-mono text-sm tabular-nums" style={{ color: trustScoreColor }}>
+              <span className="text-xl font-semibold">{trustScoreValue}</span>
+              <span className="text-white/50">/100</span>
+              <span className="ml-2 text-xs uppercase tracking-wider text-white/60">
+                {trustScoreLabel}
+              </span>
+            </p>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${trustScoreValue}%`,
+                background: trustScoreColor,
+              }}
+            />
+          </div>
+          {showKycTrustHint && (
+            <p className="mt-3 font-sans text-sm text-white/65">
+              Complétez votre KYC pour améliorer votre score
+            </p>
+          )}
         </div>
 
         <Suspense fallback={<KpiGridSkeleton />}>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
+import { persistUserTrustScore } from '@/lib/trustscore'
 
 export async function POST(
   req: NextRequest,
@@ -65,6 +66,8 @@ export async function POST(
         data: { isMutual: true, trustType: 'MUTUAL' },
       }),
     ])
+    await persistUserTrustScore(session.user.id)
+    await persistUserTrustScore(relation.fromUserId)
     const { sendMutualTrustEmail } = await import('@/lib/trust-circle-email')
     await sendMutualTrustEmail(session.user.id, relation.fromUserId).catch(console.error)
     return NextResponse.json({

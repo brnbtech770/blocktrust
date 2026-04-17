@@ -13,6 +13,7 @@ import {
   createKycSubmittedAdminAlertIfNew,
   createNewPaymentAdminAlertIfNew,
 } from '@/lib/admin-alerts'
+import { persistUserTrustScore } from '@/lib/trustscore'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
@@ -272,6 +273,8 @@ export async function POST(req: NextRequest) {
             `Subscription créée/activée — plan: ${plan}`
           )
 
+          await persistUserTrustScore(user.id)
+
           // Email de confirmation : uniquement via customer.subscription.created (PaymentConfirmationEmail)
         }
         break
@@ -404,6 +407,7 @@ export async function POST(req: NextRequest) {
             kycVerifiedAt: new Date(),
           },
         })
+        await persistUserTrustScore(userId)
         const kycUser = await prisma.user.findUnique({
           where: { id: userId },
           select: { email: true },

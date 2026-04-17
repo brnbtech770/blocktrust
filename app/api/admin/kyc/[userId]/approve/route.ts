@@ -3,6 +3,7 @@ import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
 import { sendKYCApprovedEmail } from '@/lib/kyc-email'
+import { persistUserTrustScore } from '@/lib/trustscore'
 
 export async function PATCH(
   req: NextRequest,
@@ -37,6 +38,8 @@ export async function PATCH(
       },
     }),
   ])
+
+  await persistUserTrustScore(userId)
 
   sendKYCApprovedEmail(userId).catch(console.error)
 

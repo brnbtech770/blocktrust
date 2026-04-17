@@ -41,6 +41,7 @@ export async function createAdminFraudAlert(args: {
   type: 'FRAUD_ALERT' | 'SUSPICIOUS_VOLUME' | 'SUSPICIOUS_SCANNING'
   entityId?: string | null
   certificateId?: string | null
+  userId?: string | null
   metadata?: Record<string, unknown>
 }) {
   const titleByType = {
@@ -58,6 +59,7 @@ export async function createAdminFraudAlert(args: {
     title: titleByType[args.type],
     description: parts.length ? parts.join(' · ') : 'Anomalie détectée sur /verify',
     entityId: args.entityId ?? undefined,
+    userId: args.userId ?? undefined,
     metadata: {
       ...(args.metadata ?? {}),
       ...(args.certificateId ? { certificateId: args.certificateId } : {}),
