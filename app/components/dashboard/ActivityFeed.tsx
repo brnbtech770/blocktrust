@@ -71,14 +71,13 @@ function shortId(id: string | null): string {
 }
 
 /**
- * Dédupe les évènements par (certificateId, minute) : plusieurs vérifications du
- * même certificat dans la même minute = une seule entrée (la plus récente).
+ * Dédupe par certificateId : une seule entrée (la plus récente) par certificat.
+ * Les évènements sans certificateId sont conservés tels quels (clé id).
  */
 function dedupe(events: VerificationEvent[]): VerificationEvent[] {
   const byKey = new Map<string, VerificationEvent>()
   for (const ev of events) {
-    const minuteBucket = Math.floor(new Date(ev.verifiedAt).getTime() / 60_000)
-    const key = `${ev.certificateId ?? 'null'}:${minuteBucket}`
+    const key = ev.certificateId ?? `__null__:${ev.id}`
     const existing = byKey.get(key)
     if (!existing || new Date(ev.verifiedAt).getTime() > new Date(existing.verifiedAt).getTime()) {
       byKey.set(key, ev)

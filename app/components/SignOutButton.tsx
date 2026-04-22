@@ -8,7 +8,7 @@ export default function SignOutButton() {
     <button
       type="button"
       onClick={() => signOut({ callbackUrl: '/' })}
-      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 font-sans text-sm text-white/50 transition-all hover:bg-white/5 hover:text-white"
+      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 font-sans text-sm text-bt-cyan transition-all hover:bg-white/5 hover:text-white"
     >
       <LogOut size={16} aria-hidden />
       <span>Déconnexion</span>
