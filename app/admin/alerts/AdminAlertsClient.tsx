@@ -7,6 +7,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
+import { ShieldCheck } from 'lucide-react'
 
 export type AdminAlertRow = {
   id: string
@@ -174,7 +175,8 @@ export default function AdminAlertsClient({
           className="rounded-xl border border-white/10 p-12 text-center"
           style={{ background: 'rgba(13,31,60,0.5)', borderColor: 'var(--bt-border)' }}
         >
-          <p style={{ color: 'var(--bt-muted)' }}>Aucune alerte pour ce filtre.</p>
+          <ShieldCheck size={48} aria-hidden className="mx-auto mb-4 text-bt-cyan" />
+          <h3 className="font-syne text-lg text-white/60">Aucune alerte active</h3>
         </div>
       ) : (
         <ul className="space-y-3">

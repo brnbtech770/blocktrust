@@ -135,27 +135,13 @@ export default async function AdminLayout({
           borderRightColor: 'var(--bt-border)',
         }}
       >
-        {/* Bloc logo 60px */}
+        {/* Bloc logo + badge ADMIN (stacked) */}
         <div
-          className="flex flex-shrink-0 items-center gap-2.5 px-4 border-b"
-          style={{
-            height: 60,
-            borderBottomColor: 'var(--bt-border)',
-          }}
+          className="flex flex-shrink-0 flex-col items-center gap-1.5 border-b px-4 py-3"
+          style={{ borderBottomColor: 'var(--bt-border)' }}
         >
           <Logo size="sm" withText={true} href="/admin/dashboard" />
-          <span
-            className="rounded font-bold uppercase tracking-widest"
-            style={{
-              fontFamily: 'var(--font-mono-bt), monospace',
-              fontSize: '9px',
-              letterSpacing: '0.15em',
-              color: '#0a1628',
-              background: '#00d4ff',
-              padding: '2px 6px',
-              marginLeft: 2,
-            }}
-          >
+          <span className="mx-auto w-fit rounded border border-bt-cyan/30 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-widest text-bt-cyan">
             ADMIN
           </span>
         </div>
@@ -166,10 +152,12 @@ export default async function AdminLayout({
             <Link
               key={href}
               href={href}
-              className="flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium transition-colors hover:bg-[rgba(255,255,255,0.04)] hover:text-white"
+              className="group flex items-center gap-3 rounded-lg px-4 py-3 text-base font-medium transition-colors hover:bg-[rgba(255,255,255,0.04)] hover:text-white"
               style={{ color: 'var(--bt-muted)' }}
             >
-              <Icon />
+              <span className="inline-flex shrink-0 transition-all duration-300 group-hover:drop-shadow-[0_0_6px_rgba(0,212,255,0.8)]">
+                <Icon />
+              </span>
               <span className="flex-1">{label}</span>
               {href === '/admin/alerts' && unreadAdminAlerts > 0 ? (
                 <span

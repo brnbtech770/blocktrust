@@ -34,6 +34,14 @@ export default {
         h2: ["1.75rem", { lineHeight: "1.3", fontWeight: "600" }],
         h3: ["1.25rem", { lineHeight: "1.4", fontWeight: "600" }],
       },
+      boxShadow: {
+        "glow-cyan": "0 0 8px rgba(0, 212, 255, 0.6)",
+        "glow-gold": "0 0 8px rgba(189, 167, 107, 0.6)",
+      },
+      dropShadow: {
+        "glow-cyan": "0 0 6px rgba(0, 212, 255, 0.8)",
+        "glow-gold": "0 0 6px rgba(189, 167, 107, 0.8)",
+      },
     },
   },
 } satisfies Config;

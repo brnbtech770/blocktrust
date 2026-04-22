@@ -10,6 +10,7 @@ import { auth } from "@/app/lib/auth-server";
 import { isAdmin } from "@/app/lib/admin";
 import { getVerifyQuotaDisplay } from "@/lib/verify-quotas";
 import Link from "next/link";
+import { Plus, Shield } from "lucide-react";
 import VerifyBadgeCard from "@/app/components/dashboard/VerifyBadgeCard";
 import type { CertificateTableItem, VerificationEvent } from "@/types/dashboard";
 import StatsBlock from "@/app/components/dashboard/StatsBlock";
@@ -201,15 +202,17 @@ export default async function Dashboard({
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/dashboard/create"
-              className="inline-flex min-w-0 w-full items-center justify-center rounded-lg bg-bt-cyan px-4 py-3 text-center font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:px-6 sm:text-base"
+              className="inline-flex min-w-0 w-full items-center justify-center gap-2 rounded-lg bg-bt-cyan px-6 py-3 font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:text-base"
             >
-              ➕ Créer une entité
+              <Plus size={18} aria-hidden />
+              Créer une entité
             </Link>
             <Link
               href="/dashboard/certificates"
-              className="inline-flex min-w-0 w-full items-center justify-center rounded-lg border border-white/20 px-4 py-3 text-center font-sans text-sm font-semibold text-white transition-all hover:border-white/40 sm:w-auto sm:px-6 sm:text-base"
+              className="inline-flex min-w-0 w-full items-center justify-center gap-2 rounded-lg border border-white/20 px-6 py-3 font-sans text-sm font-semibold text-white transition-all hover:border-bt-cyan/50 hover:text-bt-cyan sm:w-auto sm:text-base"
             >
-              🛡️ Voir tous mes certificats
+              <Shield size={18} aria-hidden />
+              Voir tous mes certificats
             </Link>
           </div>
         </div>

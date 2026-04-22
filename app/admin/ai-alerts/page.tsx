@@ -4,6 +4,7 @@
 
 import { prisma } from '@/app/lib/db'
 import { requireAdminPage } from '@/app/lib/require-admin-page'
+import { ShieldCheck } from 'lucide-react'
 
 type SearchParams = {
   status?: string
@@ -406,14 +407,9 @@ export default async function AdminAiAlertsPage({
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center transition-all hover:border-gold/30">
-          <div className="mb-4 text-6xl">✅</div>
-          <h3 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">
-            Aucune alerte
-          </h3>
-          <p style={{ color: 'var(--bt-muted)' }}>
-            Toutes les alertes sont résolues ou il n&apos;y a pas d&apos;alerte en cours.
-          </p>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center transition-all hover:border-bt-cyan/30">
+          <ShieldCheck size={48} aria-hidden className="mx-auto mb-4 text-bt-cyan" />
+          <h3 className="font-syne text-lg text-white/60">Aucune alerte active</h3>
         </div>
       )}
     </div>
