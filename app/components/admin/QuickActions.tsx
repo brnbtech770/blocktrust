@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import ActionButton, { NoActionText } from './ActionButton'
 
 interface QuickActionsProps {
   certificateId: string
@@ -15,11 +16,9 @@ export default function QuickActions({ certificateId, currentStatus }: QuickActi
 
   const [showRevokeModal, setShowRevokeModal] = useState(false)
   const [revokeReason, setRevokeReason] = useState('')
-
   const [pendingAction, setPendingAction] = useState<string | null>(null)
 
   const handleAction = async (action: string) => {
-    // Pour revoke et reject, afficher un modal de confirmation
     if (action === 'revoke' || action === 'reject') {
       setPendingAction(action)
       setShowRevokeModal(true)
@@ -50,7 +49,6 @@ export default function QuickActions({ certificateId, currentStatus }: QuickActi
         throw new Error(data.error || 'Erreur lors de la mise à jour')
       }
 
-      // Recharger la page pour voir les changements
       router.refresh()
       setShowRevokeModal(false)
       setRevokeReason('')
@@ -74,62 +72,47 @@ export default function QuickActions({ certificateId, currentStatus }: QuickActi
     return labels[action] || action
   }
 
-  const btn = (onClick: () => void, label: string, variant: 'success' | 'danger' | 'warn') => {
-    const styles = {
-      success: { background: 'rgba(29,184,126,0.15)', color: '#1DB87E' },
-      danger: { background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' },
-      warn: { background: 'rgba(232,148,58,0.15)', color: 'var(--bt-warn)' },
-    }
-    return (
-      <button
-        onClick={onClick}
-        disabled={loading}
-        className="px-3 py-1.5 rounded text-sm font-medium transition disabled:opacity-50"
-        style={styles[variant]}
-      >
-        {loading ? '...' : label}
-      </button>
-    )
-  }
-
   return (
-    <div className="flex gap-2 items-center flex-wrap">
+    <div className="flex flex-wrap items-center gap-2">
       {error && (
-        <span className="text-xs" style={{ color: 'var(--bt-danger)' }}>{error}</span>
+        <span className="text-xs text-red-400">{error}</span>
       )}
 
       {currentStatus === 'PENDING' && (
         <>
-          {btn(() => handleAction('activate'), '✅ Valider', 'success')}
-          {btn(() => handleAction('reject'), '❌ Rejeter', 'danger')}
+          <ActionButton variant="validate" onClick={() => handleAction('activate')} loading={loading} />
+          <ActionButton variant="reject" onClick={() => handleAction('reject')} loading={loading} />
         </>
       )}
 
       {(currentStatus === 'ACTIVE' || currentStatus === 'ANCHORED') && (
         <>
-          {btn(() => handleAction('suspend'), '⏸️ Suspendre', 'warn')}
-          {btn(() => handleAction('revoke'), '🚫 Révoquer', 'danger')}
+          <ActionButton variant="suspend" onClick={() => handleAction('suspend')} loading={loading} />
+          <ActionButton variant="revoke" onClick={() => handleAction('revoke')} loading={loading} />
         </>
       )}
 
       {currentStatus === 'SUSPENDED' && (
         <>
-          {btn(() => handleAction('reactivate'), '▶️ Réactiver', 'success')}
-          {btn(() => handleAction('revoke'), '🚫 Révoquer', 'danger')}
+          <ActionButton variant="reactivate" onClick={() => handleAction('reactivate')} loading={loading} />
+          <ActionButton variant="revoke" onClick={() => handleAction('revoke')} loading={loading} />
         </>
       )}
 
-      {(currentStatus === 'REVOKED' || currentStatus === 'EXPIRED') && (
-        <span className="text-sm" style={{ color: 'var(--bt-muted)' }}>Aucune action</span>
-      )}
+      {(currentStatus === 'REVOKED' || currentStatus === 'EXPIRED') && <NoActionText />}
 
       {showRevokeModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="rounded-2xl border p-6 max-w-md w-full mx-4" style={{ background: 'rgba(13,31,60,0.95)', borderColor: 'var(--bt-border)' }}>
-            <h3 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">⚠️ Confirmer l&apos;action</h3>
+          <div
+            className="rounded-2xl border p-6 max-w-md w-full mx-4"
+            style={{ background: 'rgba(13,31,60,0.95)', borderColor: 'var(--bt-border)' }}
+          >
+            <h3 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">
+              ⚠️ Confirmer l&apos;action
+            </h3>
             <p className="text-base mb-4" style={{ color: 'var(--bt-muted)' }}>
               Vous êtes sur le point de {currentStatus === 'PENDING' ? 'rejeter' : 'révoquer'} ce certificat.
-              Cette action est <strong style={{ color: 'var(--bt-danger)' }}>irréversible</strong>.
+              Cette action est <strong className="text-red-400">irréversible</strong>.
             </p>
             <div className="mb-4">
               <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--bt-muted)' }}>
@@ -146,7 +129,11 @@ export default function QuickActions({ certificateId, currentStatus }: QuickActi
             </div>
             <div className="flex gap-3">
               <button
-                onClick={() => { setShowRevokeModal(false); setRevokeReason(''); setPendingAction(null) }}
+                onClick={() => {
+                  setShowRevokeModal(false)
+                  setRevokeReason('')
+                  setPendingAction(null)
+                }}
                 className="flex-1 py-2 px-4 rounded-lg font-medium transition border"
                 style={{ borderColor: 'var(--bt-border)', color: 'white', background: 'transparent' }}
               >
@@ -155,8 +142,7 @@ export default function QuickActions({ certificateId, currentStatus }: QuickActi
               <button
                 onClick={() => pendingAction && executeAction(pendingAction, revokeReason || undefined)}
                 disabled={loading}
-                className="flex-1 py-2 px-4 rounded-lg font-medium transition disabled:opacity-50"
-                style={{ background: 'var(--bt-danger)', color: 'white' }}
+                className="flex-1 py-2 px-4 rounded-lg font-medium transition disabled:opacity-50 bg-red-500 text-white hover:bg-red-600"
               >
                 {loading ? 'Traitement...' : 'Confirmer'}
               </button>

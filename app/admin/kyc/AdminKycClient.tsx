@@ -1,6 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import StatusBadge from '@/app/components/admin/StatusBadge'
+import TypeBadge from '@/app/components/admin/TypeBadge'
+import ActionButton from '@/app/components/admin/ActionButton'
 
 type User = {
   id: string
@@ -14,6 +17,14 @@ type User = {
   siret: string | null
   companyName: string | null
   createdAt: Date
+}
+
+function TH({ children }: { children: React.ReactNode }) {
+  return (
+    <th className="border-b border-white/5 px-4 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">
+      {children}
+    </th>
+  )
 }
 
 export default function AdminKycClient({ users }: { users: User[] }) {
@@ -65,78 +76,73 @@ export default function AdminKycClient({ users }: { users: User[] }) {
         {['all', 'PENDING', 'VERIFIED', 'REQUIRES_INPUT', 'REJECTED'].map((f) => (
           <button
             key={f}
+            type="button"
             onClick={() => setFilter(f)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+            className={`rounded-lg px-3 py-1.5 font-sans text-sm font-medium transition-all ${
               filter === f
                 ? 'border border-bt-cyan/50 bg-bt-cyan/20 text-bt-cyan'
-                : 'border border-white/10 bg-white/5 text-white/50'
+                : 'border border-white/10 bg-white/5 text-white/50 hover:text-white'
             }`}
           >
             {f === 'all' ? 'Tous' : f}
           </button>
         ))}
       </div>
-      <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--bt-border)', background: 'rgba(13,31,60,0.8)' }}>
+      <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--bt-border)', background: 'rgba(13,31,60,0.5)' }}>
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b" style={{ borderColor: 'var(--bt-border)' }}>
-              <th className="px-4 py-3 text-xs font-medium text-gray-400">Utilisateur</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-400">Type</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-400">Statut KYC</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-400">SIRET</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-400">Date</th>
-              <th className="px-4 py-3 text-xs font-medium text-gray-400">Actions</th>
+            <tr>
+              <TH>Utilisateur</TH>
+              <TH>Type</TH>
+              <TH>Statut KYC</TH>
+              <TH>SIRET</TH>
+              <TH>Date</TH>
+              <TH>Actions</TH>
             </tr>
           </thead>
           <tbody>
             {filtered.map((u) => (
-              <tr key={u.id} className="border-b" style={{ borderColor: 'var(--bt-border)' }}>
-                <td className="px-4 py-3">
+              <tr key={u.id} className="border-b border-white/5 transition-all hover:bg-white/[0.02]">
+                <td className="px-4 py-4">
                   <p className="font-medium text-white">{u.name || '—'}</p>
-                  <p className="text-xs text-gray-500">{u.email}</p>
+                  <p className="text-xs text-white/50">{u.email}</p>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-400">{u.accountType}</td>
-                <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 rounded text-xs ${
-                    (u.kycStatus ?? 'PENDING') === 'VERIFIED' ? 'bg-green-500/20 text-green-400' :
-                    (u.kycStatus ?? 'PENDING') === 'REJECTED' ? 'bg-red-500/20 text-red-400' :
-                    'bg-amber-500/20 text-amber-400'
-                  }`}>
-                    {u.kycStatus ?? 'PENDING'}
-                  </span>
+                <td className="px-4 py-4">
+                  <TypeBadge variant={u.accountType === 'INDIVIDUAL' ? 'B2C' : 'B2B'} />
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-400">{u.siret || '—'}</td>
-                <td className="px-4 py-3 text-xs text-gray-500">{u.kycVerifiedAt ? new Date(u.kycVerifiedAt).toLocaleDateString('fr-FR') : '—'}</td>
-                <td className="px-4 py-3 flex gap-2">
-                  {(u.kycStatus ?? 'PENDING') === 'PENDING' && (
-                    <>
-                      <button
-                        onClick={() => handleApprove(u.id)}
-                        className="px-2 py-1 rounded text-xs font-medium bg-green-500/20 text-green-400 hover:bg-green-500/30"
-                      >
-                        Valider
-                      </button>
-                      <button
-                        onClick={() => setRejecting(rejecting === u.id ? null : u.id)}
-                        className="px-2 py-1 rounded text-xs font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                      >
-                        Rejeter
-                      </button>
-                    </>
-                  )}
+                <td className="px-4 py-4">
+                  <StatusBadge status={u.kycStatus ?? 'PENDING'} type="kyc" />
+                </td>
+                <td className="px-4 py-4 font-mono text-sm text-white/60">{u.siret || '—'}</td>
+                <td className="px-4 py-4 font-mono text-xs text-white/50">
+                  {u.kycVerifiedAt ? new Date(u.kycVerifiedAt).toLocaleDateString('fr-FR') : '—'}
+                </td>
+                <td className="px-4 py-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {(u.kycStatus ?? 'PENDING') === 'PENDING' ? (
+                      <>
+                        <ActionButton variant="validate" onClick={() => handleApprove(u.id)} />
+                        <ActionButton
+                          variant="reject"
+                          onClick={() => setRejecting(rejecting === u.id ? null : u.id)}
+                        />
+                      </>
+                    ) : null}
+                  </div>
                   {rejecting === u.id && (
-                    <div className="flex flex-col gap-1">
+                    <div className="mt-2 flex items-center gap-2">
                       <input
                         type="text"
                         value={rejectReason}
                         onChange={(e) => setRejectReason(e.target.value)}
                         placeholder="Raison du rejet"
-                        className="px-2 py-1 rounded text-xs bg-white/10 border border-white/20 text-white w-40"
+                        className="w-56 rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 font-sans text-xs text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                       />
                       <button
+                        type="button"
                         onClick={() => handleReject(u.id)}
-                        disabled={!rejectReason.trim() || rejecting === u.id}
-                        className="px-2 py-1 rounded text-xs bg-red-500 text-white"
+                        disabled={!rejectReason.trim()}
+                        className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 font-sans text-xs font-medium text-red-400 transition-all hover:bg-red-500/20 disabled:opacity-50"
                       >
                         Confirmer rejet
                       </button>

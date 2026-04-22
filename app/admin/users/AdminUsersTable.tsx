@@ -7,7 +7,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition, useRef, useEffect } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Trash2, ArrowRight } from 'lucide-react'
+import StatusBadge from '@/app/components/admin/StatusBadge'
 
 export type AdminUserRow = {
   id: string
@@ -161,19 +162,8 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
       >
         <table className="w-full">
           <thead>
-            <tr
-              style={{
-                background: 'rgba(0,0,0,0.3)',
-                borderBottom: '1px solid var(--bt-border)',
-              }}
-            >
-              <th
-                className="w-10 px-4 py-4 text-left text-[10px] font-medium uppercase tracking-wider"
-                style={{
-                  fontFamily: 'var(--font-mono-bt), monospace',
-                  color: 'var(--bt-muted)',
-                }}
-              >
+            <tr>
+              <th className="w-10 border-b border-white/5 px-4 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">
                 <input
                   ref={selectAllCheckboxRef}
                   type="checkbox"
@@ -186,86 +176,21 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
                   onChange={(e) => toggleSelectAll(e.target.checked)}
                 />
               </th>
-              <th
-                className="px-6 py-4 text-left text-[10px] font-medium uppercase tracking-wider"
-                style={{
-                  fontFamily: 'var(--font-mono-bt), monospace',
-                  color: 'var(--bt-muted)',
-                }}
-              >
-                Email
-              </th>
-              <th
-                className="px-6 py-4 text-left text-[10px] font-medium uppercase tracking-wider"
-                style={{
-                  fontFamily: 'var(--font-mono-bt), monospace',
-                  color: 'var(--bt-muted)',
-                }}
-              >
-                Nom
-              </th>
-              <th
-                className="px-6 py-4 text-left text-[10px] font-medium uppercase tracking-wider"
-                style={{
-                  fontFamily: 'var(--font-mono-bt), monospace',
-                  color: 'var(--bt-muted)',
-                }}
-              >
-                Plan
-              </th>
-              <th
-                className="px-6 py-4 text-left text-[10px] font-medium uppercase tracking-wider"
-                style={{
-                  fontFamily: 'var(--font-mono-bt), monospace',
-                  color: 'var(--bt-muted)',
-                }}
-              >
-                Entités
-              </th>
-              <th
-                className="px-6 py-4 text-left text-[10px] font-medium uppercase tracking-wider"
-                style={{
-                  fontFamily: 'var(--font-mono-bt), monospace',
-                  color: 'var(--bt-muted)',
-                }}
-              >
-                Certificats
-              </th>
-              <th
-                className="px-6 py-4 text-left text-[10px] font-medium uppercase tracking-wider"
-                style={{
-                  fontFamily: 'var(--font-mono-bt), monospace',
-                  color: 'var(--bt-muted)',
-                }}
-              >
-                Date inscription
-              </th>
-              <th
-                className="px-6 py-4 text-left text-[10px] font-medium uppercase tracking-wider"
-                style={{
-                  fontFamily: 'var(--font-mono-bt), monospace',
-                  color: 'var(--bt-muted)',
-                }}
-              >
-                Statut
-              </th>
-              <th
-                className="px-6 py-4 text-left text-[10px] font-medium uppercase tracking-wider"
-                style={{
-                  fontFamily: 'var(--font-mono-bt), monospace',
-                  color: 'var(--bt-muted)',
-                }}
-              >
-                Actions
-              </th>
+              <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Email</th>
+              <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Nom</th>
+              <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Plan</th>
+              <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Entités</th>
+              <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Certificats</th>
+              <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Date inscription</th>
+              <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Statut</th>
+              <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Actions</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
               <tr
                 key={user.id}
-                className="transition-colors hover:bg-[rgba(0,212,255,0.04)]"
-                style={{ borderTop: '1px solid var(--bt-border)' }}
+                className="border-b border-white/5 transition-all hover:bg-white/[0.02]"
               >
                 <td className="px-4 py-4 align-middle">
                   {!user.isAdminUser ? (
@@ -330,25 +255,19 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
                   {user.createdAtLabel}
                 </td>
                 <td className="px-6 py-4">
-                  <span
-                    className="rounded-full px-3 py-1 text-xs font-bold"
-                    style={
-                      user.hasActivePlan
-                        ? { background: 'rgba(29,184,126,0.15)', color: '#1DB87E' }
-                        : { background: 'rgba(255,255,255,0.08)', color: 'var(--bt-muted)' }
-                    }
-                  >
-                    {user.hasActivePlan ? 'Actif' : 'Sans abonnement'}
-                  </span>
+                  <StatusBadge
+                    status={user.hasActivePlan ? 'ACTIVE' : 'INACTIVE'}
+                    type="user"
+                  />
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <Link
                       href={`/admin/users/${user.id}`}
-                      className="text-sm hover:underline"
-                      style={{ color: 'var(--bt-cyan)' }}
+                      className="inline-flex items-center gap-1 font-sans text-xs text-white/40 transition-all hover:text-bt-cyan"
                     >
-                      Voir détail →
+                      Détails
+                      <ArrowRight size={12} aria-hidden />
                     </Link>
                     {!user.isAdminUser && (
                       <button

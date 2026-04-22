@@ -1,5 +1,9 @@
 'use client'
 
+import StatusBadge from '@/app/components/admin/StatusBadge'
+import TypeBadge from '@/app/components/admin/TypeBadge'
+import ActionButton from '@/app/components/admin/ActionButton'
+
 type Entry = {
   id: string
   entityName: string
@@ -12,6 +16,14 @@ type Entry = {
   adminRejectReason: string | null
   createdAt: Date
   user: { email: string | null; name: string | null }
+}
+
+function TH({ children }: { children: React.ReactNode }) {
+  return (
+    <th className="border-b border-white/5 px-4 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">
+      {children}
+    </th>
+  )
 }
 
 export default function AdminDemandesClient({ entries }: { entries: Entry[] }) {
@@ -43,67 +55,67 @@ export default function AdminDemandesClient({ entries }: { entries: Entry[] }) {
     }
   }
 
-  const docs = (d: unknown): string[] => (Array.isArray(d) ? d.filter((x): x is string => typeof x === 'string') : [])
+  const docs = (d: unknown): string[] =>
+    Array.isArray(d) ? d.filter((x): x is string => typeof x === 'string') : []
 
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--bt-border)', background: 'rgba(13,31,60,0.8)' }}>
+    <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--bt-border)', background: 'rgba(13,31,60,0.5)' }}>
       <table className="w-full text-left">
         <thead>
-          <tr className="border-b" style={{ borderColor: 'var(--bt-border)' }}>
-            <th className="px-4 py-3 text-xs font-medium text-gray-400">Demandeur</th>
-            <th className="px-4 py-3 text-xs font-medium text-gray-400">Entité</th>
-            <th className="px-4 py-3 text-xs font-medium text-gray-400">Type</th>
-            <th className="px-4 py-3 text-xs font-medium text-gray-400">SIRET</th>
-            <th className="px-4 py-3 text-xs font-medium text-gray-400">Documents</th>
-            <th className="px-4 py-3 text-xs font-medium text-gray-400">Date</th>
-            <th className="px-4 py-3 text-xs font-medium text-gray-400">Statut</th>
-            <th className="px-4 py-3 text-xs font-medium text-gray-400">Actions</th>
+          <tr>
+            <TH>Demandeur</TH>
+            <TH>Entité</TH>
+            <TH>Type</TH>
+            <TH>SIRET</TH>
+            <TH>Documents</TH>
+            <TH>Date</TH>
+            <TH>Statut</TH>
+            <TH>Actions</TH>
           </tr>
         </thead>
         <tbody>
           {entries.map((e) => (
-            <tr key={e.id} className="border-b" style={{ borderColor: 'var(--bt-border)' }}>
-              <td className="px-4 py-3">
+            <tr key={e.id} className="border-b border-white/5 transition-all hover:bg-white/[0.02]">
+              <td className="px-4 py-4">
                 <p className="text-sm text-white">{e.user.name || '—'}</p>
-                <p className="text-xs text-gray-500">{e.user.email}</p>
+                <p className="text-xs text-white/50">{e.user.email}</p>
               </td>
-              <td className="px-4 py-3 text-sm text-gray-300">{e.entityName}</td>
-              <td className="px-4 py-3 text-sm text-gray-400">{e.entityType}</td>
-              <td className="px-4 py-3 text-sm text-gray-400">{e.siret || '—'}</td>
-              <td className="px-4 py-3">
-                {docs(e.documents).map((url) => (
-                  <a key={url} href={url} target="_blank" rel="noopener noreferrer" className="block max-w-[120px] truncate text-xs text-bt-cyan hover:underline">
-                    Voir
-                  </a>
-                ))}
-                {docs(e.documents).length === 0 && '—'}
+              <td className="px-4 py-4 text-sm text-white/80">{e.entityName}</td>
+              <td className="px-4 py-4">
+                <TypeBadge variant={e.entityType === 'INDIVIDUAL' ? 'B2C' : 'B2B'} />
               </td>
-              <td className="px-4 py-3 text-xs text-gray-500">{new Date(e.createdAt).toLocaleDateString('fr-FR')}</td>
-              <td className="px-4 py-3">
-                <span className={`px-2 py-0.5 rounded text-xs ${
-                  e.status === 'ADMIN_VERIFIED' ? 'bg-green-500/20 text-green-400' :
-                  e.status === 'REJECTED' ? 'bg-red-500/20 text-red-400' :
-                  'bg-amber-500/20 text-amber-400'
-                }`}>
-                  {e.status}
-                </span>
-              </td>
-              <td className="px-4 py-3 flex gap-2">
-                {e.status === 'PENDING_ADMIN' && (
-                  <>
-                    <button
-                      onClick={() => handleApprove(e.id)}
-                      className="px-2 py-1 rounded text-xs font-medium bg-green-500/20 text-green-400 hover:bg-green-500/30"
+              <td className="px-4 py-4 font-mono text-sm text-white/60">{e.siret || '—'}</td>
+              <td className="px-4 py-4">
+                {docs(e.documents).length > 0 ? (
+                  docs(e.documents).map((url) => (
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block max-w-[120px] truncate text-xs text-bt-cyan/70 hover:text-bt-cyan hover:underline"
                     >
-                      Valider
-                    </button>
-                    <button
-                      onClick={() => handleReject(e.id)}
-                      className="px-2 py-1 rounded text-xs font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                    >
-                      Rejeter
-                    </button>
-                  </>
+                      Voir
+                    </a>
+                  ))
+                ) : (
+                  <span className="text-xs text-white/30">—</span>
+                )}
+              </td>
+              <td className="px-4 py-4 font-mono text-xs text-white/50">
+                {new Date(e.createdAt).toLocaleDateString('fr-FR')}
+              </td>
+              <td className="px-4 py-4">
+                <StatusBadge status={e.status} type="trust" />
+              </td>
+              <td className="px-4 py-4">
+                {e.status === 'PENDING_ADMIN' ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ActionButton variant="validate" onClick={() => handleApprove(e.id)} />
+                    <ActionButton variant="reject" onClick={() => handleReject(e.id)} />
+                  </div>
+                ) : (
+                  <span className="text-xs italic text-white/30">Aucune action</span>
                 )}
               </td>
             </tr>

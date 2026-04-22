@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import ActionButton, { NoActionText } from './ActionButton'
 
 interface CertificateActionsProps {
   certificateId: string
@@ -38,52 +39,35 @@ export default function CertificateActions({ certificateId, currentStatus }: Cer
     }
   }
 
-  const btn = (onClick: () => void, label: string, variant: 'success' | 'danger' | 'warn') => (
-    <button
-      onClick={onClick}
-      disabled={loading}
-      className="px-4 py-2 rounded-lg transition disabled:opacity-50"
-      style={
-        variant === 'success'
-          ? { background: 'rgba(29,184,126,0.15)', color: '#1DB87E' }
-          : variant === 'danger'
-            ? { background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' }
-            : { background: 'rgba(232,148,58,0.15)', color: 'var(--bt-warn)' }
-      }
-    >
-      {loading ? '...' : label}
-    </button>
-  )
-
   return (
     <div>
       {error && (
-        <div className="p-4 rounded-lg mb-4 border" style={{ background: 'rgba(224,82,82,0.1)', borderColor: 'var(--bt-danger)', color: 'var(--bt-danger)' }}>
-          ❌ {error}
+        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          {error}
         </div>
       )}
 
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex flex-wrap gap-3">
         {currentStatus === 'PENDING' && (
           <>
-            {btn(() => handleAction('activate'), '✅ Valider', 'success')}
-            {btn(() => handleAction('reject'), '❌ Rejeter', 'danger')}
+            <ActionButton variant="validate" onClick={() => handleAction('activate')} loading={loading} />
+            <ActionButton variant="reject" onClick={() => handleAction('reject')} loading={loading} />
           </>
         )}
         {(currentStatus === 'ACTIVE' || currentStatus === 'ANCHORED') && (
           <>
-            {btn(() => handleAction('suspend'), '⏸️ Suspendre', 'warn')}
-            {btn(() => handleAction('revoke'), '🚫 Révoquer', 'danger')}
+            <ActionButton variant="suspend" onClick={() => handleAction('suspend')} loading={loading} />
+            <ActionButton variant="revoke" onClick={() => handleAction('revoke')} loading={loading} />
           </>
         )}
         {currentStatus === 'SUSPENDED' && (
           <>
-            {btn(() => handleAction('reactivate'), '▶️ Réactiver', 'success')}
-            {btn(() => handleAction('revoke'), '🚫 Révoquer', 'danger')}
+            <ActionButton variant="reactivate" onClick={() => handleAction('reactivate')} loading={loading} />
+            <ActionButton variant="revoke" onClick={() => handleAction('revoke')} loading={loading} />
           </>
         )}
         {(currentStatus === 'REVOKED' || currentStatus === 'EXPIRED') && (
-          <p className="text-sm" style={{ color: 'var(--bt-muted)' }}>Aucune action disponible</p>
+          <NoActionText text="Aucune action disponible" />
         )}
       </div>
     </div>
