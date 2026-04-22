@@ -4,17 +4,20 @@
 
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { VerificationEvent } from '@/types/dashboard'
-import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react'
+import { AlertTriangle, XCircle } from 'lucide-react'
 
 export interface ActivityFeedProps {
   initialEvents?: VerificationEvent[]
 }
 
 const POLL_INTERVAL_MS = 30_000
+const MAX_ITEMS = 5
 
-function resultIcon(result: VerificationEvent['result']) {
+type VerificationResultType = VerificationEvent['result']
+
+function resultIcon(result: VerificationResultType) {
   switch (result) {
     case 'VALID':
       return <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full" style={{ background: '#00d4ff' }} aria-hidden />
@@ -28,8 +31,8 @@ function resultIcon(result: VerificationEvent['result']) {
   }
 }
 
-function resultLabel(result: VerificationEvent['result']) {
-  const labels: Record<VerificationEvent['result'], string> = {
+function resultLabel(result: VerificationResultType) {
+  const labels: Record<VerificationResultType, string> = {
     VALID: 'Valide',
     FRAUD_ALERT: 'Alerte fraude',
     EXPIRED: 'Expiré',
@@ -43,6 +46,49 @@ function resultLabel(result: VerificationEvent['result']) {
   return labels[result] ?? result
 }
 
+/** Équivalent minimaliste de date-fns.formatDistanceToNow (locale fr) — pas de dépendance. */
+function formatDistanceToNow(dateIso: string, now: number = Date.now()): string {
+  const diff = Math.max(0, now - new Date(dateIso).getTime())
+  const sec = Math.floor(diff / 1000)
+  if (sec < 60) return 'il y a quelques secondes'
+  const min = Math.floor(sec / 60)
+  if (min < 60) return `il y a ${min} min`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `il y a ${h} h`
+  const d = Math.floor(h / 24)
+  if (d < 7) return `il y a ${d} j`
+  const w = Math.floor(d / 7)
+  if (w < 5) return `il y a ${w} sem`
+  const mo = Math.floor(d / 30)
+  if (mo < 12) return `il y a ${mo} mois`
+  const y = Math.floor(d / 365)
+  return `il y a ${y} an${y > 1 ? 's' : ''}`
+}
+
+function shortId(id: string | null): string {
+  if (!id) return '—'
+  return id.length <= 10 ? id : `${id.slice(0, 6)}…${id.slice(-4)}`
+}
+
+/**
+ * Dédupe les évènements par (certificateId, minute) : plusieurs vérifications du
+ * même certificat dans la même minute = une seule entrée (la plus récente).
+ */
+function dedupe(events: VerificationEvent[]): VerificationEvent[] {
+  const byKey = new Map<string, VerificationEvent>()
+  for (const ev of events) {
+    const minuteBucket = Math.floor(new Date(ev.verifiedAt).getTime() / 60_000)
+    const key = `${ev.certificateId ?? 'null'}:${minuteBucket}`
+    const existing = byKey.get(key)
+    if (!existing || new Date(ev.verifiedAt).getTime() > new Date(existing.verifiedAt).getTime()) {
+      byKey.set(key, ev)
+    }
+  }
+  return Array.from(byKey.values()).sort(
+    (a, b) => new Date(b.verifiedAt).getTime() - new Date(a.verifiedAt).getTime()
+  )
+}
+
 export default function ActivityFeed({ initialEvents = [] }: ActivityFeedProps) {
   const [events, setEvents] = useState<VerificationEvent[]>(initialEvents)
   const [loading, setLoading] = useState(false)
@@ -50,7 +96,7 @@ export default function ActivityFeed({ initialEvents = [] }: ActivityFeedProps) 
   const fetchActivity = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/activity?limit=10', { credentials: 'include' })
+      const res = await fetch('/api/activity?limit=20', { credentials: 'include' })
       if (res.ok) {
         const data = await res.json()
         setEvents(Array.isArray(data) ? data : [])
@@ -72,6 +118,8 @@ export default function ActivityFeed({ initialEvents = [] }: ActivityFeedProps) 
     return () => clearInterval(t)
   }, [])
 
+  const visible = useMemo(() => dedupe(events).slice(0, MAX_ITEMS), [events])
+
   return (
     <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all hover:border-gold/30">
       <div className="border-b px-4 py-3 flex items-center justify-between" style={{ borderColor: 'var(--bt-border)' }}>
@@ -82,18 +130,18 @@ export default function ActivityFeed({ initialEvents = [] }: ActivityFeedProps) 
           <span className="text-[10px]" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>Actualisation...</span>
         )}
       </div>
-      <ul className="divide-y max-h-80 overflow-y-auto" style={{ borderColor: 'var(--bt-border)' }}>
-        {events.length === 0 && !loading ? (
+      <ul className="divide-y" style={{ borderColor: 'var(--bt-border)' }}>
+        {visible.length === 0 && !loading ? (
           <li className="px-4 py-8 text-center text-sm" style={{ color: 'var(--bt-muted)' }}>
             Aucune vérification récente
           </li>
         ) : (
-          events.map((ev) => (
+          visible.map((ev) => (
             <li key={ev.id} className="px-4 py-3 flex items-start gap-3 hover:bg-[rgba(0,212,255,0.04)] transition-colors">
               {resultIcon(ev.result)}
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-white">
-                  Certificat <span className="font-mono" style={{ color: 'var(--bt-cyan)' }}>{ev.certificatePublicId ?? ev.certificateId}</span>
+                  Certificat <span className="font-mono" style={{ color: 'var(--bt-cyan)' }}>{shortId(ev.certificatePublicId ?? ev.certificateId)}</span>
                   {' · '}
                   <span
                     style={{
@@ -107,10 +155,8 @@ export default function ActivityFeed({ initialEvents = [] }: ActivityFeedProps) 
                   >
                     {resultLabel(ev.result)}
                   </span>
-                </p>
-                <p className="text-[10px] mt-0.5" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>
-                  {new Date(ev.verifiedAt).toLocaleString('fr-FR')}
-                  {ev.country ? ` · ${ev.country}` : ''}
+                  {' · '}
+                  <span className="text-white/50">{formatDistanceToNow(ev.verifiedAt)}</span>
                 </p>
               </div>
             </li>

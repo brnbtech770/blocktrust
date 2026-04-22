@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import type { CertificateTableItem } from '@/types/dashboard'
@@ -13,6 +13,15 @@ import { Eye, ShieldOff } from 'lucide-react'
 export interface CertificateTableProps {
   certificates: CertificateTableItem[]
 }
+
+type FilterKey = 'all' | 'active' | 'pending' | 'revoked'
+
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: 'all',     label: 'Tous' },
+  { key: 'active',  label: 'Actifs' },
+  { key: 'pending', label: 'En attente' },
+  { key: 'revoked', label: 'Révoqués' },
+]
 
 function entityDisplayName(entity: CertificateTableItem['entity']): string {
   if (entity.entityType === 'INDIVIDUAL') {
@@ -24,25 +33,49 @@ function entityDisplayName(entity: CertificateTableItem['entity']): string {
 
 function statusBadge(status: string) {
   const styles: Record<string, { bg: string; text: string; border: string }> = {
-    ACTIVE: { bg: 'rgba(0,212,255,0.1)', text: '#00d4ff', border: 'rgba(0,212,255,0.3)' },
-    ANCHORED: { bg: 'rgba(189,167,107,0.15)', text: 'var(--bt-gold)', border: 'rgba(189,167,107,0.3)' },
-    PENDING: { bg: 'rgba(189,167,107,0.1)', text: 'var(--bt-gold)', border: 'rgba(189,167,107,0.25)' },
-    REVOKED: { bg: 'rgba(224,82,82,0.15)', text: '#E05252', border: 'rgba(224,82,82,0.3)' },
-    EXPIRED: { bg: 'rgba(232,148,58,0.15)', text: 'var(--bt-warn)', border: 'rgba(232,148,58,0.3)' },
-    SUSPENDED: { bg: 'rgba(232,148,58,0.15)', text: 'var(--bt-warn)', border: 'rgba(232,148,58,0.3)' },
+    ACTIVE:    { bg: 'rgba(0,212,255,0.1)',  text: '#00d4ff',         border: 'rgba(0,212,255,0.3)' },
+    ANCHORED:  { bg: 'rgba(189,167,107,0.15)', text: 'var(--bt-gold)', border: 'rgba(189,167,107,0.3)' },
+    PENDING:   { bg: 'rgba(189,167,107,0.1)',  text: 'var(--bt-gold)', border: 'rgba(189,167,107,0.25)' },
+    REVOKED:   { bg: 'rgba(239,68,68,0.20)',   text: '#f87171',        border: 'rgba(239,68,68,0.35)' },
+    EXPIRED:   { bg: 'rgba(232,148,58,0.15)',  text: 'var(--bt-warn)', border: 'rgba(232,148,58,0.3)' },
+    SUSPENDED: { bg: 'rgba(232,148,58,0.15)',  text: 'var(--bt-warn)', border: 'rgba(232,148,58,0.3)' },
   }
   const s = styles[status] ?? { bg: 'rgba(255,255,255,0.08)', text: 'var(--bt-muted)', border: 'var(--bt-border)' }
   return (
-    <span className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium" style={{ background: s.bg, color: s.text, borderColor: s.border }}>
+    <span
+      className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium"
+      style={{ background: s.bg, color: s.text, borderColor: s.border }}
+    >
       {status}
     </span>
   )
+}
+
+function matchesFilter(status: string, filter: FilterKey): boolean {
+  switch (filter) {
+    case 'all':
+      return true
+    case 'active':
+      return status === 'ACTIVE' || status === 'ANCHORED'
+    case 'pending':
+      return status === 'PENDING'
+    case 'revoked':
+      return status === 'REVOKED' || status === 'EXPIRED'
+    default:
+      return true
+  }
 }
 
 export default function CertificateTable({ certificates }: CertificateTableProps) {
   const router = useRouter()
   const [revokeModal, setRevokeModal] = useState<CertificateTableItem | null>(null)
   const [revoking, setRevoking] = useState(false)
+  const [filter, setFilter] = useState<FilterKey>('all')
+
+  const filtered = useMemo(
+    () => certificates.filter((c) => matchesFilter(c.status, filter)),
+    [certificates, filter]
+  )
 
   const handleRevokeConfirm = async () => {
     if (!revokeModal) return
@@ -65,6 +98,27 @@ export default function CertificateTable({ certificates }: CertificateTableProps
 
   return (
     <>
+      <div className="mb-3 flex flex-wrap items-center gap-4">
+        {FILTERS.map((tab) => {
+          const isActive = filter === tab.key
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setFilter(tab.key)}
+              className={`font-sans text-sm transition-colors ${
+                isActive
+                  ? 'text-bt-cyan'
+                  : 'text-white/50 hover:text-white'
+              }`}
+              aria-pressed={isActive}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
       <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all hover:border-gold/30">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -88,45 +142,52 @@ export default function CertificateTable({ certificates }: CertificateTableProps
               </tr>
             </thead>
             <tbody>
-              {certificates.length === 0 ? (
+              {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center" style={{ color: 'var(--bt-muted)' }}>
                     Aucun certificat
                   </td>
                 </tr>
               ) : (
-                certificates.map((cert) => (
-                  <tr key={cert.id} className="border-b transition-colors hover:bg-[rgba(0,212,255,0.04)]" style={{ borderColor: 'var(--bt-border)' }}>
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-white">{entityDisplayName(cert.entity)}</div>
-                      <div className="text-xs text-gray-500 font-mono">{cert.publicId ?? cert.id}</div>
-                    </td>
-                    <td className="px-4 py-3">{statusBadge(cert.status)}</td>
-                    <td className="px-4 py-3 font-mono text-sm text-gray-300">{cert.verificationCount}</td>
-                    <td className="px-4 py-3 text-sm text-gray-400">
-                      {new Date(cert.issuedAt).toLocaleDateString('fr-FR')}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/dashboard/certificate/${cert.id}`}
-                          className="inline-flex items-center gap-1 rounded-lg bg-[var(--bt-gold)]/20 px-2 py-1.5 text-sm font-medium text-[var(--bt-gold)] hover:bg-[var(--bt-gold)]/30 transition-colors"
-                        >
-                          <Eye className="w-4 h-4" /> Voir
-                        </Link>
-                        {cert.status !== 'REVOKED' && cert.status !== 'EXPIRED' && (
-                          <button
-                            type="button"
-                            onClick={() => setRevokeModal(cert)}
-                            className="inline-flex items-center gap-1 rounded-lg bg-[var(--bt-danger)]/20 px-2 py-1.5 text-sm font-medium text-[var(--bt-danger)] hover:bg-[var(--bt-danger)]/30 transition-colors"
+                filtered.map((cert) => {
+                  const isRevoked = cert.status === 'REVOKED' || cert.status === 'EXPIRED'
+                  return (
+                    <tr
+                      key={cert.id}
+                      className={`border-b transition-colors hover:bg-[rgba(0,212,255,0.04)] ${isRevoked ? 'opacity-60' : ''}`}
+                      style={{ borderColor: 'var(--bt-border)' }}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-white">{entityDisplayName(cert.entity)}</div>
+                        <div className="text-xs text-gray-500 font-mono">{cert.publicId ?? cert.id}</div>
+                      </td>
+                      <td className="px-4 py-3">{statusBadge(cert.status)}</td>
+                      <td className="px-4 py-3 font-mono text-sm text-gray-300">{cert.verificationCount}</td>
+                      <td className="px-4 py-3 text-sm text-gray-400">
+                        {new Date(cert.issuedAt).toLocaleDateString('fr-FR')}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/dashboard/certificate/${cert.id}`}
+                            className="inline-flex items-center gap-1 rounded-lg bg-[var(--bt-gold)]/20 px-2 py-1.5 text-sm font-medium text-[var(--bt-gold)] hover:bg-[var(--bt-gold)]/30 transition-colors"
                           >
-                            <ShieldOff className="w-4 h-4" /> Révoquer
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                            <Eye className="w-4 h-4" /> Voir
+                          </Link>
+                          {!isRevoked && (
+                            <button
+                              type="button"
+                              onClick={() => setRevokeModal(cert)}
+                              className="inline-flex items-center gap-1 rounded-lg bg-[var(--bt-danger)]/20 px-2 py-1.5 text-sm font-medium text-[var(--bt-danger)] hover:bg-[var(--bt-danger)]/30 transition-colors"
+                            >
+                              <ShieldOff className="w-4 h-4" /> Révoquer
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>

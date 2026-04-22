@@ -28,14 +28,13 @@ export default function DashboardSidebarNav({ items }: { items: SidebarItem[] })
           <Link
             key={item.href}
             href={item.href}
-            className={`flex items-center gap-2 md:gap-3 px-3 py-2.5 md:px-4 md:py-3 text-sm md:text-base rounded-lg transition-colors font-medium border-l-2 ${
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 font-sans text-sm transition-all ${
               isActive
-                ? 'text-[#00d4ff] bg-[rgba(0,212,255,0.08)] border-[#00d4ff]'
-                : 'border-transparent hover:text-white hover:bg-[rgba(255,255,255,0.04)]'
+                ? 'bg-white/10 text-white'
+                : 'text-white/50 hover:bg-white/5 hover:text-white'
             }`}
-            style={!isActive ? { color: 'var(--bt-muted)' } : undefined}
           >
-            <Icon className="h-[18px] w-[18px] md:h-[22px] md:w-[22px] shrink-0" strokeWidth={2} />
+            <Icon size={18} strokeWidth={2} className="shrink-0" aria-hidden />
             <span>{item.name}</span>
           </Link>
         )

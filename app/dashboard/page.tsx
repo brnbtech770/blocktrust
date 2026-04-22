@@ -67,12 +67,13 @@ export default async function Dashboard({
     const subscription = await prisma.subscription.findUnique({
       where: { userId: user.id },
     });
+    const hasActiveSub = subscription?.status === "active";
     let quotaLabel: string | null = null;
-    if (!userIsAdmin && subscription?.status === "active") {
+    if (!userIsAdmin && hasActiveSub && subscription) {
       const d = await getVerifyQuotaDisplay(user.id, subscription.plan);
       quotaLabel = d.unlimited
         ? "Illimité ce mois"
-        : `${d.remaining}/${d.limit} vérifications ce mois`;
+        : `${d.remaining} vérifications restantes ce mois`;
     }
 
     const certificates = await prisma.certificate.findMany({
@@ -191,7 +192,11 @@ export default async function Dashboard({
             Actions rapides
           </h2>
           <div className="mb-6">
-            <VerifyBadgeCard quotaLabel={quotaLabel} isAdmin={userIsAdmin} />
+            <VerifyBadgeCard
+              quotaLabel={quotaLabel}
+              isAdmin={userIsAdmin}
+              hasActiveSub={hasActiveSub}
+            />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <Link
