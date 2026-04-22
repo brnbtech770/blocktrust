@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/anomaly-detection",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 3 * * *"
     },
     {
       "path": "/api/cron/trustscore-update",
