@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ShieldCheck, Lock, Network } from "lucide-react";
-import { Logo } from "@/app/components/ui/Logo";
 import StatCounter from "./StatCounter";
 
 export default function Hero() {
@@ -84,10 +83,80 @@ export default function Hero() {
           </ul>
         </div>
 
-        {/* Logo BlockTrust (composant centralisé) — float + drop-shadow cyan */}
+        {/* Badge SVG BlockTrust temporaire — float + glow-pulse cyan */}
         <div className="lg:col-span-2 order-2 flex justify-center lg:justify-end">
-          <div className="opacity-0 animate-fade-in [animation-delay:300ms] w-48 sm:w-64 lg:w-80 animate-float drop-shadow-[0_0_30px_rgba(0,212,255,0.4)]">
-            <Logo size="hero" withText={false} href={undefined} className="!w-full !h-auto" />
+          <div className="opacity-0 animate-fade-in [animation-delay:300ms]">
+            <div className="relative w-48 sm:w-64 lg:w-80 animate-float">
+              {/* Halo cyan pulsé en arrière-plan */}
+              <div
+                aria-hidden
+                className="absolute inset-[-12%] rounded-full animate-glow-pulse"
+                style={{
+                  background:
+                    "radial-gradient(circle at center, rgba(0,212,255,0.45) 0%, rgba(0,212,255,0.12) 45%, rgba(0,212,255,0) 75%)",
+                }}
+              />
+              <svg
+                role="img"
+                aria-label="Badge BlockTrust"
+                viewBox="0 0 200 220"
+                xmlns="http://www.w3.org/2000/svg"
+                className="relative h-auto w-full drop-shadow-[0_0_30px_rgba(0,212,255,0.45)]"
+              >
+                <defs>
+                  <linearGradient id="bt-shield-bg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#0e2540" />
+                    <stop offset="100%" stopColor="#0a1628" />
+                  </linearGradient>
+                  <linearGradient id="bt-shield-stroke" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#00d4ff" />
+                    <stop offset="55%" stopColor="#21dfff" />
+                    <stop offset="100%" stopColor="#BDA76B" />
+                  </linearGradient>
+                </defs>
+
+                {/* Bouclier */}
+                <path
+                  d="M100 8 L186 36 L186 110 C186 158 152 196 100 212 C48 196 14 158 14 110 L14 36 Z"
+                  fill="url(#bt-shield-bg)"
+                  stroke="url(#bt-shield-stroke)"
+                  strokeWidth="3"
+                />
+
+                {/* Liseré intérieur subtil */}
+                <path
+                  d="M100 22 L172 44 L172 110 C172 152 142 184 100 198 C58 184 28 152 28 110 L28 44 Z"
+                  fill="none"
+                  stroke="rgba(0,212,255,0.25)"
+                  strokeWidth="1"
+                />
+
+                {/* Lettres BT */}
+                <text
+                  x="100"
+                  y="128"
+                  textAnchor="middle"
+                  fontFamily="var(--font-space-grotesk), 'Space Grotesk', sans-serif"
+                  fontWeight="700"
+                  fontSize="74"
+                  letterSpacing="-2"
+                  fill="#00d4ff"
+                >
+                  BT
+                </text>
+
+                {/* Tiret décoratif sous BT */}
+                <rect
+                  x="78"
+                  y="148"
+                  width="44"
+                  height="3"
+                  rx="1.5"
+                  fill="#BDA76B"
+                  opacity="0.85"
+                />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
