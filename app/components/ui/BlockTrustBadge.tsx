@@ -1,393 +1,353 @@
+import { type CSSProperties } from "react";
+
 /**
- * Badge BlockTrust premium inline SVG (v2 — circuits animés).
- *
- * Composition (du fond vers le premier plan) :
- *  1. Halo concentrique (3 cercles, opacités décroissantes)
- *  2. Anneau extérieur pointillé rotatif — DOUBLE stroke cyan + or
- *     en damier (overlay de 2 cercles avec dasharray offset)
- *  3. Hexagone double : bordure dégradée cyan/or + fond radial navy
- *  4. Circuit imprimé externe (lignes + intersections + clignotants),
- *     clippé sur l'hexagone intérieur
- *  5. Effet scanline (pattern 2px) sur tout l'intérieur
- *  6. QR code simplifié 3×3 dans le coin haut-gauche
- *  7. Petits hexagones décoratifs or aux coins
- *  8. Bouclier central cyan
- *  9. Circuits ANIMÉS dans le bouclier (data-flow CSS keyframes :
- *     bt-flow1 / bt-flow2 / bt-pulse-dot / bt-scan), clippés sur la
- *     forme du bouclier pour ne pas déborder
- * 10. Checkmark blanc (style ShieldCheck) au premier plan
- * 11. Label BLOCKTRUST en IBM Plex Mono or
- * 12. Ligne or pulsée sous le label (SMIL animate opacity)
- *
- * 100 % SVG inline + CSS keyframes inline. Aucune dépendance.
+ * BlockTrustBadge
+ * --------------------------------------------------------------
+ * A premium animated hex badge built entirely with SVG + CSS.
+ * No animation libraries. Scales to any size via the `size` prop.
  */
-export default function BlockTrustBadge({
-  className = "",
-}: {
+export interface BlockTrustBadgeProps {
+  /** Rendered width/height in px. Defaults to 320. */
+  size?: number;
+  /** Optional className to apply to the outer wrapper. */
   className?: string;
-}) {
+  /** Override the wordmark. Defaults to "BLOCKTRUST". */
+  label?: string;
+}
+
+const COLORS = {
+  navy: "#0a1628",
+  navyDeep: "#06101f",
+  cyan: "#00d4ff",
+  cyanSoft: "#1ee9ff",
+  gold: "#BDA76B",
+  goldBright: "#E8D08A",
+  white: "#ffffff",
+};
+
+/** Hex points for a 200x200 viewBox, flat-top hexagon. */
+const HEX_POINTS = "100,6 182,52 182,148 100,194 18,148 18,52";
+/** Slightly inset hex for inner border. */
+const HEX_POINTS_INNER = "100,18 172,58 172,142 100,182 28,142 28,58";
+
+/** Circuit traces — each path uses dasharray for the data-flow effect. */
+const CIRCUIT_TRACES: { d: string; reverse?: boolean; delay?: string }[] = [
+  { d: "M30 60 L60 60 L72 72 L72 96" },
+  { d: "M170 60 L140 60 L128 72 L128 110 L110 128", reverse: true },
+  { d: "M30 140 L55 140 L70 125 L70 100", delay: "0.4s" },
+  { d: "M170 140 L145 140 L130 155 L100 155", reverse: true, delay: "0.8s" },
+  { d: "M100 30 L100 50 L86 64", delay: "1.1s" },
+  { d: "M100 170 L100 150 L114 136", reverse: true, delay: "0.6s" },
+  { d: "M40 100 L60 100 L70 90", delay: "1.4s" },
+  { d: "M160 100 L140 100 L130 90", reverse: true, delay: "0.2s" },
+];
+
+/** Pulsing intersection nodes. */
+const NODES: { cx: number; cy: number; delay: string }[] = [
+  { cx: 60,  cy: 60,  delay: "0s"   },
+  { cx: 140, cy: 60,  delay: "0.3s" },
+  { cx: 70,  cy: 100, delay: "0.6s" },
+  { cx: 130, cy: 100, delay: "0.9s" },
+  { cx: 72,  cy: 96,  delay: "1.2s" },
+  { cx: 128, cy: 110, delay: "0.4s" },
+  { cx: 100, cy: 50,  delay: "0.7s" },
+  { cx: 100, cy: 150, delay: "1.0s" },
+];
+
+/** Tiny faux-QR pattern (5x5 grid) rendered in the bottom-right corner. */
+const QR_PATTERN = [
+  [1, 1, 1, 0, 1],
+  [1, 0, 1, 0, 1],
+  [1, 1, 1, 1, 0],
+  [0, 0, 1, 0, 1],
+  [1, 1, 0, 1, 1],
+];
+
+export function BlockTrustBadge({
+  size = 320,
+  className,
+  label = "BLOCKTRUST",
+}: BlockTrustBadgeProps) {
+  const wrapperStyle: CSSProperties = {
+    width: size,
+    height: size,
+  };
+
   return (
-    <svg
+    <div
+      className={`relative inline-block select-none ${className ?? ""}`}
+      style={wrapperStyle}
       role="img"
-      aria-label="Badge BlockTrust"
-      viewBox="0 0 200 200"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
+      aria-label={`${label} verified badge`}
     >
-      <defs>
-        {/* Keyframes CSS inline — préfixe bt- pour éviter toute collision globale */}
-        <style>
-          {`
-            @keyframes bt-flow1 {
-              0%   { stroke-dashoffset: 100; opacity: 0.2; }
-              50%  { opacity: 0.85; }
-              100% { stroke-dashoffset: 0;   opacity: 0.2; }
-            }
-            @keyframes bt-flow2 {
-              0%   { stroke-dashoffset: 80; opacity: 0.1; }
-              50%  { opacity: 0.7; }
-              100% { stroke-dashoffset: 0;  opacity: 0.1; }
-            }
-            @keyframes bt-pulse-dot {
-              0%, 100% { opacity: 0.3; r: 1.6; }
-              50%      { opacity: 1;   r: 2.6; }
-            }
-            @keyframes bt-scan {
-              0%   { transform: translateY(-22px); opacity: 0; }
-              10%  { opacity: 0.7; }
-              90%  { opacity: 0.7; }
-              100% { transform: translateY(48px); opacity: 0; }
-            }
-            @media (prefers-reduced-motion: reduce) {
-              .bt-anim { animation: none !important; }
-            }
-          `}
-        </style>
-
-        <filter id="bt-badge-glow">
-          <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
-          <feMerge>
-            <feMergeNode in="coloredBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        <filter id="bt-badge-glow-strong">
-          <feGaussianBlur stdDeviation="5" result="coloredBlur" />
-          <feMerge>
-            <feMergeNode in="coloredBlur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-
-        <radialGradient id="bt-badge-hex-bg" cx="50%" cy="50%" r="60%">
-          <stop offset="0%" stopColor="#0d1f3c" />
-          <stop offset="100%" stopColor="#060d1a" />
-        </radialGradient>
-
-        <linearGradient id="bt-badge-border" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#00d4ff" />
-          <stop offset="50%" stopColor="#BDA76B" />
-          <stop offset="100%" stopColor="#00d4ff" />
-        </linearGradient>
-
-        <clipPath id="bt-badge-hex-clip">
-          <polygon points="100,18 175,57 175,143 100,182 25,143 25,57" />
-        </clipPath>
-
-        {/* ClipPath spécifique au bouclier central — limite les circuits animés */}
-        <clipPath id="bt-badge-shield-clip">
-          <path d="M100 55 L125 65 L125 95 Q125 115 100 125 Q75 115 75 95 L75 65 Z" />
-        </clipPath>
-
-        <pattern
-          id="bt-badge-scanlines"
-          width="2"
-          height="2"
-          patternUnits="userSpaceOnUse"
-        >
-          <rect width="2" height="1" fill="rgba(255,255,255,0.05)" />
-        </pattern>
-      </defs>
-
-      {/* 1. Halo concentrique */}
-      <circle cx="100" cy="100" r="98" fill="rgba(0,212,255,0.15)" />
-      <circle cx="100" cy="100" r="92" fill="rgba(0,212,255,0.08)" />
-      <circle cx="100" cy="100" r="86" fill="rgba(0,212,255,0.03)" />
-
-      {/* 2. Anneau rotatif — overlay cyan + or en damier */}
-      <g>
-        <animateTransform
-          attributeName="transform"
-          attributeType="XML"
-          type="rotate"
-          from="0 100 100"
-          to="360 100 100"
-          dur="18s"
-          repeatCount="indefinite"
-        />
-        <circle
-          cx="100"
-          cy="100"
-          r="95"
-          fill="none"
-          stroke="#00d4ff"
-          strokeOpacity="0.35"
-          strokeWidth="1"
-          strokeDasharray="2 6"
-        />
-        <circle
-          cx="100"
-          cy="100"
-          r="95"
-          fill="none"
-          stroke="#BDA76B"
-          strokeOpacity="0.35"
-          strokeWidth="1"
-          strokeDasharray="2 6"
-          strokeDashoffset="4"
-        />
-      </g>
-
-      {/* 3. Hexagone bordure */}
-      <polygon
-        points="100,8 185,52 185,148 100,192 15,148 15,52"
-        fill="none"
-        stroke="url(#bt-badge-border)"
-        strokeWidth="2.5"
-        filter="url(#bt-badge-glow)"
-      />
-      {/* 3'. Hexagone fond */}
-      <polygon
-        points="100,18 175,57 175,143 100,182 25,143 25,57"
-        fill="url(#bt-badge-hex-bg)"
-      />
-
-      {/* 4-7. Circuits externes + scanlines + dots + QR + hex décoratifs */}
-      <g clipPath="url(#bt-badge-hex-clip)">
-        <g stroke="#00d4ff" strokeOpacity="0.3" strokeWidth="0.6">
-          <line x1="20" y1="50" x2="180" y2="50" />
-          <line x1="20" y1="70" x2="180" y2="70" />
-          <line x1="20" y1="130" x2="180" y2="130" />
-          <line x1="20" y1="150" x2="180" y2="150" />
-          <line x1="50" y1="20" x2="50" y2="180" />
-          <line x1="80" y1="20" x2="80" y2="180" />
-          <line x1="120" y1="20" x2="120" y2="180" />
-          <line x1="150" y1="20" x2="150" y2="180" />
-        </g>
-
-        <rect x="20" y="20" width="160" height="160" fill="url(#bt-badge-scanlines)" />
-
-        <g fill="#00d4ff" filter="url(#bt-badge-glow)">
-          <circle cx="50" cy="50" r="1.5" opacity="0.7" />
-          <circle cx="50" cy="70" r="1.5" opacity="0.7" />
-          <circle cx="80" cy="50" r="1.5" opacity="0.7" />
-          <circle cx="120" cy="50" r="1.5" opacity="0.7" />
-          <circle cx="150" cy="50" r="1.5" opacity="0.7" />
-          <circle cx="150" cy="70" r="1.5" opacity="0.7" />
-          <circle cx="50" cy="130" r="1.5" opacity="0.7" />
-          <circle cx="50" cy="150" r="1.5" opacity="0.7" />
-          <circle cx="80" cy="150" r="1.5" opacity="0.7" />
-          <circle cx="120" cy="150" r="1.5" opacity="0.7" />
-          <circle cx="150" cy="130" r="1.5" opacity="0.7" />
-          <circle cx="150" cy="150" r="1.5" opacity="0.7" />
-
-          <circle cx="80" cy="70" r="2" opacity="0.7">
-            <animate
-              attributeName="opacity"
-              values="0.3;1;0.3"
-              dur="1.8s"
-              repeatCount="indefinite"
-            />
-          </circle>
-          <circle cx="120" cy="70" r="2" opacity="0.7">
-            <animate
-              attributeName="opacity"
-              values="1;0.3;1"
-              dur="2.2s"
-              begin="0.6s"
-              repeatCount="indefinite"
-            />
-          </circle>
-          <circle cx="120" cy="130" r="2" opacity="0.7">
-            <animate
-              attributeName="opacity"
-              values="0.3;1;0.3"
-              dur="2.6s"
-              begin="0.3s"
-              repeatCount="indefinite"
-            />
-          </circle>
-        </g>
-
-        {/* QR code 3×3 simplifié, coin haut-gauche */}
-        <g fill="#00d4ff" opacity="0.6">
-          <rect x="38" y="62" width="3" height="3" />
-          <rect x="44" y="62" width="3" height="3" />
-          <rect x="50" y="62" width="3" height="3" />
-          <rect x="38" y="68" width="3" height="3" />
-          <rect x="50" y="68" width="3" height="3" />
-          <rect x="44" y="74" width="3" height="3" />
-          <rect x="50" y="74" width="3" height="3" />
-        </g>
-
-        {/* Hex décoratifs or */}
-        <g fill="none" stroke="#BDA76B" strokeOpacity="0.45" strokeWidth="0.8">
-          <polygon points="155,62 161,62 164,67 161,72 155,72 152,67" />
-          <polygon points="38,128 44,128 47,133 44,138 38,138 35,133" />
-          <polygon points="155,128 161,128 164,133 161,138 155,138 152,133" />
-        </g>
-      </g>
-
-      {/* 8. Bouclier central — fill + stroke (sans glow pour laisser circuits propres) */}
-      <path
-        d="M100 55 L125 65 L125 95 Q125 115 100 125 Q75 115 75 95 L75 65 Z"
-        fill="rgba(0,212,255,0.1)"
-        stroke="#00d4ff"
-        strokeWidth="2"
-        filter="url(#bt-badge-glow)"
-      />
-
-      {/* 9. Circuits animés data-flow DANS le bouclier (clippés à sa forme) */}
-      <g clipPath="url(#bt-badge-shield-clip)">
-        {/* Horizontales — flow1 */}
-        <line
-          x1="75"
-          y1="75"
-          x2="125"
-          y2="75"
-          stroke="#00d4ff"
-          strokeWidth="1"
-          strokeDasharray="8 4"
-          className="bt-anim"
-          style={{ animation: "bt-flow1 2s linear infinite" }}
-        />
-        <line
-          x1="75"
-          y1="115"
-          x2="125"
-          y2="115"
-          stroke="#00d4ff"
-          strokeWidth="1"
-          strokeDasharray="8 4"
-          className="bt-anim"
-          style={{ animation: "bt-flow1 2.5s linear infinite reverse" }}
-        />
-
-        {/* Verticales — flow2 */}
-        <line
-          x1="80"
-          y1="70"
-          x2="80"
-          y2="120"
-          stroke="#00d4ff"
-          strokeWidth="0.8"
-          strokeDasharray="6 4"
-          className="bt-anim"
-          style={{ animation: "bt-flow2 3s linear infinite" }}
-        />
-        <line
-          x1="120"
-          y1="70"
-          x2="120"
-          y2="120"
-          stroke="#00d4ff"
-          strokeWidth="0.8"
-          strokeDasharray="6 4"
-          className="bt-anim"
-          style={{ animation: "bt-flow2 2.8s linear infinite reverse" }}
-        />
-
-        {/* Points de connexion pulsés (CSS @keyframes pulse-dot) */}
-        <circle
-          cx="80"
-          cy="75"
-          r="2"
-          fill="#00d4ff"
-          className="bt-anim"
-          style={{ animation: "bt-pulse-dot 2s ease-in-out infinite" }}
-        />
-        <circle
-          cx="120"
-          cy="75"
-          r="2"
-          fill="#00d4ff"
-          className="bt-anim"
-          style={{ animation: "bt-pulse-dot 2.3s ease-in-out infinite" }}
-        />
-        <circle
-          cx="80"
-          cy="115"
-          r="2"
-          fill="#00d4ff"
-          className="bt-anim"
-          style={{ animation: "bt-pulse-dot 1.8s ease-in-out infinite" }}
-        />
-        <circle
-          cx="120"
-          cy="115"
-          r="2"
-          fill="#00d4ff"
-          className="bt-anim"
-          style={{ animation: "bt-pulse-dot 2.5s ease-in-out infinite" }}
-        />
-
-        {/* Ligne de scan horizontale qui balaie verticalement */}
-        <line
-          x1="75"
-          y1="70"
-          x2="125"
-          y2="70"
-          stroke="#00d4ff"
-          strokeWidth="0.6"
-          opacity="0.6"
-          className="bt-anim"
-          style={{ animation: "bt-scan 3s ease-in-out infinite" }}
-        />
-      </g>
-
-      {/* 10. Checkmark blanc (style ShieldCheck) au premier plan */}
-      <path
-        d="M88 92 L96 100 L112 82"
-        fill="none"
-        stroke="#ffffff"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        filter="url(#bt-badge-glow)"
-      />
-
-      {/* 11. Label BLOCKTRUST */}
-      <text
-        x="100"
-        y="146"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize="8.5"
-        fontWeight="600"
-        fontFamily="var(--font-mono-bt), 'IBM Plex Mono', ui-monospace, monospace"
-        fill="#BDA76B"
-        letterSpacing="3"
+      <svg
+        viewBox="0 0 200 200"
+        width={size}
+        height={size}
+        xmlns="http://www.w3.org/2000/svg"
+        className="block"
       >
-        BLOCKTRUST
-      </text>
+        <defs>
+          {/* Hex clip so circuits + scanline never escape the badge */}
+          <clipPath id="bt-hex-clip">
+            <polygon points={HEX_POINTS_INNER} />
+          </clipPath>
 
-      {/* 12. Ligne or pulsée sous le label */}
-      <line
-        x1="80"
-        y1="156"
-        x2="120"
-        y2="156"
-        stroke="#BDA76B"
-        strokeWidth="1"
-        strokeLinecap="round"
-      >
-        <animate
-          attributeName="opacity"
-          values="0.35;1;0.35"
-          dur="2.4s"
-          repeatCount="indefinite"
-        />
-      </line>
-    </svg>
+          {/* Background gradient inside hex */}
+          <radialGradient id="bt-bg" cx="50%" cy="42%" r="65%">
+            <stop offset="0%"  stopColor="#13243f" />
+            <stop offset="60%" stopColor={COLORS.navy} />
+            <stop offset="100%" stopColor={COLORS.navyDeep} />
+          </radialGradient>
+
+          {/* Gold border gradient */}
+          <linearGradient id="bt-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stopColor={COLORS.gold} />
+            <stop offset="50%"  stopColor={COLORS.goldBright} />
+            <stop offset="100%" stopColor={COLORS.gold} />
+          </linearGradient>
+
+          {/* Cyan shield gradient */}
+          <linearGradient id="bt-shield" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"  stopColor={COLORS.cyanSoft} />
+            <stop offset="100%" stopColor={COLORS.cyan} />
+          </linearGradient>
+
+          {/* Scan line gradient */}
+          <linearGradient id="bt-scanline" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%"   stopColor={COLORS.cyan} stopOpacity="0" />
+            <stop offset="50%"  stopColor={COLORS.cyan} stopOpacity="0.85" />
+            <stop offset="100%" stopColor={COLORS.cyan} stopOpacity="0" />
+          </linearGradient>
+
+          {/* Soft cyan glow filter */}
+          <filter id="bt-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.4" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* === Outer hex border with gold glow === */}
+        <g className="bt-anim-gold-glow">
+          <polygon
+            points={HEX_POINTS}
+            fill="url(#bt-bg)"
+            stroke="url(#bt-gold)"
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+          />
+          {/* Thin cyan inner accent */}
+          <polygon
+            points={HEX_POINTS_INNER}
+            fill="none"
+            stroke={COLORS.cyan}
+            strokeOpacity="0.35"
+            strokeWidth="0.6"
+            strokeLinejoin="round"
+          />
+        </g>
+
+        {/* === Rotating outer ring (gold + cyan alternating dashes) === */}
+        <g className="bt-anim-spin-slow" style={{ transformOrigin: "100px 100px" }}>
+          <circle
+            cx="100"
+            cy="100"
+            r="92"
+            fill="none"
+            stroke={COLORS.gold}
+            strokeWidth="1.2"
+            strokeDasharray="6 10"
+            opacity="0.85"
+          />
+        </g>
+        <g className="bt-anim-spin-reverse" style={{ transformOrigin: "100px 100px" }}>
+          <circle
+            cx="100"
+            cy="100"
+            r="88"
+            fill="none"
+            stroke={COLORS.cyan}
+            strokeWidth="0.9"
+            strokeDasharray="2 12"
+            opacity="0.85"
+          />
+        </g>
+
+        {/* === Everything inside the hex is clipped === */}
+        <g clipPath="url(#bt-hex-clip)">
+          {/* Faint dotted grid for depth */}
+          <g opacity="0.08" stroke={COLORS.cyan} strokeWidth="0.4">
+            {Array.from({ length: 11 }).map((_, i) => (
+              <line key={`gx-${i}`} x1={20 + i * 16} y1="20" x2={20 + i * 16} y2="180" />
+            ))}
+            {Array.from({ length: 11 }).map((_, i) => (
+              <line key={`gy-${i}`} x1="20" y1={20 + i * 16} x2="180" y2={20 + i * 16} />
+            ))}
+          </g>
+
+          {/* Static base traces (dim) */}
+          <g
+            fill="none"
+            stroke={COLORS.cyan}
+            strokeOpacity="0.22"
+            strokeWidth="1"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            {CIRCUIT_TRACES.map((t, i) => (
+              <path key={`base-${i}`} d={t.d} />
+            ))}
+          </g>
+
+          {/* Animated data-flow overlay */}
+          <g
+            fill="none"
+            stroke={COLORS.cyan}
+            strokeWidth="1.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            filter="url(#bt-glow)"
+          >
+            {CIRCUIT_TRACES.map((t, i) => (
+              <path
+                key={`flow-${i}`}
+                d={t.d}
+                strokeDasharray="10 110"
+                className={t.reverse ? "bt-anim-flow-rev" : "bt-anim-flow"}
+                style={{ animationDelay: t.delay ?? "0s" }}
+              />
+            ))}
+          </g>
+
+          {/* Pulsing nodes */}
+          <g fill={COLORS.cyan}>
+            {NODES.map((n, i) => (
+              <circle
+                key={`node-${i}`}
+                cx={n.cx}
+                cy={n.cy}
+                r="2.4"
+                className="bt-anim-pulse-node"
+                style={{ animationDelay: n.delay }}
+              />
+            ))}
+          </g>
+
+          {/* QR pattern (bottom-right corner) */}
+          <g transform="translate(146 146)">
+            <rect x="-2" y="-2" width="22" height="22" fill={COLORS.navyDeep} stroke={COLORS.gold} strokeWidth="0.5" opacity="0.9" />
+            {QR_PATTERN.flatMap((row, y) =>
+              row.map((cell, x) =>
+                cell ? (
+                  <rect
+                    key={`qr-${x}-${y}`}
+                    x={x * 3.6}
+                    y={y * 3.6}
+                    width="3"
+                    height="3"
+                    fill={COLORS.cyan}
+                    opacity="0.95"
+                  />
+                ) : null,
+              ),
+            )}
+            {/* QR finder marker */}
+            <rect x="0" y="0" width="3" height="3" fill={COLORS.gold} />
+          </g>
+
+          {/* Scan line — sweeps top to bottom */}
+          <rect
+            x="20"
+            y="100"
+            width="160"
+            height="3"
+            fill="url(#bt-scanline)"
+            className="bt-anim-scan"
+            style={{ transformOrigin: "100px 100px" }}
+          />
+
+          {/* === Center shield === */}
+          <g
+            className="bt-anim-shield-glow"
+            transform="translate(100 86)"
+            style={{ transformBox: "fill-box", transformOrigin: "center" }}
+          >
+            {/* Shield silhouette */}
+            <path
+              d="M0 -22
+                 C 12 -22, 20 -18, 22 -14
+                 L 22 4
+                 C 22 16, 12 24, 0 30
+                 C -12 24, -22 16, -22 4
+                 L -22 -14
+                 C -20 -18, -12 -22, 0 -22 Z"
+              fill="url(#bt-shield)"
+              stroke={COLORS.white}
+              strokeOpacity="0.35"
+              strokeWidth="0.6"
+            />
+            {/* Inner bevel */}
+            <path
+              d="M0 -17
+                 C 10 -17, 17 -14, 18 -11
+                 L 18 3
+                 C 18 13, 10 20, 0 25
+                 C -10 20, -18 13, -18 3
+                 L -18 -11
+                 C -17 -14, -10 -17, 0 -17 Z"
+              fill="none"
+              stroke={COLORS.white}
+              strokeOpacity="0.25"
+              strokeWidth="0.5"
+            />
+            {/* Checkmark */}
+            <path
+              d="M -8 1 L -2 8 L 9 -6"
+              fill="none"
+              stroke={COLORS.white}
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </g>
+
+          {/* === Wordmark === */}
+          <text
+            x="100"
+            y="140"
+            textAnchor="middle"
+            fill={COLORS.gold}
+            className="bt-font-mono bt-anim-shimmer"
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.32em",
+            }}
+          >
+            {label}
+          </text>
+          <text
+            x="100"
+            y="151"
+            textAnchor="middle"
+            fill={COLORS.cyan}
+            opacity="0.7"
+            className="bt-font-mono"
+            style={{
+              fontSize: "4.2px",
+              fontWeight: 500,
+              letterSpacing: "0.5em",
+            }}
+          >
+            VERIFIED · SECURE · ON-CHAIN
+          </text>
+        </g>
+      </svg>
+    </div>
   );
 }
+
+export default BlockTrustBadge;

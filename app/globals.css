@@ -125,3 +125,88 @@ h5, h6 {
              logo-glow  3s ease-in-out infinite;
 }
 .pulse-cyan { animation: pulse-cyan 2s infinite; }
+
+/* ==========================================================
+   BlockTrustBadge — animations premium "circuits Lovable"
+   ========================================================== */
+.bt-anim-gold-glow {
+  animation: bt-gold-breathe 3s ease-in-out infinite;
+}
+@keyframes bt-gold-breathe {
+  0%, 100% { filter: drop-shadow(0 0 4px #BDA76B66); }
+  50% { filter: drop-shadow(0 0 12px #BDA76Baa); }
+}
+
+.bt-anim-spin-slow {
+  animation: bt-spin 18s linear infinite;
+}
+.bt-anim-spin-reverse {
+  animation: bt-spin 14s linear infinite reverse;
+}
+@keyframes bt-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.bt-anim-flow {
+  animation: bt-flow 2.4s linear infinite;
+}
+.bt-anim-flow-rev {
+  animation: bt-flow 2.4s linear infinite reverse;
+}
+@keyframes bt-flow {
+  from { stroke-dashoffset: 120; }
+  to { stroke-dashoffset: 0; }
+}
+
+.bt-anim-pulse-node {
+  animation: bt-pulse 1.8s ease-in-out infinite;
+}
+@keyframes bt-pulse {
+  0%, 100% { opacity: 0.4; r: 2.4; }
+  50% { opacity: 1; r: 3.6; }
+}
+
+.bt-anim-scan {
+  animation: bt-scan 3.5s ease-in-out infinite;
+}
+@keyframes bt-scan {
+  0% { transform: translateY(-80px); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateY(80px); opacity: 0; }
+}
+
+.bt-anim-shield-glow {
+  animation: bt-shield-pulse 2.5s ease-in-out infinite;
+}
+@keyframes bt-shield-pulse {
+  0%, 100% { filter: drop-shadow(0 0 6px #00d4ff88); }
+  50% { filter: drop-shadow(0 0 16px #00d4ffcc); }
+}
+
+.bt-anim-shimmer {
+  animation: bt-shimmer 3s ease-in-out infinite;
+}
+@keyframes bt-shimmer {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; fill: #E8D08A; }
+}
+
+.bt-font-mono {
+  font-family: 'IBM Plex Mono', 'Courier New', monospace;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bt-anim-gold-glow,
+  .bt-anim-spin-slow,
+  .bt-anim-spin-reverse,
+  .bt-anim-flow,
+  .bt-anim-flow-rev,
+  .bt-anim-pulse-node,
+  .bt-anim-scan,
+  .bt-anim-shield-glow,
+  .bt-anim-shimmer {
+    animation: none !important;
+  }
+}

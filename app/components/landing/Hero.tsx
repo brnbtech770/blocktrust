@@ -87,7 +87,7 @@ export default function Hero() {
         {/* Badge BlockTrust SVG — float + glow-pulse cyan */}
         <div className="lg:col-span-2 order-2 flex justify-center lg:justify-end">
           <div className="opacity-0 animate-fade-in [animation-delay:300ms]">
-            <div className="relative w-48 sm:w-64 lg:w-80 animate-float drop-shadow-[0_0_40px_rgba(0,212,255,0.4)]">
+            <div className="relative w-56 sm:w-72 lg:w-80 aspect-square animate-float drop-shadow-[0_0_40px_rgba(0,212,255,0.4)]">
               {/* Halo cyan pulsé en arrière-plan */}
               <div
                 aria-hidden
@@ -97,7 +97,7 @@ export default function Hero() {
                     "radial-gradient(circle at center, rgba(0,212,255,0.4) 0%, rgba(0,212,255,0.1) 45%, rgba(0,212,255,0) 75%)",
                 }}
               />
-              <BlockTrustBadge className="relative h-auto w-full" />
+              <BlockTrustBadge className="relative !w-full !h-full [&>svg]:!w-full [&>svg]:!h-full" />
             </div>
           </div>
         </div>
