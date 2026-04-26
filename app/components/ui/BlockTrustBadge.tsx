@@ -1,18 +1,26 @@
-import { type CSSProperties } from "react";
+"use client";
+
+import { type CSSProperties, useId } from "react";
 
 /**
  * BlockTrustBadge
  * --------------------------------------------------------------
  * A premium animated hex badge built entirely with SVG + CSS.
  * No animation libraries. Scales to any size via the `size` prop.
+ *
+ * `instanceId` permet de garantir l'unicité des IDs SVG (defs) lorsque
+ * plusieurs badges coexistent sur la même page. Quand non fourni, un id
+ * stable est généré via React.useId().
  */
 export interface BlockTrustBadgeProps {
   /** Rendered width/height in px. Defaults to 320. */
   size?: number;
   /** Optional className to apply to the outer wrapper. */
   className?: string;
-  /** Override the wordmark. Defaults to "BLOCKTRUST". */
+  /** Override the wordmark. Defaults to "BlockTrust". */
   label?: string;
+  /** Préfixe unique pour les IDs SVG (defs, clipPath, gradients, filtre). */
+  instanceId?: string;
 }
 
 const COLORS = {
@@ -67,7 +75,23 @@ export function BlockTrustBadge({
   size = 320,
   className,
   label = "BlockTrust",
+  instanceId,
 }: BlockTrustBadgeProps) {
+  // useId fournit un id stable côté serveur et client (Next.js SSR safe).
+  const reactId = useId();
+  // useId peut contenir des ":" — on les remplace pour rester safe en URL fragment.
+  const uid = (instanceId ?? reactId).replace(/[^a-zA-Z0-9_-]/g, "_");
+  const ID = {
+    hexClip: `bt-hex-clip-${uid}`,
+    bg: `bt-bg-${uid}`,
+    gold: `bt-gold-${uid}`,
+    shield: `bt-shield-${uid}`,
+    shieldDepth: `bt-shield-depth-${uid}`,
+    scanline: `bt-scanline-${uid}`,
+    film: `bt-film-${uid}`,
+    glow: `bt-glow-${uid}`,
+  } as const;
+
   const wrapperStyle: CSSProperties = {
     width: size,
     height: size,
@@ -89,46 +113,46 @@ export function BlockTrustBadge({
       >
         <defs>
           {/* Hex clip so circuits + scanline never escape the badge */}
-          <clipPath id="bt-hex-clip">
+          <clipPath id={ID.hexClip}>
             <polygon points={HEX_POINTS_INNER} />
           </clipPath>
 
           {/* Background gradient inside hex */}
-          <radialGradient id="bt-bg" cx="50%" cy="42%" r="65%">
+          <radialGradient id={ID.bg} cx="50%" cy="42%" r="65%">
             <stop offset="0%"  stopColor="#13243f" />
             <stop offset="60%" stopColor={COLORS.navy} />
             <stop offset="100%" stopColor={COLORS.navyDeep} />
           </radialGradient>
 
           {/* Gold border gradient */}
-          <linearGradient id="bt-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={ID.gold} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%"   stopColor={COLORS.gold} />
             <stop offset="50%"  stopColor={COLORS.goldBright} />
             <stop offset="100%" stopColor={COLORS.gold} />
           </linearGradient>
 
           {/* Cyan shield gradient — version profonde */}
-          <linearGradient id="bt-shield" x1="30%" y1="0%" x2="70%" y2="100%">
+          <linearGradient id={ID.shield} x1="30%" y1="0%" x2="70%" y2="100%">
             <stop offset="0%"   stopColor="#1ee9ff" />
             <stop offset="40%"  stopColor="#00a8cc" />
             <stop offset="100%" stopColor="#003d4d" />
           </linearGradient>
 
           {/* Overlay radial sombre pour la profondeur du bouclier */}
-          <radialGradient id="bt-shield-depth" cx="50%" cy="40%" r="60%">
+          <radialGradient id={ID.shieldDepth} cx="50%" cy="40%" r="60%">
             <stop offset="0%"   stopColor="#001820" stopOpacity="0.6" />
             <stop offset="100%" stopColor="#001820" stopOpacity="0" />
           </radialGradient>
 
           {/* Scan line gradient */}
-          <linearGradient id="bt-scanline" x1="0%" y1="0%" x2="0%" y2="100%">
+          <linearGradient id={ID.scanline} x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%"   stopColor={COLORS.cyan} stopOpacity="0" />
             <stop offset="50%"  stopColor={COLORS.cyan} stopOpacity="0.85" />
             <stop offset="100%" stopColor={COLORS.cyan} stopOpacity="0" />
           </linearGradient>
 
           {/* Film lumineux qui balaie la baseline VERIFIED */}
-          <linearGradient id="bt-film" x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id={ID.film} x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%"   stopColor="#00d4ff" stopOpacity="0" />
             <stop offset="40%"  stopColor="#00d4ff" stopOpacity="0" />
             <stop offset="50%"  stopColor="#ffffff" stopOpacity="0.9" />
@@ -137,7 +161,7 @@ export function BlockTrustBadge({
           </linearGradient>
 
           {/* Soft cyan glow filter */}
-          <filter id="bt-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <filter id={ID.glow} x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur stdDeviation="1.4" result="b" />
             <feMerge>
               <feMergeNode in="b" />
@@ -150,8 +174,8 @@ export function BlockTrustBadge({
         <g className="bt-anim-gold-glow">
           <polygon
             points={HEX_POINTS}
-            fill="url(#bt-bg)"
-            stroke="url(#bt-gold)"
+            fill={`url(#${ID.bg})`}
+            stroke={`url(#${ID.gold})`}
             strokeWidth="2.5"
             strokeLinejoin="round"
           />
@@ -193,7 +217,7 @@ export function BlockTrustBadge({
         </g>
 
         {/* === Everything inside the hex is clipped === */}
-        <g clipPath="url(#bt-hex-clip)">
+        <g clipPath={`url(#${ID.hexClip})`}>
           {/* Faint dotted grid for depth */}
           <g opacity="0.08" stroke={COLORS.cyan} strokeWidth="0.4">
             {Array.from({ length: 11 }).map((_, i) => (
@@ -225,7 +249,7 @@ export function BlockTrustBadge({
             strokeWidth="1.4"
             strokeLinecap="round"
             strokeLinejoin="round"
-            filter="url(#bt-glow)"
+            filter={`url(#${ID.glow})`}
           >
             {CIRCUIT_TRACES.map((t, i) => (
               <path
@@ -280,7 +304,7 @@ export function BlockTrustBadge({
             y="100"
             width="160"
             height="3"
-            fill="url(#bt-scanline)"
+            fill={`url(#${ID.scanline})`}
             className="bt-anim-scan"
             style={{ transformOrigin: "100px 100px" }}
           />
@@ -300,7 +324,7 @@ export function BlockTrustBadge({
                  C -12 24, -22 16, -22 4
                  L -22 -14
                  C -20 -18, -12 -22, 0 -22 Z"
-              fill="url(#bt-shield)"
+              fill={`url(#${ID.shield})`}
               stroke={COLORS.white}
               strokeOpacity="0.35"
               strokeWidth="0.6"
@@ -314,7 +338,7 @@ export function BlockTrustBadge({
                  C -12 24, -22 16, -22 4
                  L -22 -14
                  C -20 -18, -12 -22, 0 -22 Z"
-              fill="url(#bt-shield-depth)"
+              fill={`url(#${ID.shieldDepth})`}
             />
             {/* Inner bevel */}
             <path
@@ -385,7 +409,7 @@ export function BlockTrustBadge({
             y="127"
             width="90"
             height="8"
-            fill="url(#bt-film)"
+            fill={`url(#${ID.film})`}
             className="bt-anim-film"
           />
 

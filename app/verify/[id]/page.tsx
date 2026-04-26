@@ -9,6 +9,7 @@ import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { Logo } from '@/app/components/ui/Logo'
+import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 import { hashIp } from '@/app/lib/auth'
 import { checkRateLimitVerify } from '@/lib/rate-limit-verify'
 import { checkAndIncrementVerifyQuota } from '@/lib/verify-quotas'
@@ -600,18 +601,9 @@ function ValidView({
       <div className="mx-auto max-w-xl px-3 py-6 sm:px-4 sm:py-10">
         <div className="rounded-xl border border-bt-cyan/40 bg-bt-cyan/10 p-4 backdrop-blur-sm sm:p-6 md:p-8">
           <div className="mb-4 flex justify-center sm:mb-6">
-            <span
-              className="text-5xl sm:text-6xl"
-              style={{ filter: 'drop-shadow(0 0 12px rgba(0,212,255,0.6))' }}
-              aria-hidden
-            >
-              🛡️
-            </span>
+            <BlockTrustBadge size={120} instanceId="verify-id" />
             <span className="sr-only">Certificat vérifié</span>
           </div>
-          <p className="mb-1 text-center text-3xl text-bt-cyan" aria-hidden>
-            ✓
-          </p>
           <h1 className="font-syne mb-4 text-center text-xl font-bold leading-tight text-white sm:text-2xl lg:text-3xl">
             {name}
           </h1>

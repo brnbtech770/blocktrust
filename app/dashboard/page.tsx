@@ -12,6 +12,7 @@ import { getVerifyQuotaDisplay } from "@/lib/verify-quotas";
 import Link from "next/link";
 import { Plus, Shield } from "lucide-react";
 import VerifyBadgeCard from "@/app/components/dashboard/VerifyBadgeCard";
+import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 import type { CertificateTableItem, VerificationEvent } from "@/types/dashboard";
 import StatsBlock from "@/app/components/dashboard/StatsBlock";
 import CertificateTable from "@/app/components/dashboard/CertificateTable";
@@ -156,32 +157,41 @@ export default async function Dashboard({
         </div>
 
         <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
-          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-            <h2 className="font-syne text-lg font-semibold tracking-tight text-white sm:text-xl">
-              TrustScore
-            </h2>
-            <p className="font-mono text-sm tabular-nums" style={{ color: trustScoreColor }}>
-              <span className="text-xl font-semibold">{trustScoreValue}</span>
-              <span className="text-white/50">/100</span>
-              <span className="ml-2 text-xs uppercase tracking-wider text-white/60">
-                {trustScoreLabel}
-              </span>
-            </p>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full transition-all"
-              style={{
-                width: `${trustScoreValue}%`,
-                background: trustScoreColor,
-              }}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+            <BlockTrustBadge
+              size={80}
+              instanceId="dashboard-trustscore"
+              className="shrink-0 self-center sm:self-start"
             />
+            <div className="flex-1 min-w-0">
+              <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+                <h2 className="font-syne text-lg font-semibold tracking-tight text-white sm:text-xl">
+                  TrustScore
+                </h2>
+                <p className="font-mono text-sm tabular-nums" style={{ color: trustScoreColor }}>
+                  <span className="text-xl font-semibold">{trustScoreValue}</span>
+                  <span className="text-white/50">/100</span>
+                  <span className="ml-2 text-xs uppercase tracking-wider text-white/60">
+                    {trustScoreLabel}
+                  </span>
+                </p>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${trustScoreValue}%`,
+                    background: trustScoreColor,
+                  }}
+                />
+              </div>
+              {showKycTrustHint && (
+                <p className="mt-3 font-sans text-sm text-white/65">
+                  Complétez votre KYC pour améliorer votre score
+                </p>
+              )}
+            </div>
           </div>
-          {showKycTrustHint && (
-            <p className="mt-3 font-sans text-sm text-white/65">
-              Complétez votre KYC pour améliorer votre score
-            </p>
-          )}
         </div>
 
         <Suspense fallback={<KpiGridSkeleton />}>

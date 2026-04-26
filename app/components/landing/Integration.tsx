@@ -8,10 +8,10 @@ import {
   Code2,
   Copy,
   Check,
-  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import Reveal from "./Reveal";
+import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 
 type Tab = {
   id: string;
@@ -144,36 +144,19 @@ export default function Integration() {
                 </div>
               </div>
 
-              {/* Aperçu badge */}
+              {/* Aperçu badge — vrai BlockTrustBadge animé */}
               <div className="flex items-center justify-center">
-                <div
-                  className="relative flex h-[260px] w-[220px] flex-col items-center justify-center rounded-2xl border border-bt-cyan/30 p-4"
-                  style={{
-                    background:
-                      "linear-gradient(180deg, rgba(0,212,255,0.08), rgba(189,167,107,0.05))",
-                  }}
-                >
-                  <div className="absolute inset-0 -z-10 rounded-2xl animate-glow-pulse" />
-                  <ShieldCheck className="h-12 w-12 text-bt-cyan" />
-                  <div className="mt-3 font-syne text-base font-extrabold text-white">
-                    BLOCKTRUST
-                  </div>
-                  <div className="mt-1 rounded-full bg-bt-cyan/15 px-3 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-bt-cyan">
-                    Vérifié ✓
-                  </div>
-                  <div className="mt-3 grid grid-cols-6 gap-0.5">
-                    {Array.from({ length: 36 }).map((_, i) => (
-                      <span
-                        key={i}
-                        className="h-2 w-2"
-                        style={{
-                          background:
-                            (i * 7) % 3 === 0 ? "#00d4ff" : "rgba(255,255,255,0.18)",
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <div className="mt-3 font-mono text-[10px] tracking-wider text-white/50">
+                <div className="relative flex flex-col items-center gap-3">
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 -z-10 rounded-full animate-glow-pulse"
+                    style={{
+                      background:
+                        "radial-gradient(circle at center, rgba(0,212,255,0.18) 0%, rgba(0,212,255,0) 70%)",
+                    }}
+                  />
+                  <BlockTrustBadge size={160} instanceId="integration-preview" />
+                  <div className="font-mono text-[10px] tracking-wider text-white/50">
                     {SAMPLE_ID.toUpperCase()}
                   </div>
                 </div>

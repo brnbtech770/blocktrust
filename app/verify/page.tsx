@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 
 type Verdict = "VALID" | "VALID_WITH_WARNING" | "TAMPERED" | "REVOKED" | "EXPIRED" | "INVALID" | "ERROR";
 
@@ -94,22 +95,33 @@ function VerifyContent() {
         
         {verdict && (
           <div className="bg-blue-800/50 border border-blue-700/50 rounded-xl p-6 mt-6">
-            <div className="mb-4">
-              <span className="text-gray-300 font-medium">Verdict:</span>
-              <span className={`ml-2 font-bold ${
-                verdict === 'VALID' ? 'text-green-400' :
-                verdict === 'VALID_WITH_WARNING' ? 'text-yellow-400' :
-                'text-red-400'
-              }`}>
-                {verdict}
-              </span>
-            </div>
-            {reason && (
-              <div>
-                <span className="text-gray-300 font-medium">Raison:</span>
-                <p className="text-gray-300 mt-2">{reason}</p>
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-6">
+              {verdict === "VALID" && (
+                <BlockTrustBadge size={120} instanceId="verify-public" />
+              )}
+              <div className="flex-1 text-center sm:text-left">
+                <div className="mb-2">
+                  <span className="text-gray-300 font-medium">Verdict:</span>
+                  <span
+                    className={`ml-2 font-bold ${
+                      verdict === "VALID"
+                        ? "text-green-400"
+                        : verdict === "VALID_WITH_WARNING"
+                          ? "text-yellow-400"
+                          : "text-red-400"
+                    }`}
+                  >
+                    {verdict}
+                  </span>
+                </div>
+                {reason && (
+                  <div>
+                    <span className="text-gray-300 font-medium">Raison:</span>
+                    <p className="text-gray-300 mt-2">{reason}</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         )}
       </div>
