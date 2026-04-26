@@ -55,18 +55,6 @@ export default function Solution() {
       </Reveal>
 
       <div className="relative mt-14 mx-auto max-w-3xl">
-        {/* Ligne verticale animée */}
-        <div
-          aria-hidden
-          className="absolute left-6 top-2 bottom-2 w-px origin-top sm:left-7"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(0,212,255,0.6), rgba(189,167,107,0.4), rgba(0,212,255,0.6))",
-          }}
-        >
-          <div className="absolute inset-0 animate-draw-line bg-inherit" />
-        </div>
-
         <ol className="space-y-10 sm:space-y-12">
           {steps.map((step, i) => {
             const Icon = step.icon;
@@ -75,7 +63,7 @@ export default function Solution() {
                 as="li"
                 key={step.title}
                 delay={200 * i}
-                className="relative pl-16 sm:pl-20"
+                className="relative pl-16 sm:pl-20 before:pointer-events-none before:absolute before:content-[''] before:left-6 before:top-12 before:-bottom-10 before:w-px before:bg-gradient-to-b before:from-bt-cyan/60 before:via-gold/40 before:to-bt-cyan/60 sm:before:left-7 sm:before:top-14 sm:before:-bottom-12 last:before:hidden"
               >
                 <div
                   className="absolute left-0 top-0 flex h-12 w-12 items-center justify-center rounded-full border-2 sm:h-14 sm:w-14"
