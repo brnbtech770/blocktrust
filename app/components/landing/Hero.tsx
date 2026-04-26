@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { ShieldCheck, Lock, Network } from "lucide-react";
+import { Logo } from "@/app/components/ui/Logo";
 import StatCounter from "./StatCounter";
 
 export default function Hero() {
@@ -26,9 +26,11 @@ export default function Hero() {
             <span className="font-bold text-bt-cyan">Polygon</span>&nbsp;Blockchain
           </div>
 
-          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-4xl font-bold leading-tight tracking-tight text-white sm:mt-6 sm:text-5xl lg:text-6xl">
+          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-4xl font-bold leading-[1.15] tracking-tight text-white overflow-visible sm:mt-6 sm:text-5xl lg:text-6xl">
             Protégez chaque interaction de votre{" "}
-            <span className="text-bt-cyan">écosystème digital</span>
+            <span className="text-bt-cyan inline-block pb-2 leading-normal align-baseline">
+              écosystème digital
+            </span>
           </h1>
 
           <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl text-base leading-relaxed text-white/75 sm:mt-6 sm:text-lg">
@@ -82,17 +84,10 @@ export default function Hero() {
           </ul>
         </div>
 
-        {/* Logo BlockTrust — float + drop-shadow cyan (pas de halo qui écrase) */}
+        {/* Logo BlockTrust (composant centralisé) — float + drop-shadow cyan */}
         <div className="lg:col-span-2 order-2 flex justify-center lg:justify-end">
-          <div className="opacity-0 animate-fade-in [animation-delay:300ms]">
-            <Image
-              src="/logo.png"
-              alt="Logo BlockTrust"
-              width={320}
-              height={320}
-              priority
-              className="w-48 sm:w-64 lg:w-80 h-auto object-contain animate-float drop-shadow-[0_0_30px_rgba(0,212,255,0.4)]"
-            />
+          <div className="opacity-0 animate-fade-in [animation-delay:300ms] w-48 sm:w-64 lg:w-80 animate-float drop-shadow-[0_0_30px_rgba(0,212,255,0.4)]">
+            <Logo size="hero" withText={false} href={undefined} className="!w-full !h-auto" />
           </div>
         </div>
       </div>
