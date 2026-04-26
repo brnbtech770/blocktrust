@@ -107,11 +107,18 @@ export function BlockTrustBadge({
             <stop offset="100%" stopColor={COLORS.gold} />
           </linearGradient>
 
-          {/* Cyan shield gradient */}
-          <linearGradient id="bt-shield" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%"  stopColor={COLORS.cyanSoft} />
-            <stop offset="100%" stopColor={COLORS.cyan} />
+          {/* Cyan shield gradient — version profonde */}
+          <linearGradient id="bt-shield" x1="30%" y1="0%" x2="70%" y2="100%">
+            <stop offset="0%"   stopColor="#1ee9ff" />
+            <stop offset="40%"  stopColor="#00a8cc" />
+            <stop offset="100%" stopColor="#003d4d" />
           </linearGradient>
+
+          {/* Overlay radial sombre pour la profondeur du bouclier */}
+          <radialGradient id="bt-shield-depth" cx="50%" cy="40%" r="60%">
+            <stop offset="0%"   stopColor="#001820" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#001820" stopOpacity="0" />
+          </radialGradient>
 
           {/* Scan line gradient */}
           <linearGradient id="bt-scanline" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -289,6 +296,17 @@ export function BlockTrustBadge({
               strokeOpacity="0.35"
               strokeWidth="0.6"
             />
+            {/* Overlay radial sombre pour la profondeur */}
+            <path
+              d="M0 -22
+                 C 12 -22, 20 -18, 22 -14
+                 L 22 4
+                 C 22 16, 12 24, 0 30
+                 C -12 24, -22 16, -22 4
+                 L -22 -14
+                 C -20 -18, -12 -22, 0 -22 Z"
+              fill="url(#bt-shield-depth)"
+            />
             {/* Inner bevel */}
             <path
               d="M0 -17
@@ -303,12 +321,33 @@ export function BlockTrustBadge({
               strokeOpacity="0.25"
               strokeWidth="0.5"
             />
-            {/* Checkmark */}
+            {/* Micro-lignes décoratives dans le bouclier */}
+            <line
+              x1="-12"
+              y1="-4"
+              x2="12"
+              y2="-4"
+              stroke="#00d4ff"
+              strokeWidth="0.5"
+              opacity="0.4"
+              strokeDasharray="3 2"
+            />
+            <line
+              x1="-10"
+              y1="4"
+              x2="10"
+              y2="4"
+              stroke="#00d4ff"
+              strokeWidth="0.5"
+              opacity="0.3"
+              strokeDasharray="3 2"
+            />
+            {/* Checkmark — gold */}
             <path
               d="M -8 1 L -2 8 L 9 -6"
               fill="none"
-              stroke={COLORS.white}
-              strokeWidth="3"
+              stroke={COLORS.goldBright}
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
