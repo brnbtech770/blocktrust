@@ -35,11 +35,11 @@ export default function Entreprises() {
       id="entreprises"
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24"
     >
-      <Reveal className="mx-auto max-w-3xl text-center">
+      <Reveal className="mx-auto max-w-3xl text-center overflow-visible">
         <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-gold/80">
           Pour les entreprises
         </p>
-        <h2 className="font-syne text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+        <h2 className="font-syne mx-auto max-w-2xl pb-2 text-2xl font-semibold leading-normal text-white overflow-visible sm:text-3xl lg:text-4xl">
           Sécurisez chaque interaction <span className="text-gold">B2B</span>
         </h2>
       </Reveal>
@@ -59,7 +59,7 @@ export default function Entreprises() {
               >
                 <Icon className="h-6 w-6 text-gold" />
               </div>
-              <h3 className="font-syne mb-2 text-lg sm:text-xl font-semibold text-white">
+              <h3 className="font-syne mb-2 text-base sm:text-lg font-semibold text-white">
                 {c.title}
               </h3>
               <p className="text-sm sm:text-base leading-relaxed text-white/70">{c.text}</p>

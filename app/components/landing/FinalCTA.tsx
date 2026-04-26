@@ -11,11 +11,11 @@ export default function FinalCTA() {
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24"
     >
       <Reveal
-        className="relative overflow-hidden rounded-3xl border border-bt-cyan/25 p-8 text-center sm:p-12 lg:p-16"
+        className="relative overflow-visible rounded-3xl border border-bt-cyan/25 p-8 text-center sm:p-12 lg:p-16"
       >
         <div
           aria-hidden
-          className="absolute inset-0 -z-10"
+          className="absolute inset-0 -z-10 rounded-3xl"
           style={{
             background:
               "linear-gradient(135deg, rgba(10,22,40,0.95) 0%, rgba(0,212,255,0.18) 100%)",
@@ -31,7 +31,7 @@ export default function FinalCTA() {
           <ShieldCheck className="h-7 w-7 text-bt-cyan" />
         </div>
 
-        <h2 className="font-syne mt-6 text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+        <h2 className="font-syne mx-auto mt-6 max-w-2xl pb-4 text-2xl font-semibold leading-normal text-white overflow-visible sm:text-3xl lg:text-4xl">
           <span className="block">Prêt à sécuriser votre</span>
           <span className="block">
             <span className="text-bt-cyan">identité digitale&nbsp;?</span>

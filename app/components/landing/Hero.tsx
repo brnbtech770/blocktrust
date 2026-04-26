@@ -26,7 +26,7 @@ export default function Hero() {
             <span className="font-bold text-bt-cyan">Polygon</span>&nbsp;Blockchain
           </div>
 
-          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-4xl font-bold leading-[1.15] tracking-tight text-white overflow-visible sm:mt-6 sm:text-5xl lg:text-6xl">
+          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-3xl font-bold leading-[1.15] tracking-tight text-white overflow-visible sm:mt-6 sm:text-4xl lg:text-5xl">
             Protégez chaque interaction de votre{" "}
             <span className="text-bt-cyan inline-block pb-2 leading-normal align-baseline">
               écosystème digital

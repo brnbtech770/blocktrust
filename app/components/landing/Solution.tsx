@@ -49,7 +49,7 @@ export default function Solution() {
         <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-bt-cyan/80">
           La solution
         </p>
-        <h2 className="font-syne text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+        <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-4xl">
           3 étapes pour sécuriser votre <span className="text-bt-cyan">identité</span>
         </h2>
       </Reveal>
@@ -90,7 +90,7 @@ export default function Solution() {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
                   {step.step}
                 </div>
-                <h3 className="font-syne mt-1 text-lg sm:text-xl font-semibold text-white">
+                <h3 className="font-syne mt-1 text-base sm:text-lg font-semibold text-white">
                   {step.title}
                 </h3>
                 <p className="mt-2 text-sm sm:text-base leading-relaxed text-white/70">

@@ -68,7 +68,7 @@ export default function Integration() {
         <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-bt-cyan/80">
           Intégration
         </p>
-        <h2 className="font-syne text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+        <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-4xl">
           Intégrez votre badge <span className="text-bt-cyan">partout</span>
         </h2>
       </Reveal>
@@ -115,7 +115,7 @@ export default function Integration() {
               className="grid grid-cols-1 gap-6 animate-fade-in lg:grid-cols-2"
             >
               <div>
-                <h3 className="font-syne mb-2 text-lg sm:text-xl font-semibold text-white">
+                <h3 className="font-syne mb-2 text-base sm:text-lg font-semibold text-white">
                   Iframe à coller sur votre site
                 </h3>
                 <p className="mb-4 text-sm text-white/70">
@@ -189,7 +189,7 @@ export default function Integration() {
               aria-labelledby="tab-email"
               className="animate-fade-in"
             >
-              <h3 className="font-syne mb-2 text-lg sm:text-xl font-semibold text-white">
+              <h3 className="font-syne mb-2 text-base sm:text-lg font-semibold text-white">
                 Ajoutez votre badge à votre signature email
               </h3>
               <p className="mb-6 text-sm text-white/70">
@@ -223,7 +223,7 @@ export default function Integration() {
               aria-labelledby="tab-visio"
               className="animate-fade-in"
             >
-              <h3 className="font-syne mb-2 text-lg sm:text-xl font-semibold text-white">
+              <h3 className="font-syne mb-2 text-base sm:text-lg font-semibold text-white">
                 Partagez votre lien avant chaque appel
               </h3>
               <p className="mb-6 text-sm text-white/70">
@@ -274,7 +274,7 @@ export default function Integration() {
               aria-labelledby="tab-api"
               className="animate-fade-in"
             >
-              <h3 className="font-syne mb-2 text-lg sm:text-xl font-semibold text-white">
+              <h3 className="font-syne mb-2 text-base sm:text-lg font-semibold text-white">
                 API REST pour vos systèmes B2B
               </h3>
               <p className="mb-4 text-sm text-white/70">
