@@ -2,9 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { CheckCircle2, AlertTriangle, Loader2, Building2, MapPin, Briefcase, Hash } from 'lucide-react'
 import { Logo } from '@/app/components/ui/Logo'
 
 type Step = 'select' | 'siret' | 'launching' | 'complete'
+
+type SiretInfo = {
+  siret: string
+  siren: string
+  raisonSociale: string
+  adresse: string
+  activite: string | null
+  dateCreation: string | null
+  etatAdministratif: 'Actif' | 'Fermé'
+}
 
 export function OnboardingVerifyClient() {
   const router = useRouter()
@@ -12,9 +23,9 @@ export function OnboardingVerifyClient() {
   const [step, setStep] = useState<Step>('select')
   const [accountType, setAccountType] = useState<'INDIVIDUAL' | 'BUSINESS'>('INDIVIDUAL')
   const [siret, setSiret] = useState('')
-  const [companyName, setCompanyName] = useState('')
   const [siretStatus, setSiretStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
   const [siretError, setSiretError] = useState<string | null>(null)
+  const [siretInfo, setSiretInfo] = useState<SiretInfo | null>(null)
 
   const statusComplete = searchParams.get('status') === 'complete'
 
@@ -22,27 +33,44 @@ export function OnboardingVerifyClient() {
     if (statusComplete) setStep('complete')
   }, [statusComplete])
 
+  const isSiretFormatValid = /^\d{14}$/.test(siret)
+
   async function checkSiret() {
-    if (!siret || siret.length !== 14) {
+    if (!isSiretFormatValid) {
       setSiretStatus('error')
       setSiretError('14 chiffres requis')
+      setSiretInfo(null)
       return
     }
     setSiretStatus('loading')
     setSiretError(null)
     try {
-      const res = await fetch(`/api/kyc/siret?siret=${encodeURIComponent(siret)}`)
+      const res = await fetch('/api/kyc/siret', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ siret }),
+      })
       const data = await res.json()
-      if (!res.ok) {
+      if (!res.ok || !data.valid) {
         setSiretStatus('error')
         setSiretError(data.error || 'SIRET non trouvé')
+        setSiretInfo(null)
         return
       }
-      setCompanyName(data.companyName || '')
+      setSiretInfo({
+        siret: data.siret,
+        siren: data.siren,
+        raisonSociale: data.raisonSociale,
+        adresse: data.adresse,
+        activite: data.activite,
+        dateCreation: data.dateCreation,
+        etatAdministratif: data.etatAdministratif,
+      })
       setSiretStatus('ok')
     } catch {
       setSiretStatus('error')
-      setSiretError('Erreur API')
+      setSiretError('Erreur réseau, réessayez')
+      setSiretInfo(null)
     }
   }
 
@@ -54,7 +82,14 @@ export function OnboardingVerifyClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           accountType,
-          ...(accountType === 'BUSINESS' && siret ? { siret, companyName: companyName || undefined } : {}),
+          ...(accountType === 'BUSINESS' && siretInfo
+            ? {
+                siret: siretInfo.siret,
+                companyName: siretInfo.raisonSociale,
+                address: siretInfo.adresse,
+                activite: siretInfo.activite ?? undefined,
+              }
+            : {}),
         }),
       })
       const data = await res.json()
@@ -71,7 +106,7 @@ export function OnboardingVerifyClient() {
   }
 
   const cardClass =
-    'mx-auto max-w-[480px] rounded-xl border border-bt-cyan/20 bg-white/5 p-8 backdrop-blur-sm transition-all hover:border-gold/30'
+    'mx-auto max-w-[520px] rounded-xl border border-bt-cyan/20 bg-white/5 p-8 backdrop-blur-sm transition-all hover:border-gold/30'
 
   return (
     <div className="min-h-screen bt-circuit-bg" style={{ background: 'var(--bt-navy)', padding: 24 }}>
@@ -120,7 +155,7 @@ export function OnboardingVerifyClient() {
               }}
             >
               <div className="flex items-center gap-2 mb-2">
-                <BuildingIcon className="w-6 h-6 text-[var(--bt-muted)]" />
+                <Building2 className="w-6 h-6 text-[var(--bt-muted)]" />
                 <span className="font-bold text-white">Entreprise</span>
               </div>
               <ul className="text-xs space-y-1 mb-2" style={{ color: 'var(--bt-muted)' }}>
@@ -153,24 +188,96 @@ export function OnboardingVerifyClient() {
           >
             ← Retour
           </button>
-          <h2 className="font-syne mb-4 text-lg font-bold tracking-tight text-white">
+          <h2 className="font-syne mb-2 text-lg font-bold tracking-tight text-white">
             SIRET entreprise
           </h2>
-          <input
-            type="text"
-            placeholder="14 chiffres"
-            maxLength={14}
-            value={siret}
-            onChange={(e) => { setSiret(e.target.value.replace(/\D/g, '')); setSiretStatus('idle') }}
-            onBlur={checkSiret}
-            className="mb-2 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40"
-          />
-          {siretStatus === 'ok' && <p className="text-sm text-green-500 mb-2">✓ {companyName}</p>}
-          {siretStatus === 'error' && <p className="text-sm text-red-400 mb-2">{siretError}</p>}
+          <p className="text-xs mb-4" style={{ color: 'var(--bt-muted)' }}>
+            Vérification en temps réel via le registre INSEE Sirene
+          </p>
+
+          <div className="flex gap-2 mb-3">
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="14 chiffres"
+              maxLength={14}
+              value={siret}
+              onChange={(e) => {
+                const cleaned = e.target.value.replace(/\D/g, '').slice(0, 14)
+                setSiret(cleaned)
+                setSiretStatus('idle')
+                setSiretError(null)
+                setSiretInfo(null)
+              }}
+              className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-3 font-mono tracking-wider text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={checkSiret}
+              disabled={!isSiretFormatValid || siretStatus === 'loading'}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-bt-cyan/40 bg-bt-cyan/10 px-4 py-3 text-sm font-semibold text-bt-cyan transition hover:bg-bt-cyan/20 disabled:opacity-40"
+            >
+              {siretStatus === 'loading' ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                'Vérifier'
+              )}
+            </button>
+          </div>
+
+          {/* Indicateur format temps réel */}
+          {siret.length > 0 && siret.length < 14 && (
+            <p className="text-xs mb-2" style={{ color: 'var(--bt-muted)' }}>
+              {siret.length}/14 chiffres
+            </p>
+          )}
+
+          {siretStatus === 'error' && (
+            <div className="mb-4 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-400">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{siretError}</span>
+            </div>
+          )}
+
+          {siretStatus === 'ok' && siretInfo && (
+            <div
+              className="mb-4 rounded-xl border p-4"
+              style={{ borderColor: 'rgba(29,184,126,0.4)', background: 'rgba(29,184,126,0.06)' }}
+            >
+              <div className="flex items-start gap-2 mb-3">
+                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" />
+                <div className="min-w-0">
+                  <p className="font-syne font-bold text-white">{siretInfo.raisonSociale}</p>
+                  <p className="text-[11px] uppercase tracking-wider text-emerald-400">
+                    Vérifié INSEE · {siretInfo.etatAdministratif}
+                  </p>
+                </div>
+              </div>
+              <ul className="space-y-1.5 text-xs text-white/75">
+                <li className="flex items-start gap-2">
+                  <Hash className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/40" />
+                  <span className="font-mono">{siretInfo.siret}</span>
+                </li>
+                {siretInfo.adresse && (
+                  <li className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/40" />
+                    <span>{siretInfo.adresse}</span>
+                  </li>
+                )}
+                {siretInfo.activite && (
+                  <li className="flex items-start gap-2">
+                    <Briefcase className="mt-0.5 h-3.5 w-3.5 shrink-0 text-white/40" />
+                    <span>Code APE {siretInfo.activite}</span>
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+
           <button
             type="button"
             onClick={startVerification}
-            disabled={siret.length !== 14 || siretStatus !== 'ok'}
+            disabled={siretStatus !== 'ok'}
             className="w-full rounded-lg bg-bt-cyan py-3 font-bold text-navy transition hover:bg-bt-cyan/90 disabled:opacity-50"
           >
             Démarrer la vérification
@@ -216,13 +323,7 @@ function PersonIcon({ className }: { className?: string }) {
     </svg>
   )
 }
-function BuildingIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-    </svg>
-  )
-}
+
 function CheckIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { CheckCircle2, AlertTriangle } from 'lucide-react'
 import StatusBadge from '@/app/components/admin/StatusBadge'
 import TypeBadge from '@/app/components/admin/TypeBadge'
 import ActionButton from '@/app/components/admin/ActionButton'
@@ -17,6 +18,7 @@ type User = {
   siret: string | null
   companyName: string | null
   createdAt: Date
+  siretVerifiedByInsee?: boolean
 }
 
 function TH({ children }: { children: React.ReactNode }) {
@@ -113,7 +115,26 @@ export default function AdminKycClient({ users }: { users: User[] }) {
                 <td className="px-4 py-4">
                   <StatusBadge status={u.kycStatus ?? 'PENDING'} type="kyc" />
                 </td>
-                <td className="px-4 py-4 font-mono text-sm text-white/60">{u.siret || '—'}</td>
+                <td className="px-4 py-4">
+                  {u.siret ? (
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="font-mono text-sm text-white/70">{u.siret}</span>
+                      {u.siretVerifiedByInsee ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+                          <CheckCircle2 className="h-3 w-3" />
+                          INSEE ✓
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
+                          <AlertTriangle className="h-3 w-3" />
+                          SIRET non vérifié
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-white/30">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-4 font-mono text-xs text-white/50">
                   {u.kycVerifiedAt ? new Date(u.kycVerifiedAt).toLocaleDateString('fr-FR') : '—'}
                 </td>

@@ -8,6 +8,8 @@ const schema = z.object({
   accountType: z.enum(['INDIVIDUAL', 'BUSINESS']),
   siret: z.string().length(14).optional(),
   companyName: z.string().optional(),
+  address: z.string().optional(),
+  activite: z.string().optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -25,7 +27,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { accountType, siret, companyName } = parsed.data
+  const { accountType, siret, companyName, address, activite } = parsed.data
 
   try {
     const verificationSession =
@@ -64,7 +66,15 @@ export async function POST(req: NextRequest) {
         accountType,
         status:                'PENDING',
         siretVerified:         !!siret,
-        siretData:             siret ? { siret, companyName } : undefined,
+        siretData:             siret
+          ? {
+              siret,
+              companyName: companyName ?? null,
+              address: address ?? null,
+              activite: activite ?? null,
+              source: 'insee_sirene_3.11',
+            }
+          : undefined,
       },
     })
 
