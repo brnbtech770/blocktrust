@@ -193,6 +193,16 @@ h5, h6 {
   50% { opacity: 1; fill: #E8D08A; }
 }
 
+.bt-anim-film {
+  animation: bt-film-sweep 3s ease-in-out infinite;
+}
+@keyframes bt-film-sweep {
+  0%   { transform: translateX(-90px); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateX(90px); opacity: 0; }
+}
+
 .bt-font-mono {
   font-family: 'IBM Plex Mono', 'Courier New', monospace;
 }
@@ -206,7 +216,8 @@ h5, h6 {
   .bt-anim-pulse-node,
   .bt-anim-scan,
   .bt-anim-shield-glow,
-  .bt-anim-shimmer {
+  .bt-anim-shimmer,
+  .bt-anim-film {
     animation: none !important;
   }
 }

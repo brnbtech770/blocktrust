@@ -66,7 +66,7 @@ const QR_PATTERN = [
 export function BlockTrustBadge({
   size = 320,
   className,
-  label = "BLOCKTRUST",
+  label = "BlockTrust",
 }: BlockTrustBadgeProps) {
   const wrapperStyle: CSSProperties = {
     width: size,
@@ -125,6 +125,15 @@ export function BlockTrustBadge({
             <stop offset="0%"   stopColor={COLORS.cyan} stopOpacity="0" />
             <stop offset="50%"  stopColor={COLORS.cyan} stopOpacity="0.85" />
             <stop offset="100%" stopColor={COLORS.cyan} stopOpacity="0" />
+          </linearGradient>
+
+          {/* Film lumineux qui balaie la baseline VERIFIED */}
+          <linearGradient id="bt-film" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%"   stopColor="#00d4ff" stopOpacity="0" />
+            <stop offset="40%"  stopColor="#00d4ff" stopOpacity="0" />
+            <stop offset="50%"  stopColor="#ffffff" stopOpacity="0.9" />
+            <stop offset="60%"  stopColor="#00d4ff" stopOpacity="0" />
+            <stop offset="100%" stopColor="#00d4ff" stopOpacity="0" />
           </linearGradient>
 
           {/* Soft cyan glow filter */}
@@ -353,24 +362,10 @@ export function BlockTrustBadge({
             />
           </g>
 
-          {/* === Wordmark === */}
+          {/* === Baseline VERIFIED · SECURE · ON-CHAIN (au-dessus) === */}
           <text
             x="100"
-            y="140"
-            textAnchor="middle"
-            fill={COLORS.gold}
-            className="bt-font-mono bt-anim-shimmer"
-            style={{
-              fontSize: "11px",
-              fontWeight: 700,
-              letterSpacing: "0.32em",
-            }}
-          >
-            {label}
-          </text>
-          <text
-            x="100"
-            y="151"
+            y="132"
             textAnchor="middle"
             fill={COLORS.cyan}
             opacity="0.7"
@@ -382,6 +377,32 @@ export function BlockTrustBadge({
             }}
           >
             VERIFIED · SECURE · ON-CHAIN
+          </text>
+
+          {/* Film lumineux animé qui balaie la baseline */}
+          <rect
+            x="55"
+            y="127"
+            width="90"
+            height="8"
+            fill="url(#bt-film)"
+            className="bt-anim-film"
+          />
+
+          {/* === Wordmark BlockTrust (en dessous) === */}
+          <text
+            x="100"
+            y="143"
+            textAnchor="middle"
+            fill={COLORS.gold}
+            className="bt-font-mono bt-anim-shimmer"
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.32em",
+            }}
+          >
+            {label}
           </text>
         </g>
       </svg>
