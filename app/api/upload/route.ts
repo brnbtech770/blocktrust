@@ -2,10 +2,34 @@ import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
 import { auth } from '@/app/lib/auth-server'
 
+/**
+ * Types MIME acceptés pour l'upload de documents (KYC + Trust manuel).
+ * - image/jpeg, image/png, image/webp : pièces d'identité, captures
+ * - application/pdf : Kbis, justificatifs
+ */
+const ALLOWED_MIME = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'application/pdf',
+])
+
+const MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10 MB
+
+/**
+ * Préfixes de chemin selon le contexte d'upload — permet de cloisonner
+ * les blobs par usage (lifecycle / nettoyage / audit).
+ */
+const PURPOSE_PREFIXES = {
+  kyc: 'kyc',
+  'trust-manual': 'trust-manual',
+} as const
+type Purpose = keyof typeof PURPOSE_PREFIXES
+
 /** Nom de fichier sûr pour la clé blob (pas de path traversal ni caractères exotiques). */
 function safeUploadFilename(original: string): string {
   const base = original.replace(/[/\\]/g, '').replace(/\.\./g, '').slice(0, 180)
-  const m = base.match(/\.(jpe?g|png|pdf)$/i)
+  const m = base.match(/\.(jpe?g|png|webp|pdf)$/i)
   const ext = m ? m[0].toLowerCase() : ''
   const stem = base
     .replace(/\.[^.]+$/, '')
@@ -21,45 +45,67 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
   }
 
-  const formData = await req.formData()
-  const file = formData.get('file') as File
+  let formData: FormData
+  try {
+    formData = await req.formData()
+  } catch {
+    return NextResponse.json({ error: 'Corps de requête invalide' }, { status: 400 })
+  }
 
-  if (!file) {
+  const file = formData.get('file')
+  if (!(file instanceof File)) {
+    return NextResponse.json({ error: 'Fichier manquant' }, { status: 400 })
+  }
+
+  if (!ALLOWED_MIME.has(file.type)) {
     return NextResponse.json(
-      { error: 'Fichier manquant' }, { status: 400 }
+      { error: 'Type non autorisé (JPG, PNG, WEBP ou PDF)' },
+      { status: 400 },
     )
   }
 
-  const allowed = [
-    'image/jpeg', 'image/png', 'application/pdf'
-  ]
-  if (!allowed.includes(file.type)) {
+  if (file.size > MAX_SIZE_BYTES) {
     return NextResponse.json(
-      { error: 'Type non autorisé (JPG, PNG, PDF)' },
-      { status: 400 }
+      { error: 'Fichier trop volumineux (max 10 MB)' },
+      { status: 400 },
     )
   }
 
-  if (file.size > 10 * 1024 * 1024) {
+  // Purpose explicite (formulaire) — fallback "kyc" pour rétro-compatibilité.
+  const rawPurpose = formData.get('purpose')
+  const purpose: Purpose =
+    typeof rawPurpose === 'string' && rawPurpose in PURPOSE_PREFIXES
+      ? (rawPurpose as Purpose)
+      : 'kyc'
+  const prefix = PURPOSE_PREFIXES[purpose]
+
+  const token = process.env.BLOB_READ_WRITE_TOKEN
+  if (!token) {
     return NextResponse.json(
-      { error: 'Fichier trop volumineux (max 10MB)' },
-      { status: 400 }
+      { error: 'Stockage indisponible (BLOB_READ_WRITE_TOKEN manquant)' },
+      { status: 503 },
     )
   }
 
   try {
     const blob = await put(
-      `kyc/${session.user.id}/${safeUploadFilename(file.name || 'upload')}`,
+      `${prefix}/${session.user.id}/${safeUploadFilename(file.name || 'upload')}`,
       file,
-      { access: 'private' }
+      {
+        access: 'public',
+        addRandomSuffix: true,
+        contentType: file.type,
+        token,
+      },
     )
 
-    return NextResponse.json({ url: blob.url })
+    return NextResponse.json({ url: blob.url, pathname: blob.pathname })
   } catch (err) {
-    console.error('[UPLOAD ERROR]', err)
+    // NE PAS logger le token / contenu du fichier
+    console.error('[UPLOAD ERROR]', err instanceof Error ? err.message : 'unknown')
     return NextResponse.json(
-      { error: 'Erreur lors de l\'upload' },
-      { status: 500 }
+      { error: "Erreur lors de l'upload" },
+      { status: 500 },
     )
   }
 }

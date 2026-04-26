@@ -1,5 +1,6 @@
 'use client'
 
+import { ExternalLink, FileText } from 'lucide-react'
 import StatusBadge from '@/app/components/admin/StatusBadge'
 import TypeBadge from '@/app/components/admin/TypeBadge'
 import ActionButton from '@/app/components/admin/ActionButton'
@@ -87,17 +88,22 @@ export default function AdminDemandesClient({ entries }: { entries: Entry[] }) {
               <td className="px-4 py-4 font-mono text-sm text-white/60">{e.siret || '—'}</td>
               <td className="px-4 py-4">
                 {docs(e.documents).length > 0 ? (
-                  docs(e.documents).map((url) => (
-                    <a
-                      key={url}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block max-w-[120px] truncate text-xs text-bt-cyan/70 hover:text-bt-cyan hover:underline"
-                    >
-                      Voir
-                    </a>
-                  ))
+                  <ul className="space-y-1">
+                    {docs(e.documents).map((url, i, arr) => (
+                      <li key={url}>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-md border border-bt-cyan/25 bg-bt-cyan/5 px-2 py-1 text-xs text-bt-cyan/90 transition hover:border-bt-cyan/60 hover:bg-bt-cyan/15 hover:text-bt-cyan"
+                        >
+                          <FileText className="h-3 w-3" />
+                          {arr.length > 1 ? `Voir document ${i + 1}` : 'Voir le document'}
+                          <ExternalLink className="h-3 w-3 opacity-70" />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
                 ) : (
                   <span className="text-xs text-white/30">—</span>
                 )}

@@ -40,10 +40,13 @@ export default function TrustCircleManualModal({
     try {
       const form = new FormData()
       form.set('file', file)
+      form.set('purpose', 'trust-manual')
       const res = await fetch('/api/upload', { method: 'POST', credentials: 'include', body: form })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Upload échoué')
       setDocuments((d) => [...d, data.url])
+      // Reset input pour permettre de re-uploader le même fichier
+      e.target.value = ''
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -159,15 +162,35 @@ export default function TrustCircleManualModal({
             />
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-white/70">Documents <span className="text-red-400">*</span> (JPG, PNG, PDF, max 10 Mo)</label>
+            <label className="mb-2 block text-sm font-medium text-white/70">
+              Documents <span className="text-red-400">*</span>{' '}
+              <span className="text-xs text-white/40">(JPG, PNG, WEBP, PDF — max 10 Mo)</span>
+            </label>
             <input
               type="file"
-              accept="image/jpeg,image/png,application/pdf"
+              accept="image/jpeg,image/png,image/webp,application/pdf"
               onChange={onFileChange}
               disabled={uploading}
               className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white file:mr-2 file:rounded file:border-0 file:bg-bt-cyan file:px-3 file:py-1 file:font-medium file:text-navy"
             />
-            {documents.length > 0 && <p className="text-xs text-green-400 mt-1">{documents.length} fichier(s) joint(s)</p>}
+            {uploading && <p className="text-xs text-bt-cyan/80 mt-1">Upload en cours…</p>}
+            {documents.length > 0 && (
+              <ul className="mt-2 space-y-1 text-xs">
+                {documents.map((url, i) => (
+                  <li key={url} className="flex items-center justify-between gap-2 rounded-md border border-emerald-500/25 bg-emerald-500/5 px-2 py-1 text-emerald-300">
+                    <span className="truncate">Document {i + 1} joint</span>
+                    <button
+                      type="button"
+                      onClick={() => setDocuments((d) => d.filter((u) => u !== url))}
+                      className="text-emerald-400/70 hover:text-red-400"
+                      aria-label="Retirer ce document"
+                    >
+                      <X size={12} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
           <div>
             <label className="mb-2 block text-sm font-medium text-white/70">Note pour l&apos;admin (optionnel)</label>
