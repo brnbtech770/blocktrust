@@ -21,9 +21,66 @@ const syne = Syne({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+const SITE_URL = "https://blocktrust.tech";
+const SITE_TITLE = "BlockTrust — Certification d'identité numérique";
+const SITE_DESCRIPTION =
+  "Protégez chaque interaction de votre écosystème digital. BlockTrust certifie votre identité et sécurise vos échanges en ligne — pour les particuliers comme pour les entreprises.";
+
 export const metadata: Metadata = {
-  title: "BlockTrust - Certification de confiance numérique",
-  description: "Protégez votre identité et authentifiez vos communications avec des certificats vérifiables et des signatures cryptographiques.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_TITLE,
+    template: "%s — BlockTrust",
+  },
+  description: SITE_DESCRIPTION,
+  applicationName: "BlockTrust",
+  keywords: [
+    "BlockTrust",
+    "identité numérique",
+    "blockchain",
+    "Polygon",
+    "certificat",
+    "KYC",
+    "anti-phishing",
+    "badge vérifié",
+  ],
+  authors: [{ name: "BRNB TECH SASU" }],
+  creator: "BRNB TECH SASU",
+  publisher: "BRNB TECH SASU",
+  icons: {
+    icon: [
+      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: ["/favicon.png"],
+  },
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: SITE_URL,
+    siteName: "BlockTrust",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "BlockTrust — Certification d'identité numérique",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
