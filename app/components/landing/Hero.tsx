@@ -26,7 +26,7 @@ export default function Hero() {
             <span className="font-bold text-bt-cyan">Polygon</span>&nbsp;Blockchain
           </div>
 
-          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-3xl font-extrabold leading-[1.08] text-white sm:mt-6 sm:text-5xl lg:text-6xl">
+          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-4xl font-bold leading-tight tracking-tight text-white sm:mt-6 sm:text-5xl lg:text-6xl">
             Protégez chaque interaction de votre{" "}
             <span className="text-bt-cyan">écosystème digital</span>
           </h1>
@@ -82,42 +82,17 @@ export default function Hero() {
           </ul>
         </div>
 
-        {/* Logo BlockTrust animé — float + glow pulse cyan */}
+        {/* Logo BlockTrust — float + drop-shadow cyan (pas de halo qui écrase) */}
         <div className="lg:col-span-2 order-2 flex justify-center lg:justify-end">
-          <div className="opacity-0 animate-fade-in [animation-delay:300ms] relative">
-            {/* halo glow pulsé en arrière-plan (cyan) */}
-            <div
-              aria-hidden
-              className="absolute inset-[-20px] rounded-full animate-glow-pulse"
-              style={{
-                background:
-                  "radial-gradient(circle at center, rgba(0,212,255,0.45) 0%, rgba(0,212,255,0.12) 40%, rgba(0,212,255,0) 70%)",
-              }}
+          <div className="opacity-0 animate-fade-in [animation-delay:300ms]">
+            <Image
+              src="/logo.png"
+              alt="Logo BlockTrust"
+              width={320}
+              height={320}
+              priority
+              className="w-48 sm:w-64 lg:w-80 h-auto object-contain animate-float drop-shadow-[0_0_30px_rgba(0,212,255,0.4)]"
             />
-            {/* anneau qui tourne lentement (cyan + or) */}
-            <div
-              aria-hidden
-              className="absolute inset-[-12px] rounded-full border-2 border-bt-cyan/20 animate-spin-slow"
-              style={{
-                borderTopColor: "rgba(0,212,255,0.8)",
-                borderRightColor: "rgba(189,167,107,0.6)",
-              }}
-            />
-            <div className="relative flex h-[220px] w-[220px] items-center justify-center sm:h-[300px] sm:w-[300px] lg:h-[360px] lg:w-[360px] animate-float">
-              <Image
-                src="/logo.png"
-                alt="Logo BlockTrust"
-                width={360}
-                height={360}
-                priority
-                className="h-full w-full object-contain"
-                style={{
-                  mixBlendMode: "screen",
-                  filter:
-                    "drop-shadow(0 0 18px rgba(0,212,255,0.55)) drop-shadow(0 0 40px rgba(0,212,255,0.25))",
-                }}
-              />
-            </div>
           </div>
         </div>
       </div>

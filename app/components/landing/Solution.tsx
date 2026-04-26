@@ -46,10 +46,10 @@ export default function Solution() {
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24"
     >
       <Reveal className="mx-auto max-w-3xl text-center">
-        <p className="mb-4 text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-bt-cyan/80">
+        <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-bt-cyan/80">
           La solution
         </p>
-        <h2 className="font-syne text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
+        <h2 className="font-syne text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
           3 étapes pour sécuriser votre <span className="text-bt-cyan">identité</span>
         </h2>
       </Reveal>
@@ -90,7 +90,7 @@ export default function Solution() {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
                   {step.step}
                 </div>
-                <h3 className="font-syne mt-1 text-xl font-bold text-white sm:text-2xl">
+                <h3 className="font-syne mt-1 text-lg sm:text-xl font-semibold text-white">
                   {step.title}
                 </h3>
                 <p className="mt-2 text-sm sm:text-base leading-relaxed text-white/70">

@@ -32,9 +32,9 @@
 }
 
 /* Hiérarchie des polices :
-   Inter 400-900     → corps (nav, boutons, paragraphes, labels, inputs)
-   Syne 800          → titres H1-H4, logo BLOCKTRUST
-   IBM Plex Mono     → hashes, timestamps, badges techniques, ticker blockchain
+   Inter 400-900       → corps (nav, boutons, paragraphes, labels, inputs)
+   Space Grotesk 700   → titres H1-H4, logo BLOCKTRUST (alias Tailwind: font-syne)
+   IBM Plex Mono       → hashes, timestamps, badges techniques, ticker blockchain
 */
 @theme inline {
   --color-background: var(--background);
@@ -54,15 +54,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Titres : Syne 800 */
+/* Titres : Space Grotesk */
 h1, h2, h3, h4 {
-  font-family: var(--font-syne), sans-serif;
-  font-weight: 800;
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-weight: 700;
 }
 
 h5, h6 {
-  font-family: var(--font-syne), sans-serif;
-  font-weight: 700;
+  font-family: var(--font-space-grotesk), sans-serif;
+  font-weight: 600;
 }
 
 /* Données techniques : IBM Plex Mono (hashes, timestamps, badges techniques, ticker) */

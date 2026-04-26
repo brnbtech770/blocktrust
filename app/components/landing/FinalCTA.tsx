@@ -31,10 +31,10 @@ export default function FinalCTA() {
           <ShieldCheck className="h-7 w-7 text-bt-cyan" />
         </div>
 
-        <h2 className="font-syne mt-6 text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
-          <span className="block">Prêt à sécuriser</span>
+        <h2 className="font-syne mt-6 text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+          <span className="block">Prêt à sécuriser votre</span>
           <span className="block">
-            votre <span className="text-bt-cyan">identité digitale&nbsp;?</span>
+            <span className="text-bt-cyan">identité digitale&nbsp;?</span>
           </span>
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-sm sm:text-base leading-relaxed text-white/75">

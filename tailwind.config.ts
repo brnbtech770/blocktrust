@@ -15,7 +15,12 @@ export default {
           "system-ui",
           "sans-serif",
         ],
-        syne: ["var(--font-syne)", "Syne", "ui-sans-serif", "sans-serif"],
+        syne: [
+          "var(--font-space-grotesk)",
+          "Space Grotesk",
+          "ui-sans-serif",
+          "sans-serif",
+        ],
         mono: [
           "var(--font-mono-bt)",
           "IBM Plex Mono",

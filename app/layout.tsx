@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, IBM_Plex_Mono, Syne } from "next/font/google";
+import { Inter, IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
@@ -15,10 +15,11 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["400", "500", "600"],
 });
 
-const syne = Syne({
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-syne",
-  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-space-grotesk",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const SITE_URL = "https://blocktrust.tech";
@@ -91,7 +92,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className="dark">
       <body
-        className={`${inter.variable} ${ibmPlexMono.variable} ${syne.variable} font-sans antialiased bg-navy text-gray-100 overflow-x-hidden`}
+        className={`${inter.variable} ${ibmPlexMono.variable} ${spaceGrotesk.variable} font-sans antialiased bg-navy text-gray-100 overflow-x-hidden`}
       >
         <Providers>{children}</Providers>
       </body>
