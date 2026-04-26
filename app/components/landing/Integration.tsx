@@ -144,14 +144,14 @@ export default function Integration() {
                 </div>
               </div>
 
-              {/* Aperçu badge — vrai BlockTrustBadge animé */}
-              <div className="flex flex-col items-center gap-2">
+              {/* Aperçu badge — vrai BlockTrustBadge animé, centré + agrandi */}
+              <div className="flex h-full min-h-[280px] w-full flex-col items-center justify-center">
                 <BlockTrustBadge
-                  size={160}
+                  size={200}
                   instanceId="integration-preview"
                   className="shrink-0"
                 />
-                <p className="font-mono text-xs text-bt-cyan/60">
+                <p className="mt-3 font-mono text-xs text-bt-cyan/60">
                   {SAMPLE_ID.toUpperCase()}
                 </p>
               </div>
