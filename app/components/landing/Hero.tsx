@@ -82,36 +82,40 @@ export default function Hero() {
           </ul>
         </div>
 
-        {/* Badge animé */}
+        {/* Logo BlockTrust animé — float + glow pulse cyan */}
         <div className="lg:col-span-2 order-2 flex justify-center lg:justify-end">
           <div className="opacity-0 animate-fade-in [animation-delay:300ms] relative">
-            {/* halo glow pulsé en arrière-plan */}
+            {/* halo glow pulsé en arrière-plan (cyan) */}
             <div
               aria-hidden
-              className="absolute inset-0 rounded-full animate-glow-pulse"
+              className="absolute inset-[-20px] rounded-full animate-glow-pulse"
               style={{
                 background:
-                  "radial-gradient(circle at center, rgba(0,212,255,0.35) 0%, rgba(0,212,255,0) 65%)",
+                  "radial-gradient(circle at center, rgba(0,212,255,0.45) 0%, rgba(0,212,255,0.12) 40%, rgba(0,212,255,0) 70%)",
               }}
             />
-            {/* anneau qui tourne lentement */}
+            {/* anneau qui tourne lentement (cyan + or) */}
             <div
               aria-hidden
-              className="absolute inset-[-12px] rounded-full border border-bt-cyan/25 animate-spin-slow"
+              className="absolute inset-[-12px] rounded-full border-2 border-bt-cyan/20 animate-spin-slow"
               style={{
-                borderTopColor: "rgba(0,212,255,0.7)",
+                borderTopColor: "rgba(0,212,255,0.8)",
                 borderRightColor: "rgba(189,167,107,0.6)",
               }}
             />
             <div className="relative flex h-[220px] w-[220px] items-center justify-center sm:h-[300px] sm:w-[300px] lg:h-[360px] lg:w-[360px] animate-float">
               <Image
                 src="/logo.png"
-                alt="Badge BlockTrust"
+                alt="Logo BlockTrust"
                 width={360}
                 height={360}
                 priority
                 className="h-full w-full object-contain"
-                style={{ mixBlendMode: "screen" }}
+                style={{
+                  mixBlendMode: "screen",
+                  filter:
+                    "drop-shadow(0 0 18px rgba(0,212,255,0.55)) drop-shadow(0 0 40px rgba(0,212,255,0.25))",
+                }}
               />
             </div>
           </div>

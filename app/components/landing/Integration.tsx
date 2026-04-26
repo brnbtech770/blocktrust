@@ -65,10 +65,10 @@ export default function Integration() {
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24"
     >
       <Reveal className="mx-auto max-w-3xl text-center">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-bt-cyan/80">
+        <p className="mb-4 text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-bt-cyan/80">
           Intégration
         </p>
-        <h2 className="font-syne text-2xl font-extrabold leading-tight text-white sm:text-4xl">
+        <h2 className="font-syne text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
           Intégrez votre badge <span className="text-bt-cyan">partout</span>
         </h2>
       </Reveal>
