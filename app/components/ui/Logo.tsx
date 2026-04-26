@@ -56,7 +56,7 @@ export function Logo({
   const text = withText && (
     <div style={{ minWidth: 0 }}>
       <div
-        className={`font-syne font-extrabold leading-none tracking-wide text-bt-cyan ${
+        className={`font-syne font-extrabold leading-none tracking-wide text-white ${
           isHero
             ? "text-sm sm:text-lg md:text-[22px]"
             : size === "lg"
@@ -66,7 +66,7 @@ export function Logo({
                 : "text-[11px]"
         } ${size === "sm" ? "tracking-[0.04em]" : "tracking-[0.08em]"}`}
       >
-        BLOCKTRUST
+        Block<span className="text-bt-cyan">Trust</span>
       </div>
       <div className={isHero ? 'text-[8px] sm:text-[9px]' : ''} style={{
         fontFamily: 'var(--font-mono-bt), monospace',

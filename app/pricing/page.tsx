@@ -63,6 +63,17 @@ export default function PricingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [mode, setMode] = useState<'B2C' | 'B2B'>('B2C')
 
+  // Active automatiquement l'onglet Entreprises depuis ?tab=entreprises ou #entreprises.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const tab = params.get('tab')?.toLowerCase()
+    const hash = window.location.hash.replace('#', '').toLowerCase()
+    if (tab === 'entreprises' || tab === 'b2b' || hash === 'entreprises' || hash === 'b2b') {
+      setMode('B2B')
+    }
+  }, [])
+
   useEffect(() => {
     fetch('/api/pricing')
       .then((res) => res.json())

@@ -70,7 +70,7 @@ export default function Entreprises() {
 
       <Reveal delay={300} className="mt-10 flex justify-center">
         <Link
-          href="/pricing"
+          href="/pricing?tab=entreprises"
           className="inline-flex items-center justify-center rounded-xl border border-gold/60 bg-gold/10 px-8 py-3.5 text-sm font-bold text-gold transition-all hover:scale-[1.04] hover:bg-gold/20 sm:text-base"
         >
           Voir les forfaits entreprise

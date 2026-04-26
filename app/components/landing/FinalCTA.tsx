@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
 import Reveal from "./Reveal";
+import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 
 export default function FinalCTA() {
   return (
@@ -27,8 +27,8 @@ export default function FinalCTA() {
           style={{ background: "rgba(0,212,255,0.25)" }}
         />
 
-        <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-bt-cyan/40 bg-bt-cyan/10 animate-glow-pulse">
-          <ShieldCheck className="h-7 w-7 text-bt-cyan" />
+        <div className="mx-auto flex justify-center">
+          <BlockTrustBadge size={64} instanceId="final-cta" />
         </div>
 
         <h2 className="font-syne mx-auto mt-6 max-w-2xl pb-4 text-2xl font-semibold leading-normal text-white overflow-visible sm:text-3xl lg:text-4xl">

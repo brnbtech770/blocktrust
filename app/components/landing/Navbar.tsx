@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Logo } from '@/app/components/ui/Logo'
+import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 
 const navLinks = [
   { label: 'Comment ça marche', href: '/#comment' },
@@ -23,12 +23,17 @@ export default function Navbar() {
     >
       <div className="mx-auto flex w-full min-w-0 max-w-7xl items-center justify-between gap-2">
         <div className="min-w-0 shrink-0">
-          <span className="sm:hidden">
-            <Logo size="sm" withText={true} href="/" />
-          </span>
-          <span className="hidden sm:inline-block">
-            <Logo size="md" withText={true} href="/" />
-          </span>
+          <Link
+            href="/"
+            className="flex items-center gap-2"
+            style={{ textDecoration: 'none' }}
+            aria-label="Retour à l'accueil BlockTrust"
+          >
+            <BlockTrustBadge size={32} instanceId="navbar" className="shrink-0" />
+            <span className="font-syne text-base font-bold leading-none text-white sm:text-lg">
+              Block<span className="text-bt-cyan">Trust</span>
+            </span>
+          </Link>
         </div>
 
         {/* Desktop nav centre */}

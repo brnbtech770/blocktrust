@@ -145,21 +145,15 @@ export default function Integration() {
               </div>
 
               {/* Aperçu badge — vrai BlockTrustBadge animé */}
-              <div className="flex items-center justify-center">
-                <div className="relative flex flex-col items-center gap-3">
-                  <div
-                    aria-hidden
-                    className="absolute inset-0 -z-10 rounded-full animate-glow-pulse"
-                    style={{
-                      background:
-                        "radial-gradient(circle at center, rgba(0,212,255,0.18) 0%, rgba(0,212,255,0) 70%)",
-                    }}
-                  />
-                  <BlockTrustBadge size={160} instanceId="integration-preview" />
-                  <div className="font-mono text-[10px] tracking-wider text-white/50">
-                    {SAMPLE_ID.toUpperCase()}
-                  </div>
-                </div>
+              <div className="flex flex-col items-center gap-2">
+                <BlockTrustBadge
+                  size={160}
+                  instanceId="integration-preview"
+                  className="shrink-0"
+                />
+                <p className="font-mono text-xs text-bt-cyan/60">
+                  {SAMPLE_ID.toUpperCase()}
+                </p>
               </div>
             </div>
           )}
