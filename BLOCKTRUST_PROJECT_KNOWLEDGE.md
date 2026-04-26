@@ -1,401 +1,309 @@
-# BlockTrust — Knowledge Base v3
+# BlockTrust — Document de Référence Projet
 
-> **Date de mise à jour** : 22 avril 2026
-> **État** : 92 % — MVP en production sur [blocktrust.tech](https://blocktrust.tech)
-> **Stack** : Next.js 16 (App Router, Turbopack) · React 19 · TypeScript · Prisma 6 · PostgreSQL · NextAuth v5 · Stripe · Resend · Vercel
-
----
-
-## 1. Vue d'ensemble produit
-
-BlockTrust est une plateforme SaaS qui émet, signe, ancre et vérifie des **certificats d'authenticité numériques** (B2B et B2C). Chaque certificat est :
-- associé à une **entité** (individuelle ou entreprise) validée par KYC,
-- signé cryptographiquement puis ancré en blockchain,
-- vérifiable publiquement via une URL ou un QR code,
-- adossé à un **TrustScore (0-100)** calculé en continu pour refléter la fiabilité de l'émetteur.
-
-### Cibles
-- **B2C** : particuliers souhaitant certifier l'authenticité de biens (œuvres, artisanat, produits rares).
-- **B2B** : entreprises (luxe, immobilier, automobile, art) pour certification produit à l'échelle.
+**Version:** 4.0  
+**Date:** 26 avril 2026  
+**Auteur:** Olivier Bernabé (BRNB TECH SASU)  
+**Statut:** Production live — 96% d'avancement
 
 ---
 
-## 2. Architecture technique
+## 1. VISION & POSITIONNEMENT
 
-### Stack
+### Message central
+> "Protégez chaque interaction de votre écosystème digital"
 
-| Couche | Technologie |
-|---|---|
-| Framework | Next.js 16.2.4 (App Router, Turbopack) |
-| UI | React 19.2 + Tailwind CSS 4 + lucide-react |
-| Auth | NextAuth v5 (beta.31) + Prisma Adapter + bcrypt |
-| DB | PostgreSQL (via Prisma 6.19) |
-| Paiement | Stripe (subscriptions + Stripe Identity KYC) |
-| Email | Resend + React Email |
-| Storage | Vercel Blob (token à activer) |
-| Hosting | Vercel (plan Hobby actuellement) |
-| Cron | Vercel Cron Jobs |
+BlockTrust est une plateforme SaaS de certification d'identité numérique anti-fraude combinant signatures cryptographiques (ES256, SHA-256), ancrage blockchain (Polygon) et vérification par QR code rotatif.
 
-### Arborescence clé
+### Équipe
+| Nom | Rôle |
+|-----|------|
+| Olivier Bernabé | CEO / Fondateur / CTO |
+| Laurianne Winter | DAF & Chef de projet |
+| Deborah Slama | Directrice Marketing |
+| Shaï Bernabé | Data / IA (Bachelor PSTB) |
+
+### Propriété intellectuelle
+- Domaine `blocktrust.tech` ✅
+- Dépôt INPI "Block Trust" ✅
+- Code source GitHub privé `brnbtech770/blocktrust` ✅
+
+---
+
+## 2. STACK TECHNIQUE
 
 ```
-blocktrust-mvp/
-├── app/
-│   ├── admin/                  # Dashboard admin (protégé par middleware + helper)
-│   │   ├── certificates/
-│   │   ├── kyc/
-│   │   ├── demandes/
-│   │   ├── users/
-│   │   ├── alerts/ + ai-alerts/
-│   │   └── layout.tsx
-│   ├── dashboard/              # Dashboard client
-│   ├── api/
-│   │   ├── admin/*             # Double check : middleware + isAdmin()
-│   │   ├── cron/               # anomaly-detection + trustscore-update
-│   │   ├── stripe/             # webhooks (checkout, identity)
-│   │   ├── trust-circle/
-│   │   ├── v2/                 # issue / sign / verify (API publique)
-│   │   └── user/trust-score
-│   ├── verify/[id]/            # Page publique de vérification
-│   ├── components/
-│   │   ├── admin/              # StatusBadge, TypeBadge, TrustScoreCell, IdCell, ActionButton
-│   │   └── dashboard/
-│   └── lib/
-│       ├── admin.ts            # ADMIN_EMAILS + isAdmin()
-│       ├── require-admin-page.ts
-│       ├── auth.ts + auth.edge.config.ts
-│       └── db.ts
-├── lib/
-│   ├── trustscore.ts           # computeTrustScore + persistUserTrustScore
-│   ├── agents/trustscore-updater.ts
-│   ├── verify-fraud.ts
-│   └── register-anti-bot.ts    # Honeypot + heuristiques anti-bot
-├── prisma/schema.prisma
-├── middleware.ts               # Guard /admin + /api/admin
-├── vercel.json                 # Crons quotidiens 03:00 UTC
-├── next.config.ts              # Headers HSTS, CSP-ish
-└── SECURITY.md
+Framework : Next.js 16.1.6 (App Router)
+Language  : TypeScript
+Style     : TailwindCSS
+Auth      : NextAuth v5 (Google OAuth + Credentials + Magic Link)
+ORM       : Prisma 5 (v6.19.2)
+DB        : PostgreSQL via Neon
+Paiements : Stripe (subscriptions + Stripe Identity KYC)
+Emails    : Resend (domaine blocktrust.tech vérifié)
+Storage   : Vercel Blob (store: blocktrust-blob, région IAD1, Private)
+JWT       : jose (ES256 / RS256)
+QR        : qrcode
+Déploiement : Vercel (plan Hobby)
+Repo      : github.com/brnbtech770/blocktrust
 ```
 
-### Modèles Prisma principaux
-`Account`, `Session`, `User`, `Organization`, `OrganizationMember`, `Plan`, `Subscription`, `Entity`, `Certificate`, `Signature`, `Verification`, `TrustRelation`, `UserTrustRelation`, `ManualTrustEntry`, `UserManualTrustEntry`, `KYCVerification`, `TrustScore`, `BadgeInteraction`, `AIAlert`, `AdminAlert`, `AuditLog`, `UserDevice`, `PasswordReset`.
-
----
-
-## 3. Sécurité — état au 22/04/2026
-
-### P0 (critique) — tout traité
-
-| # | Faille / mesure | Statut |
-|---|---|---|
-| 1 | Auth bypass `/api/v2/issue` | ✅ Fixé |
-| 2 | JWT fail-closed | ✅ Fixé |
-| 3 | Activation certificat côté admin uniquement | ✅ Fixé |
-| 4 | Email linking (évite vol de compte via OAuth) | ✅ Fixé |
-| 5 | `AUTH_DEBUG` désactivable en prod | ✅ |
-| 6 | **Accès admin** : routes `/admin/*` + `/api/admin/*` verrouillées | ✅ Middleware + `requireAdminPage()` + `isAdmin()` sur chaque route |
-| 7 | **Isolation données** : tous les `findMany` filtrés par `session.user.id`, `findFirst` pour ownership | ✅ Migration complète de `email` → `id` |
-
-### P2 (hardening)
-
-- Headers HTTP : `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, `Strict-Transport-Security` (HSTS 2 ans + preload) → `next.config.ts`.
-- `ADMIN_EMAILS` exposé en variable d'environnement Vercel (fallback codé : `brnbtech@gmail.com,laurianne@blocktrust.tech`).
-- Logs prod nettoyés.
-- `SECURITY.md` à la racine.
-- `npm audit` : **0 vulnérabilité**.
-
-### Anti-fraude & anti-bot
-
-- **Inscription** : honeypot + délai minimum formulaire + regex email strict + cleanup comptes suspects via `scripts/cleanup-bots.ts`.
-- **`/verify`** : détection d'anomalies (volume suspect, IP répétées) → `AdminAlert` + `AIAlert`.
-- **Suppression masse admin** (`/api/admin/users/bulk-delete`) avec transaction cascade complète.
-- **Agent IA** : 3 règles de détection actives, cron quotidien `/api/cron/anomaly-detection`, dashboard `/admin/surveillance`.
-
----
-
-## 4. Authentification & autorisation
-
-- NextAuth v5 + Prisma Adapter + credentials (bcrypt) + OAuth (Google).
-- JWT signé, strict, fail-closed.
-- Password reset via token horodaté (`PasswordReset`).
-- Device tracking (`UserDevice`).
-- Middleware edge (`middleware.ts`) :
-  - `/admin/*` non-admin → redirect `/dashboard`.
-  - `/api/admin/*` non-admin → `403 Forbidden`.
-- Helper serveur `requireAdminPage()` pour les pages RSC admin.
-- Double protection : chaque route `/api/admin/*` revalide `auth()` + `isAdmin()`.
-
----
-
-## 5. Paiement & abonnements
-
-- **Stripe Checkout** (`/api/stripe/checkout`) pour créer une subscription.
-- **Webhooks** (`/api/stripe/webhook`) :
-  - `checkout.session.completed` → création User Plan + TrustScore recalculé.
-  - `identity.verification_session.verified` → KYC validé + TrustScore recalculé.
-  - `invoice.paid` → renouvellement.
-  - `customer.subscription.deleted` → désactivation.
-- **Email confirmation** : déclenché uniquement par `subscription.created` (plus de double email).
-- **Portail client** (`/api/stripe/portal`) pour gérer l'abonnement.
-
-### Plans & quotas
-- Certificats par mois (quota par plan).
-- Vérifications par mois (quota par plan, sinon `/verify` privée avec upgrade prompt élégant).
-- `UpgradePrompt` design doux (plus de rouge agressif).
-
----
-
-## 6. KYC
-
-### Particulier (B2C)
-Stripe Identity → `identity.verification_session.verified` → `User.kycStatus = VERIFIED`.
-
-### Entreprise (B2B)
-- API INSEE (SIRET) — **token à configurer** (`api.insee.fr`).
-- Fallback manuel via `/onboarding/pending` → demande validée par admin (`/admin/demandes`).
-
----
-
-## 7. TrustScore (0-100)
-
-### Source
-- Librairie dédiée : `lib/trustscore.ts` (pur) + `lib/agents/trustscore-updater.ts` (batch).
-- Persisté sur `User.trustScore` (`Int @default(0)`) + `User.trustScoreAt` (`DateTime?`).
-
-### Règles de calcul
-- KYC validé : +X points
-- Abonnement actif : +X points
-- Relations Trust Circle mutuelles confirmées : +X par lien (comptées une seule fois, via `fromUserId`)
-- Certificats actifs : +X
-- Alertes fraude récentes : **pénalités**
-
-### Déclencheurs de recalcul
-- KYC approuvé (`/api/admin/kyc/[userId]/approve` + webhook Stripe Identity)
-- Trust Circle mutuel confirmé (`/api/trust-circle/add` + `/api/trust-circle/confirm/[token]`)
-- Activation/réactivation de certificat (`/api/admin/certificates/[id]`)
-- Événements Stripe (checkout, subscription verified)
-- Alertes fraude (`verify-fraud.ts`)
-
-### Cron
-- `/api/cron/trustscore-update` — **tous les jours à 03:00 UTC** (Vercel Hobby compatible) — met à jour les users actifs.
-
-### API publique
-- `GET /api/user/trust-score` — renvoie le score stocké de l'utilisateur authentifié.
-- `POST /api/user/trust-score` — force le recalcul + persistance.
-
-### UI
-- Affiché sur `/dashboard` (score + label + couleur + progress bar + nudge KYC si bas).
-- Affiché sur `/verify/[id]` pour le titulaire du certificat.
-
----
-
-## 8. Design system
-
-### Typographie
-- **Syne** : titres (`font-syne`).
-- **Inter** : corps (`font-sans`).
-- **Mono (JetBrains ou similaire)** : IDs, codes, badges techniques (`font-mono`).
-
-### Couleurs clés
-- `bt-cyan` : accent principal.
-- `gold` : accent premium B2B.
-- `navy` : fond général.
-- `white/40` → `white/90` : gris typographique.
-
-### Utilities custom (`tailwind.config.ts`)
-- `shadow-glow-cyan`, `shadow-glow-gold`
-- `drop-shadow-glow-cyan`, `drop-shadow-glow-gold`
-
-### Sidebars
-- Icônes `lucide-react` 18px, glow cyan au hover (`drop-shadow-[0_0_6px_rgba(0,212,255,0.8)]`).
-- Active state : `bg-white/10 text-white`.
-- Logo admin + badge `ADMIN` empilés verticalement (pas d'écrasement).
-
-### Composants admin réutilisables (`app/components/admin/`)
-- `StatusBadge` — prop `type: 'certificate' | 'kyc' | 'trust' | 'user'` + `status: string`.
-- `TypeBadge` — B2B (gold) / B2C (white/60).
-- `TrustScoreCell` — score coloré dynamiquement (`<25` white/40, `25-49` amber, `50-79` gold, `≥80` cyan) + label sous-ligne.
-- `IdCell` — `max-w-[120px] truncate font-mono text-xs text-bt-cyan/70` + `title={id}`.
-- `ActionButton` — variantes `validate`/`reject`/`suspend`/`reactivate`/`revoke` avec icônes lucide. Exporte aussi `DetailsLink` + `NoActionText`.
-
-### Dashboard client
-- Sidebar : padding/hover/active unifiés, icônes lucide avec glow.
-- `SignOutButton` : icône `LogOut`, `text-bt-cyan` → `hover:text-white`.
-- `CertificateTable` : onglets filtres (All / Active / Pending / Revoked), opacité 60 % sur révoqués, bouton "Révoquer" masqué si déjà révoqué.
-- `ActivityFeed` : dédoublonnage strict par `certificateId` (une entrée par certificat, la plus récente), max 5, `formatDistanceToNow` maison (pas de dépendance).
-- `VerifyBadgeCard` : texte conditionnel selon `hasActiveSub` (lien `/pricing` si pas d'abo, sinon quota).
-- `UpgradePrompt` : palette douce orientée conversion.
-
-### Cookie banner RGPD
-- `app/components/ui/CookieBanner.tsx` — bannière conforme.
-- Consentement horodaté en DB via `/api/user/cookie-consent`.
-- CGU horodatée à l'inscription.
-
----
-
-## 9. Routes & endpoints clés
-
-### Pages
-- `/` — landing (à animer ⚠️)
-- `/pricing` — plans
-- `/verify` + `/verify/[id]` + `/verify/qr/[token]` — vérification publique
-- `/dashboard/*` — espace client
-- `/admin/*` — backoffice (dashboard, certificates, kyc, demandes, users, alerts, ai-alerts, surveillance)
-- `/onboarding/verify`, `/onboarding/pending`, `/onboarding/rejected`
-- `/trust/confirm/[token]`, `/invite/[token]`
-- `/cgu`, `/privacy`
-
-### API
-- `/api/auth/*` — NextAuth + register + forgot/reset password
-- `/api/certificates`, `/api/certificates/[id]` (+ `/revoke`, `/status`)
-- `/api/entities`, `/api/entities/[id]/trust-score`
-- `/api/verify/[id]`, `/api/badge/[id]`
-- `/api/qr/[id]`, `/api/qr/generate/[certId]`, `/api/qr/settings/[certId]`
-- `/api/trust-circle/*`
-- `/api/stripe/*` (checkout, webhook, portal, identity-webhook)
-- `/api/kyc/*` (start, status, siret)
-- `/api/admin/*` — protégé
-- `/api/cron/trustscore-update`, `/api/cron/anomaly-detection`
-- `/api/v2/*` — API publique (issue, sign, verify)
-- `/api/stats`, `/api/activity`, `/api/health`, `/api/quota/certificates`, `/api/pricing`
-
----
-
-## 10. Variables d'environnement
-
-| Variable | Usage | Statut |
-|---|---|---|
-| `DATABASE_URL` | PostgreSQL | ✅ |
-| `NEXTAUTH_SECRET` | Signature JWT | ✅ |
-| `NEXTAUTH_URL` | Callback OAuth | ✅ |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth Google | ✅ |
-| `ADMIN_EMAILS` | `brnbtech@gmail.com,laurianne@blocktrust.tech` | ✅ |
-| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Paiement | ✅ |
-| `STRIPE_IDENTITY_WEBHOOK_SECRET` | KYC | ✅ |
-| `RESEND_API_KEY` | Emails | ✅ |
-| `CRON_SECRET` | Protection `/api/cron/*` | ✅ |
-| `AUTH_DEBUG` | Désactivé en prod | ✅ |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob | ⚠️ À créer |
-| `INSEE_API_TOKEN` | SIRET B2B | ⚠️ À créer sur `api.insee.fr` |
-
----
-
-## 11. Historique des commits récents
-
+### Polices
 ```
-a5b8eb8 design: admin tableau premium — badges, boutons, statuts cohérents
-83be433 design: boutons cohérents + logo admin + icônes glow high-tech
-7da7fa5 design: déconnexion cyan + activité feed déduplication stricte
-de55916 design: cohérence sidebar + dashboard — déconnexion, filtres, activité
-1317721 fix: vercel.json crons compatibles plan Hobby
-1cbbbe8 security: isolation données — fix fuite certificats inter-utilisateurs
-c8ace3a security: CRITICAL fix accès admin non autorisé — isolation routes /admin
-4119ebd feat: TrustScore dynamique — calcul réel + cron quotidien
-17d199e fix: supprimer double email confirmation paiement checkout
-90a1655 feat: /verify privée + quotas vérification par plan + bouton dashboard
-70e33cf chore: npm audit fix vulnérabilités
-39d7042 feat: cookie banner RGPD + CGU horodatée inscription
-8152738 fix: redirect admin dashboard
-9415273 feat: email confirmation paiement Stripe
-bd3a4c2 security: anti-bot inscription + cleanup comptes suspects + suppression masse
-6429c03 fix: responsive mobile toutes pages + hero title + double logo
-3c36c87 feat: agent IA surveillance anomalies + Vercel Cron + dashboard surveillance
-8882124 feat: système alertes admin + suppression profils utilisateurs
-5c56b94 security: /verify anti-fraude + détection anomalies + AdminAlert
+Inter          → corps de texte (font-sans)
+Space Grotesk  → titres (font-syne — alias conservé dans Tailwind)
+IBM Plex Mono  → données techniques (font-mono)
+```
+
+### Charte graphique
+```
+#0a1628 navy | #00d4ff cyan | #BDA76B gold
+```
+
+### Imports critiques
+```typescript
+import { prisma } from '@/app/lib/db'
+import { auth } from '@/app/lib/auth-server'
+// AccountType : PERSONAL / BUSINESS
+// JWT : BLOCKTRUST_JWT_PRIVATE_KEY / BLOCKTRUST_JWT_PUBLIC_KEY
 ```
 
 ---
 
-## 12. État d'avancement
+## 3. PRICING
 
+### B2C
+| Plan | Prix/mois | Profils | Entités | Vérifs/mois |
+|------|-----------|---------|---------|-------------|
+| Essentiel | 4,99€ | 1 | 20 | 10 |
+| Premium | 9,99€ | 1 | 100 | 50 |
+| Famille | 14,99€ | 5 | 100 | 100 |
+| Famille+ | 24,99€ | 10 | 300 | 300 |
+
+### B2B
+| Plan | Prix/mois | Users | Vérifs/mois |
+|------|-----------|-------|-------------|
+| Starter | 29€ | 3 | 200 |
+| Team | 79€ | 10 | 500 |
+| Business | 199€ | 50 | Illimité |
+| Enterprise | Sur devis | Illimité | Illimité |
+
+**Toggle annuel : -20% | 14 Price IDs Stripe | Upgrade banner à 80%**
+
+---
+
+## 4. FONCTIONNALITÉS EN PRODUCTION
+
+### Auth
+- Google OAuth, Email/Password, Magic Link
+- ADMIN_EMAILS via env var
+- Middleware fail-closed, JWT RS256
+
+### Paiement & KYC
+- Stripe checkout B2C + B2B, webhooks validés
+- KYC Stripe Identity (1,50€/vérif)
+- **INSEE API Sirene 3.11** — vérification SIRET B2B
+  - OAuth2 Client Credentials
+  - Badge "INSEE ✓" dans admin/kyc
+  - Variables : INSEE_CONSUMER_KEY + INSEE_CONSUMER_SECRET
+
+### Certificats & Badge
+- ES256 + SHA-256
+- Badge SVG inline animé (BlockTrustBadge component)
+- QR dynamique rotatif (invalide après scan)
+- /verify PRIVÉE — abonnement requis + quotas par plan
+- Quotas : Essentiel 10/mois → Business illimité
+
+### Trust Circle
+- 4 niveaux : MUTUAL/UNILATERAL/MANUAL/UNVERIFIED
+- Upload documents via **Vercel Blob** (store blocktrust-blob)
+- Invitations virales /invite/[token]
+
+### TrustScore dynamique
+- KYC (+30) | abonnement (+15) | cert actif (+20)
+- Ancienneté (+10 max) | CGU (+5) | MUTUAL (+1/rel, max 15)
+- Pénalité FRAUD_ALERT (-10/alerte)
+- Cron quotidien 3h : /api/cron/trustscore-update
+- Labels : TRUSTED/VERIFIED/LOW/UNVERIFIED
+
+### Emails (Resend)
+- PaymentConfirmationEmail (1 seul email par souscription)
+- KYC, Trust Circle, Manuel — 9 templates total
+
+### Dashboard Admin
+- KPIs, KYC, Certificats, Demandes, Users
+- Alertes temps réel (6 types) + pastille rouge
+- Surveillance IA (3 règles + Cron + Recharts)
+- Suppression profils en cascade ($transaction)
+- Composants réutilisables : StatusBadge, TypeBadge,
+  TrustScoreCell, IdCell, ActionButton
+
+### Conformité RGPD
+- Cookie banner (localStorage + DB)
+- CGU horodatée (cguAcceptedAt, cguVersion)
+- /privacy + /cgu
+- Registre des traitements ✅
+
+---
+
+## 5. LANDING PAGE (26/04/2026)
+
+### Composants créés
 ```
-Janvier 2026   ████████████░░░░░░░░  65%
-Mars 2026      █████████████████░░░  88%
-22 avril 2026  ██████████████████░░  92%
+Hero.tsx          — Badge SVG animé + headline + CTA + stats
+Problem.tsx       — 3 cards problème (lucide icons)
+Solution.tsx      — Timeline 3 étapes
+Particuliers.tsx  — 3 use cases B2C + CTA 4,99€
+Entreprises.tsx   — 4 use cases B2B + CTA
+Integration.tsx   — 4 tabs (Site web/Email/Visio/API B2B)
+PricingTeaser.tsx — 2 cards + "À partir de 29€/mois" B2B
+FinalCTA.tsx      — CTA gradient + boutons
+Footer.tsx        — Liens + LinkedIn + Polygon mention
+Reveal.tsx        — IntersectionObserver wrapper
+StatCounter.tsx   — Compteurs animés requestAnimationFrame
 ```
 
-### Les 8 % restants
-
-| Catégorie | Poids |
-|---|---|
-| Landing page animée | ~3 % |
-| Tests E2E (KYC → certif → QR) + smoke test prod | ~2 % |
-| INSEE token + Vercel Blob token + ancrage Polygon | ~2 % |
-| DPIA avocat + SOPs incident response + RGPD breach | ~1 % |
-
----
-
-## 13. Ce qui reste à faire
-
-### 🔴 Urgent (cette semaine)
-
-| # | Tâche | Impact |
-|---|---|---|
-| 1 | **Landing page animée** | Conversion commerciale |
-| 2 | **Test E2E complet** : inscription → KYC → création certif → QR scan → `/verify` | Validation prod |
-| 3 | Smoke test visuel sur `blocktrust.tech` : sidebar glow, logo admin, tableaux premium, ShieldCheck | QA |
-
-### 🟡 Moyen terme
-
-- **INSEE API token** → créer compte `api.insee.fr` et renseigner `INSEE_API_TOKEN`.
-- **Vercel Blob token** → Vercel dashboard → Storage → créer et renseigner `BLOB_READ_WRITE_TOKEN`.
-- **Ancrage Polygon blockchain** : remplacer le mock par un call réel (contrat déployé ?).
-- **Badge embed** : intégration URL / email / site web tiers (iframe + OG tags).
-- **DPIA** : finaliser avec avocat.
-- **SOPs** : incident response + RGPD breach.
-- **Migration Next.js 16** : `middleware` est deprecated → migrer vers **`proxy`** (warning build).
-- **Migration Prisma 7** : `package.json#prisma` deprecated → créer `prisma.config.ts`.
-- **Cleanup** : 8 `catch (e: any)` pré-existants dans les fichiers admin (passage à `unknown` + narrowing).
-
-### 🔵 Long terme
-
-- Extension Chrome **TrustScan** (scan badge sur n'importe quel site).
-- App mobile + tag NFC.
-- API publique B2B (Trust-as-a-Service).
-- Migration JWT → AWS KMS.
-- SSO / SAML Enterprise.
-- Plugin email Outlook / Gmail.
-- Upstash Redis (rate limiting distribué).
-- Tests automatisés Jest sur auth + Stripe + KYC.
+### Badge SVG BlockTrust (app/components/ui/BlockTrustBadge.tsx)
+- Hexagone flat-top, gold border gradient
+- Circuits data-flow animés (8 traces + 8 nodes pulsants)
+- Double anneau contra-rotatif gold/cyan
+- Bouclier central : gradient cyan profond + checkmark gold
+- Scanline, QR pattern, "BLOCKTRUST" IBM Plex Mono gold
+- "VERIFIED · SECURE · ON-CHAIN" cyan
+- Props : size, className, label
+- CSS animations dans globals.css (prefixe bt-)
+- prefers-reduced-motion respecté
+- **⚠️ À appliquer partout : dashboard, badge embed, /verify, OG image**
 
 ---
 
-## 14. Comptes & accès
+## 6. SÉCURITÉ
 
-### Admins
+### Commits de sécurité
+| Fix | Commit |
+|-----|--------|
+| Auth bypass /api/v2/issue | 6427938 |
+| Isolation données inter-users | 1cbbbe8 |
+| Accès admin non autorisé | c8ace3a |
+| Headers HTTP sécurité | P2 |
+| Anti-bot inscription | bd3a4c2 |
+| npm audit 0 vulnérabilités | 70e33cf |
 
-- `brnbtech@gmail.com`
-- `laurianne@blocktrust.tech`
-
-### Plateformes tierces
-
-- GitHub : `brnbtech770/blocktrust`
-- Vercel : `olivier-brnbs-projects/blocktrust-mvp` (alias `blocktrust.tech`)
-- Stripe, Resend, Google OAuth : dashboards correspondants.
+### Règles absolues
+- Ne jamais faire confiance à userId du body → session.user.id
+- timingSafeEqual pour hash comparison
+- Pas de PrismaClient ad hoc → @/app/lib/db
+- Fail-closed sur clé JWT absente en prod
 
 ---
 
-## 15. Commandes utiles
+## 7. VARIABLES D'ENVIRONNEMENT VERCEL
+
+| Variable | Statut |
+|----------|--------|
+| BLOB_READ_WRITE_TOKEN | ✅ Auto-ajouté |
+| INSEE_CONSUMER_KEY | ✅ Sensitive |
+| INSEE_CONSUMER_SECRET | ✅ Sensitive |
+| RESEND_API_KEY | ✅ |
+| STRIPE_SECRET_KEY | ✅ (Needs Attention → marquer Sensitive) |
+| STRIPE_WEBHOOK_SECRET | ✅ (Needs Attention → marquer Sensitive) |
+| NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY | ✅ |
+| BLOCKTRUST_JWT_PRIVATE_KEY | ✅ (Needs Attention → marquer Sensitive) |
+| BLOCKTRUST_JWT_PUBLIC_KEY | ✅ |
+| NEXTAUTH_SECRET | ✅ (Needs Attention → marquer Sensitive) |
+| CRON_SECRET | ✅ |
+| ADMIN_EMAILS | ✅ brnbtech@gmail.com,laurianne@blocktrust.tech |
+| DATABASE_URL | ✅ |
+
+---
+
+## 8. PIPELINE DE DÉPLOIEMENT
 
 ```bash
-npm run dev              # Dev local sur :3004
-npm run build            # Build prod
-npx prisma studio        # Inspection DB
-npx prisma migrate dev   # Migration DB
-npx vercel --prod        # Deploy prod manuel
-git push origin main     # Push (déclenche Vercel webhook)
-npx tsc --noEmit         # Vérif TS sans build
-npm run cleanup-bots     # Purge comptes suspects
+# Depuis Terminal Mac
+cd /Users/olivierbernabe/Projects/blocktrust-mvp
+git push origin main          # webhook auto → Vercel déploie
+npx vercel --prod             # si webhook KO
+
+# Config git
+git config user.email "brnbtech770@gmail.com"
+git config user.name "brnbtech770"
+git config --global credential.helper osxkeychain
 ```
 
----
-
-## 16. Contacts projet
-
-- **Tech lead & fondateur** : Olivier
-- **Co-fondatrice** : Laurianne
-- **Support admin** : `brnbtech@gmail.com`
+**Vercel Hobby → Crons quotidiens uniquement (0 3 * * *)**
 
 ---
 
-_Document généré automatiquement à partir de l'état du repo au 22 avril 2026 — commit `a5b8eb8`._
+## 9. CHANTIERS RESTANTS
+
+### 🔴 Priorité immédiate
+- [ ] **Appliquer BlockTrustBadge partout** (dashboard, /verify, badge embed, OG image)
+- [ ] **Test E2E complet** KYC → certificat → QR scan sur prod
+- [ ] **Marquer Sensitive** les variables Vercel "Needs Attention"
+
+### 🟡 Moyen terme
+- [ ] **Ancrage Polygon** blockchain réel
+- [ ] **Intégration appels** : Twilio (tel) + API B2B + plugin Teams/Zoom
+- [ ] **Migration middleware → proxy** Next.js 16
+- [ ] **Migration prisma.config.ts** avant Prisma 7
+- [ ] **DPIA** finaliser pour avocat
+- [ ] **SOPs** incident response + RGPD breach
+- [ ] **npm audit** 3 vulnérabilités modérées (tar@7.5.7)
+- [ ] **Upstash Redis** rate limiting distribué (avant 100 users)
+
+### 🔵 Long terme
+- Extension Chrome TrustScan
+- App mobile + NFC
+- API publique B2B (TaaS)
+- Migration JWT → AWS KMS
+- SSO / SAML Enterprise
+- Tests automatisés Jest
+- BlockTrust GPT
+
+---
+
+## 10. RÈGLES DE TRAVAIL
+
+### Workflow Cursor
+1. Un prompt à la fois — audit step obligatoire
+2. Build vert entre chaque prompt
+3. Reporter résultats à Claude avant le suivant
+4. Push + déploiement après validation
+
+### Principes
+- Turbopack désactivé (stale Prisma cache)
+- Google OAuth : fallbacks token.sub ?? token.id ?? ''
+- QR verify : double lookup jti → Certificate.id
+- Domain consistency www vs non-www → NextAuth
+- `__Host-` cookie incompatible avec domain spec
+
+### Ne jamais faire
+- PrismaClient ad hoc (→ @/app/lib/db)
+- userId du body/query (→ session.user.id)
+- Erreur rouge sur page de conversion (→ UpgradePrompt)
+- Déployer avec variables manquantes
+
+---
+
+## 11. ACCÈS & CONTACTS
+
+| Ressource | Info |
+|-----------|------|
+| Production | https://blocktrust.tech |
+| GitHub | github.com/brnbtech770/blocktrust |
+| Vercel | vercel.com → blocktrust-mvp |
+| Stripe | dashboard.stripe.com |
+| Resend | resend.com |
+| Neon DB | neon.tech |
+| INSEE API | portail-api.insee.fr |
+| Vercel Blob | vercel.com → Storage → blocktrust-blob |
+| Admin | blocktrust.tech/admin/dashboard |
+| Support | support@blocktrust.tech |
+| Sécurité | security@blocktrust.tech |
+| Commercial | commercial@blocktrust.tech |
+
+---
+
+*Mis à jour le 26 avril 2026 — Session Claude*
+*Règle : ce fichier est mis à jour après chaque session*
+*→ Uploader dans Project Knowledge Claude + commit GitHub*
