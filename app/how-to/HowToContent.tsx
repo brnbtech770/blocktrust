@@ -286,8 +286,8 @@ function ParticulierDemoCreate() {
           style={{ animationDelay: "0.9s" }}
         >
           <div className="text-[10px] uppercase tracking-wider text-bt-cyan">Étape 3 — Badge généré</div>
-          <div className="howto-pop">
-            <BlockTrustBadge size={88} instanceId="howto-create" />
+          <div className="howto-pop mx-auto">
+            <BlockTrustBadge size={80} instanceId="howto-create" />
           </div>
         </div>
       </div>
@@ -298,35 +298,41 @@ function ParticulierDemoCreate() {
 function ParticulierDemoIntegrate() {
   return (
     <BrowserFrame url="https://cabinet-martin.fr" className="h-full">
-      <div className="relative">
+      <div className="relative min-h-[220px]">
         {/* Header du site fictif */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <div>
+        <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-4">
+          <div className="min-w-0">
             <div className="font-syne text-sm font-bold text-white">Cabinet Martin & Associés</div>
             <div className="text-[10px] text-white/40">Avocats au Barreau de Paris</div>
           </div>
-          <div className="relative">
+          <div className="relative shrink-0">
             <div className="howto-pulse-node rounded-full">
-              <BlockTrustBadge size={48} instanceId="howto-integrate" />
+              <BlockTrustBadge size={56} instanceId="howto-integrate" />
             </div>
             {/* Tooltip animé */}
-            <div className="howto-tooltip pointer-events-none absolute right-0 top-full mt-2 whitespace-nowrap rounded-md border border-bt-cyan/40 bg-navy/95 px-3 py-1.5 text-[10px] font-medium text-bt-cyan shadow-glow-cyan">
+            <div className="howto-tooltip pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-md border border-bt-cyan/40 bg-navy/95 px-3 py-1.5 text-[10px] font-medium text-bt-cyan shadow-glow-cyan">
               Identité vérifiée par BLOCKTRUST
             </div>
           </div>
         </div>
 
-        {/* Contenu fictif */}
-        <div className="mt-4 space-y-2">
-          <div className="h-2 w-3/4 rounded bg-white/8" />
-          <div className="h-2 w-full rounded bg-white/8" />
-          <div className="h-2 w-2/3 rounded bg-white/8" />
+        {/* Contenu fictif (lignes lorem) */}
+        <div className="mt-5 space-y-2.5">
+          <div className="h-2.5 w-3/4 rounded bg-white/10" />
+          <div className="h-2.5 w-full rounded bg-white/10" />
+          <div className="h-2.5 w-2/3 rounded bg-white/10" />
+          <div className="h-2.5 w-5/6 rounded bg-white/10" />
+        </div>
+
+        <div className="mt-5 flex gap-2">
+          <div className="h-7 w-24 rounded bg-bt-cyan/20" />
+          <div className="h-7 w-20 rounded border border-white/10 bg-white/5" />
         </div>
 
         {/* Curseur animé */}
         <div
           aria-hidden
-          className="howto-cursor pointer-events-none absolute left-0 top-0"
+          className="howto-cursor pointer-events-none absolute left-2 top-12"
           style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.4))" }}
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -728,7 +734,7 @@ function HowToFinalCTA() {
           }}
         />
         <div className="mx-auto flex justify-center">
-          <BlockTrustBadge size={64} instanceId="howto-final-cta" />
+          <BlockTrustBadge size={100} instanceId="howto-final-cta" />
         </div>
         <h2 className="font-syne mx-auto mt-6 max-w-2xl pb-4 text-2xl font-semibold leading-normal text-white sm:text-3xl lg:text-4xl">
           Prêt à protéger votre <span className="text-bt-cyan">identité digitale&nbsp;?</span>
