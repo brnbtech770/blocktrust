@@ -22,6 +22,11 @@ type SurveillancePayload = {
   unreadAlerts: number
   lastRunAt: string | null
   chart: { hour: string; count: number }[]
+  polygon?: {
+    anchored: number
+    pending: number
+    failed: number
+  }
   recentFraudAlerts: {
     id: string
     type: string
@@ -126,6 +131,29 @@ export default function SurveillanceDashboard() {
         />
       </div>
 
+      <div className="mb-8">
+        <h2 className="mb-3 font-syne text-base font-semibold text-white">
+          Ancrages Polygon
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <KpiCard
+            label="Ancrés on-chain ✓"
+            value={data?.polygon ? String(data.polygon.anchored) : '—'}
+            tone="cyan"
+          />
+          <KpiCard
+            label="En attente"
+            value={data?.polygon ? String(data.polygon.pending) : '—'}
+            tone="amber"
+          />
+          <KpiCard
+            label="Échecs"
+            value={data?.polygon ? String(data.polygon.failed) : '—'}
+            tone="red"
+          />
+        </div>
+      </div>
+
       <div
         className="mb-10 rounded-xl border p-6"
         style={{ background: 'rgba(13,31,60,0.5)', borderColor: 'var(--bt-border)' }}
@@ -207,7 +235,23 @@ export default function SurveillanceDashboard() {
   )
 }
 
-function KpiCard({ label, value }: { label: string; value: string }) {
+function KpiCard({
+  label,
+  value,
+  tone,
+}: {
+  label: string
+  value: string
+  tone?: 'cyan' | 'amber' | 'red'
+}) {
+  const valueColor =
+    tone === 'cyan'
+      ? 'var(--bt-cyan)'
+      : tone === 'amber'
+        ? '#fbbf24'
+        : tone === 'red'
+          ? '#f87171'
+          : 'white'
   return (
     <div
       className="rounded-xl border p-5"
@@ -216,7 +260,9 @@ function KpiCard({ label, value }: { label: string; value: string }) {
       <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--bt-muted)' }}>
         {label}
       </p>
-      <p className="mt-2 font-syne text-2xl font-bold text-white">{value}</p>
+      <p className="mt-2 font-syne text-2xl font-bold" style={{ color: valueColor }}>
+        {value}
+      </p>
     </div>
   )
 }

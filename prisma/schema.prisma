@@ -404,13 +404,20 @@ model Certificate {
   // Identifiants
   publicId String? @unique @default(cuid())
 
-  // Blockchain
+  // Blockchain (legacy fields)
   txHash          String?   @unique
   blockNumber     Int?
   contractAddress String?
   tokenId         String?
   merkleRoot      String?
   anchoredAt      DateTime?
+
+  // Ancrage Polygon réel (avril 2026)
+  polygonTxHash      String?   @unique
+  polygonBlock       Int?
+  polygonAnchoredAt  DateTime?
+  polygonExplorerUrl String?
+  blockchainStatus   String    @default("PENDING") // PENDING | ANCHORED | FAILED
 
   // Métadonnées
   level  ValidationLevel   @default(BRONZE)

@@ -9,6 +9,7 @@ import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import { createAdminAlert } from '@/lib/admin-alerts'
 import { persistUserTrustScore } from '@/lib/trustscore'
+import { anchorToPolygon, isPolygonConfigured } from '@/lib/polygon'
 
 const actionSchema = z.object({
   action: z.enum(['activate', 'suspend', 'reactivate', 'revoke', 'reject']),
@@ -141,6 +142,13 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       if (ownerEntity) {
         await persistUserTrustScore(ownerEntity.userId)
       }
+
+      // Ancrage Polygon (fire-and-forget) — uniquement à l'activation initiale
+      if (action === 'activate' && isPolygonConfigured()) {
+        triggerPolygonAnchor(id).catch((err) => {
+          console.error('[Polygon] Anchor trigger failed:', err?.message ?? err)
+        })
+      }
     } else if (action === 'revoke' || action === 'reject') {
       await createAdminAlert({
         type: 'CERT_REVOKED',
@@ -167,5 +175,69 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       },
       { status: 500 }
     )
+  }
+}
+
+/**
+ * Ancre un certificat sur Polygon (fire-and-forget).
+ * Utilise le contextHash de la dernière Signature comme empreinte ancrée.
+ * Met à jour blockchainStatus → ANCHORED (succès) | FAILED (échec).
+ */
+async function triggerPolygonAnchor(certificateId: string): Promise<void> {
+  const cert = await prisma.certificate.findUnique({
+    where: { id: certificateId },
+    select: {
+      id: true,
+      entityId: true,
+      blockchainStatus: true,
+      signatures: {
+        orderBy: { issuedAt: 'desc' },
+        take: 1,
+        select: { contextHash: true, jti: true },
+      },
+    },
+  })
+
+  if (!cert) return
+  if (cert.blockchainStatus === 'ANCHORED') return // déjà ancré
+
+  const hash = cert.signatures[0]?.contextHash ?? cert.signatures[0]?.jti
+  if (!hash) {
+    console.error('[Polygon] Pas de hash à ancrer pour le certificat', certificateId)
+    return
+  }
+
+  try {
+    const anchor = await anchorToPolygon(certificateId, hash)
+    await prisma.certificate.update({
+      where: { id: certificateId },
+      data: {
+        polygonTxHash: anchor.txHash,
+        polygonBlock: anchor.blockNumber,
+        polygonAnchoredAt: new Date(),
+        polygonExplorerUrl: anchor.explorerUrl,
+        blockchainStatus: 'ANCHORED',
+      },
+    })
+    await createAdminAlert({
+      type: 'CERT_ANCHORED',
+      title: 'Certificat ancré sur Polygon',
+      description: `TX: ${anchor.txHash} — bloc #${anchor.blockNumber}`,
+      entityId: cert.entityId,
+      metadata: {
+        certificateId,
+        txHash: anchor.txHash,
+        blockNumber: anchor.blockNumber,
+        explorerUrl: anchor.explorerUrl,
+      },
+    })
+  } catch (err: any) {
+    console.error('[Polygon] Ancrage échoué pour', certificateId, ':', err?.message ?? err)
+    await prisma.certificate
+      .update({
+        where: { id: certificateId },
+        data: { blockchainStatus: 'FAILED' },
+      })
+      .catch(() => undefined)
   }
 }

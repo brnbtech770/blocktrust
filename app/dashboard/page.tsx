@@ -98,6 +98,21 @@ export default async function Dashboard({
       orderBy: { issuedAt: 'desc' },
     });
 
+    const blockchainStats = certificates.reduce(
+      (acc, c) => {
+        const status = (c.blockchainStatus || 'PENDING') as 'PENDING' | 'ANCHORED' | 'FAILED';
+        if (status === 'ANCHORED') acc.anchored += 1;
+        else if (status === 'FAILED') acc.failed += 1;
+        else acc.pending += 1;
+        return acc;
+      },
+      { anchored: 0, pending: 0, failed: 0 }
+    );
+
+    const lastAnchored = certificates.find(
+      (c) => c.blockchainStatus === 'ANCHORED' && c.polygonExplorerUrl
+    );
+
     const showSuccessMessage = resolvedSearchParams?.success === "true" || resolvedSearchParams?.certificateCreated === "true";
 
     const certificateTableItems: CertificateTableItem[] = certificates.map((c) => ({
@@ -197,6 +212,54 @@ export default async function Dashboard({
         <Suspense fallback={<KpiGridSkeleton />}>
           <StatsBlock />
         </Suspense>
+
+        {certificates.length > 0 && (
+          <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <h2 className="font-syne text-xl font-semibold tracking-tight text-white sm:text-2xl">
+                Blockchain (Polygon)
+              </h2>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+                Ancrage on-chain
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+              <div className="rounded-lg border border-bt-cyan/30 bg-bt-cyan/5 px-4 py-3">
+                <p className="text-xs uppercase tracking-wider text-white/50">Ancrés ✓</p>
+                <p className="mt-1 font-mono text-2xl font-semibold text-bt-cyan">
+                  {blockchainStats.anchored}
+                </p>
+              </div>
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3">
+                <p className="text-xs uppercase tracking-wider text-white/50">En attente</p>
+                <p className="mt-1 font-mono text-2xl font-semibold text-amber-300">
+                  {blockchainStats.pending}
+                </p>
+              </div>
+              <div className="rounded-lg border border-red-500/30 bg-red-500/5 px-4 py-3">
+                <p className="text-xs uppercase tracking-wider text-white/50">Échecs</p>
+                <p className="mt-1 font-mono text-2xl font-semibold text-red-300">
+                  {blockchainStats.failed}
+                </p>
+                {blockchainStats.failed > 0 && (
+                  <p className="mt-1 text-[11px] text-white/50">
+                    Retry automatique chaque nuit
+                  </p>
+                )}
+              </div>
+            </div>
+            {lastAnchored?.polygonExplorerUrl && (
+              <a
+                href={lastAnchored.polygonExplorerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-flex items-center gap-2 text-sm text-bt-cyan hover:underline"
+              >
+                Dernier ancrage sur PolygonScan ↗
+              </a>
+            )}
+          </div>
+        )}
 
         <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-gold/30 sm:p-6">
           <h2 className="font-syne mb-3 text-xl font-semibold tracking-tight text-white sm:mb-4 sm:text-2xl">

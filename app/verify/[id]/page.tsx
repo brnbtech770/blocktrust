@@ -570,6 +570,10 @@ function ValidView({
     expiresAt: Date | null
     publicId: string | null
     txHash: string | null
+    blockchainStatus?: string | null
+    polygonTxHash?: string | null
+    polygonBlock?: number | null
+    polygonExplorerUrl?: string | null
   }
   signature: { contextHash: string | null; dynamicToken: string | null; maxScans: number }
   verificationsLast30Days: number
@@ -590,7 +594,8 @@ function ValidView({
       })
     : null
   const hashDisplay = signature.contextHash ?? '—'
-  const anchored = Boolean(certificate.txHash)
+  const polygonAnchored = certificate.blockchainStatus === 'ANCHORED' && Boolean(certificate.polygonTxHash)
+  const anchored = polygonAnchored || Boolean(certificate.txHash)
   const rotatingQr = signature.dynamicToken != null
   const holderTrustScore = entity.user?.trustScore ?? 0
   const holderLabel = getTrustScoreLabel(holderTrustScore)
@@ -659,6 +664,27 @@ function ValidView({
               <p className="mb-1 text-xs uppercase tracking-wider text-bt-cyan">Hash SHA-256 (contexte)</p>
               <p className="break-all rounded bg-black/30 px-3 py-2 font-mono text-xs text-bt-cyan/80">{hashDisplay}</p>
             </div>
+
+            {polygonAnchored && (
+              <div className="rounded-lg border border-bt-cyan/30 bg-bt-cyan/5 px-4 py-3">
+                <p className="mb-1 text-xs uppercase tracking-wider text-bt-cyan">
+                  Ancré sur Polygon
+                </p>
+                <p className="font-mono text-sm text-white/85">
+                  Bloc #{certificate.polygonBlock ?? '—'}
+                </p>
+                {certificate.polygonExplorerUrl && (
+                  <a
+                    href={certificate.polygonExplorerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-block break-all font-mono text-xs text-gold hover:underline"
+                  >
+                    Voir sur PolygonScan ↗
+                  </a>
+                )}
+              </div>
+            )}
 
             {rotatingQr && (
               <p className="rounded-lg border border-bt-cyan/30 bg-bt-cyan/5 px-3 py-2 text-xs text-bt-cyan/90">

@@ -24,7 +24,15 @@ export async function GET() {
   const now = new Date()
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
-  const [verifications24h, fraudCount, unreadAlerts, runLogs] = await Promise.all([
+  const [
+    verifications24h,
+    fraudCount,
+    unreadAlerts,
+    runLogs,
+    polygonAnchored,
+    polygonPending,
+    polygonFailed,
+  ] = await Promise.all([
     prisma.verification.count({
       where: { verifiedAt: { gte: oneDayAgo } },
     }),
@@ -45,6 +53,9 @@ export async function GET() {
       take: 20,
       select: { createdAt: true, newValue: true },
     }),
+    prisma.certificate.count({ where: { blockchainStatus: 'ANCHORED' } }),
+    prisma.certificate.count({ where: { blockchainStatus: 'PENDING', status: 'ACTIVE' } }),
+    prisma.certificate.count({ where: { blockchainStatus: 'FAILED' } }),
   ])
 
   const fraudRate = verifications24h > 0 ? fraudCount / verifications24h : 0
@@ -105,6 +116,11 @@ export async function GET() {
     lastRunAt: lastRun?.createdAt?.toISOString() ?? null,
     lastRunMeta: lastRun?.newValue ?? null,
     chart,
+    polygon: {
+      anchored: polygonAnchored,
+      pending: polygonPending,
+      failed: polygonFailed,
+    },
     recentFraudAlerts: recentFraudAlerts.map((a) => ({
       id: a.id,
       type: a.type,

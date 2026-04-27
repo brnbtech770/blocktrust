@@ -10,6 +10,7 @@ import StatusBadge from '@/app/components/admin/StatusBadge'
 import TypeBadge from '@/app/components/admin/TypeBadge'
 import TrustScoreCell from '@/app/components/admin/TrustScoreCell'
 import IdCell from '@/app/components/admin/IdCell'
+import BlockchainCell from '@/app/components/admin/BlockchainCell'
 import { DetailsLink } from '@/app/components/admin/ActionButton'
 
 type SearchParams = {
@@ -150,6 +151,7 @@ export default async function AdminCertificatesPage({
               <TH>Type</TH>
               <TH>Email</TH>
               <TH>Statut</TH>
+              <TH>Blockchain</TH>
               <TH>TrustScore</TH>
               <TH>Date création</TH>
               <TH>Actions</TH>
@@ -175,6 +177,14 @@ export default async function AdminCertificatesPage({
                 </td>
                 <td className="px-6 py-4">
                   <StatusBadge status={cert.status} type="certificate" />
+                </td>
+                <td className="px-6 py-4">
+                  <BlockchainCell
+                    status={cert.blockchainStatus as 'PENDING' | 'ANCHORED' | 'FAILED' | null}
+                    explorerUrl={cert.polygonExplorerUrl}
+                    blockNumber={cert.polygonBlock}
+                    certificateId={cert.id}
+                  />
                 </td>
                 <td className="px-6 py-4">
                   <TrustScoreCell
