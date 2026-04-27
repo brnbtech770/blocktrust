@@ -1,6 +1,7 @@
 // lib/polygon.ts
 // Ancrage des hashes de certificats sur Polygon (mainnet 137 ou Amoy 80002).
-// Le hash est embarqué dans le champ `data` d'une self-transaction (équivalent OP_RETURN).
+// Le hash est embarqué dans le champ `data` d'une transaction value=0 envoyée
+// vers une burn address (ou un contrat dédié si POLYGON_CONTRACT_ADDRESS).
 // ============================================================
 
 import { createHash } from 'node:crypto'
@@ -11,6 +12,30 @@ import { createAdminAlert } from '@/lib/admin-alerts'
 const RPC_URL = process.env.POLYGON_RPC_URL?.trim() || ''
 const PRIVATE_KEY = process.env.POLYGON_PRIVATE_KEY?.trim() || ''
 const CHAIN_ID = parseInt(process.env.POLYGON_CHAIN_ID?.trim() || '137', 10)
+
+// Burn address EVM standard. Certains RPC publics rejettent les transactions
+// `from === to` ; on envoie donc systématiquement vers une autre adresse.
+const DEFAULT_BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD'
+
+function resolveAnchorRecipient(walletAddress: string): string {
+  const raw = process.env.POLYGON_CONTRACT_ADDRESS?.trim()
+  let candidate = raw && raw.length > 0 ? raw : DEFAULT_BURN_ADDRESS
+
+  // Validation : si la valeur n'est pas une adresse EVM valide, on retombe sur
+  // la burn address. On garantit aussi que l'adresse cible n'est jamais celle
+  // du wallet émetteur (sinon certains RPC rejettent la tx).
+  try {
+    candidate = ethers.getAddress(candidate)
+  } catch {
+    candidate = ethers.getAddress(DEFAULT_BURN_ADDRESS)
+  }
+
+  if (candidate.toLowerCase() === walletAddress.toLowerCase()) {
+    candidate = ethers.getAddress(DEFAULT_BURN_ADDRESS)
+  }
+
+  return candidate
+}
 
 const EXPLORER_BASE =
   CHAIN_ID === 80002
@@ -65,8 +90,10 @@ function getWallet(): ethers.Wallet {
 }
 
 /**
- * Ancre un hash sur Polygon en envoyant une transaction self-to-self avec le
- * payload `BLOCKTRUST:<certificateId>:<hash>` dans le champ data.
+ * Ancre un hash sur Polygon en envoyant une transaction value=0 vers la
+ * burn address (ou POLYGON_CONTRACT_ADDRESS si défini), avec le payload
+ * `BLOCKTRUST:<certificateId>:<hash>` dans le champ data.
+ * On évite explicitement `from === to` (rejeté par certains RPC publics).
  * Renvoie le txHash + blockNumber + URL explorer.
  */
 export async function anchorToPolygon(
@@ -78,12 +105,13 @@ export async function anchorToPolygon(
   }
 
   const wallet = getWallet()
+  const recipient = resolveAnchorRecipient(wallet.address)
 
   const payload = `BLOCKTRUST:${certificateId}:${hash}`
   const data = ethers.hexlify(ethers.toUtf8Bytes(payload))
 
   const tx = await wallet.sendTransaction({
-    to: wallet.address,
+    to: recipient,
     value: BigInt(0),
     data,
     chainId: CHAIN_ID,
