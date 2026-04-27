@@ -6,7 +6,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
-import { anchorToPolygon, isPolygonConfigured } from '@/lib/polygon'
+import {
+  anchorToPolygon,
+  computeCertificateAnchorHash,
+  isPolygonConfigured,
+} from '@/lib/polygon'
 import { createAdminAlert } from '@/lib/admin-alerts'
 
 export const dynamic = 'force-dynamic'
@@ -38,6 +42,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
       entityId: true,
       status: true,
       blockchainStatus: true,
+      issuedAt: true,
       signatures: {
         orderBy: { issuedAt: 'desc' },
         take: 1,
@@ -59,10 +64,9 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: 'Déjà ancré' }, { status: 400 })
   }
 
-  const hash = cert.signatures[0]?.contextHash ?? cert.signatures[0]?.jti
-  if (!hash) {
-    return NextResponse.json({ error: 'Aucun hash à ancrer' }, { status: 400 })
-  }
+  // Hash : priorité Signature.contextHash, sinon fallback déterministe
+  // dérivé des données du certificat (id + entityId + issuedAt).
+  const hash = computeCertificateAnchorHash(cert)
 
   try {
     const anchor = await anchorToPolygon(id, hash)

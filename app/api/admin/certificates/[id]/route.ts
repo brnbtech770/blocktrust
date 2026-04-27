@@ -9,7 +9,11 @@ import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import { createAdminAlert } from '@/lib/admin-alerts'
 import { persistUserTrustScore } from '@/lib/trustscore'
-import { anchorToPolygon, isPolygonConfigured } from '@/lib/polygon'
+import {
+  anchorToPolygon,
+  computeCertificateAnchorHash,
+  isPolygonConfigured,
+} from '@/lib/polygon'
 
 const actionSchema = z.object({
   action: z.enum(['activate', 'suspend', 'reactivate', 'revoke', 'reject']),
@@ -190,6 +194,7 @@ async function triggerPolygonAnchor(certificateId: string): Promise<void> {
       id: true,
       entityId: true,
       blockchainStatus: true,
+      issuedAt: true,
       signatures: {
         orderBy: { issuedAt: 'desc' },
         take: 1,
@@ -201,11 +206,7 @@ async function triggerPolygonAnchor(certificateId: string): Promise<void> {
   if (!cert) return
   if (cert.blockchainStatus === 'ANCHORED') return // déjà ancré
 
-  const hash = cert.signatures[0]?.contextHash ?? cert.signatures[0]?.jti
-  if (!hash) {
-    console.error('[Polygon] Pas de hash à ancrer pour le certificat', certificateId)
-    return
-  }
+  const hash = computeCertificateAnchorHash(cert)
 
   try {
     const anchor = await anchorToPolygon(certificateId, hash)

@@ -3,6 +3,7 @@
 // Le hash est embarqué dans le champ `data` d'une self-transaction (équivalent OP_RETURN).
 // ============================================================
 
+import { createHash } from 'node:crypto'
 import { ethers } from 'ethers'
 import { prisma } from '@/app/lib/db'
 import { createAdminAlert } from '@/lib/admin-alerts'
@@ -30,6 +31,27 @@ export interface VerifyAnchorResult {
 
 export function isPolygonConfigured(): boolean {
   return Boolean(RPC_URL && PRIVATE_KEY)
+}
+
+/**
+ * Calcule le hash à ancrer pour un certificat.
+ * Priorité au contextHash de la dernière Signature (cohérence avec le QR public).
+ * Sinon, fallback déterministe SHA-256(`${id}:${entityId}:${issuedAt}`).
+ */
+export function computeCertificateAnchorHash(cert: {
+  id: string
+  entityId: string
+  issuedAt: Date | string
+  signatures?: { contextHash: string | null; jti?: string | null }[]
+}): string {
+  const fromSig = cert.signatures?.[0]?.contextHash ?? cert.signatures?.[0]?.jti
+  if (fromSig) return fromSig
+
+  const issuedAt =
+    cert.issuedAt instanceof Date ? cert.issuedAt.toISOString() : String(cert.issuedAt)
+  return createHash('sha256')
+    .update(`${cert.id}:${cert.entityId}:${issuedAt}`)
+    .digest('hex')
 }
 
 function getProvider(): ethers.JsonRpcProvider {
@@ -108,6 +130,7 @@ export async function retryFailedAnchors(max = 25): Promise<RetryAnchorsResult> 
       id: true,
       entityId: true,
       blockchainStatus: true,
+      issuedAt: true,
       signatures: {
         orderBy: { issuedAt: 'desc' },
         take: 1,
@@ -118,14 +141,10 @@ export async function retryFailedAnchors(max = 25): Promise<RetryAnchorsResult> 
 
   let anchored = 0
   let failed = 0
-  let noHash = 0
+  const noHash = 0
 
   for (const cert of candidates) {
-    const hash = cert.signatures[0]?.contextHash ?? cert.signatures[0]?.jti
-    if (!hash) {
-      noHash += 1
-      continue
-    }
+    const hash = computeCertificateAnchorHash(cert)
     try {
       const anchor = await anchorToPolygon(cert.id, hash)
       await prisma.certificate.update({
