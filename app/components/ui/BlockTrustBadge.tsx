@@ -17,7 +17,7 @@ export interface BlockTrustBadgeProps {
   size?: number;
   /** Optional className to apply to the outer wrapper. */
   className?: string;
-  /** Override the wordmark. Defaults to "BlockTrust". */
+  /** Override the wordmark. Defaults to "BLOCKTRUST". */
   label?: string;
   /** Préfixe unique pour les IDs SVG (defs, clipPath, gradients, filtre). */
   instanceId?: string;
@@ -74,7 +74,7 @@ const QR_PATTERN = [
 export function BlockTrustBadge({
   size = 320,
   className,
-  label = "BlockTrust",
+  label = "BLOCKTRUST",
   instanceId,
 }: BlockTrustBadgeProps) {
   // useId fournit un id stable côté serveur et client (Next.js SSR safe).

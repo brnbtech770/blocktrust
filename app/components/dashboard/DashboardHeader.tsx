@@ -32,8 +32,8 @@ export default function DashboardHeader() {
             aria-label="Retour au tableau de bord BlockTrust"
           >
             <BlockTrustBadge size={36} instanceId="dashboard-header" className="shrink-0" />
-            <span className="font-syne text-base font-bold leading-none tracking-[0.06em] text-white sm:text-lg">
-              BLOCK<span className="text-bt-cyan">TRUST</span>
+            <span className="font-syne text-base font-bold leading-none tracking-wider text-bt-cyan sm:text-lg">
+              BLOCKTRUST
             </span>
           </Link>
         </div>
