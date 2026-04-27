@@ -5,7 +5,7 @@
 'use client'
 
 const STATIC_HASH =
-  '0x7a3f...9e2b • Polygon • Dernier bloc: 52,847,291 • BlockTrust Anchor Pending'
+  '0x7a3f...9e2b • Polygon • Dernier bloc: 52,847,291 • BLOCKTRUST Anchor Pending'
 
 export default function BlockchainTicker() {
   return (

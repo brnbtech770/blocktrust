@@ -16,7 +16,7 @@ const FAQ = [
   },
   {
     q: "Qu'est-ce qu'une entité certifiée ?",
-    a: "Une entité est une personne physique, une entreprise, un domaine web ou tout profil que vous souhaitez certifier avec un badge BlockTrust vérifiable.",
+    a: "Une entité est une personne physique, une entreprise, un domaine web ou tout profil que vous souhaitez certifier avec un badge BLOCKTRUST vérifiable.",
   },
   {
     q: 'Comment fonctionne le badge de vérification ?',
@@ -179,7 +179,7 @@ export default function PricingPage() {
         {mode === 'B2B' && (
           <p className="text-center text-sm max-w-xl mx-auto mb-8" style={{ color: 'var(--bt-muted)' }}>
             <span className="text-white font-semibold">1 poste = 1 utilisateur.</span>{' '}
-            Son badge BlockTrust fonctionne sur tous ses appareils (PC, mobile, tablette) sans configuration supplémentaire.
+            Son badge BLOCKTRUST fonctionne sur tous ses appareils (PC, mobile, tablette) sans configuration supplémentaire.
           </p>
         )}
       </section>

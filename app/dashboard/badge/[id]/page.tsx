@@ -105,9 +105,9 @@ export default function DashboardBadgePage() {
   const getBadgeText = () => {
     if (!badgeData) return ''
     if (badgeData.entity.entityType === 'INDIVIDUAL') {
-      return 'Identité vérifiée par BlockTrust'
+      return 'Identité vérifiée par BLOCKTRUST'
     }
-    return `Entreprise certifiée BlockTrust${badgeData.entity.siret ? ` • SIRET ${badgeData.entity.siret}` : ''}`
+    return `Entreprise certifiée BLOCKTRUST${badgeData.entity.siret ? ` • SIRET ${badgeData.entity.siret}` : ''}`
   }
 
   const getEmbedCode = () => {

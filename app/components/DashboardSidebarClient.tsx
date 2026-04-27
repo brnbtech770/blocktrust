@@ -28,7 +28,7 @@ export default function DashboardSidebarClient() {
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-gray-900 border-r border-gray-800 p-6">
-      <div className="text-3xl font-bold text-white mb-8 tracking-tight">🛡️ BlockTrust</div>
+      <div className="text-3xl font-bold text-white mb-8 tracking-tight">🛡️ BLOCKTRUST</div>
 
       <nav className="space-y-1">
         <a

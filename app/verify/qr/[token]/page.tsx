@@ -66,7 +66,7 @@ export default async function VerifyQRTokenPage({
             </p>
             <h1 className="font-syne mb-4 text-xl font-bold text-white">Vérification réservée aux abonnés</h1>
             <p className="mb-6 text-sm text-white/70">
-              La vérification de badges BlockTrust est disponible à partir du forfait Essentiel.
+              La vérification de badges BLOCKTRUST est disponible à partir du forfait Essentiel.
             </p>
             <Link
               href="/pricing"

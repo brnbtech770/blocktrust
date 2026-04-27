@@ -152,7 +152,7 @@ export default async function Dashboard({
             Bonjour {firstName} 👋
           </h1>
           <p className="font-sans text-base leading-relaxed text-white/80">
-            Voici un aperçu de votre activité BlockTrust
+            Voici un aperçu de votre activité BLOCKTRUST
           </p>
         </div>
 

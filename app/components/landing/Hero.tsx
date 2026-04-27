@@ -34,7 +34,7 @@ export default function Hero() {
           </h1>
 
           <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl text-base leading-relaxed text-white/75 sm:mt-6 sm:text-lg">
-            BlockTrust certifie votre identité et sécurise vos échanges en ligne — pour
+            BLOCKTRUST certifie votre identité et sécurise vos échanges en ligne — pour
             les <span className="text-white font-medium">particuliers</span> comme pour
             les <span className="text-white font-medium">entreprises</span>.
           </p>

@@ -38,7 +38,7 @@ export default function FinalCTA() {
           </span>
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-sm sm:text-base leading-relaxed text-white/75">
-          Rejoignez les professionnels qui font confiance à BlockTrust pour protéger
+          Rejoignez les professionnels qui font confiance à BLOCKTRUST pour protéger
           chacune de leurs interactions.
         </p>
 

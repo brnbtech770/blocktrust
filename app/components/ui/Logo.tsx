@@ -66,7 +66,7 @@ export function Logo({
                 : "text-[11px]"
         } ${size === "sm" ? "tracking-[0.04em]" : "tracking-[0.08em]"}`}
       >
-        Block<span className="text-bt-cyan">Trust</span>
+        BLOCK<span className="text-bt-cyan">TRUST</span>
       </div>
       <div className={isHero ? 'text-[8px] sm:text-[9px]' : ''} style={{
         fontFamily: 'var(--font-mono-bt), monospace',

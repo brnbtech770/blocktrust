@@ -418,7 +418,7 @@ function SubscriptionRequiredVerifyView() {
           Vérification réservée aux abonnés
         </h1>
         <p className="mb-8 text-sm leading-relaxed text-white/70">
-          La vérification de badges BlockTrust est disponible à partir de notre forfait Essentiel à 4,99€/mois.
+          La vérification de badges BLOCKTRUST est disponible à partir de notre forfait Essentiel à 4,99€/mois.
         </p>
         <Link
           href="/pricing"
@@ -611,7 +611,7 @@ function ValidView({
             ID {certificate.publicId ?? certificate.id}
           </p>
           <p className="mb-6 text-center text-sm text-white/70">
-            Vérifié par BlockTrust
+            Vérifié par BLOCKTRUST
             {anchored ? ' — Ancré sur Polygon' : ''}
           </p>
 

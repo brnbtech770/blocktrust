@@ -99,7 +99,7 @@ export default function CookieBanner() {
     >
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 sm:flex-row">
         <p className="text-center text-sm text-white/70 sm:text-left">
-          BlockTrust utilise des cookies nécessaires au fonctionnement du service et des cookies
+          BLOCKTRUST utilise des cookies nécessaires au fonctionnement du service et des cookies
           analytiques anonymes.{' '}
           <Link href="/privacy" className="text-[#00d4ff] underline hover:brightness-110">
             En savoir plus

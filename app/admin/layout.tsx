@@ -8,7 +8,7 @@ import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
 import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
 import { redirect } from 'next/navigation'
 import SignOutButton from '@/app/components/SignOutButton'
-import { Logo } from '@/app/components/ui/Logo'
+import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 import Link from 'next/link'
 import AdminPageHeader from '@/app/admin/AdminPageHeader'
 import { prisma } from '@/app/lib/db'
@@ -137,10 +137,20 @@ export default async function AdminLayout({
       >
         {/* Bloc logo + badge ADMIN (stacked) */}
         <div
-          className="flex flex-shrink-0 flex-col items-center gap-1.5 border-b px-4 py-3"
+          className="flex flex-shrink-0 flex-col items-center gap-2 border-b px-4 py-3"
           style={{ borderBottomColor: 'var(--bt-border)' }}
         >
-          <Logo size="sm" withText={true} href="/admin/dashboard" />
+          <Link
+            href="/admin/dashboard"
+            className="flex items-center gap-2.5"
+            style={{ textDecoration: 'none' }}
+            aria-label="Retour au tableau de bord admin BLOCKTRUST"
+          >
+            <BlockTrustBadge size={36} instanceId="admin-header" className="shrink-0" />
+            <span className="font-syne text-base font-bold leading-none tracking-[0.06em] text-white">
+              BLOCK<span className="text-bt-cyan">TRUST</span>
+            </span>
+          </Link>
           <span className="mx-auto w-fit rounded border border-bt-cyan/30 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-widest text-bt-cyan">
             ADMIN
           </span>

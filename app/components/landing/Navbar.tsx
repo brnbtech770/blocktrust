@@ -25,13 +25,13 @@ export default function Navbar() {
         <div className="min-w-0 shrink-0">
           <Link
             href="/"
-            className="flex items-center gap-2"
+            className="flex items-center gap-3"
             style={{ textDecoration: 'none' }}
             aria-label="Retour à l'accueil BlockTrust"
           >
-            <BlockTrustBadge size={32} instanceId="navbar" className="shrink-0" />
-            <span className="font-syne text-base font-bold leading-none text-white sm:text-lg">
-              Block<span className="text-bt-cyan">Trust</span>
+            <BlockTrustBadge size={44} instanceId="navbar" className="shrink-0" />
+            <span className="font-syne text-base font-bold leading-none tracking-[0.06em] text-white sm:text-lg">
+              BLOCK<span className="text-bt-cyan">TRUST</span>
             </span>
           </Link>
         </div>

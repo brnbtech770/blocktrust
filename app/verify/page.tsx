@@ -68,9 +68,9 @@ function VerifyContent() {
             <div className="absolute inset-0 text-5xl blur-sm opacity-50">🛡️</div>
           </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent mb-2 relative">
-            BlockTrust Verification
+            BLOCKTRUST Verification
             <span className="absolute inset-0 text-4xl font-bold bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent blur-[2px] opacity-30">
-              BlockTrust Verification
+              BLOCKTRUST Verification
             </span>
           </h1>
         </div>

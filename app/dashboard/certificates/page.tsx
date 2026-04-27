@@ -287,7 +287,7 @@ export default function CertificatesPage() {
                       className="text-sm mt-2 max-w-2xl leading-relaxed"
                       style={{ color: "#BDA76B" }}
                     >
-                      Votre certificat est en cours de validation par l&apos;équipe BlockTrust.
+                      Votre certificat est en cours de validation par l&apos;équipe BLOCKTRUST.
                       Vous serez notifié par email sous 24–48h.
                     </p>
                   ) : (

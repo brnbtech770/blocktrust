@@ -74,9 +74,9 @@ export default async function BadgePage({
             <div className="absolute inset-0 text-4xl blur-sm opacity-50">🛡️</div>
           </div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent relative">
-            BlockTrust
+            BLOCKTRUST
             <span className="absolute inset-0 text-2xl font-bold bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent blur-[2px] opacity-30">
-              BlockTrust
+              BLOCKTRUST
             </span>
           </h1>
           <p className="text-gray-300 text-sm mt-2">Certificat de confiance vérifié</p>
@@ -92,8 +92,8 @@ export default async function BadgePage({
           <div className="text-center">
             <p className="text-gray-300 text-sm mb-2">
               {entity.entityType === 'INDIVIDUAL' 
-                ? '✅ Identité vérifiée par BlockTrust'
-                : `✅ Entreprise certifiée BlockTrust${entity.siret ? ` • SIRET ${entity.siret}` : ''}`}
+                ? '✅ Identité vérifiée par BLOCKTRUST'
+                : `✅ Entreprise certifiée BLOCKTRUST${entity.siret ? ` • SIRET ${entity.siret}` : ''}`}
             </p>
             <p className="text-white text-xl font-bold">
               {entity.entityType === 'INDIVIDUAL'

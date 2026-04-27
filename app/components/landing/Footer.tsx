@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Linkedin, Network } from "lucide-react";
-import { Logo } from "@/app/components/ui/Logo";
+import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 
 const links: { label: string; href: string }[] = [
   { label: "Accueil", href: "/" },
@@ -25,7 +25,12 @@ export default function Footer() {
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div className="flex flex-col items-start gap-4">
-            <Logo size="md" withText={true} href="/" />
+            <Link href="/" className="flex items-center gap-3" style={{ textDecoration: "none" }}>
+              <BlockTrustBadge size={40} instanceId="footer" className="shrink-0" />
+              <span className="font-syne text-lg font-bold leading-none tracking-[0.06em] text-white">
+                BLOCK<span className="text-bt-cyan">TRUST</span>
+              </span>
+            </Link>
             <p className="max-w-sm text-sm leading-relaxed text-white/65">
               Certification d&apos;identité numérique ancrée sur la blockchain Polygon.
               Pour particuliers et entreprises.
@@ -77,7 +82,7 @@ export default function Footer() {
           className="mt-10 border-t pt-6 text-xs text-white/55 sm:flex sm:items-center sm:justify-between"
           style={{ borderColor: "var(--bt-border)" }}
         >
-          <p>© 2026 BRNB TECH SASU — BlockTrust® Tous droits réservés</p>
+          <p>© 2026 BRNB TECH SASU — BLOCKTRUST® Tous droits réservés</p>
           <p className="mt-2 sm:mt-0">RCS Paris — Hébergé par Vercel</p>
         </div>
       </div>

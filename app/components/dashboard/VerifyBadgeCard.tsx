@@ -30,7 +30,7 @@ export default function VerifyBadgeCard({ quotaLabel, isAdmin, hasActiveSub = fa
         <div className="min-w-0 flex-1">
           <h3 className="font-syne text-lg font-semibold text-white">Vérifier un badge</h3>
           <p className="mt-1 text-sm text-white/65">
-            Scannez ou collez l&apos;ID d&apos;un badge BlockTrust
+            Scannez ou collez l&apos;ID d&apos;un badge BLOCKTRUST
           </p>
         </div>
       </div>

@@ -4,9 +4,10 @@
 
 'use client'
 
+import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 import { useSession } from 'next-auth/react'
-import { Logo } from '@/app/components/ui/Logo'
+import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 
 export default function DashboardHeader() {
   const { data: session } = useSession()
@@ -24,9 +25,17 @@ export default function DashboardHeader() {
     >
       <div className="mx-auto flex w-full max-w-7xl min-w-0 items-center justify-between gap-2 sm:gap-4 lg:px-0">
         <div className="min-w-0 shrink">
-          <span className="inline-flex max-w-[min(100%,200px)] sm:max-w-none">
-            <Logo size="sm" withText={true} href="/dashboard" className="max-w-full" />
-          </span>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2.5 sm:gap-3"
+            style={{ textDecoration: 'none' }}
+            aria-label="Retour au tableau de bord BlockTrust"
+          >
+            <BlockTrustBadge size={36} instanceId="dashboard-header" className="shrink-0" />
+            <span className="font-syne text-base font-bold leading-none tracking-[0.06em] text-white sm:text-lg">
+              BLOCK<span className="text-bt-cyan">TRUST</span>
+            </span>
+          </Link>
         </div>
         <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-4">
           <div className="hidden text-right sm:block">

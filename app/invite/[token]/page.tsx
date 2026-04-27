@@ -44,7 +44,7 @@ export default async function InvitePage({
     )
   }
 
-  const fromName = relation.fromUser.name || relation.fromUser.email || 'Un utilisateur BlockTrust'
+  const fromName = relation.fromUser.name || relation.fromUser.email || 'Un utilisateur BLOCKTRUST'
   const initiales = fromName.slice(0, 2).toUpperCase()
 
   return (
@@ -61,7 +61,7 @@ export default async function InvitePage({
           {initiales}
         </div>
         <h1 className="font-syne mb-3 text-2xl font-extrabold tracking-tight text-white">
-          {fromName} vous fait confiance sur BlockTrust
+          {fromName} vous fait confiance sur BLOCKTRUST
         </h1>
         <p className="text-[15px] mb-6" style={{ color: 'var(--bt-muted)' }}>
           {fromName} a certifié son identité numérique et vous invite à rejoindre son cercle de confiance.
@@ -81,7 +81,7 @@ export default async function InvitePage({
           href={`/pricing?ref=${token}`}
           className="font-syne block w-full rounded-[10px] bg-bt-cyan py-4 px-8 text-center text-base font-bold text-navy transition hover:bg-bt-cyan/90"
         >
-          Rejoindre BlockTrust — 4,99€/mois
+          Rejoindre BLOCKTRUST — 4,99€/mois
         </Link>
         <p className="text-[11px] mt-3" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>
           Sans engagement · CB obligatoire · Annulation à tout moment

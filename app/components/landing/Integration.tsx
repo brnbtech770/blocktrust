@@ -175,7 +175,7 @@ export default function Integration() {
               <ol className="space-y-3">
                 {[
                   "Ouvrez les paramètres de signature de votre client mail.",
-                  "Collez le lien ou l'image fournie depuis votre dashboard BlockTrust.",
+                  "Collez le lien ou l'image fournie depuis votre dashboard BLOCKTRUST.",
                   "Vos contacts voient un badge cliquable qui prouve votre identité.",
                 ].map((s, i) => (
                   <li

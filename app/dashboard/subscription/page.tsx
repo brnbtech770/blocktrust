@@ -61,7 +61,7 @@ export default async function SubscriptionPage() {
             Mon abonnement
           </h1>
           <p className="text-gray-400 text-base">
-            Gérez votre abonnement BlockTrust
+            Gérez votre abonnement BLOCKTRUST
           </p>
         </div>
 
