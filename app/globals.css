@@ -207,6 +207,95 @@ h5, h6 {
   font-family: 'IBM Plex Mono', 'Courier New', monospace;
 }
 
+/* ============================================================
+   Animations dédiées à /how-to (démos, schéma vérification)
+   ============================================================ */
+
+/* Effet machine à écrire (curseur clignotant + width 0→100%) */
+@keyframes howto-typing {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+@keyframes howto-blink {
+  50% { border-color: transparent; }
+}
+.howto-typing {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--bt-cyan);
+  animation:
+    howto-typing 2.4s steps(40, end) 0.3s forwards,
+    howto-blink 0.6s step-end 8;
+  width: 0;
+}
+.howto-typing--done {
+  animation:
+    howto-typing 2.4s steps(40, end) 0.3s forwards,
+    howto-blink 0.6s step-end infinite;
+}
+
+/* Curseur fictif qui se déplace vers le badge */
+@keyframes howto-cursor-move {
+  0%, 8%   { transform: translate(0, 0); opacity: 0; }
+  12%      { opacity: 1; }
+  45%, 70% { transform: translate(140px, 32px); opacity: 1; }
+  90%, 100%{ transform: translate(0, 0); opacity: 0; }
+}
+.howto-cursor {
+  animation: howto-cursor-move 5s ease-in-out infinite;
+}
+
+/* Tooltip lié au curseur */
+@keyframes howto-tooltip {
+  0%, 35%  { opacity: 0; transform: translateY(4px); }
+  45%, 70% { opacity: 1; transform: translateY(0); }
+  85%, 100%{ opacity: 0; transform: translateY(4px); }
+}
+.howto-tooltip {
+  animation: howto-tooltip 5s ease-in-out infinite;
+}
+
+/* Flèche en flux (stroke-dasharray) pour le schéma */
+@keyframes howto-flow-arrow {
+  0%   { stroke-dashoffset: 24; opacity: 0.35; }
+  100% { stroke-dashoffset: 0;  opacity: 1; }
+}
+.howto-flow-arrow {
+  stroke-dasharray: 6 6;
+  animation: howto-flow-arrow 1.6s linear infinite;
+}
+
+/* Fade-in séquentiel (ligne JSON, champs formulaire) */
+@keyframes howto-line-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.howto-line-in {
+  opacity: 0;
+  animation: howto-line-in 0.45s ease-out forwards;
+}
+
+/* Pop scale + glow (badge généré, tampon validé) */
+@keyframes howto-pop {
+  0%   { opacity: 0; transform: scale(0.55); filter: drop-shadow(0 0 0 rgba(0,212,255,0)); }
+  60%  { opacity: 1; transform: scale(1.08); filter: drop-shadow(0 0 22px rgba(0,212,255,0.55)); }
+  100% { opacity: 1; transform: scale(1);    filter: drop-shadow(0 0 12px rgba(0,212,255,0.4)); }
+}
+.howto-pop {
+  animation: howto-pop 0.9s cubic-bezier(0.25,1.4,0.5,1) 0.4s forwards;
+  opacity: 0;
+}
+
+/* Pulsation soft pour les nœuds du schéma */
+@keyframes howto-pulse-node {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,212,255,0.5); }
+  50%      { box-shadow: 0 0 0 10px rgba(0,212,255,0); }
+}
+.howto-pulse-node {
+  animation: howto-pulse-node 2.2s ease-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bt-anim-gold-glow,
   .bt-anim-spin-slow,
@@ -217,7 +306,18 @@ h5, h6 {
   .bt-anim-scan,
   .bt-anim-shield-glow,
   .bt-anim-shimmer,
-  .bt-anim-film {
+  .bt-anim-film,
+  .howto-typing,
+  .howto-typing--done,
+  .howto-cursor,
+  .howto-tooltip,
+  .howto-flow-arrow,
+  .howto-line-in,
+  .howto-pop,
+  .howto-pulse-node {
     animation: none !important;
   }
+  .howto-typing { width: 100%; border-right: none; }
+  .howto-line-in,
+  .howto-pop { opacity: 1; transform: none; }
 }

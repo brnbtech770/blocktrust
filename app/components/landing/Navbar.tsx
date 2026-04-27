@@ -5,7 +5,7 @@ import Link from 'next/link'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 
 const navLinks = [
-  { label: 'Comment ça marche', href: '/#comment' },
+  { label: 'Comment ça marche', href: '/how-to' },
   { label: 'Tarifs', href: '/pricing' },
   { label: 'FAQ', href: '/pricing#faq' },
 ]
