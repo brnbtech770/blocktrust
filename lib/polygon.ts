@@ -4,6 +4,8 @@
 // ============================================================
 
 import { ethers } from 'ethers'
+import { prisma } from '@/app/lib/db'
+import { createAdminAlert } from '@/lib/admin-alerts'
 
 const RPC_URL = process.env.POLYGON_RPC_URL?.trim() || ''
 const PRIVATE_KEY = process.env.POLYGON_PRIVATE_KEY?.trim() || ''
@@ -74,6 +76,100 @@ export async function anchorToPolygon(
     txHash: receipt.hash,
     blockNumber: receipt.blockNumber,
     explorerUrl: `${EXPLORER_BASE}${receipt.hash}`,
+  }
+}
+
+export interface RetryAnchorsResult {
+  skipped: boolean
+  examined: number
+  anchored: number
+  failed: number
+  noHash: number
+}
+
+/**
+ * Reprend en lot les ancrages Polygon en échec ou en attente pour les
+ * certificats ACTIVE. Limité à `max` (défaut 25) par exécution.
+ * Fail gracefully si Polygon n'est pas configuré.
+ */
+export async function retryFailedAnchors(max = 25): Promise<RetryAnchorsResult> {
+  if (!isPolygonConfigured()) {
+    return { skipped: true, examined: 0, anchored: 0, failed: 0, noHash: 0 }
+  }
+
+  const candidates = await prisma.certificate.findMany({
+    where: {
+      status: 'ACTIVE',
+      blockchainStatus: { in: ['FAILED', 'PENDING'] },
+    },
+    orderBy: { issuedAt: 'asc' },
+    take: max,
+    select: {
+      id: true,
+      entityId: true,
+      blockchainStatus: true,
+      signatures: {
+        orderBy: { issuedAt: 'desc' },
+        take: 1,
+        select: { contextHash: true, jti: true },
+      },
+    },
+  })
+
+  let anchored = 0
+  let failed = 0
+  let noHash = 0
+
+  for (const cert of candidates) {
+    const hash = cert.signatures[0]?.contextHash ?? cert.signatures[0]?.jti
+    if (!hash) {
+      noHash += 1
+      continue
+    }
+    try {
+      const anchor = await anchorToPolygon(cert.id, hash)
+      await prisma.certificate.update({
+        where: { id: cert.id },
+        data: {
+          polygonTxHash: anchor.txHash,
+          polygonBlock: anchor.blockNumber,
+          polygonAnchoredAt: new Date(),
+          polygonExplorerUrl: anchor.explorerUrl,
+          blockchainStatus: 'ANCHORED',
+        },
+      })
+      await createAdminAlert({
+        type: 'CERT_ANCHORED',
+        title: 'Certificat ancré sur Polygon (cron retry)',
+        description: `TX: ${anchor.txHash} — bloc #${anchor.blockNumber}`,
+        entityId: cert.entityId,
+        metadata: {
+          certificateId: cert.id,
+          txHash: anchor.txHash,
+          blockNumber: anchor.blockNumber,
+          explorerUrl: anchor.explorerUrl,
+          via: 'cron',
+        },
+      }).catch(() => undefined)
+      anchored += 1
+    } catch (err: any) {
+      console.error('[Polygon] retry échec', cert.id, ':', err?.message ?? err)
+      await prisma.certificate
+        .update({
+          where: { id: cert.id },
+          data: { blockchainStatus: 'FAILED' },
+        })
+        .catch(() => undefined)
+      failed += 1
+    }
+  }
+
+  return {
+    skipped: false,
+    examined: candidates.length,
+    anchored,
+    failed,
+    noHash,
   }
 }
 

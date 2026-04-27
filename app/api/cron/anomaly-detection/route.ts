@@ -6,9 +6,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { runAnomalyDetection } from '@/lib/agents/anomaly-detector'
+import { retryFailedAnchors } from '@/lib/polygon'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
+export const maxDuration = 300
+
+async function runPolygonRetrySafe() {
+  try {
+    return await retryFailedAnchors(25)
+  } catch (e) {
+    console.error('[cron/anomaly-detection] polygon retry failed:', e)
+    return { skipped: true, examined: 0, anchored: 0, failed: 0, noHash: 0 }
+  }
+}
 
 function unauthorizedCron() {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -30,7 +41,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const result = await runAnomalyDetection()
-    return NextResponse.json({ success: true, ...result })
+    const polygon = await runPolygonRetrySafe()
+    return NextResponse.json({ success: true, ...result, polygon })
   } catch (e) {
     console.error('[cron/anomaly-detection]', e)
     return NextResponse.json({ error: 'Agent failed' }, { status: 500 })
@@ -45,7 +57,8 @@ export async function POST() {
     }
 
     const result = await runAnomalyDetection()
-    return NextResponse.json({ success: true, ...result })
+    const polygon = await runPolygonRetrySafe()
+    return NextResponse.json({ success: true, ...result, polygon })
   } catch (e) {
     console.error('[cron/anomaly-detection POST]', e)
     return NextResponse.json({ error: 'Agent failed' }, { status: 500 })
