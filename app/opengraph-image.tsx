@@ -6,7 +6,11 @@ export const alt =
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+const SITE_URL = "https://blocktrust.tech";
+
 export default function OGImage() {
+  const badgeUrl = `${SITE_URL}/badge-og.svg`;
+
   return new ImageResponse(
     (
       <div
@@ -214,7 +218,7 @@ export default function OGImage() {
           </div>
         </div>
 
-        {/* COLONNE DROITE — Badge */}
+        {/* COLONNE DROITE — Badge SVG (image fixe) */}
         <div
           style={{
             display: "flex",
@@ -224,68 +228,14 @@ export default function OGImage() {
             marginLeft: "40px",
           }}
         >
-          {/* Carte hexagonale gold */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "300px",
-              height: "300px",
-              background:
-                "linear-gradient(135deg, #13243f 0%, #0a1628 60%, #06101f 100%)",
-              border: "3px solid #BDA76B",
-              borderRadius: "32px",
-              boxShadow: "0 0 80px rgba(0,212,255,0.25)",
-            }}
-          >
-            {/* Bouclier cyan */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "120px",
-                height: "120px",
-                background: "rgba(0,212,255,0.15)",
-                border: "4px solid #00d4ff",
-                borderRadius: "50% 50% 50% 50% / 60% 60% 40% 40%",
-                color: "#E8D08A",
-                fontSize: "60px",
-                fontWeight: 900,
-                marginBottom: "20px",
-              }}
-            >
-              ✓
-            </div>
-
-            {/* Wordmark gold */}
-            <div
-              style={{
-                display: "flex",
-                color: "#BDA76B",
-                fontSize: "16px",
-                fontWeight: 800,
-                letterSpacing: "5px",
-              }}
-            >
-              BLOCKTRUST
-            </div>
-
-            {/* Baseline cyan */}
-            <div
-              style={{
-                display: "flex",
-                color: "rgba(0,212,255,0.65)",
-                fontSize: "9px",
-                letterSpacing: "3px",
-                marginTop: "8px",
-              }}
-            >
-              VERIFIED · SECURE · ON-CHAIN
-            </div>
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={badgeUrl}
+            alt="BlockTrust Badge"
+            width={380}
+            height={380}
+            style={{ display: "block" }}
+          />
 
           {/* Pill Polygon Mainnet */}
           <div
@@ -293,7 +243,7 @@ export default function OGImage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              marginTop: "20px",
+              marginTop: "16px",
               padding: "8px 18px",
               background: "rgba(189,167,107,0.15)",
               border: "1px solid rgba(189,167,107,0.5)",

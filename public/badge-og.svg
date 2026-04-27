@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="600" height="600">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="65%">
+      <stop offset="0%" stop-color="#13243f" />
+      <stop offset="60%" stop-color="#0a1628" />
+      <stop offset="100%" stop-color="#06101f" />
+    </radialGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#BDA76B" />
+      <stop offset="50%" stop-color="#E8D08A" />
+      <stop offset="100%" stop-color="#BDA76B" />
+    </linearGradient>
+    <linearGradient id="shield" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#1ee9ff" />
+      <stop offset="40%" stop-color="#00a8cc" />
+      <stop offset="100%" stop-color="#003d4d" />
+    </linearGradient>
+    <radialGradient id="shield-depth" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#001820" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#001820" stop-opacity="0" />
+    </radialGradient>
+    <clipPath id="hex-clip">
+      <polygon points="100,18 172,58 172,142 100,182 28,142 28,58" />
+    </clipPath>
+  </defs>
+
+  <!-- Hexagon outer with gold gradient border -->
+  <polygon
+    points="100,6 182,52 182,148 100,194 18,148 18,52"
+    fill="url(#bg)"
+    stroke="url(#gold)"
+    stroke-width="2.5"
+    stroke-linejoin="round"
+  />
+  <polygon
+    points="100,18 172,58 172,142 100,182 28,142 28,58"
+    fill="none"
+    stroke="#00d4ff"
+    stroke-opacity="0.35"
+    stroke-width="0.6"
+    stroke-linejoin="round"
+  />
+
+  <!-- Outer rings (gold + cyan dashed) -->
+  <circle cx="100" cy="100" r="92" fill="none" stroke="#BDA76B" stroke-width="1.2" stroke-dasharray="6 10" opacity="0.85" />
+  <circle cx="100" cy="100" r="88" fill="none" stroke="#00d4ff" stroke-width="0.9" stroke-dasharray="2 12" opacity="0.85" />
+
+  <g clip-path="url(#hex-clip)">
+    <!-- Faint dotted grid -->
+    <g opacity="0.08" stroke="#00d4ff" stroke-width="0.4">
+      <line x1="20" y1="20" x2="20" y2="180" />
+      <line x1="36" y1="20" x2="36" y2="180" />
+      <line x1="52" y1="20" x2="52" y2="180" />
+      <line x1="68" y1="20" x2="68" y2="180" />
+      <line x1="84" y1="20" x2="84" y2="180" />
+      <line x1="100" y1="20" x2="100" y2="180" />
+      <line x1="116" y1="20" x2="116" y2="180" />
+      <line x1="132" y1="20" x2="132" y2="180" />
+      <line x1="148" y1="20" x2="148" y2="180" />
+      <line x1="164" y1="20" x2="164" y2="180" />
+      <line x1="180" y1="20" x2="180" y2="180" />
+      <line x1="20" y1="20" x2="180" y2="20" />
+      <line x1="20" y1="36" x2="180" y2="36" />
+      <line x1="20" y1="52" x2="180" y2="52" />
+      <line x1="20" y1="68" x2="180" y2="68" />
+      <line x1="20" y1="84" x2="180" y2="84" />
+      <line x1="20" y1="100" x2="180" y2="100" />
+      <line x1="20" y1="116" x2="180" y2="116" />
+      <line x1="20" y1="132" x2="180" y2="132" />
+      <line x1="20" y1="148" x2="180" y2="148" />
+      <line x1="20" y1="164" x2="180" y2="164" />
+      <line x1="20" y1="180" x2="180" y2="180" />
+    </g>
+
+    <!-- Static circuits -->
+    <g fill="none" stroke="#00d4ff" stroke-opacity="0.55" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M30 60 L60 60 L72 72 L72 96" />
+      <path d="M170 60 L140 60 L128 72 L128 110 L110 128" />
+      <path d="M30 140 L55 140 L70 125 L70 100" />
+      <path d="M170 140 L145 140 L130 155 L100 155" />
+      <path d="M100 30 L100 50 L86 64" />
+      <path d="M100 170 L100 150 L114 136" />
+      <path d="M40 100 L60 100 L70 90" />
+      <path d="M160 100 L140 100 L130 90" />
+    </g>
+
+    <!-- Pulsing nodes -->
+    <g fill="#00d4ff">
+      <circle cx="60" cy="60" r="2.4" />
+      <circle cx="140" cy="60" r="2.4" />
+      <circle cx="70" cy="100" r="2.4" />
+      <circle cx="130" cy="100" r="2.4" />
+      <circle cx="72" cy="96" r="2.4" />
+      <circle cx="128" cy="110" r="2.4" />
+      <circle cx="100" cy="50" r="2.4" />
+      <circle cx="100" cy="150" r="2.4" />
+    </g>
+
+    <!-- QR pattern bottom-right -->
+    <g transform="translate(146 146)">
+      <rect x="-2" y="-2" width="22" height="22" fill="#06101f" stroke="#BDA76B" stroke-width="0.5" opacity="0.9" />
+      <rect x="0" y="0" width="3" height="3" fill="#BDA76B" />
+      <rect x="3.6" y="0" width="3" height="3" fill="#00d4ff" />
+      <rect x="7.2" y="0" width="3" height="3" fill="#00d4ff" />
+      <rect x="14.4" y="0" width="3" height="3" fill="#00d4ff" />
+      <rect x="0" y="3.6" width="3" height="3" fill="#00d4ff" />
+      <rect x="7.2" y="3.6" width="3" height="3" fill="#00d4ff" />
+      <rect x="14.4" y="3.6" width="3" height="3" fill="#00d4ff" />
+      <rect x="0" y="7.2" width="3" height="3" fill="#00d4ff" />
+      <rect x="3.6" y="7.2" width="3" height="3" fill="#00d4ff" />
+      <rect x="7.2" y="7.2" width="3" height="3" fill="#00d4ff" />
+      <rect x="10.8" y="7.2" width="3" height="3" fill="#00d4ff" />
+      <rect x="7.2" y="10.8" width="3" height="3" fill="#00d4ff" />
+      <rect x="14.4" y="10.8" width="3" height="3" fill="#00d4ff" />
+      <rect x="0" y="14.4" width="3" height="3" fill="#00d4ff" />
+      <rect x="3.6" y="14.4" width="3" height="3" fill="#00d4ff" />
+      <rect x="10.8" y="14.4" width="3" height="3" fill="#00d4ff" />
+      <rect x="14.4" y="14.4" width="3" height="3" fill="#00d4ff" />
+    </g>
+
+    <!-- Center shield -->
+    <g transform="translate(100 86)">
+      <path
+        d="M0 -22 C 12 -22, 20 -18, 22 -14 L 22 4 C 22 16, 12 24, 0 30 C -12 24, -22 16, -22 4 L -22 -14 C -20 -18, -12 -22, 0 -22 Z"
+        fill="url(#shield)"
+        stroke="#ffffff"
+        stroke-opacity="0.35"
+        stroke-width="0.6"
+      />
+      <path
+        d="M0 -22 C 12 -22, 20 -18, 22 -14 L 22 4 C 22 16, 12 24, 0 30 C -12 24, -22 16, -22 4 L -22 -14 C -20 -18, -12 -22, 0 -22 Z"
+        fill="url(#shield-depth)"
+      />
+      <path
+        d="M0 -17 C 10 -17, 17 -14, 18 -11 L 18 3 C 18 13, 10 20, 0 25 C -10 20, -18 13, -18 3 L -18 -11 C -17 -14, -10 -17, 0 -17 Z"
+        fill="none"
+        stroke="#ffffff"
+        stroke-opacity="0.25"
+        stroke-width="0.5"
+      />
+      <line x1="-12" y1="-4" x2="12" y2="-4" stroke="#00d4ff" stroke-width="0.5" opacity="0.4" stroke-dasharray="3 2" />
+      <line x1="-10" y1="4" x2="10" y2="4" stroke="#00d4ff" stroke-width="0.5" opacity="0.3" stroke-dasharray="3 2" />
+      <path
+        d="M -8 1 L -2 8 L 9 -6"
+        fill="none"
+        stroke="#E8D08A"
+        stroke-width="2.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </g>
+
+    <!-- Baseline -->
+    <text
+      x="100"
+      y="132"
+      text-anchor="middle"
+      fill="#00d4ff"
+      opacity="0.7"
+      font-family="monospace"
+      font-size="4.2"
+      font-weight="500"
+      letter-spacing="2"
+    >VERIFIED · SECURE · ON-CHAIN</text>
+
+    <!-- Wordmark -->
+    <text
+      x="100"
+      y="146"
+      text-anchor="middle"
+      fill="#BDA76B"
+      font-family="monospace"
+      font-size="11"
+      font-weight="700"
+      letter-spacing="3.5"
+    >BLOCKTRUST</text>
+  </g>
+</svg>
