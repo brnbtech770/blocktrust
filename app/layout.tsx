@@ -50,33 +50,35 @@ export const metadata: Metadata = {
   publisher: "BRNB TECH SASU",
   icons: {
     icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon.png", sizes: "32x32", type: "image/png" },
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
-    shortcut: ["/favicon.png"],
+    apple: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    shortcut: ["/favicon.svg"],
   },
   openGraph: {
     type: "website",
     locale: "fr_FR",
     url: SITE_URL,
-    siteName: "BlockTrust",
+    siteName: "BLOCKTRUST",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     images: [
       {
-        url: "/og-image.png",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: "BlockTrust — Certification d'identité numérique",
+        alt: "BLOCKTRUST — Certification d'identité numérique ancrée sur Polygon",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
-    images: ["/og-image.png"],
+    description:
+      "Certifiez votre identité digitale ancrée sur Polygon blockchain.",
+    images: ["/opengraph-image"],
   },
   robots: {
     index: true,
