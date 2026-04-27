@@ -47,6 +47,15 @@ export default async function DashboardSidebar() {
               icon: 'Users' as const,
             },
           ]),
+      ...(plan?.whitelabelEnabled
+        ? [
+            {
+              name: 'API & Marque blanche',
+              href: '/dashboard/white-label',
+              icon: 'Code2' as const,
+            },
+          ]
+        : []),
       { name: 'Facturation', href: '/dashboard/billing', icon: 'CreditCard' },
       { name: 'Paramètres', href: '/dashboard/settings', icon: 'Settings' },
       ...(userIsAdmin

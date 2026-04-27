@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Building, Shield, Users, CreditCard, Settings } from 'lucide-react'
+import { Home, Building, Shield, Users, CreditCard, Settings, Code2 } from 'lucide-react'
 
 const iconMap = {
   Home,
@@ -11,6 +11,7 @@ const iconMap = {
   Users,
   CreditCard,
   Settings,
+  Code2,
 } as const
 
 export type SidebarItem = { name: string; href: string; icon: keyof typeof iconMap }
