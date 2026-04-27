@@ -13,7 +13,7 @@ export default function IdCell({
   return (
     <code
       title={id}
-      className="block max-w-[120px] truncate rounded bg-bt-cyan/5 px-2 py-1 font-mono text-xs text-bt-cyan/70"
+      className="block max-w-[100px] truncate rounded bg-bt-cyan/5 px-2 py-1 font-mono text-xs text-bt-cyan/70"
     >
       {label}
     </code>

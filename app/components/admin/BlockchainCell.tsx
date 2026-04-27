@@ -9,11 +9,13 @@ export default function BlockchainCell({
   explorerUrl,
   blockNumber,
   certificateId,
+  certStatus,
 }: {
   status: BlockchainStatus
   explorerUrl: string | null | undefined
   blockNumber: number | null | undefined
   certificateId: string
+  certStatus?: string
 }) {
   const [loading, setLoading] = useState(false)
   const [localStatus, setLocalStatus] = useState<BlockchainStatus>(status)
@@ -87,11 +89,25 @@ export default function BlockchainCell({
   }
 
   return (
-    <span
-      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
-      style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24' }}
-    >
-      En attente
-    </span>
+    <div className="flex flex-col gap-1">
+      <span
+        className="inline-flex w-fit items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
+        style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24' }}
+      >
+        En attente
+      </span>
+      {certStatus === 'ACTIVE' && (
+        <button
+          type="button"
+          onClick={retry}
+          disabled={loading}
+          className="inline-flex w-fit items-center rounded border border-bt-cyan/30 bg-bt-cyan/10 px-2 py-1 text-xs text-bt-cyan transition hover:bg-bt-cyan/20 disabled:opacity-50"
+          title="Forcer l'ancrage Polygon maintenant"
+        >
+          {loading ? '…' : '⛓️ Ancrer'}
+        </button>
+      )}
+      {error && <span className="text-[10px] text-red-300">{error}</span>}
+    </div>
   )
 }

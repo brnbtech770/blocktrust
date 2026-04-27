@@ -173,30 +173,43 @@ export default async function AdminCertificatesPage({
                   <TypeBadge variant={cert.entity.entityType === 'INDIVIDUAL' ? 'B2C' : 'B2B'} />
                 </td>
                 <td className="px-6 py-4">
-                  <p className="text-sm" style={{ color: 'var(--bt-muted)' }}>{cert.entity.email}</p>
+                  <p
+                    className="block max-w-[160px] truncate text-sm"
+                    style={{ color: 'var(--bt-muted)' }}
+                    title={cert.entity.email}
+                  >
+                    {cert.entity.email}
+                  </p>
                 </td>
                 <td className="px-6 py-4">
                   <StatusBadge status={cert.status} type="certificate" />
                 </td>
                 <td className="px-6 py-4">
-                  <TrustScoreCell
-                    score={cert.trustScore?.score ?? null}
-                    level={cert.trustScore?.level ?? null}
-                  />
+                  <TrustScoreCell score={cert.trustScore?.score ?? null} />
                 </td>
                 <td className="px-6 py-4">
-                  <BlockchainCell
-                    status={cert.blockchainStatus as 'PENDING' | 'ANCHORED' | 'FAILED' | null}
-                    explorerUrl={cert.polygonExplorerUrl}
-                    blockNumber={cert.polygonBlock}
-                    certificateId={cert.id}
-                  />
+                  <div className="max-w-[100px]">
+                    <BlockchainCell
+                      status={cert.blockchainStatus as 'PENDING' | 'ANCHORED' | 'FAILED' | null}
+                      explorerUrl={cert.polygonExplorerUrl}
+                      blockNumber={cert.polygonBlock}
+                      certificateId={cert.id}
+                      certStatus={cert.status}
+                    />
+                  </div>
                 </td>
-                <td className="px-6 py-4 text-sm" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>
-                  {new Date(cert.issuedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                <td
+                  className="px-6 py-4 text-sm"
+                  style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}
+                >
+                  {new Date(cert.issuedAt).toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: '2-digit',
+                  })}
                 </td>
                 <td className="px-6 py-4">
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-col gap-1">
                     <QuickActions certificateId={cert.id} currentStatus={cert.status} />
                     <DetailsLink href={`/admin/certificates/${cert.id}`} />
                   </div>
