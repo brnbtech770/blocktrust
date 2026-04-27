@@ -53,10 +53,11 @@ export default function BlockchainCell({
             href={explorerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-[11px] hover:underline"
+            className="text-[11px] hover:underline"
             style={{ color: 'var(--bt-cyan)' }}
+            title={blockNumber ? `Bloc #${blockNumber}` : undefined}
           >
-            #{blockNumber ?? '—'} ↗
+            Voir TX →
           </a>
         )}
       </div>

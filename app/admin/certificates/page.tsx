@@ -151,8 +151,8 @@ export default async function AdminCertificatesPage({
               <TH>Type</TH>
               <TH>Email</TH>
               <TH>Statut</TH>
-              <TH>Blockchain</TH>
               <TH>TrustScore</TH>
+              <TH>Blockchain</TH>
               <TH>Date création</TH>
               <TH>Actions</TH>
             </tr>
@@ -179,17 +179,17 @@ export default async function AdminCertificatesPage({
                   <StatusBadge status={cert.status} type="certificate" />
                 </td>
                 <td className="px-6 py-4">
+                  <TrustScoreCell
+                    score={cert.trustScore?.score ?? null}
+                    level={cert.trustScore?.level ?? null}
+                  />
+                </td>
+                <td className="px-6 py-4">
                   <BlockchainCell
                     status={cert.blockchainStatus as 'PENDING' | 'ANCHORED' | 'FAILED' | null}
                     explorerUrl={cert.polygonExplorerUrl}
                     blockNumber={cert.polygonBlock}
                     certificateId={cert.id}
-                  />
-                </td>
-                <td className="px-6 py-4">
-                  <TrustScoreCell
-                    score={cert.trustScore?.score ?? null}
-                    level={cert.trustScore?.level ?? null}
                   />
                 </td>
                 <td className="px-6 py-4 text-sm" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>
