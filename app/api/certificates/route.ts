@@ -11,6 +11,7 @@ import QRCode from 'qrcode'
 import { checkCertificateQuota } from '@/lib/checkQuota'
 import { sendEmail } from '@/lib/email'
 import { CertificateCreatedEmail, subject as certificateCreatedSubject } from '@/emails/CertificateCreatedEmail'
+import { createAdminAlert } from '@/lib/admin-alerts'
 
 // ─────────────────────────────────────────────
 // GET — Liste des certificats de l'utilisateur
@@ -276,6 +277,28 @@ export async function POST(req: NextRequest) {
           expiresAt: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000), // 10 ans
         },
       })
+
+      // FIX E2E : alerter l'admin qu'un certificat est en attente d'activation
+      const certEntityName =
+        certificate.entity.entityType === 'INDIVIDUAL'
+          ? `${certificate.entity.firstName ?? ''} ${certificate.entity.lastName ?? ''}`.trim() ||
+            certificate.entity.email
+          : certificate.entity.legalName || certificate.entity.email
+      await createAdminAlert({
+        type: 'CERT_PENDING',
+        title: 'Certificat en attente d\u2019activation',
+        description: `Nouveau certificat ${certificate.publicId ?? certificate.id} pour ${certEntityName}`,
+        entityId: certificate.entityId,
+        userId: user.id,
+        metadata: {
+          certificateId: certificate.id,
+          publicId: certificate.publicId,
+          entityType: certificate.entity.entityType,
+          level: certificate.level,
+        },
+      }).catch((e) =>
+        console.error('[Certificate] AdminAlert CERT_PENDING failed:', e)
+      )
     }
 
     // Générer l'URL de vérification (jti + contextHash si Signature existe)

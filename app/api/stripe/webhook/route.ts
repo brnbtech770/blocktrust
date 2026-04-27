@@ -22,6 +22,31 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 // Mapping priceId → plan name (monthly + yearly, B2C + B2B)
+/**
+ * Synchronise `User.planId` à partir du `stripePriceId` actif. Aucune erreur
+ * si le Plan n'est pas seedé en base : on log et on continue (le webhook ne
+ * doit pas casser pour ça).
+ */
+async function syncUserPlanFromPriceId(userId: string, priceId: string | null | undefined) {
+  if (!priceId) return
+  const plan = await prisma.plan.findUnique({ where: { stripePriceId: priceId } })
+  if (!plan) {
+    btLog(
+      `ℹ️ Plan introuvable pour stripePriceId=${priceId} (User.planId non synchronisé)`,
+      'Plan not seeded for stripePriceId'
+    )
+    return
+  }
+  await prisma.user.update({
+    where: { id: userId },
+    data: { planId: plan.id },
+  })
+  btLog(
+    `✅ User.planId synchronisé pour user ${userId} → plan ${plan.name}`,
+    `User plan synced — ${plan.name}`
+  )
+}
+
 function mapPriceIdToPlan(priceId: string): string {
   const priceMap: Record<string, string> = {
     // B2C
@@ -209,6 +234,10 @@ export async function POST(req: NextRequest) {
         const priceId = sub.items.data[0]?.price?.id
         const plan = mapPriceIdToPlan(priceId || '')
         const amountLabel = formatSubscriptionAmount(sub)
+
+        // FIX E2E : synchroniser User.planId depuis stripePriceId
+        await syncUserPlanFromPriceId(user.id, priceId)
+
         await createNewPaymentAdminAlertIfNew({
           userId: user.id,
           email: user.email,
@@ -267,6 +296,9 @@ export async function POST(req: NextRequest) {
             currentPeriodEnd,
           },
         })
+
+          // FIX E2E : synchroniser User.planId depuis stripePriceId
+          await syncUserPlanFromPriceId(user.id, priceId)
 
           btLog(
             `✅ Subscription créée/activée pour user ${user.id} - Plan: ${plan}`,
@@ -380,6 +412,15 @@ export async function POST(req: NextRequest) {
             currentPeriodEnd: new Date(subscription.current_period_end * 1000),
           },
         })
+
+        // FIX E2E : synchroniser User.planId si le user existe pour ce customer
+        const updatedUser = await prisma.user.findFirst({
+          where: { stripeCustomerId: customerId },
+          select: { id: true },
+        })
+        if (updatedUser) {
+          await syncUserPlanFromPriceId(updatedUser.id, priceId)
+        }
 
         btLog(
           `🔄 Subscription mise à jour: ${subscription.id} - Plan: ${plan}`,
