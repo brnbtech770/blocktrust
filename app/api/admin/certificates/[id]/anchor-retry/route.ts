@@ -10,6 +10,7 @@ import {
   anchorToPolygon,
   computeCertificateAnchorHash,
   isPolygonConfigured,
+  notifyAnchorSuccess,
 } from '@/lib/polygon'
 import { createAdminAlert } from '@/lib/admin-alerts'
 
@@ -93,6 +94,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
         retried: true,
       },
     })
+    notifyAnchorSuccess(id, anchor).catch(() => undefined)
     return NextResponse.json({
       success: true,
       txHash: anchor.txHash,

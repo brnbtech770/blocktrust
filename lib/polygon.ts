@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto'
 import { ethers } from 'ethers'
 import { prisma } from '@/app/lib/db'
 import { createAdminAlert } from '@/lib/admin-alerts'
+import { sendCertificateAnchoredEmail } from '@/lib/email'
 
 const RPC_URL = process.env.POLYGON_RPC_URL?.trim() || ''
 const PRIVATE_KEY = process.env.POLYGON_PRIVATE_KEY?.trim() || ''
@@ -129,6 +130,58 @@ export async function anchorToPolygon(
   }
 }
 
+/**
+ * Notifie le propriétaire du certificat par email après un ancrage réussi.
+ * Fire-and-forget — n'échoue jamais.
+ */
+export async function notifyAnchorSuccess(
+  certificateId: string,
+  anchor: AnchorResult,
+): Promise<void> {
+  try {
+    const cert = await prisma.certificate.findUnique({
+      where: { id: certificateId },
+      select: {
+        id: true,
+        polygonAnchoredAt: true,
+        entity: {
+          select: {
+            legalName: true,
+            tradeName: true,
+            firstName: true,
+            lastName: true,
+            user: {
+              select: { email: true, name: true },
+            },
+          },
+        },
+      },
+    })
+
+    const email = cert?.entity?.user?.email
+    if (!email) return
+
+    const userName = cert.entity.user.name?.trim() || 'Utilisateur'
+    const entityName =
+      cert.entity.legalName?.trim() ||
+      cert.entity.tradeName?.trim() ||
+      [cert.entity.firstName, cert.entity.lastName].filter(Boolean).join(' ').trim() ||
+      'Votre entité'
+
+    sendCertificateAnchoredEmail(email, {
+      userName,
+      entityName,
+      certificateId,
+      polygonTxHash: anchor.txHash,
+      polygonBlock: anchor.blockNumber,
+      polygonExplorerUrl: anchor.explorerUrl,
+      anchoredAt: cert.polygonAnchoredAt ?? new Date(),
+    })
+  } catch (err) {
+    console.error('[Polygon] notifyAnchorSuccess error:', (err as Error).message)
+  }
+}
+
 export interface RetryAnchorsResult {
   skipped: boolean
   examined: number
@@ -198,6 +251,7 @@ export async function retryFailedAnchors(max = 25): Promise<RetryAnchorsResult> 
           via: 'cron',
         },
       }).catch(() => undefined)
+      notifyAnchorSuccess(cert.id, anchor).catch(() => undefined)
       anchored += 1
     } catch (err: any) {
       console.error('[Polygon] retry échec', cert.id, ':', err?.message ?? err)

@@ -13,6 +13,7 @@ import {
   anchorToPolygon,
   computeCertificateAnchorHash,
   isPolygonConfigured,
+  notifyAnchorSuccess,
 } from '@/lib/polygon'
 
 const actionSchema = z.object({
@@ -232,6 +233,7 @@ async function triggerPolygonAnchor(certificateId: string): Promise<void> {
         explorerUrl: anchor.explorerUrl,
       },
     })
+    notifyAnchorSuccess(certificateId, anchor).catch(() => undefined)
   } catch (err: any) {
     console.error('[Polygon] Ancrage échoué pour', certificateId, ':', err?.message ?? err)
     await prisma.certificate

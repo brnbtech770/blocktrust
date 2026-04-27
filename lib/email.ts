@@ -6,6 +6,10 @@
 
 import { Resend } from 'resend'
 import type { ReactElement } from 'react'
+import {
+  CertificateAnchoredEmail,
+  type CertificateAnchoredEmailProps,
+} from '../emails/CertificateAnchoredEmail'
 
 function getResend(): Resend | null {
   const key = process.env.RESEND_API_KEY
@@ -61,5 +65,20 @@ export async function sendEmail({ to, subject, react, replyTo }: SendEmailParams
 export function sendEmailFireAndForget(params: SendEmailParams): void {
   sendEmail(params).catch((err) => {
     console.error('[Email] Envoi échoué (fire-and-forget):', params.subject, err)
+  })
+}
+
+/**
+ * Envoi de la confirmation d'ancrage Polygon (fire-and-forget).
+ * Appelé après une mise à jour DB blockchainStatus → ANCHORED.
+ */
+export function sendCertificateAnchoredEmail(
+  to: string,
+  props: CertificateAnchoredEmailProps,
+): void {
+  sendEmailFireAndForget({
+    to,
+    subject: '⛓️ Votre certificat BLOCKTRUST est ancré sur Polygon',
+    react: CertificateAnchoredEmail(props),
   })
 }
