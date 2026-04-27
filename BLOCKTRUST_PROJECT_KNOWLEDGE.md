@@ -1,9 +1,9 @@
 # BlockTrust — Document de Référence Projet
 
-**Version:** 4.0  
-**Date:** 26 avril 2026  
+**Version:** 5.0  
+**Date:** 27 avril 2026  
 **Auteur:** Olivier Bernabé (BRNB TECH SASU)  
-**Statut:** Production live — 96% d'avancement
+**Statut:** Production live — 98% d'avancement
 
 ---
 
@@ -12,7 +12,7 @@
 ### Message central
 > "Protégez chaque interaction de votre écosystème digital"
 
-BlockTrust est une plateforme SaaS de certification d'identité numérique anti-fraude combinant signatures cryptographiques (ES256, SHA-256), ancrage blockchain (Polygon) et vérification par QR code rotatif.
+BlockTrust est une plateforme SaaS de certification d'identité numérique anti-fraude combinant signatures cryptographiques (ES256, SHA-256), ancrage blockchain (Polygon) et vérification par QR code rotatif. Cible B2C (particuliers/familles) et B2B (entreprises/marque blanche).
 
 ### Équipe
 | Nom | Rôle |
@@ -22,41 +22,36 @@ BlockTrust est une plateforme SaaS de certification d'identité numérique anti-
 | Deborah Slama | Directrice Marketing |
 | Shaï Bernabé | Data / IA (Bachelor PSTB) |
 
-### Propriété intellectuelle
-- Domaine `blocktrust.tech` ✅
-- Dépôt INPI "Block Trust" ✅
-- Code source GitHub privé `brnbtech770/blocktrust` ✅
-
 ---
 
 ## 2. STACK TECHNIQUE
 
 ```
-Framework : Next.js 16.1.6 (App Router)
-Language  : TypeScript
-Style     : TailwindCSS
-Auth      : NextAuth v5 (Google OAuth + Credentials + Magic Link)
-ORM       : Prisma 5 (v6.19.2)
-DB        : PostgreSQL via Neon
-Paiements : Stripe (subscriptions + Stripe Identity KYC)
-Emails    : Resend (domaine blocktrust.tech vérifié)
-Storage   : Vercel Blob (store: blocktrust-blob, région IAD1, Private)
-JWT       : jose (ES256 / RS256)
-QR        : qrcode
+Framework   : Next.js 16.1.6 (App Router)
+Language    : TypeScript
+Style       : TailwindCSS
+Auth        : NextAuth v5
+ORM         : Prisma 5 (v6.19.2)
+DB          : PostgreSQL via Neon
+Paiements   : Stripe (subscriptions + Stripe Identity KYC)
+Emails      : Resend (domaine blocktrust.tech vérifié)
+Storage     : Vercel Blob (blocktrust-blob, IAD1, Private)
+JWT         : jose (ES256 / RS256)
 Déploiement : Vercel (plan Hobby)
-Repo      : github.com/brnbtech770/blocktrust
+Repo        : github.com/brnbtech770/blocktrust
 ```
 
 ### Polices
 ```
 Inter          → corps de texte (font-sans)
-Space Grotesk  → titres (font-syne — alias conservé dans Tailwind)
+Space Grotesk  → titres (alias font-syne dans Tailwind)
 IBM Plex Mono  → données techniques (font-mono)
 ```
 
-### Charte graphique
+### Charte
 ```
 #0a1628 navy | #00d4ff cyan | #BDA76B gold
+BLOCKTRUST = toujours en majuscules, couleur cyan #00d4ff
 ```
 
 ### Imports critiques
@@ -64,7 +59,6 @@ IBM Plex Mono  → données techniques (font-mono)
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 // AccountType : PERSONAL / BUSINESS
-// JWT : BLOCKTRUST_JWT_PRIVATE_KEY / BLOCKTRUST_JWT_PUBLIC_KEY
 ```
 
 ---
@@ -80,148 +74,129 @@ import { auth } from '@/app/lib/auth-server'
 | Famille+ | 24,99€ | 10 | 300 | 300 |
 
 ### B2B
-| Plan | Prix/mois | Users | Vérifs/mois |
-|------|-----------|-------|-------------|
-| Starter | 29€ | 3 | 200 |
-| Team | 79€ | 10 | 500 |
-| Business | 199€ | 50 | Illimité |
-| Enterprise | Sur devis | Illimité | Illimité |
-
-**Toggle annuel : -20% | 14 Price IDs Stripe | Upgrade banner à 80%**
+| Plan | Prix/mois | Users | Vérifs/mois | White Label |
+|------|-----------|-------|-------------|-------------|
+| Starter | 29€ | 3 | 200 | ✅ |
+| Team | 79€ | 10 | 500 | ✅ |
+| Business | 199€ | 50 | Illimité | ✅ |
+| Enterprise | Sur devis | Illimité | Illimité | ✅ |
 
 ---
 
 ## 4. FONCTIONNALITÉS EN PRODUCTION
 
-### Auth
+### Auth & Sécurité
 - Google OAuth, Email/Password, Magic Link
 - ADMIN_EMAILS via env var
 - Middleware fail-closed, JWT RS256
+- Anti-bot inscription (honeypot, délai, regex)
+- Headers sécurité (X-Frame-Options, HSTS, etc.)
 
 ### Paiement & KYC
 - Stripe checkout B2C + B2B, webhooks validés
+- **Bug fix critique (27/04)** : User.planId maintenant synchronisé sur customer.subscription.created + checkout.session.completed + customer.subscription.updated
 - KYC Stripe Identity (1,50€/vérif)
-- **INSEE API Sirene 3.11** — vérification SIRET B2B
-  - OAuth2 Client Credentials
-  - Badge "INSEE ✓" dans admin/kyc
-  - Variables : INSEE_CONSUMER_KEY + INSEE_CONSUMER_SECRET
+- INSEE API Sirene 3.11 — vérification SIRET B2B
 
 ### Certificats & Badge
 - ES256 + SHA-256
-- Badge SVG inline animé (BlockTrustBadge component)
+- **BlockTrustBadge SVG animé** (Lovable) — hexagone gold, circuits data-flow, double anneau contra-rotatif, bouclier cyan + checkmark gold, film lumineux "VERIFIED·SECURE·ON-CHAIN"
+- Props : size, className, label, instanceId (useId SSR-safe)
+- CSS animations dans globals.css (préfixe bt-)
 - QR dynamique rotatif (invalide après scan)
 - /verify PRIVÉE — abonnement requis + quotas par plan
-- Quotas : Essentiel 10/mois → Business illimité
 
-### Trust Circle
-- 4 niveaux : MUTUAL/UNILATERAL/MANUAL/UNVERIFIED
-- Upload documents via **Vercel Blob** (store blocktrust-blob)
-- Invitations virales /invite/[token]
+### White Label & API Publique (27/04/2026)
+- **Modèle WhiteLabelConfig** en DB
+- **GET /api/public/verify/:id** — X-API-Key header, réponse JSON complète
+- **GET /api/public/widget/:id** — SVG personnalisable (couleurs, taille, label)
+- **Webhooks sortants** — HMAC-SHA256, events : verification.completed, badge.created, kyc.approved
+- **Dashboard /dashboard/white-label** — clé API, personnalisation, webhook, docs
+- Rate limit : 30 req/min par apiKey + quota mensuel hard
+- Visible dans sidebar uniquement si plan B2B
 
 ### TrustScore dynamique
 - KYC (+30) | abonnement (+15) | cert actif (+20)
 - Ancienneté (+10 max) | CGU (+5) | MUTUAL (+1/rel, max 15)
 - Pénalité FRAUD_ALERT (-10/alerte)
-- Cron quotidien 3h : /api/cron/trustscore-update
-- Labels : TRUSTED/VERIFIED/LOW/UNVERIFIED
+- Cron quotidien 3h
 
-### Emails (Resend)
-- PaymentConfirmationEmail (1 seul email par souscription)
-- KYC, Trust Circle, Manuel — 9 templates total
+### Page /how-to (27/04/2026)
+- Hero + tabs Particuliers/Entreprises
+- Schéma vérification 8 étapes animé
+- 3 démos BrowserFrame animées CSS (formulaire, intégration, visio)
+- Guide Entreprises (API terminal, marque blanche, SDK)
+- FAQ accordion 6 questions
+- CTA final avec BlockTrustBadge
+- Lien navbar "Comment ça marche" → /how-to
 
-### Dashboard Admin
-- KPIs, KYC, Certificats, Demandes, Users
-- Alertes temps réel (6 types) + pastille rouge
-- Surveillance IA (3 règles + Cron + Recharts)
-- Suppression profils en cascade ($transaction)
-- Composants réutilisables : StatusBadge, TypeBadge,
-  TrustScoreCell, IdCell, ActionButton
-
-### Conformité RGPD
-- Cookie banner (localStorage + DB)
-- CGU horodatée (cguAcceptedAt, cguVersion)
-- /privacy + /cgu
-- Registre des traitements ✅
-
----
-
-## 5. LANDING PAGE (26/04/2026)
-
-### Composants créés
-```
-Hero.tsx          — Badge SVG animé + headline + CTA + stats
-Problem.tsx       — 3 cards problème (lucide icons)
-Solution.tsx      — Timeline 3 étapes
-Particuliers.tsx  — 3 use cases B2C + CTA 4,99€
-Entreprises.tsx   — 4 use cases B2B + CTA
-Integration.tsx   — 4 tabs (Site web/Email/Visio/API B2B)
-PricingTeaser.tsx — 2 cards + "À partir de 29€/mois" B2B
-FinalCTA.tsx      — CTA gradient + boutons
-Footer.tsx        — Liens + LinkedIn + Polygon mention
-Reveal.tsx        — IntersectionObserver wrapper
-StatCounter.tsx   — Compteurs animés requestAnimationFrame
-```
-
-### Badge SVG BlockTrust (app/components/ui/BlockTrustBadge.tsx)
-- Hexagone flat-top, gold border gradient
-- Circuits data-flow animés (8 traces + 8 nodes pulsants)
-- Double anneau contra-rotatif gold/cyan
-- Bouclier central : gradient cyan profond + checkmark gold
-- Scanline, QR pattern, "BLOCKTRUST" IBM Plex Mono gold
-- "VERIFIED · SECURE · ON-CHAIN" cyan
-- Props : size, className, label
-- CSS animations dans globals.css (prefixe bt-)
-- prefers-reduced-motion respecté
-- **⚠️ À appliquer partout : dashboard, badge embed, /verify, OG image**
+### Test E2E validé (27/04/2026)
+Script scripts/test-e2e-flow.ts — 8/8 étapes OK :
+1. User création ✅
+2. Subscription + planId sync ✅
+3. KYC verified ✅
+4. Entity + Certificate + Signature ✅
+5. Certificate activation ✅
+6. QR rotatif généré ✅
+7. Vérification publique VALID ✅
+8. WhiteLabel API ✅
 
 ---
 
-## 6. SÉCURITÉ
+## 5. SÉCURITÉ
 
-### Commits de sécurité
-| Fix | Commit |
-|-----|--------|
-| Auth bypass /api/v2/issue | 6427938 |
-| Isolation données inter-users | 1cbbbe8 |
-| Accès admin non autorisé | c8ace3a |
-| Headers HTTP sécurité | P2 |
-| Anti-bot inscription | bd3a4c2 |
-| npm audit 0 vulnérabilités | 70e33cf |
+### Commits critiques
+| Fix | Commit | Impact |
+|-----|--------|--------|
+| Auth bypass /api/v2/issue | 6427938 | Critique |
+| Isolation données inter-users | 1cbbbe8 | Critique |
+| Accès admin non autorisé | c8ace3a | Critique |
+| User.planId non synchronisé | 57642b9 | Important |
+| Anti-bot inscription | bd3a4c2 | Moyen |
 
-### Règles absolues
-- Ne jamais faire confiance à userId du body → session.user.id
-- timingSafeEqual pour hash comparison
-- Pas de PrismaClient ad hoc → @/app/lib/db
-- Fail-closed sur clé JWT absente en prod
+### API publique White Label
+- apiKeyHash jamais retourné dans réponses
+- Clé en clair : uniquement à la création et régénération
+- timingSafeEqual pour comparaison
+- Webhook signé HMAC-SHA256
+
+### À implémenter (roadmap sécurité)
+- WAF Cloudflare
+- Upstash Redis (rate limiting distribué)
+- Migration JWT → AWS KMS
+- Pentest externe (Synacktiv/Quarkslab)
+- CSP headers
+- Monitoring Sentry
+- Bug bounty (HackerOne/YesWeHack)
 
 ---
 
-## 7. VARIABLES D'ENVIRONNEMENT VERCEL
+## 6. VARIABLES D'ENVIRONNEMENT VERCEL
 
 | Variable | Statut |
 |----------|--------|
-| BLOB_READ_WRITE_TOKEN | ✅ Auto-ajouté |
+| BLOB_READ_WRITE_TOKEN | ✅ |
 | INSEE_CONSUMER_KEY | ✅ Sensitive |
 | INSEE_CONSUMER_SECRET | ✅ Sensitive |
 | RESEND_API_KEY | ✅ |
-| STRIPE_SECRET_KEY | ✅ (Needs Attention → marquer Sensitive) |
-| STRIPE_WEBHOOK_SECRET | ✅ (Needs Attention → marquer Sensitive) |
+| STRIPE_SECRET_KEY | ✅ → marquer Sensitive |
+| STRIPE_WEBHOOK_SECRET | ✅ → marquer Sensitive |
 | NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY | ✅ |
-| BLOCKTRUST_JWT_PRIVATE_KEY | ✅ (Needs Attention → marquer Sensitive) |
+| BLOCKTRUST_JWT_PRIVATE_KEY | ✅ → marquer Sensitive |
 | BLOCKTRUST_JWT_PUBLIC_KEY | ✅ |
-| NEXTAUTH_SECRET | ✅ (Needs Attention → marquer Sensitive) |
+| NEXTAUTH_SECRET | ✅ → marquer Sensitive |
 | CRON_SECRET | ✅ |
 | ADMIN_EMAILS | ✅ brnbtech@gmail.com,laurianne@blocktrust.tech |
 | DATABASE_URL | ✅ |
 
 ---
 
-## 8. PIPELINE DE DÉPLOIEMENT
+## 7. PIPELINE DE DÉPLOIEMENT
 
 ```bash
-# Depuis Terminal Mac
+# Terminal Mac
 cd /Users/olivierbernabe/Projects/blocktrust-mvp
-git push origin main          # webhook auto → Vercel déploie
+git push origin main          # webhook auto → Vercel
 npx vercel --prod             # si webhook KO
 
 # Config git
@@ -230,35 +205,53 @@ git config user.name "brnbtech770"
 git config --global credential.helper osxkeychain
 ```
 
-**Vercel Hobby → Crons quotidiens uniquement (0 3 * * *)**
+**Vercel Hobby → Crons quotidiens (0 3 * * *)**
+**Webhook GitHub → Vercel opérationnel depuis 22/04/2026**
 
 ---
 
-## 9. CHANTIERS RESTANTS
+## 8. CHANTIERS RESTANTS
 
-### 🔴 Priorité immédiate
-- [ ] **Appliquer BlockTrustBadge partout** (dashboard, /verify, badge embed, OG image)
-- [ ] **Test E2E complet** KYC → certificat → QR scan sur prod
-- [ ] **Marquer Sensitive** les variables Vercel "Needs Attention"
+### 🔴 Priorité
+- [ ] **Ancrage Polygon réel** (blockchain)
+- [ ] **Marquer Sensitive** les variables Vercel
+- [ ] **OG image + favicon** depuis BlockTrustBadge SVG
 
 ### 🟡 Moyen terme
-- [ ] **Ancrage Polygon** blockchain réel
-- [ ] **Intégration appels** : Twilio (tel) + API B2B + plugin Teams/Zoom
-- [ ] **Migration middleware → proxy** Next.js 16
-- [ ] **Migration prisma.config.ts** avant Prisma 7
-- [ ] **DPIA** finaliser pour avocat
-- [ ] **SOPs** incident response + RGPD breach
-- [ ] **npm audit** 3 vulnérabilités modérées (tar@7.5.7)
-- [ ] **Upstash Redis** rate limiting distribué (avant 100 users)
+- [ ] Migration middleware → proxy (Next.js 16)
+- [ ] Migration prisma.config.ts (avant Prisma 7)
+- [ ] DPIA finaliser pour avocat (Laurianne)
+- [ ] SOPs incident response + RGPD breach
+- [ ] Upstash Redis rate limiting distribué
+- [ ] npm audit 3 vulnérabilités modérées (tar@7.5.7)
+- [ ] Témoignages + chiffres réels sur landing
 
 ### 🔵 Long terme
 - Extension Chrome TrustScan
 - App mobile + NFC
-- API publique B2B (TaaS)
-- Migration JWT → AWS KMS
 - SSO / SAML Enterprise
 - Tests automatisés Jest
-- BlockTrust GPT
+- Plugin email Outlook/Gmail
+- WAF Cloudflare + pentest externe
+- Migration JWT → AWS KMS
+- Intégration appels (Twilio + Teams/Zoom)
+
+---
+
+## 9. OBJECTIFS 9-10/10
+
+Score actuel : **7.5/10**
+
+| Action | Impact |
+|--------|--------|
+| 1 client B2B signé | +++++ |
+| Témoignages + chiffres réels | +++ |
+| Ancrage Polygon réel | +++ |
+| DPIA + SOPs | ++ |
+| Extension Chrome + plugin email | ++ |
+| Partenariats (SeLoger, Malt, LeBonCoin) | +++++ |
+
+**La priorité n°1 est commerciale, pas technique.**
 
 ---
 
@@ -269,19 +262,13 @@ git config --global credential.helper osxkeychain
 2. Build vert entre chaque prompt
 3. Reporter résultats à Claude avant le suivant
 4. Push + déploiement après validation
-
-### Principes
-- Turbopack désactivé (stale Prisma cache)
-- Google OAuth : fallbacks token.sub ?? token.id ?? ''
-- QR verify : double lookup jti → Certificate.id
-- Domain consistency www vs non-www → NextAuth
-- `__Host-` cookie incompatible avec domain spec
+5. **Knowledge base mis à jour après chaque session**
 
 ### Ne jamais faire
 - PrismaClient ad hoc (→ @/app/lib/db)
 - userId du body/query (→ session.user.id)
 - Erreur rouge sur page de conversion (→ UpgradePrompt)
-- Déployer avec variables manquantes
+- apiKeyHash dans les réponses API
 
 ---
 
@@ -290,11 +277,9 @@ git config --global credential.helper osxkeychain
 | Ressource | Info |
 |-----------|------|
 | Production | https://blocktrust.tech |
+| How-to | https://blocktrust.tech/how-to |
 | GitHub | github.com/brnbtech770/blocktrust |
 | Vercel | vercel.com → blocktrust-mvp |
-| Stripe | dashboard.stripe.com |
-| Resend | resend.com |
-| Neon DB | neon.tech |
 | INSEE API | portail-api.insee.fr |
 | Vercel Blob | vercel.com → Storage → blocktrust-blob |
 | Admin | blocktrust.tech/admin/dashboard |
@@ -304,6 +289,6 @@ git config --global credential.helper osxkeychain
 
 ---
 
-*Mis à jour le 26 avril 2026 — Session Claude*
+*Mis à jour le 27 avril 2026 — Session Claude*
 *Règle : ce fichier est mis à jour après chaque session*
 *→ Uploader dans Project Knowledge Claude + commit GitHub*
