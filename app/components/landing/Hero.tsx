@@ -59,10 +59,8 @@ export default function Hero() {
             <li className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-bt-cyan" />
               <div>
-                <div className="font-syne text-xl font-bold text-white">
-                  <StatCounter value={99.9} decimals={1} suffix="%" />
-                </div>
-                <div className="text-xs text-white/60">de disponibilité</div>
+                <div className="font-syne text-xl font-bold text-white">ES256</div>
+                <div className="text-xs text-white/60">cryptographie</div>
               </div>
             </li>
             <li className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">

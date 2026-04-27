@@ -156,7 +156,7 @@ export default function OGImage() {
             style={{ display: "flex", gap: "40px", marginTop: "8px" }}
           >
             {[
-              { value: "99,9%", label: "Disponibilité" },
+              { value: "ES256", label: "Cryptographie" },
               { value: "256-bit", label: "Encryption" },
               { value: "Polygon", label: "Blockchain" },
             ].map((stat) => (
