@@ -1,9 +1,9 @@
 # BlockTrust — Document de Référence Projet
 
-**Version:** 5.0  
+**Version:** 5.1  
 **Date:** 27 avril 2026  
 **Auteur:** Olivier Bernabé (BRNB TECH SASU)  
-**Statut:** Production live — 98% d'avancement
+**Statut:** Production live — 99% d'avancement
 
 ---
 
@@ -12,7 +12,7 @@
 ### Message central
 > "Protégez chaque interaction de votre écosystème digital"
 
-BlockTrust est une plateforme SaaS de certification d'identité numérique anti-fraude combinant signatures cryptographiques (ES256, SHA-256), ancrage blockchain (Polygon) et vérification par QR code rotatif. Cible B2C (particuliers/familles) et B2B (entreprises/marque blanche).
+BlockTrust est une plateforme SaaS de certification d'identité numérique anti-fraude combinant signatures cryptographiques (ES256, SHA-256), ancrage blockchain (Polygon Mainnet) et vérification par QR code rotatif. Cible B2C (particuliers/familles) et B2B (entreprises/marque blanche).
 
 ### Équipe
 | Nom | Rôle |
@@ -37,6 +37,7 @@ Paiements   : Stripe (subscriptions + Stripe Identity KYC)
 Emails      : Resend (domaine blocktrust.tech vérifié)
 Storage     : Vercel Blob (blocktrust-blob, IAD1, Private)
 JWT         : jose (ES256 / RS256)
+Blockchain  : Polygon Mainnet (Chain ID 137) via Alchemy
 Déploiement : Vercel (plan Hobby)
 Repo        : github.com/brnbtech770/blocktrust
 ```
@@ -94,26 +95,48 @@ import { auth } from '@/app/lib/auth-server'
 
 ### Paiement & KYC
 - Stripe checkout B2C + B2B, webhooks validés
-- **Bug fix critique (27/04)** : User.planId maintenant synchronisé sur customer.subscription.created + checkout.session.completed + customer.subscription.updated
+- User.planId synchronisé sur 3 événements Stripe
 - KYC Stripe Identity (1,50€/vérif)
 - INSEE API Sirene 3.11 — vérification SIRET B2B
 
 ### Certificats & Badge
 - ES256 + SHA-256
-- **BlockTrustBadge SVG animé** (Lovable) — hexagone gold, circuits data-flow, double anneau contra-rotatif, bouclier cyan + checkmark gold, film lumineux "VERIFIED·SECURE·ON-CHAIN"
+- BlockTrustBadge SVG animé (Lovable) — hexagone gold, circuits data-flow, double anneau contra-rotatif, bouclier cyan + checkmark gold, film lumineux "VERIFIED·SECURE·ON-CHAIN"
 - Props : size, className, label, instanceId (useId SSR-safe)
 - CSS animations dans globals.css (préfixe bt-)
 - QR dynamique rotatif (invalide après scan)
 - /verify PRIVÉE — abonnement requis + quotas par plan
 
-### White Label & API Publique (27/04/2026)
-- **Modèle WhiteLabelConfig** en DB
-- **GET /api/public/verify/:id** — X-API-Key header, réponse JSON complète
-- **GET /api/public/widget/:id** — SVG personnalisable (couleurs, taille, label)
-- **Webhooks sortants** — HMAC-SHA256, events : verification.completed, badge.created, kyc.approved
-- **Dashboard /dashboard/white-label** — clé API, personnalisation, webhook, docs
-- Rate limit : 30 req/min par apiKey + quota mensuel hard
-- Visible dans sidebar uniquement si plan B2B
+### 🎉 Ancrage Polygon Mainnet RÉEL (27/04/2026)
+- **PREMIER ANCRAGE RÉEL EFFECTUÉ** — certificat Deborah Bernabe
+- TX visible sur PolygonScan ✅
+- lib/polygon.ts — `resolveAnchorRecipient()` :
+  1. Lit `POLYGON_CONTRACT_ADDRESS` si défini
+  2. Sinon burn address `0x000000000000000000000000000000000000dEaD`
+  3. Validation checksum ethers.js
+  4. Garde-fou : jamais `wallet.address` comme destinataire
+- Ancrage auto à l'activation certificat (fire-and-forget)
+- Bouton "⛓️ Ancrer" dans /admin/certificates pour retry manuel
+- Cron retry quotidien 4h (fusionné dans anomaly-detection)
+- Wallet dédié : `BlockTrust Anchor` MetaMask (~122 POL)
+- RPC : Alchemy Polygon Mainnet (clé personnelle)
+- Coût ancrage : ~0,001-0,005 POL par certificat
+
+### Variables Polygon Vercel
+```
+POLYGON_RPC_URL         = https://polygon-mainnet.g.alchemy.com/v2/[CLÉ]
+POLYGON_CHAIN_ID        = 137
+POLYGON_PRIVATE_KEY     = 0x... (Sensitive — compte BlockTrust Anchor)
+POLYGON_CONTRACT_ADDRESS = 0x000000000000000000000000000000000000dEaD
+```
+
+### White Label & API Publique
+- Modèle WhiteLabelConfig en DB
+- GET /api/public/verify/:id — X-API-Key header
+- GET /api/public/widget/:id — SVG personnalisable
+- Webhooks sortants HMAC-SHA256
+- Dashboard /dashboard/white-label
+- Rate limit : 30 req/min par apiKey
 
 ### TrustScore dynamique
 - KYC (+30) | abonnement (+15) | cert actif (+20)
@@ -121,25 +144,15 @@ import { auth } from '@/app/lib/auth-server'
 - Pénalité FRAUD_ALERT (-10/alerte)
 - Cron quotidien 3h
 
-### Page /how-to (27/04/2026)
+### Page /how-to
 - Hero + tabs Particuliers/Entreprises
 - Schéma vérification 8 étapes animé
-- 3 démos BrowserFrame animées CSS (formulaire, intégration, visio)
+- 3 démos BrowserFrame animées CSS
 - Guide Entreprises (API terminal, marque blanche, SDK)
 - FAQ accordion 6 questions
-- CTA final avec BlockTrustBadge
-- Lien navbar "Comment ça marche" → /how-to
 
-### Test E2E validé (27/04/2026)
-Script scripts/test-e2e-flow.ts — 8/8 étapes OK :
-1. User création ✅
-2. Subscription + planId sync ✅
-3. KYC verified ✅
-4. Entity + Certificate + Signature ✅
-5. Certificate activation ✅
-6. QR rotatif généré ✅
-7. Vérification publique VALID ✅
-8. WhiteLabel API ✅
+### Test E2E validé
+Script scripts/test-e2e-flow.ts — 8/8 étapes OK ✅
 
 ---
 
@@ -152,22 +165,20 @@ Script scripts/test-e2e-flow.ts — 8/8 étapes OK :
 | Isolation données inter-users | 1cbbbe8 | Critique |
 | Accès admin non autorisé | c8ace3a | Critique |
 | User.planId non synchronisé | 57642b9 | Important |
-| Anti-bot inscription | bd3a4c2 | Moyen |
+| Ancrage from===to rejection | resolveAnchorRecipient | Important |
 
-### API publique White Label
+### Règles absolues
 - apiKeyHash jamais retourné dans réponses
-- Clé en clair : uniquement à la création et régénération
-- timingSafeEqual pour comparaison
-- Webhook signé HMAC-SHA256
+- Clé privée Polygon jamais loggée
+- timingSafeEqual pour comparaison hash
+- Burn address comme destination ancrage (jamais wallet.address)
 
-### À implémenter (roadmap sécurité)
+### À implémenter (roadmap)
 - WAF Cloudflare
 - Upstash Redis (rate limiting distribué)
 - Migration JWT → AWS KMS
-- Pentest externe (Synacktiv/Quarkslab)
-- CSP headers
-- Monitoring Sentry
-- Bug bounty (HackerOne/YesWeHack)
+- Pentest externe
+- CSP headers + Sentry
 
 ---
 
@@ -186,8 +197,12 @@ Script scripts/test-e2e-flow.ts — 8/8 étapes OK :
 | BLOCKTRUST_JWT_PUBLIC_KEY | ✅ |
 | NEXTAUTH_SECRET | ✅ → marquer Sensitive |
 | CRON_SECRET | ✅ |
-| ADMIN_EMAILS | ✅ brnbtech@gmail.com,laurianne@blocktrust.tech |
+| ADMIN_EMAILS | ✅ |
 | DATABASE_URL | ✅ |
+| POLYGON_RPC_URL | ✅ Alchemy Mainnet |
+| POLYGON_CHAIN_ID | ✅ 137 |
+| POLYGON_PRIVATE_KEY | ✅ Sensitive |
+| POLYGON_CONTRACT_ADDRESS | ✅ burn address |
 
 ---
 
@@ -197,34 +212,30 @@ Script scripts/test-e2e-flow.ts — 8/8 étapes OK :
 # Terminal Mac
 cd /Users/olivierbernabe/Projects/blocktrust-mvp
 git push origin main          # webhook auto → Vercel
-npx vercel --prod             # si webhook KO
+git commit --allow-empty -m "chore: force redeploy"
+git push origin main          # si variables changées
 
 # Config git
 git config user.email "brnbtech770@gmail.com"
-git config user.name "brnbtech770"
 git config --global credential.helper osxkeychain
 ```
-
-**Vercel Hobby → Crons quotidiens (0 3 * * *)**
-**Webhook GitHub → Vercel opérationnel depuis 22/04/2026**
 
 ---
 
 ## 8. CHANTIERS RESTANTS
 
-### 🔴 Priorité
-- [ ] **Ancrage Polygon réel** (blockchain)
-- [ ] **Marquer Sensitive** les variables Vercel
-- [ ] **OG image + favicon** depuis BlockTrustBadge SVG
+### 🔴 Immédiat
+- [ ] Ancrer les autres certificats ACTIVE via bouton "⛓️ Ancrer"
+- [ ] OG image + favicon depuis BlockTrustBadge SVG
+- [ ] Marquer variables Vercel restantes comme Sensitive
 
 ### 🟡 Moyen terme
 - [ ] Migration middleware → proxy (Next.js 16)
 - [ ] Migration prisma.config.ts (avant Prisma 7)
-- [ ] DPIA finaliser pour avocat (Laurianne)
-- [ ] SOPs incident response + RGPD breach
+- [ ] DPIA + SOPs (Laurianne — doc fourni)
+- [ ] CGU/CGV corrections + avocat
 - [ ] Upstash Redis rate limiting distribué
-- [ ] npm audit 3 vulnérabilités modérées (tar@7.5.7)
-- [ ] Témoignages + chiffres réels sur landing
+- [ ] Témoignages + chiffres réels landing
 
 ### 🔵 Long terme
 - Extension Chrome TrustScan
@@ -234,19 +245,17 @@ git config --global credential.helper osxkeychain
 - Plugin email Outlook/Gmail
 - WAF Cloudflare + pentest externe
 - Migration JWT → AWS KMS
-- Intégration appels (Twilio + Teams/Zoom)
 
 ---
 
 ## 9. OBJECTIFS 9-10/10
 
-Score actuel : **7.5/10**
+Score actuel : **8/10** (ancrage Polygon réel = +0.5)
 
 | Action | Impact |
 |--------|--------|
 | 1 client B2B signé | +++++ |
 | Témoignages + chiffres réels | +++ |
-| Ancrage Polygon réel | +++ |
 | DPIA + SOPs | ++ |
 | Extension Chrome + plugin email | ++ |
 | Partenariats (SeLoger, Malt, LeBonCoin) | +++++ |
@@ -262,12 +271,13 @@ Score actuel : **7.5/10**
 2. Build vert entre chaque prompt
 3. Reporter résultats à Claude avant le suivant
 4. Push + déploiement après validation
-5. **Knowledge base mis à jour après chaque session**
+5. Knowledge base mis à jour après chaque session
 
 ### Ne jamais faire
 - PrismaClient ad hoc (→ @/app/lib/db)
 - userId du body/query (→ session.user.id)
-- Erreur rouge sur page de conversion (→ UpgradePrompt)
+- wallet.address comme destinataire ancrage (→ burn address)
+- POLYGON_PRIVATE_KEY dans les logs
 - apiKeyHash dans les réponses API
 
 ---
@@ -280,8 +290,9 @@ Score actuel : **7.5/10**
 | How-to | https://blocktrust.tech/how-to |
 | GitHub | github.com/brnbtech770/blocktrust |
 | Vercel | vercel.com → blocktrust-mvp |
-| INSEE API | portail-api.insee.fr |
-| Vercel Blob | vercel.com → Storage → blocktrust-blob |
+| Alchemy | dashboard.alchemy.com |
+| PolygonScan | polygonscan.com |
+| MetaMask | Compte "BlockTrust Anchor" dédié |
 | Admin | blocktrust.tech/admin/dashboard |
 | Support | support@blocktrust.tech |
 | Sécurité | security@blocktrust.tech |
@@ -290,5 +301,6 @@ Score actuel : **7.5/10**
 ---
 
 *Mis à jour le 27 avril 2026 — Session Claude*
+*🎉 Milestone : Premier ancrage Polygon Mainnet réel effectué*
 *Règle : ce fichier est mis à jour après chaque session*
 *→ Uploader dans Project Knowledge Claude + commit GitHub*
