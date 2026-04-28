@@ -3,6 +3,7 @@
 import Navbar from "./landing/Navbar";
 import Hero from "./landing/Hero";
 import Problem from "./landing/Problem";
+import Categories from "./landing/Categories";
 import Solution from "./landing/Solution";
 import Particuliers from "./landing/Particuliers";
 import Entreprises from "./landing/Entreprises";
@@ -21,6 +22,7 @@ export default function LandingPageClient() {
       <main>
         <Hero />
         <Problem />
+        <Categories />
         <Solution />
         <Particuliers />
         <Entreprises />
