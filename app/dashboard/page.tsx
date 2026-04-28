@@ -202,7 +202,7 @@ export default async function Dashboard({
               </div>
               {showKycTrustHint && (
                 <p className="mt-3 font-sans text-sm text-white/65">
-                  Complétez votre KYC pour améliorer votre score
+                  Vérifiez votre identité pour améliorer votre score
                 </p>
               )}
             </div>

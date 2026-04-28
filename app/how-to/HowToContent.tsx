@@ -128,7 +128,7 @@ type FlowStep = {
 };
 
 const FLOW_STEPS: FlowStep[] = [
-  { icon: UserPlus, label: "Émetteur", hint: "Profil + KYC", tone: "cyan" },
+  { icon: UserPlus, label: "Émetteur", hint: "Profil + identité", tone: "cyan" },
   { icon: ShieldCheck, label: "BLOCKTRUST", hint: "Signe ES256 + SHA-256", tone: "cyan" },
   { icon: Link2, label: "Polygon", hint: "Ancrage blockchain", tone: "gold" },
   { icon: QrCode, label: "Badge", hint: "QR rotatif généré", tone: "cyan" },
@@ -267,7 +267,7 @@ function ParticulierDemoCreate() {
           className="howto-line-in rounded-lg border border-white/10 bg-white/5 p-3"
           style={{ animationDelay: "0.4s" }}
         >
-          <div className="text-[10px] uppercase tracking-wider text-white/40">Étape 2 — KYC</div>
+          <div className="text-[10px] uppercase tracking-wider text-white/40">Étape 2 — Vérification d&apos;identité</div>
           <div className="mt-2 flex items-center gap-3">
             <div className="flex h-10 w-16 items-center justify-center rounded border border-bt-cyan/30 bg-bt-cyan/5">
               <span className="font-mono text-[9px] text-bt-cyan">ID CARD</span>
@@ -530,7 +530,7 @@ function GuideParticuliers() {
     {
       title: "Créer votre badge",
       icon: UserPlus,
-      desc: "Inscription, KYC sécurisé via Stripe Identity, badge généré en moins de 5 minutes.",
+      desc: "Inscription, vérification d'identité sécurisée en 2 minutes, badge généré aussitôt.",
       demo: <ParticulierDemoCreate />,
     },
     {
@@ -654,7 +654,7 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
     a: "Non — le QR code est rotatif et invalide après chaque scan. Chaque certificat est ancré sur la blockchain Polygon, ce qui rend toute falsification cryptographiquement détectable.",
   },
   {
-    q: "Quels documents pour le KYC ?",
+    q: "Quels documents pour la vérification ?",
     a: "Particulier : pièce d'identité (CNI ou passeport) + selfie. Entreprise : Kbis + SIRET + pièce du dirigeant. Vérification automatique via Stripe Identity et l'API INSEE Sirene.",
   },
   {
