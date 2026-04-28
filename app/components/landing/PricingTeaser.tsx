@@ -58,7 +58,7 @@ export default function PricingTeaser() {
             Starter · Team · Business · Enterprise sur devis
           </p>
           <p className="mt-3 text-sm sm:text-base leading-relaxed text-white/70">
-            API B2B, multi-comptes, conformité KYC/AML, intégrations dédiées.
+            API B2B, multi-comptes, vérification d&apos;identité avancée, intégrations dédiées.
           </p>
         </Reveal>
       </div>

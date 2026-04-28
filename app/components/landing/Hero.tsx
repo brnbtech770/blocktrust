@@ -37,7 +37,10 @@ export default function Hero() {
               BLOCKTRUST
             </span>{" "}
             prouve que c&apos;est bien vous — et que rien n&apos;a été modifié.
-            Vérifiable par n&apos;importe qui, en 1 scan.
+            Vérifiable par n&apos;importe qui, en 1 scan.{" "}
+            <span className="text-white/90">
+              Vérifiez aussi l&apos;authenticité de ce que vous recevez.
+            </span>
           </p>
 
           {/* CTAs + micro-copy */}

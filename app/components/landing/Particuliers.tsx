@@ -4,23 +4,26 @@ import Link from "next/link";
 import { Briefcase, ShoppingBag, User, type LucideIcon } from "lucide-react";
 import Reveal from "./Reveal";
 
-type UseCase = { icon: LucideIcon; title: string; text: string };
+type UseCase = { icon: LucideIcon; title: string; text: string; example: string };
 
 const cases: UseCase[] = [
   {
     icon: Briefcase,
     title: "Freelances & consultants",
     text: "Prouvez votre sérieux à chaque nouveau client.",
+    example: "Ex : votre nouveau client vérifie votre badge avant de signer.",
   },
   {
     icon: ShoppingBag,
     title: "Vendeurs en ligne",
     text: "Rassurez vos acheteurs sur votre authenticité.",
+    example: "Ex : votre acheteur LeBonCoin scanne votre QR avant le virement.",
   },
   {
     icon: User,
     title: "Particuliers actifs",
     text: "Protégez vos échanges : location, covoiturage, petites annonces.",
+    example: "Ex : votre propriétaire vérifie que vous êtes bien vous avant la visite.",
   },
 ];
 
@@ -58,6 +61,9 @@ export default function Particuliers() {
                 {c.title}
               </h3>
               <p className="text-sm sm:text-base leading-relaxed text-white/70">{c.text}</p>
+              <p className="mt-3 text-xs italic leading-relaxed text-white/50 sm:text-sm">
+                {c.example}
+              </p>
             </Reveal>
           );
         })}

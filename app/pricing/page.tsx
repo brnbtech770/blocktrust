@@ -160,7 +160,7 @@ export default function PricingPage() {
                 fontFamily: 'var(--font-mono-bt), "IBM Plex Mono", monospace',
               }}
             >
-              -20% · Offre de lancement
+              -20% · Engagement annuel
             </span>
           )}
         </div>

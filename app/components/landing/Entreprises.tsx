@@ -20,7 +20,7 @@ const cases: UseCase[] = [
   {
     icon: Banknote,
     title: "Finance & crypto",
-    text: "KYC/AML renforcé, conformité prouvée.",
+    text: "Vérification d'identité renforcée, conformité prouvée.",
   },
   {
     icon: ShoppingCart,

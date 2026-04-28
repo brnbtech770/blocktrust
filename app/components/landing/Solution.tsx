@@ -19,7 +19,7 @@ const steps: Step[] = [
     ringColor: "rgba(0,212,255,0.35)",
     step: "Étape 1",
     title: "Inscrivez-vous et vérifiez votre identité",
-    text: "KYC sécurisé via Stripe Identity. Particulier ou entreprise, en moins de 5 minutes.",
+    text: "Vérifiez votre identité en 2 minutes. Particulier ou entreprise, processus rapide et sécurisé.",
   },
   {
     icon: ShieldCheck,
@@ -35,7 +35,7 @@ const steps: Step[] = [
     ringColor: "rgba(0,212,255,0.35)",
     step: "Étape 3",
     title: "Intégrez votre badge partout",
-    text: "Site web, email, documents, appels vidéo — votre identité certifiée visible à chaque échange.",
+    text: "Site web, email, documents, appels vidéo, numéro de téléphone — votre identité certifiée visible à chaque échange.",
   },
 ];
 
