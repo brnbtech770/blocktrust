@@ -95,10 +95,10 @@ export default function SurveillanceDashboard() {
           type="button"
           onClick={() => void runNow()}
           disabled={runLoading}
-          className="rounded-lg px-5 py-2.5 text-sm font-medium text-white transition disabled:opacity-50"
-          style={{ background: 'var(--bt-cyan)' }}
+          className="shrink-0 whitespace-nowrap rounded-lg px-5 py-2.5 text-sm font-semibold text-navy transition hover:brightness-110 disabled:opacity-50"
+          style={{ background: 'var(--bt-cyan)', color: '#0a1628' }}
         >
-          {runLoading ? 'Analyse…' : 'Lancer analyse maintenant'}
+          {runLoading ? 'Analyse en cours…' : "Lancer l'analyse"}
         </button>
       </div>
 
