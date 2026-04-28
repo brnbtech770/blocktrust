@@ -1,10 +1,19 @@
 // lib/rate-limit-verify.ts
-// Rate limiting /verify : 10 req/min et 50 req/h par IP (mémoire par instance).
+// Rate limiting /verify : 10 req/min et 50 req/h par IP.
 // ============================================================
 //
-// ⚠️ Limite en mémoire — par instance Vercel uniquement.
-// TODO : Upstash Redis en production multi-instances.
+// Politique :
+//   1. Si Upstash Redis configuré → limiteur distribué (recommandé en prod)
+//   2. Sinon → fallback in-memory par instance Vercel (dev local, ou Redis KO)
 //
+// La fonction sync `checkRateLimitVerify` reste exposée pour rétrocompat.
+// Préférer `checkRateLimitVerifyAsync` côté nouveau code.
+
+import {
+  tryRedisLimit,
+  verifyMinuteLimiter,
+  verifyHourLimiter,
+} from "@/lib/rate-limit-redis";
 
 const LIMIT_PER_MINUTE = 10
 const WINDOW_MINUTE_MS = 60_000
@@ -87,4 +96,38 @@ export function checkRateLimitVerify(ip: string): RateLimitVerifyResult {
   const remaining = Math.min(remMinute, remHour)
 
   return { ok: true, remaining }
+}
+
+/**
+ * Variante async : Redis distribué si configuré, sinon fallback in-memory.
+ * Même shape de retour que `checkRateLimitVerify` pour un drop-in remplacement.
+ */
+export async function checkRateLimitVerifyAsync(
+  ip: string,
+): Promise<RateLimitVerifyResult> {
+  const minute = await tryRedisLimit(verifyMinuteLimiter, ip)
+  const hour = await tryRedisLimit(verifyHourLimiter, ip)
+
+  if (minute && hour) {
+    if (!minute.success) {
+      return {
+        ok: false,
+        retryAfter: Math.max(1, Math.ceil((minute.reset - Date.now()) / 1000)),
+        remaining: 0,
+      }
+    }
+    if (!hour.success) {
+      return {
+        ok: false,
+        retryAfter: Math.max(1, Math.ceil((hour.reset - Date.now()) / 1000)),
+        remaining: 0,
+      }
+    }
+    return {
+      ok: true,
+      remaining: Math.min(minute.remaining, hour.remaining),
+    }
+  }
+
+  return checkRateLimitVerify(ip)
 }

@@ -11,7 +11,7 @@ import { isAdmin } from '@/app/lib/admin'
 import { Logo } from '@/app/components/ui/Logo'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 import { hashIp } from '@/app/lib/auth'
-import { checkRateLimitVerify } from '@/lib/rate-limit-verify'
+import { checkRateLimitVerifyAsync } from '@/lib/rate-limit-verify'
 import { checkAndIncrementVerifyQuota } from '@/lib/verify-quotas'
 import {
   createAdminFraudAlert,
@@ -172,7 +172,7 @@ export default async function VerifyPublicPage({
     }
   }
 
-  const rate = checkRateLimitVerify(ip)
+  const rate = await checkRateLimitVerifyAsync(ip)
   if (!rate.ok) {
     await logRateLimitedVerification({
       ipHash: hashedIp,

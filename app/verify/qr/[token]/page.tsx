@@ -12,7 +12,7 @@ import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { Logo } from '@/app/components/ui/Logo'
 import { hashIp } from '@/app/lib/auth'
-import { checkRateLimitVerify } from '@/lib/rate-limit-verify'
+import { checkRateLimitVerifyAsync } from '@/lib/rate-limit-verify'
 import { peekVerifyQuota } from '@/lib/verify-quotas'
 
 export const dynamic = 'force-dynamic'
@@ -39,7 +39,7 @@ export default async function VerifyQRTokenPage({
   const ip = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || headersList.get('x-real-ip') || 'unknown'
   const userAgent = headersList.get('user-agent') || 'unknown'
 
-  const rate = checkRateLimitVerify(ip)
+  const rate = await checkRateLimitVerifyAsync(ip)
   if (!rate.ok) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: '#0a1628' }}>

@@ -2,9 +2,13 @@
 // Rate limiting des appels API publics White Label : 30 req/min par apiKey.
 // ============================================================
 //
-// ⚠️ Limite en mémoire — par instance Vercel uniquement.
-// TODO : Upstash Redis en production multi-instances.
+// Politique :
+//   1. Si Upstash Redis configuré → limiteur distribué (recommandé en prod)
+//   2. Sinon → fallback in-memory par instance Vercel (dev local, ou Redis KO)
 //
+// Préférer `checkRateLimitApiAsync` côté nouveau code.
+
+import { tryRedisLimit, apiLimiter } from "@/lib/rate-limit-redis";
 
 const LIMIT_PER_MINUTE = 30
 const WINDOW_MINUTE_MS = 60_000
@@ -63,4 +67,32 @@ export function checkRateLimitApi(key: string): RateLimitApiResult {
     remaining: LIMIT_PER_MINUTE - e.minuteCount,
     limit: LIMIT_PER_MINUTE,
   }
+}
+
+/**
+ * Variante async : Redis distribué si configuré, sinon fallback in-memory.
+ * Même shape de retour que `checkRateLimitApi` pour un drop-in remplacement.
+ */
+export async function checkRateLimitApiAsync(
+  key: string,
+): Promise<RateLimitApiResult> {
+  const result = await tryRedisLimit(apiLimiter, key)
+
+  if (result) {
+    if (!result.success) {
+      return {
+        ok: false,
+        retryAfter: Math.max(1, Math.ceil((result.reset - Date.now()) / 1000)),
+        remaining: 0,
+        limit: result.limit,
+      }
+    }
+    return {
+      ok: true,
+      remaining: result.remaining,
+      limit: result.limit,
+    }
+  }
+
+  return checkRateLimitApi(key)
 }

@@ -20,7 +20,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 import { hashApiKey, isValidApiKeyShape, timingSafeEqualString } from '@/lib/api-key'
-import { checkRateLimitApi } from '@/lib/rate-limit-api'
+import { checkRateLimitApiAsync } from '@/lib/rate-limit-api'
 import { sendWebhook } from '@/lib/webhooks'
 
 export const runtime = 'nodejs'
@@ -72,7 +72,7 @@ export async function GET(
     return jsonError(403, 'permission_denied', 'API key not authorized to verify')
   }
 
-  const rate = checkRateLimitApi(apiKeyHash)
+  const rate = await checkRateLimitApiAsync(apiKeyHash)
   const rateHeaders: Record<string, string> = {
     ...corsHeaders(),
     'X-RateLimit-Limit': String(rate.limit),

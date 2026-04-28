@@ -8,7 +8,7 @@ import { hashIp } from '@/app/lib/auth'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { timingSafeEqual } from 'crypto'
-import { checkRateLimitVerify } from '@/lib/rate-limit-verify'
+import { checkRateLimitVerifyAsync } from '@/lib/rate-limit-verify'
 import { checkAndIncrementVerifyQuota } from '@/lib/verify-quotas'
 import {
   createAdminFraudAlert,
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   const referer = req.headers.get('referer')
   const hashedIp = hashIp(ip)
 
-  const rate = checkRateLimitVerify(ip)
+  const rate = await checkRateLimitVerifyAsync(ip)
   if (!rate.ok) {
     await logRateLimitedVerification({
       ipHash: hashedIp,

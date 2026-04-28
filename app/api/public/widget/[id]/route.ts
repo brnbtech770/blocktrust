@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 import { hashApiKey, isValidApiKeyShape, timingSafeEqualString } from '@/lib/api-key'
-import { checkRateLimitApi } from '@/lib/rate-limit-api'
+import { checkRateLimitApiAsync } from '@/lib/rate-limit-api'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -80,7 +80,7 @@ export async function GET(
     return svgError(403, 'Widget désactivé')
   }
 
-  const rate = checkRateLimitApi(apiKeyHash)
+  const rate = await checkRateLimitApiAsync(apiKeyHash)
   if (!rate.ok) {
     return svgError(429, `Rate limit atteint (${rate.retryAfter}s)`)
   }

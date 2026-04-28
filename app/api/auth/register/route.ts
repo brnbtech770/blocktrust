@@ -3,7 +3,7 @@ import { prisma } from "@/app/lib/db";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { createAdminAlert } from "@/lib/admin-alerts";
-import { checkRateLimitRegister } from "@/lib/rate-limit-register";
+import { checkRateLimitRegisterAsync } from "@/lib/rate-limit-register";
 import {
   isDisposableEmailDomain,
   matchesBotEmailPattern,
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
       return generic400();
     }
 
-    const rl = checkRateLimitRegister(ip);
+    const rl = await checkRateLimitRegisterAsync(ip);
     if (!rl.ok) {
       return NextResponse.json(
         { error: "Trop de tentatives d'inscription. Réessayez plus tard." },

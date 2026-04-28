@@ -1,6 +1,18 @@
 // lib/rate-limit-register.ts
-// Limite inscriptions : 3 / heure / IP, 10 / jour / IP (mémoire par instance).
+// Limite inscriptions : 3 / heure / IP, 10 / jour / IP.
 // ============================================================
+//
+// Politique :
+//   1. Si Upstash Redis configuré → limiteur distribué (recommandé en prod)
+//   2. Sinon → fallback in-memory par instance Vercel (dev local, ou Redis KO)
+//
+// Préférer `checkRateLimitRegisterAsync` côté nouveau code.
+
+import {
+  tryRedisLimit,
+  registerHourLimiter,
+  registerDayLimiter,
+} from "@/lib/rate-limit-redis";
 
 const LIMIT_PER_HOUR = 3
 const WINDOW_HOUR_MS = 3_600_000
@@ -72,4 +84,33 @@ export function checkRateLimitRegister(ip: string): RateLimitRegisterResult {
   e.dayCount += 1
 
   return { ok: true }
+}
+
+/**
+ * Variante async : Redis distribué si configuré, sinon fallback in-memory.
+ * Même shape de retour que `checkRateLimitRegister` pour un drop-in remplacement.
+ */
+export async function checkRateLimitRegisterAsync(
+  ip: string,
+): Promise<RateLimitRegisterResult> {
+  const hour = await tryRedisLimit(registerHourLimiter, ip)
+  const day = await tryRedisLimit(registerDayLimiter, ip)
+
+  if (hour && day) {
+    if (!hour.success) {
+      return {
+        ok: false,
+        retryAfter: Math.max(1, Math.ceil((hour.reset - Date.now()) / 1000)),
+      }
+    }
+    if (!day.success) {
+      return {
+        ok: false,
+        retryAfter: Math.max(1, Math.ceil((day.reset - Date.now()) / 1000)),
+      }
+    }
+    return { ok: true }
+  }
+
+  return checkRateLimitRegister(ip)
 }
