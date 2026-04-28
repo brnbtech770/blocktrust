@@ -99,7 +99,7 @@ export default async function EntitiesPage() {
                 )}
 
                 <div className="mb-4">
-                  <p className="text-gray-400 text-base font-medium mb-1">Statut KYC</p>
+                  <p className="text-gray-400 text-base font-medium mb-1">Identité vérifiée</p>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold inline-block ${
                     entity.kycStatus === "VERIFIED"
                       ? "bg-green-500/20 text-green-400"
