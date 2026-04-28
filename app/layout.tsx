@@ -23,9 +23,9 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 const SITE_URL = "https://blocktrust.tech";
-const SITE_TITLE = "BlockTrust — Certification d'identité numérique";
+const SITE_TITLE = "BlockTrust — La carte d'identité numérique";
 const SITE_DESCRIPTION =
-  "Protégez chaque interaction de votre écosystème digital. BlockTrust certifie votre identité et sécurise vos échanges en ligne — pour les particuliers comme pour les entreprises.";
+  "CV, devis, contrat, document important. BlockTrust prouve que c'est bien vous — et que rien n'a été modifié. Vérifiable par n'importe qui, en 1 scan.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -61,24 +61,14 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_FR",
     url: SITE_URL,
-    siteName: "BLOCKTRUST",
+    siteName: "BlockTrust",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "BLOCKTRUST — Certification d'identité numérique ancrée sur Polygon",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
-    description:
-      "Certifiez votre identité digitale ancrée sur Polygon blockchain.",
-    images: ["/opengraph-image"],
+    description: SITE_DESCRIPTION,
   },
   robots: {
     index: true,
