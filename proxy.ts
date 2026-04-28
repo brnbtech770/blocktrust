@@ -1,6 +1,8 @@
-// middleware.ts
+// proxy.ts (Next.js 16 — ex middleware.ts)
 // Edge : www→apex + redirections admin/client (getToken) + garde API.
 // Authentification pages : layouts + auth() Node (évite divergences JWT Edge / cookies chunkés).
+// Le proxy reste un filet de sécurité Edge en amont : la défense en profondeur
+// est assurée par les server components (auth() + redirect()).
 // ============================================================
 
 import { NextResponse } from 'next/server'
@@ -44,7 +46,7 @@ function isProtectedApi(pathname: string): boolean {
   )
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // ─── www → apex redirect ───
@@ -73,7 +75,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     } catch (error) {
-      console.error('Middleware admin guard:', error)
+      console.error('Proxy admin guard:', error)
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
@@ -86,7 +88,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
     } catch (error) {
-      console.error('Middleware admin API guard:', error)
+      console.error('Proxy admin API guard:', error)
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
   }
@@ -104,7 +106,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(signInUrl)
       }
     } catch (error) {
-      console.error('Middleware verify redirect:', error)
+      console.error('Proxy verify redirect:', error)
     }
     return NextResponse.next()
   }
@@ -117,7 +119,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/admin/dashboard', request.url))
       }
     } catch (error) {
-      console.error('Middleware admin redirect from dashboard:', error)
+      console.error('Proxy admin redirect from dashboard:', error)
     }
   }
 
@@ -160,7 +162,7 @@ export async function middleware(request: NextRequest) {
 
     return NextResponse.next()
   } catch (error) {
-    console.error('Middleware error:', error)
+    console.error('Proxy error:', error)
     return NextResponse.json(
       { error: 'Service temporairement indisponible' },
       { status: 503 }
