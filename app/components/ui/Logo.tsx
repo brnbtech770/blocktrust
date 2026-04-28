@@ -46,8 +46,7 @@ export function Logo({
         alt="BlockTrust"
         width={isHero ? 380 : px}
         height={isHero ? 380 : px}
-        className={isHero ? 'h-full w-full object-contain' : undefined}
-        style={{ mixBlendMode: 'screen' }}
+        className={isHero ? 'h-full w-full object-contain' : 'h-full w-full object-contain'}
         priority
       />
     </div>
