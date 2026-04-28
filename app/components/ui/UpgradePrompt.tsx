@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Shield, Star } from "lucide-react";
+import { Sparkles, ArrowRight } from "lucide-react";
 
 export type UpgradePromptProps = {
   planName: string;
@@ -10,13 +10,9 @@ export type UpgradePromptProps = {
   nextPlanLimit: number;
   nextPlanPrice: string;
   upgradeHref: string;
-  /** Une ligne + CTA (ex. haut de liste certificats) */
+  /** Bandeau compact (ex. haut de liste certificats) au lieu de la carte pleine. */
   inline?: boolean;
 };
-
-const NAVY = "#0a1628";
-const GOLD = "#BDA76B";
-const CYAN = "#00d4ff";
 
 export function UpgradePrompt({
   planName,
@@ -32,91 +28,87 @@ export function UpgradePrompt({
 
   if (inline) {
     return (
-      <div
-        className="rounded-xl border px-4 py-3 flex flex-wrap items-center gap-3"
-        style={{ background: NAVY, borderColor: GOLD }}
-      >
-        <div className="relative shrink-0" aria-hidden>
-          <Shield className="w-8 h-8" strokeWidth={1.25} style={{ color: GOLD }} />
-          <Star
-            className="w-3.5 h-3.5 absolute -bottom-0.5 -right-0.5"
-            strokeWidth={2}
-            fill={CYAN}
-            stroke={NAVY}
-          />
+      <div className="relative overflow-hidden rounded-xl border border-[#BDA76B]/30 bg-gradient-to-br from-[#0d1f3c] to-[#0a1628] p-4 sm:p-5">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[#BDA76B]/10 blur-2xl"
+        />
+
+        <div className="relative z-10 flex flex-wrap items-center gap-4">
+          <div
+            aria-hidden
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#BDA76B]/30 bg-[#BDA76B]/15"
+          >
+            <Sparkles className="h-5 w-5 text-[#BDA76B]" />
+          </div>
+
+          <p className="min-w-[200px] flex-1 text-sm leading-relaxed text-white/80">
+            Forfait <span className="font-semibold text-white">{planName}</span> —{" "}
+            <span className="text-white/60">
+              {currentLimit} {certWord} inclus.
+            </span>{" "}
+            Passez à <span className="font-semibold text-white">{nextPlanName}</span> pour {nextPlanLimit} {nextWord}.
+          </p>
+
+          <Link
+            href={upgradeHref}
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg border border-[#BDA76B]/40 bg-[#BDA76B]/20 px-4 py-2 text-xs font-semibold text-[#BDA76B] transition-all duration-200 hover:border-[#BDA76B]/60 hover:bg-[#BDA76B]/30"
+          >
+            {nextPlanPrice === "Voir les offres" ? "Voir les offres" : nextPlanPrice}
+            <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
-        <p
-          className="text-sm text-white/90 flex-1 min-w-[200px]"
-          style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
-        >
-          Forfait <strong className="text-white">{planName}</strong> : jusqu’à{" "}
-          <strong className="text-white">{currentLimit}</strong> {certWord}. Passez à{" "}
-          <strong className="text-white">{nextPlanName}</strong> pour jusqu’à{" "}
-          <strong className="text-white">{nextPlanLimit}</strong> {nextWord}.
-        </p>
-        <Link
-          href={upgradeHref}
-          className="inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition hover:opacity-90 shrink-0"
-          style={{ background: CYAN, color: NAVY }}
-        >
-          Passer à {nextPlanName} — {nextPlanPrice}
-        </Link>
-        <Link
-          href="/dashboard"
-          className="text-xs text-white/50 hover:text-white/70 underline-offset-2 hover:underline shrink-0"
-          style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
-        >
-          Retour au dashboard
-        </Link>
       </div>
     );
   }
 
   return (
-    <div
-      className="rounded-2xl border p-6 shadow-lg"
-      style={{ background: NAVY, borderColor: GOLD }}
-    >
-      <div className="flex flex-col sm:flex-row gap-5 sm:items-start">
-        <div className="relative shrink-0" aria-hidden>
-          <Shield className="w-12 h-12 sm:w-14 sm:h-14" strokeWidth={1.25} style={{ color: GOLD }} />
-          <Star
-            className="w-5 h-5 absolute bottom-0.5 -right-0.5 sm:w-6 sm:h-6"
-            strokeWidth={2}
-            fill={CYAN}
-            stroke={NAVY}
-          />
+    <div className="relative overflow-hidden rounded-xl border border-[#BDA76B]/30 bg-gradient-to-br from-[#0d1f3c] to-[#0a1628] p-6 sm:p-7">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-8 -right-8 h-32 w-32 rounded-full bg-[#BDA76B]/10 blur-2xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-12 -left-12 h-40 w-40 rounded-full bg-[#00d4ff]/[0.04] blur-3xl"
+      />
+
+      <div className="relative z-10 flex items-start gap-4">
+        <div
+          aria-hidden
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#BDA76B]/30 bg-[#BDA76B]/15"
+        >
+          <Sparkles className="h-5 w-5 text-[#BDA76B]" />
         </div>
-        <div className="flex-1 space-y-4">
-          <h2 className="font-syne text-xl font-bold tracking-tight text-white sm:text-2xl">
-            Envie de faire plus ?
-          </h2>
-          <p
-            className="text-base text-white/85 leading-relaxed"
-            style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
-          >
-            Votre forfait <strong className="text-white">{planName}</strong> inclut{" "}
-            <strong className="text-white">{currentLimit}</strong> {certWord}. Passez en{" "}
-            <strong className="text-white">{nextPlanName}</strong> pour aller jusqu’à{" "}
-            <strong className="text-white">{nextPlanLimit}</strong> {nextWord}.
+
+        <div className="min-w-0 flex-1">
+          <p className="font-syne text-sm font-semibold text-white">
+            Passez au plan supérieur
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:items-center pt-1">
-            <Link
-              href={upgradeHref}
-              className="inline-flex items-center justify-center rounded-lg px-6 py-3 text-base font-semibold transition hover:opacity-90 text-center"
-              style={{ background: CYAN, color: NAVY }}
-            >
-              Passer à {nextPlanName} — {nextPlanPrice}
-            </Link>
-          </div>
-          <Link
-            href="/dashboard"
-            className="inline-block text-sm text-white/50 hover:text-white/75 underline-offset-2 hover:underline"
-            style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
-          >
-            Retour au dashboard
-          </Link>
+          <p className="mt-1 text-xs leading-relaxed text-white/60">
+            Votre forfait{" "}
+            <span className="font-medium text-white/80">{planName}</span> inclut{" "}
+            {currentLimit} {certWord}.{" "}
+            <span className="font-medium text-white/80">{nextPlanName}</span>{" "}
+            débloque {nextPlanLimit} {nextWord}.
+          </p>
         </div>
+      </div>
+
+      <div className="relative z-10 mt-5 flex flex-wrap items-center gap-3">
+        <Link
+          href={upgradeHref}
+          className="inline-flex items-center gap-2 rounded-lg border border-[#BDA76B]/40 bg-[#BDA76B]/20 px-4 py-2 text-xs font-semibold text-[#BDA76B] transition-all duration-200 hover:border-[#BDA76B]/60 hover:bg-[#BDA76B]/30"
+        >
+          {nextPlanPrice === "Voir les offres"
+            ? "Voir les offres"
+            : `${nextPlanName} — ${nextPlanPrice}`}
+          <ArrowRight className="h-3 w-3" />
+        </Link>
+
+        <span className="text-xs text-white/30">
+          Plan actuel : {planName}
+        </span>
       </div>
     </div>
   );
