@@ -59,14 +59,12 @@ export default function Navbar() {
           >
             Connexion
           </Link>
-          {/* prefetch=false : évite RSC prefetch non authentifié vers /dashboard/* (layout + auth()) */}
           <Link
-            href="/dashboard/create"
-            prefetch={false}
+            href="/auth/register"
             className="rounded-lg px-5 py-2 text-sm font-bold transition-colors hover:bg-[#00b8e6]"
             style={{ background: '#00d4ff', color: '#0a1628' }}
           >
-            Créer mon certificat
+            Certifier mon identité
           </Link>
         </div>
 
@@ -119,13 +117,12 @@ export default function Navbar() {
                 Connexion
               </Link>
               <Link
-                href="/dashboard/create"
-                prefetch={false}
+                href="/auth/register"
                 className="block py-3 px-4 rounded-lg text-sm font-bold mt-2 text-center"
                 style={{ background: '#00d4ff', color: '#0a1628' }}
                 onClick={() => setMenuOpen(false)}
               >
-                Créer mon certificat
+                Certifier mon identité
               </Link>
             </div>
           </nav>
