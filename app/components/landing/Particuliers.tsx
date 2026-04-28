@@ -34,7 +34,7 @@ export default function Particuliers() {
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24"
     >
       <Reveal className="mx-auto max-w-3xl text-center overflow-visible">
-        <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-bt-cyan/80">
+        <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-bt-cyan/80 drop-shadow-[0_0_10px_rgba(0,212,255,0.5)]">
           Pour les particuliers
         </p>
         <h2 className="font-syne mx-auto max-w-2xl pb-2 text-2xl font-semibold leading-normal text-white overflow-visible sm:text-3xl lg:text-4xl">
@@ -74,7 +74,7 @@ export default function Particuliers() {
           href="/pricing"
           className="inline-flex items-center justify-center rounded-xl bg-bt-cyan px-8 py-3.5 text-sm font-bold text-navy transition-all hover:scale-[1.04] hover:bg-[#21dfff] sm:text-base"
         >
-          Démarrer pour 4,99€/mois
+          Démarrer à partir de 4,99€/mois
         </Link>
       </Reveal>
     </section>

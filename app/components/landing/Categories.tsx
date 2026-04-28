@@ -76,7 +76,7 @@ export default function Categories() {
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-20 md:py-28"
     >
       <Reveal className="mx-auto max-w-3xl text-center">
-        <p className="mb-4 text-xs font-medium uppercase tracking-[0.25em] text-gold font-mono">
+        <p className="mb-4 text-sm font-medium uppercase tracking-[0.25em] text-gold font-mono drop-shadow-[0_0_10px_rgba(189,167,107,0.6)]">
           Pourquoi BLOCKTRUST n&apos;a pas de concurrent
         </p>
         <h2

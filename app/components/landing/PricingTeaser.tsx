@@ -11,8 +11,8 @@ export default function PricingTeaser() {
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24"
     >
       <Reveal className="mx-auto max-w-3xl text-center">
-        <p className="mb-3 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-bt-cyan/80">
-          <Sparkles className="h-3.5 w-3.5" />
+        <p className="mb-3 inline-flex items-center gap-2 text-sm font-medium uppercase tracking-[0.2em] text-gold/90 drop-shadow-[0_0_10px_rgba(189,167,107,0.6)]">
+          <Sparkles className="h-4 w-4" />
           Tarifs
         </p>
         <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-4xl">
@@ -32,9 +32,10 @@ export default function PricingTeaser() {
             <User className="h-5 w-5 text-bt-cyan" />
           </div>
           <h3 className="font-syne text-base sm:text-lg font-semibold text-white">Particulier</h3>
-          <div className="mt-2 flex items-end gap-1">
-            <span className="font-syne text-3xl font-bold text-white">4,99€</span>
-            <span className="mb-1 text-sm text-white/60">/mois</span>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-sm font-medium text-white/50">À partir de</span>
+            <span className="font-syne text-4xl font-bold text-white">4,99€</span>
+            <span className="text-sm text-white/60">/mois</span>
           </div>
           <p className="mt-3 text-sm sm:text-base leading-relaxed text-white/70">
             Badge certifié, QR code, signature email, page de vérification publique.

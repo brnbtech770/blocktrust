@@ -15,7 +15,7 @@ import Footer from "./landing/Footer";
 export default function LandingPageClient() {
   return (
     <div
-      className="min-h-screen overflow-x-hidden bt-circuit-bg"
+      className="min-h-screen overflow-x-hidden"
       style={{ background: "var(--bt-navy)" }}
     >
       <Navbar />

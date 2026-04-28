@@ -15,7 +15,7 @@ export default function Hero() {
         <div className="lg:col-span-3 order-1">
           {/* Pill eyebrow */}
           <div
-            className="opacity-0 animate-fade-up [animation-delay:0ms] inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[12px] sm:text-[13px] font-mono tracking-wider text-gold"
+            className="opacity-0 animate-fade-up [animation-delay:0ms] inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm sm:text-base font-mono tracking-wider text-gold drop-shadow-[0_0_10px_rgba(0,212,255,0.5)]"
             style={{
               background: "rgba(189,167,107,0.08)",
               borderColor: "var(--bt-border-gold)",

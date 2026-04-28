@@ -76,6 +76,7 @@ h5, h6 {
   position: relative;
   overflow: hidden;
 }
+/* Grille quadrillée désactivée — feedback design 28/04/2026
 .bt-circuit-bg::before {
   content: '';
   position: absolute;
@@ -87,6 +88,7 @@ h5, h6 {
   pointer-events: none;
   z-index: 0;
 }
+*/
 .bt-circuit-bg::after {
   content: '';
   position: absolute;
