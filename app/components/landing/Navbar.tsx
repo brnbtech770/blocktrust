@@ -15,7 +15,7 @@ export default function Navbar() {
 
   return (
     <header
-      className="relative sticky top-0 z-50 flex h-14 items-center overflow-x-hidden border-b px-3 backdrop-blur-[16px] sm:h-16 sm:px-6 lg:px-8"
+      className="relative sticky top-0 z-50 flex h-14 items-center overflow-x-clip border-b px-3 backdrop-blur-[16px] sm:h-16 sm:px-6 lg:px-8"
       style={{
         background: 'rgba(10,22,40,0.92)',
         borderBottomColor: 'var(--bt-border)',
