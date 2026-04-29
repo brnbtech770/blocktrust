@@ -31,7 +31,7 @@ export default function Hero() {
           </h1>
 
           {/* Sous-titre — headline validée équipe (Deborah + Laurianne 28/04/2026) */}
-          <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl font-sans text-lg leading-relaxed text-white sm:mt-6 sm:text-xl">
+          <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl text-left font-sans text-lg leading-relaxed text-white sm:mt-6 sm:text-xl">
             La preuve que c&apos;est <span className="font-semibold text-bt-cyan">vous</span>.
             La certitude que c&apos;est <span className="font-semibold text-gold">eux</span>.
           </p>
