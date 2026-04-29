@@ -36,7 +36,7 @@ export default function Entreprises() {
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24"
     >
       <Reveal className="mx-auto max-w-3xl text-center overflow-visible">
-        <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-gold/80 drop-shadow-[0_0_10px_rgba(189,167,107,0.6)]">
+        <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-gold">
           Pour les entreprises
         </p>
         <h2 className="font-syne mx-auto max-w-2xl pb-2 text-2xl font-semibold leading-normal text-white overflow-visible sm:text-3xl lg:text-4xl">

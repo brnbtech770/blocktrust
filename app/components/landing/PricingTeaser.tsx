@@ -11,7 +11,7 @@ export default function PricingTeaser() {
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24"
     >
       <Reveal className="mx-auto max-w-3xl text-center">
-        <p className="mb-3 inline-flex items-center gap-2 text-sm font-medium uppercase tracking-[0.2em] text-gold/90 drop-shadow-[0_0_10px_rgba(189,167,107,0.6)]">
+        <p className="mb-3 inline-flex items-center gap-2 text-sm font-medium uppercase tracking-[0.2em] neon-gold">
           <Sparkles className="h-4 w-4" />
           Tarifs
         </p>

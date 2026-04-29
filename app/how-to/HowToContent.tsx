@@ -73,7 +73,7 @@ function Hero({
   return (
     <section className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-8 pt-12 sm:px-6 sm:pb-12 sm:pt-16 lg:px-8">
       <Reveal className="mx-auto max-w-3xl text-center">
-        <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-bt-cyan/80 drop-shadow-[0_0_10px_rgba(0,212,255,0.5)]">
+        <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
           Guide complet
         </p>
         <h1 className="font-syne mx-auto max-w-3xl pb-2 text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
@@ -175,7 +175,7 @@ function VerificationFlow() {
   return (
     <section className="relative z-10 mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <Reveal className="mx-auto max-w-3xl text-center overflow-visible">
-        <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-bt-cyan/80 drop-shadow-[0_0_10px_rgba(0,212,255,0.5)]">
+        <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
           Schéma technique
         </p>
         <h2 className="font-syne mx-auto pb-2 text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-4xl">
@@ -550,7 +550,7 @@ function GuideParticuliers() {
   return (
     <section className="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <Reveal className="mx-auto max-w-3xl text-center overflow-visible">
-        <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-bt-cyan/80 drop-shadow-[0_0_10px_rgba(0,212,255,0.5)]">
+        <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
           Guide particuliers
         </p>
         <h2 className="font-syne pb-2 text-2xl font-semibold leading-tight text-white sm:text-3xl">
@@ -608,7 +608,7 @@ function GuideEntreprises() {
   return (
     <section className="relative z-10 mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <Reveal className="mx-auto max-w-3xl text-center overflow-visible">
-        <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-gold/80 drop-shadow-[0_0_10px_rgba(189,167,107,0.6)]">
+        <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] neon-gold">
           Guide entreprises
         </p>
         <h2 className="font-syne pb-2 text-2xl font-semibold leading-tight text-white sm:text-3xl">
@@ -676,7 +676,7 @@ function FaqAccordion() {
   return (
     <section className="relative z-10 mx-auto w-full max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <Reveal className="text-center overflow-visible">
-        <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-bt-cyan/80 drop-shadow-[0_0_10px_rgba(0,212,255,0.5)]">FAQ</p>
+        <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">FAQ</p>
         <h2 className="font-syne pb-2 text-2xl font-semibold leading-tight text-white sm:text-3xl">
           Questions fréquentes
         </h2>
