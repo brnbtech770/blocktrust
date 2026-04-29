@@ -30,14 +30,10 @@ export default function Hero() {
             La carte d&apos;identité numérique de tout ce que vous envoyez.
           </h1>
 
-          {/* Sous-titre */}
-          <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl text-base leading-relaxed text-white/75 sm:mt-6 sm:text-lg">
-            Fini les faux RIB, faux conseillers, faux documents.{" "}
-            <span className="font-bold tracking-wider text-bt-cyan">
-              BLOCKTRUST
-            </span>{" "}
-            vous protège <span className="text-white/90">et</span> certifie
-            votre identité — vérifiable par n&apos;importe qui, en 1 scan.
+          {/* Sous-titre — headline validée équipe (Deborah + Laurianne 28/04/2026) */}
+          <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl font-sans text-lg leading-relaxed text-white sm:mt-6 sm:text-xl">
+            La preuve que c&apos;est <span className="font-semibold text-bt-cyan">vous</span>.
+            La certitude que c&apos;est <span className="font-semibold text-gold">eux</span>.
           </p>
 
           {/* CTAs + micro-copy */}
