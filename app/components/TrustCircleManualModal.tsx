@@ -117,7 +117,7 @@ export default function TrustCircleManualModal({
           )}
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-white/70">Nom de l&apos;entité <span className="text-red-400">*</span></label>
+            <label className="mb-2 block text-sm font-medium text-white/70">Nom du contact <span className="text-red-400">*</span></label>
             <input
               type="text"
               value={entityName}

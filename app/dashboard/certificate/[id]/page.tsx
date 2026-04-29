@@ -156,7 +156,7 @@ export default async function CertificateDetailPage({
           <div className="space-y-6">
             {/* Informations de l'entité */}
             <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
-              <h2 className="text-xl font-bold text-white mb-4">Informations de l'entité</h2>
+              <h2 className="text-xl font-bold text-white mb-4">Informations du contact</h2>
               <div className="space-y-3">
                 <div>
                   <span className="text-gray-400 text-sm">Type :</span>

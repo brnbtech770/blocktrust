@@ -22,7 +22,7 @@ export default function Hero() {
             }}
           >
             <span aria-hidden>✦</span>
-            Certifié · Ancré · Infalsifiable
+            Certifié · Protégé · Infalsifiable
           </div>
 
           {/* H1 */}
@@ -32,15 +32,12 @@ export default function Hero() {
 
           {/* Sous-titre */}
           <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl text-base leading-relaxed text-white/75 sm:mt-6 sm:text-lg">
-            CV, devis, contrat, document important.{" "}
+            Fini les faux RIB, faux conseillers, faux documents.{" "}
             <span className="font-bold tracking-wider text-bt-cyan">
               BLOCKTRUST
             </span>{" "}
-            prouve que c&apos;est bien vous — et que rien n&apos;a été modifié.
-            Vérifiable par n&apos;importe qui, en 1 scan.{" "}
-            <span className="text-white/90">
-              Vérifiez aussi l&apos;authenticité de ce que vous recevez.
-            </span>
+            vous protège <span className="text-white/90">et</span> certifie
+            votre identité — vérifiable par n&apos;importe qui, en 1 scan.
           </p>
 
           {/* CTAs + micro-copy */}

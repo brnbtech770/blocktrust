@@ -166,7 +166,7 @@ export async function notifyAnchorSuccess(
       cert.entity.legalName?.trim() ||
       cert.entity.tradeName?.trim() ||
       [cert.entity.firstName, cert.entity.lastName].filter(Boolean).join(' ').trim() ||
-      'Votre entité'
+      'Votre contact'
 
     sendCertificateAnchoredEmail(email, {
       userName,

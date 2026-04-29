@@ -207,7 +207,7 @@ export default function CreateCertificate() {
       const entityResult = await entityResponse.json();
 
       if (!entityResponse.ok) {
-        throw new Error(entityResult.error || "Erreur lors de la création de l'entité");
+        throw new Error(entityResult.error || "Erreur lors de la création du contact");
       }
 
       setCreatedEntity(entityResult.entity);
@@ -292,7 +292,7 @@ export default function CreateCertificate() {
             Créer un certificat
           </h1>
           <p className="mb-6 font-sans text-base leading-relaxed text-white/80">
-            Remplissez les informations de votre entité
+            Remplissez les informations de votre contact
           </p>
           
           {/* Indicateur d'étapes */}
@@ -595,7 +595,7 @@ export default function CreateCertificate() {
               <div className="space-y-4">
                 <div>
                   <span className="font-sans text-sm font-medium uppercase tracking-wider text-white/60">
-                    Type d&apos;entité :
+                    Type de contact :
                   </span>
                   <p className="font-sans font-semibold text-white">{summary.type}</p>
                 </div>

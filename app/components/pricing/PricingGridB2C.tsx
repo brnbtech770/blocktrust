@@ -75,7 +75,7 @@ export default function PricingGridB2C({ plans, interval, currentPlan, isAuthent
             priceUnit={priceUnit}
             subtitle={`${plan.profiles} profil(s)`}
             badges={[
-              { label: `${plan.entities} entités`, style: 'gold' },
+              { label: `${plan.entities} contacts`, style: 'gold' },
               { label: `${pricePerProfile.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€/profil`, style: 'muted' },
             ]}
             features={mapFeatures(plan)}

@@ -125,7 +125,7 @@ export default function CertificateTable({ certificates }: CertificateTableProps
             <thead>
               <tr className="border-b" style={{ background: 'rgba(0,0,0,0.3)', borderColor: 'var(--bt-border)' }}>
                 <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
-                  Entité / ID
+                  Contact / ID
                 </th>
                 <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
                   Statut

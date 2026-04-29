@@ -24,7 +24,7 @@ export const PLANS_B2C = [
     },
     features: [
       { label: '1 profil certifié',              included: true  },
-      { label: "Jusqu'à 20 entités",             included: true  },
+      { label: "Jusqu'à 20 contacts",            included: true  },
       { label: 'Badge QR multi-support',         included: true  },
       { label: 'Page de vérification publique',  included: true  },
       { label: 'Trust Circle : 20 identités',    included: true  },
@@ -53,7 +53,7 @@ export const PLANS_B2C = [
     },
     features: [
       { label: '1 profil certifié',              included: true },
-      { label: "Jusqu'à 100 entités",            included: true },
+      { label: "Jusqu'à 100 contacts",           included: true },
       { label: 'Badge QR multi-support',         included: true },
       { label: 'Page de vérification publique',  included: true },
       { label: 'Trust Circle : 100 identités',   included: true },
@@ -82,7 +82,7 @@ export const PLANS_B2C = [
     },
     features: [
       { label: '5 profils indépendants',         included: true },
-      { label: "100 entités partagées",          included: true },
+      { label: "100 contacts partagés",          included: true },
       { label: 'Badge QR multi-support',         included: true },
       { label: 'Trust Circle pool : 100 identités', included: true },
       { label: 'Protection des mineurs',         included: true },
@@ -109,7 +109,7 @@ export const PLANS_B2C = [
     },
     features: [
       { label: '10 profils indépendants',          included: true },
-      { label: "300 entités partagées",            included: true },
+      { label: "300 contacts partagés",            included: true },
       { label: 'Badge QR multi-support',           included: true },
       { label: 'Trust Circle pool : 300 identités', included: true },
       { label: 'Protection des mineurs avancée',   included: true },
@@ -140,7 +140,7 @@ export const PLANS_B2B = [
     features: [
       { label: '1 à 3 utilisateurs',            included: true },
       { label: 'Badge multi-support par poste', included: true },
-      { label: 'Trust Circle : 40 entités',     included: true },
+      { label: 'Trust Circle : 40 contacts',    included: true },
       { label: 'Alertes fraude basiques',        included: true },
       { label: 'Support email',                  included: true },
     ],
@@ -164,7 +164,7 @@ export const PLANS_B2B = [
     features: [
       { label: '4 à 10 utilisateurs',           included: true },
       { label: 'Badge multi-support par poste', included: true },
-      { label: 'Trust Circle : 150 entités',    included: true },
+      { label: 'Trust Circle : 150 contacts',   included: true },
       { label: 'Alertes fraude avancées',        included: true },
       { label: 'Tableau de bord équipe',         included: true },
       { label: 'Support prioritaire',            included: true },
@@ -189,7 +189,7 @@ export const PLANS_B2B = [
     features: [
       { label: '11 à 50 utilisateurs',          included: true },
       { label: 'Badge multi-support par poste', included: true },
-      { label: 'Trust Circle : 500 entités',    included: true },
+      { label: 'Trust Circle : 500 contacts',   included: true },
       { label: 'API entreprise',                 included: true },
       { label: 'Tableau de bord analytique',    included: true },
       { label: 'Support dédié',                  included: true },

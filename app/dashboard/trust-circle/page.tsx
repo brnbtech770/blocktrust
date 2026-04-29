@@ -99,7 +99,7 @@ export default function TrustCirclePage() {
   }
 
   const handleDelete = async (id: string, deleteType: 'relation' | 'manual') => {
-    if (!confirm('Supprimer cette entité du Trust Circle ?')) return
+    if (!confirm('Supprimer ce contact du Trust Circle ?')) return
     try {
       const res = await fetch(`/api/trust-circle/${id}`, {
         method: 'DELETE',
@@ -111,7 +111,7 @@ export default function TrustCirclePage() {
         const errData = await res.json().catch(() => ({}))
         throw new Error(errData.error || 'Erreur suppression')
       }
-      setToastMessage('Entité supprimée')
+      setToastMessage('Contact supprimé')
       await fetchTrustCircle()
     } catch (err: any) {
       alert(err.message)
@@ -153,7 +153,7 @@ export default function TrustCirclePage() {
               Mon Trust Circle
             </h1>
             <p className="font-mono text-sm text-bt-cyan sm:text-base">
-              {data.stats.current} entités · {(data.mutual?.length ?? 0)} mutuelles
+              {data.stats.current} contacts · {(data.mutual?.length ?? 0)} mutuels
             </p>
           </div>
           <button
@@ -223,7 +223,7 @@ export default function TrustCirclePage() {
         {totalEntites === 0 && (
           <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-lg transition-all hover:border-gold/30">
             <div className="mb-4 text-6xl">🔗</div>
-            <h3 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">Aucune entité</h3>
+            <h3 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">Aucun contact</h3>
             <p className="mb-6 text-white/60">Ajoutez des contacts à votre cercle de confiance</p>
             <button
               onClick={() => setShowInviteModal(true)}
@@ -295,7 +295,7 @@ function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pendi
             onClick={onDelete}
             title="Supprimer du Trust Circle"
             className="p-1.5 rounded-md text-red-400/55 hover:text-red-400 hover:bg-red-500/15 transition-colors shrink-0"
-            aria-label="Supprimer cette entité du Trust Circle"
+            aria-label="Supprimer ce contact du Trust Circle"
           >
             <Trash2 size={15} strokeWidth={1.75} />
           </button>

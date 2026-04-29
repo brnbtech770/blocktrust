@@ -79,7 +79,7 @@ export function CertificateAnchoredEmail({
             <table style={tableStyle} role="presentation" cellPadding={0} cellSpacing={0}>
               <tbody>
                 <tr>
-                  <td style={tdLabel}>Entité certifiée</td>
+                  <td style={tdLabel}>Contact certifié</td>
                   <td style={tdValueBold}>{entityName}</td>
                 </tr>
                 <tr>

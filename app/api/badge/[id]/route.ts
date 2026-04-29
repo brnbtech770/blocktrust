@@ -66,7 +66,7 @@ export async function GET(
       entity.entityType === 'INDIVIDUAL'
         ? `${entity.firstName || ''} ${entity.lastName || ''}`.trim() || entity.email
         : entity.legalName || entity.tradeName || entity.email
-    const fullName = entityName || 'Entité certifiée'
+    const fullName = entityName || 'Contact certifié'
     const maxChars = size === 'sm' ? 18 : size === 'md' ? 22 : 26
     const displayName = fullName.length > maxChars ? fullName.substring(0, maxChars) + '...' : fullName
 

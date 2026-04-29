@@ -46,7 +46,7 @@ export function FraudAlertEmail({
           </Text>
 
           <Section style={box}>
-            <Text style={label}>Entité concernée</Text>
+            <Text style={label}>Contact concerné</Text>
             <Text style={value}>{entityName}</Text>
             <Text style={label}>Token / JTI concerné</Text>
             <Text style={value}>{tokenId}</Text>

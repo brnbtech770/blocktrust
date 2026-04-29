@@ -44,7 +44,7 @@ export default async function EntitiesPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-white tracking-tight mb-2">Mes Entités</h1>
+          <h1 className="text-4xl font-bold text-white tracking-tight mb-2">Mes Contacts</h1>
           <p className="text-gray-400 text-base">
             {entitiesCount}/{maxEntities} utilisées
           </p>
@@ -58,7 +58,7 @@ export default async function EntitiesPage() {
           }`}
           aria-disabled={limitReached}
         >
-          ➕ Nouvelle entité
+          ➕ Nouveau contact
         </Link>
       </div>
 
@@ -138,13 +138,13 @@ export default async function EntitiesPage() {
       ) : (
         <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-lg transition-all hover:border-gold/30">
           <div className="text-6xl mb-4">📭</div>
-          <h3 className="text-2xl font-bold text-white mb-2">Aucune entité</h3>
-          <p className="text-gray-400 text-base mb-6">Créez votre première entité pour commencer</p>
+          <h3 className="text-2xl font-bold text-white mb-2">Aucun contact</h3>
+          <p className="text-gray-400 text-base mb-6">Créez votre premier contact pour commencer</p>
           <Link
             href="/dashboard/create"
             className="inline-block rounded-lg bg-bt-cyan py-3 px-6 font-bold text-navy transition hover:bg-bt-cyan/90"
           >
-            Créer ma première entité
+            Créer mon premier contact
           </Link>
         </div>
       )}

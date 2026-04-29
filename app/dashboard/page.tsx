@@ -278,7 +278,7 @@ export default async function Dashboard({
               className="inline-flex min-w-0 w-full items-center justify-center gap-2 rounded-lg bg-bt-cyan px-6 py-3 font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:text-base"
             >
               <Plus size={18} aria-hidden />
-              Créer une entité
+              Créer un contact
             </Link>
             <Link
               href="/dashboard/certificates"

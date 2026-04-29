@@ -46,7 +46,7 @@ export function WelcomeEmail({ userName, dashboardUrl }: WelcomeEmailProps) {
           <Text style={text}>
             <strong>Vous pouvez :</strong>
           </Text>
-          <Text style={list}>• Créer des entités (personnes ou entreprises)</Text>
+          <Text style={list}>• Créer des contacts (personnes ou entreprises)</Text>
           <Text style={list}>• Générer des certificats avec lien de vérification et QR code</Text>
           <Text style={list}>• Intégrer le badge sur vos sites ou emails</Text>
           <Text style={list}>• Consulter les statistiques de vérification</Text>

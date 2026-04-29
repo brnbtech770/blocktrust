@@ -34,7 +34,7 @@ export default async function DashboardSidebar() {
 
     const menuItems: SidebarItem[] = [
       { name: 'Tableau de bord', href: '/dashboard', icon: 'Home' },
-      { name: 'Mes entités', href: '/dashboard/entities', icon: 'Building' },
+      { name: 'Mes contacts', href: '/dashboard/entities', icon: 'Building' },
       { name: 'Mes certificats', href: '/dashboard/certificates', icon: 'Shield' },
       ...(plan?.trustCircleEnabled
         ? [{ name: 'Trust Circle', href: '/dashboard/trust-circle', icon: 'Users' as const }]

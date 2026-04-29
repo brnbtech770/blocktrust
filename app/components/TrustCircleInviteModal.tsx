@@ -71,7 +71,7 @@ export default function TrustCircleInviteModal({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg">
         <div className="mb-6 flex items-center justify-between">
-          <h3 className="font-syne text-xl font-bold tracking-tight text-white">Inviter une entité</h3>
+          <h3 className="font-syne text-xl font-bold tracking-tight text-white">Inviter un contact</h3>
           <button
             type="button"
             onClick={onClose}
@@ -115,7 +115,7 @@ export default function TrustCircleInviteModal({
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-white/70">Type d&apos;entité</label>
+            <label className="mb-2 block text-sm font-medium text-white/70">Type de contact</label>
             <select
               value={entityType}
               onChange={(e) => setEntityType(e.target.value as any)}

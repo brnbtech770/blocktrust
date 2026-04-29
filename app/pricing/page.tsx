@@ -15,8 +15,8 @@ const FAQ = [
     a: "Oui, sans engagement et sans frais. L'annulation prend effet à la fin de la période en cours. Gérez votre abonnement directement depuis votre espace client.",
   },
   {
-    q: "Qu'est-ce qu'une entité certifiée ?",
-    a: "Une entité est une personne physique, une entreprise, un domaine web ou tout profil que vous souhaitez certifier avec un badge BLOCKTRUST vérifiable.",
+    q: "Qu'est-ce qu'un contact certifié ?",
+    a: "Un contact est une personne physique, une entreprise, un domaine web ou tout profil que vous souhaitez certifier avec un badge BLOCKTRUST vérifiable.",
   },
   {
     q: 'Comment fonctionne le badge de vérification ?',

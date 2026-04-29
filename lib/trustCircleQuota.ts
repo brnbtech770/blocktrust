@@ -65,19 +65,19 @@ export function buildUpgradeMessage(
   const remaining = limit - current
   const messages: Record<string, string> = {
     'ESSENTIEL_PREMIUM':
-      `Plus que ${remaining} entité${remaining > 1 ? 's' : ''} disponible${remaining > 1 ? 's' : ''}. Passez à Premium pour 40 entités.`,
+      `Plus que ${remaining} contact${remaining > 1 ? 's' : ''} disponible${remaining > 1 ? 's' : ''}. Passez à Premium pour 40 contacts.`,
     'PREMIUM_FAMILLE':
-      `Quota presque atteint (${current}/${limit}). Plan Famille : 80 entités partagées dès 14,99€/mois.`,
+      `Quota presque atteint (${current}/${limit}). Plan Famille : 80 contacts partagés dès 14,99€/mois.`,
     'FAMILLE_FAMILLE_PLUS':
-      `Pool familial presque plein (${current}/${limit}). Famille+ : 200 entités dès 24,99€/mois.`,
+      `Pool familial presque plein (${current}/${limit}). Famille+ : 200 contacts dès 24,99€/mois.`,
     'STARTER_TEAM':
-      `Quota presque atteint (${current}/${limit}). Plan Team : 150 entités + 30/poste dès 79€/mois.`,
+      `Quota presque atteint (${current}/${limit}). Plan Team : 150 contacts + 30/poste dès 79€/mois.`,
     'TEAM_BUSINESS':
-      `Pool entreprise presque plein (${current}/${limit}). Business : 500 entités dès 199€/mois.`,
+      `Pool entreprise presque plein (${current}/${limit}). Business : 500 contacts dès 199€/mois.`,
     'BUSINESS_ENTERPRISE':
       `Vous approchez la limite Business (${current}/${limit}). Contactez-nous pour Enterprise illimité.`,
   }
   const key = `${currentPlan}_${upgradePlan}`
   return messages[key] ??
-    `Plus que ${remaining} entité${remaining > 1 ? 's' : ''} disponible${remaining > 1 ? 's' : ''}.`
+    `Plus que ${remaining} contact${remaining > 1 ? 's' : ''} disponible${remaining > 1 ? 's' : ''}.`
 }

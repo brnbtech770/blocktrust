@@ -57,7 +57,7 @@ export function CertificateRevokedEmail({
           </Section>
 
           <Text style={text}>
-            Si vous souhaitez à nouveau prouver l’authenticité de cette entité, vous pouvez créer un
+            Si vous souhaitez à nouveau prouver l’authenticité de ce contact, vous pouvez créer un
             nouveau certificat depuis votre tableau de bord.
           </Text>
           <Section style={buttonContainer}>
