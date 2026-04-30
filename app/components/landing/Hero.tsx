@@ -21,11 +21,9 @@ export default function Hero() {
               borderColor: "var(--bt-border-gold)",
             }}
           >
-            <span aria-hidden>✦</span> Certifié
-            <span className="mx-1.5" aria-hidden>·</span>
-            <span aria-hidden>✦</span> Protégé
-            <span className="mx-1.5" aria-hidden>·</span>
-            <span aria-hidden>✦</span> Infalsifiable
+            <span><span aria-hidden>✦</span> Certifié</span>
+            <span><span aria-hidden>✦</span> Protégé</span>
+            <span><span aria-hidden>✦</span> Infalsifiable</span>
           </div>
 
           {/* H1 */}
