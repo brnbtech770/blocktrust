@@ -119,6 +119,10 @@ export default function PricingPage() {
           <span className="text-white">Tarifs </span>
           <span className="text-gold">transparents</span>
         </h1>
+        <p className="text-white/50 text-sm text-center mt-2">
+          Le badge BLOCKTRUST est inclus dans votre abonnement.
+          Sans frais cachés — annulable à tout moment.
+        </p>
         <p className="mx-auto mb-6 max-w-2xl px-1 text-center font-sans text-sm leading-relaxed text-white/80 sm:mb-10 sm:text-base">
           Choisissez le plan adapté à vos besoins. Annulez à tout moment.
         </p>

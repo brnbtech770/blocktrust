@@ -98,6 +98,19 @@ export default async function Dashboard({
       orderBy: { issuedAt: 'desc' },
     });
 
+    const entitiesCount = await prisma.entity.count({
+      where: { userId: user.id },
+    });
+    const kycVerified = user.kycStatus === "VERIFIED";
+    const hasEntities = entitiesCount > 0;
+    const hasCertificate = certificates.length > 0;
+    const showOnboardingGuide = certificates.length === 0;
+    const onboardingSteps: { step: string; text: string; href: string; done: boolean }[] = [
+      { step: "1", text: "Vérifiez votre identité", href: "/onboarding/verify", done: kycVerified },
+      { step: "2", text: "Créez votre premier contact", href: "/dashboard/entities", done: hasEntities },
+      { step: "3", text: "Partagez votre badge", href: "/dashboard/badge", done: hasCertificate },
+    ];
+
     const blockchainStats = certificates.reduce(
       (acc, c) => {
         const status = (c.blockchainStatus || 'PENDING') as 'PENDING' | 'ANCHORED' | 'FAILED';
@@ -170,6 +183,48 @@ export default async function Dashboard({
             Voici un aperçu de votre activité BLOCKTRUST
           </p>
         </div>
+
+        {showOnboardingGuide && (
+          <div className="bg-gradient-to-br from-[#0d1f3c] to-[#0a1628] border border-[#00d4ff]/20 rounded-xl p-6 mb-6">
+            <p className="text-[#00d4ff] text-xs uppercase tracking-widest mb-4">
+              PAR OÙ COMMENCER ?
+            </p>
+            <div className="space-y-3">
+              {onboardingSteps.map((item) => (
+                <a
+                  href={item.href}
+                  key={item.step}
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition"
+                >
+                  <span
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      item.done
+                        ? "bg-[#00d4ff]/20 text-[#00d4ff]"
+                        : "bg-white/10 text-white/40"
+                    }`}
+                    aria-hidden
+                  >
+                    {item.done ? "✓" : item.step}
+                  </span>
+                  <span
+                    className={
+                      item.done
+                        ? "text-white/40 line-through text-sm"
+                        : "text-white text-sm"
+                    }
+                  >
+                    {item.text}
+                  </span>
+                  {!item.done && (
+                    <span className="ml-auto text-white/30 text-xs" aria-hidden>
+                      →
+                    </span>
+                  )}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">

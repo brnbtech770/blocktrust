@@ -113,6 +113,18 @@ export default function RegisterPage() {
         <h1 className="font-syne mb-6 text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
           Créer un compte
         </h1>
+        <div className="mb-6 p-4 bg-white/[0.03] border border-white/10 rounded-xl">
+          <p className="text-white/70 text-xs text-center mb-3">
+            Vous êtes à 3 étapes de votre badge certifié
+          </p>
+          <div className="flex items-center justify-center gap-4 text-xs">
+            <span className="text-white/40">1. Créez votre compte</span>
+            <span className="text-white/20" aria-hidden>→</span>
+            <span className="text-white/40">2. Choisissez votre plan</span>
+            <span className="text-white/20" aria-hidden>→</span>
+            <span className="text-white/40">3. Vérifiez votre identité</span>
+          </div>
+        </div>
         <form onSubmit={handleSubmit} autoComplete="on">
           <input
             ref={websiteHoneypotRef}
