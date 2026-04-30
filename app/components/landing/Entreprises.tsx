@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, Rocket, Banknote, ShoppingCart, ShieldAlert, type LucideIcon } from "lucide-react";
+import { Building2, Rocket, Banknote, ShoppingCart, Network, type LucideIcon } from "lucide-react";
 import Reveal from "./Reveal";
 
 type UseCase = { icon: LucideIcon; title: string; text: string };
@@ -28,9 +28,9 @@ const cases: UseCase[] = [
     text: "Réduisez les abandons panier, augmentez la confiance.",
   },
   {
-    icon: ShieldAlert,
-    title: "Détectez les usurpations entrantes",
-    text: "Fournisseur frauduleux, faux partenaire, email quasi-identique — vos partenaires certifiés BLOCKTRUST sont identifiables en 1 scan. Toute tentative d'usurpation est détectée immédiatement.",
+    icon: Network,
+    title: "Votre réseau de partenaires certifiés",
+    text: "Fournisseurs, clients, sous-traitants — constituez votre écosystème de confiance certifié. Si quelqu'un usurpe l'identité d'un partenaire certifié pour modifier un RIB ou détourner un virement, BLOCKTRUST le détecte immédiatement.",
   },
 ];
 
