@@ -31,7 +31,7 @@ export default function Navbar() {
           >
             <BlockTrustBadge size={44} instanceId="navbar" className="shrink-0 drop-shadow-[0_0_12px_rgba(0,212,255,0.6)]" />
             <span className="font-syne text-base font-bold leading-none tracking-wider neon-cyan sm:text-lg">
-              BLOCKTRUST
+              BLOCKTRUST<span className="text-[10px] align-super">™</span>
             </span>
           </Link>
         </div>

@@ -28,7 +28,7 @@ export default function Footer() {
             <Link href="/" className="flex items-center gap-3" style={{ textDecoration: "none" }}>
               <BlockTrustBadge size={40} instanceId="footer" className="shrink-0" />
               <span className="font-syne text-lg font-bold leading-none tracking-wider text-bt-cyan">
-                BLOCKTRUST
+                BLOCKTRUST<span className="text-[10px] align-super">™</span>
               </span>
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-white/65">
@@ -82,7 +82,7 @@ export default function Footer() {
           className="mt-10 border-t pt-6 text-xs text-white/55 sm:flex sm:items-center sm:justify-between"
           style={{ borderColor: "var(--bt-border)" }}
         >
-          <p>© 2026 BRNB TECH SASU — BLOCKTRUST™</p>
+          <p>© 2026 BRNB TECH SASU — BLOCKTRUST<span className="text-[10px] align-super">™</span></p>
           <p className="mt-2 sm:mt-0">RCS Paris — Hébergé par Vercel</p>
         </div>
       </div>
