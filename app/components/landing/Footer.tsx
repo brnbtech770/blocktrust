@@ -82,7 +82,7 @@ export default function Footer() {
           className="mt-10 border-t pt-6 text-xs text-white/55 sm:flex sm:items-center sm:justify-between"
           style={{ borderColor: "var(--bt-border)" }}
         >
-          <p>© 2026 BRNB TECH SASU — BLOCKTRUST® Tous droits réservés</p>
+          <p>© 2026 BRNB TECH SASU — BLOCKTRUST™</p>
           <p className="mt-2 sm:mt-0">RCS Paris — Hébergé par Vercel</p>
         </div>
       </div>

@@ -23,7 +23,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 const SITE_URL = "https://blocktrust.tech";
-const SITE_TITLE = "BlockTrust — La carte d'identité numérique";
+const SITE_TITLE = "BLOCKTRUST™ — Certification d'identité numérique";
 const SITE_DESCRIPTION =
   "CV, devis, contrat, document important. BlockTrust prouve que c'est bien vous — et que rien n'a été modifié. Vérifiable par n'importe qui, en 1 scan.";
 
