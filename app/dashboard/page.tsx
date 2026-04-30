@@ -108,7 +108,7 @@ export default async function Dashboard({
     const onboardingSteps: { step: string; text: string; href: string; done: boolean }[] = [
       { step: "1", text: "Vérifiez votre identité", href: "/onboarding/verify", done: kycVerified },
       { step: "2", text: "Créez votre premier contact", href: "/dashboard/entities", done: hasEntities },
-      { step: "3", text: "Partagez votre badge", href: "/dashboard/badge", done: hasCertificate },
+      { step: "3", text: "Partagez votre badge", href: "/dashboard/certificates", done: hasCertificate },
     ];
 
     const blockchainStats = certificates.reduce(
