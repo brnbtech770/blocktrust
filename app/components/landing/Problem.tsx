@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield, User, AlertTriangle, type LucideIcon } from "lucide-react";
+import { Shield, User, AlertTriangle, MailWarning, type LucideIcon } from "lucide-react";
 import Reveal from "./Reveal";
 
 type Card = {
@@ -8,6 +8,7 @@ type Card = {
   iconColor: string;
   title: string;
   text: string;
+  featured?: boolean;
 };
 
 const cards: Card[] = [
@@ -29,6 +30,13 @@ const cards: Card[] = [
     title: "Perte de confiance client",
     text: "Une arnaque associée à votre nom suffit à détruire des années de réputation.",
   },
+  {
+    icon: MailWarning,
+    iconColor: "#E05252",
+    title: "Un faux vous circule déjà",
+    text: "Une lettre change dans l'adresse email, le nom de domaine, le numéro de téléphone. Vos contacts se font arnaquer en croyant vous contacter. Sans BLOCKTRUST, vous ne le saurez jamais.",
+    featured: true,
+  },
 ];
 
 export default function Problem() {
@@ -47,15 +55,20 @@ export default function Problem() {
         </h2>
       </Reveal>
 
-      <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-6">
+      <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
         {cards.map((card, i) => {
           const Icon = card.icon;
           return (
             <Reveal
               key={card.title}
               delay={150 * i}
-              className="group rounded-xl border border-red-500/20 bg-white/5 p-6 backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-red-500/40 hover:bg-white/[0.07]"
+              className="group relative rounded-xl border border-red-500/20 bg-white/5 p-6 backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-red-500/40 hover:bg-white/[0.07]"
             >
+              {card.featured && (
+                <span className="neon-red absolute top-3 right-3 rounded-full border border-red-500/30 bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+                  Menace entrante
+                </span>
+              )}
               <div
                 className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg"
                 style={{

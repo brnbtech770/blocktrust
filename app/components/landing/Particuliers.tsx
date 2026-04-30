@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Briefcase, ShoppingBag, User, type LucideIcon } from "lucide-react";
+import { Briefcase, ShoppingBag, User, ShieldAlert, type LucideIcon } from "lucide-react";
 import Reveal from "./Reveal";
 
 type UseCase = { icon: LucideIcon; title: string; text: string; example: string };
@@ -25,6 +25,12 @@ const cases: UseCase[] = [
     text: "Protégez vos échanges : location, covoiturage, petites annonces.",
     example: "Ex : votre propriétaire vérifie que vous êtes bien vous avant la visite.",
   },
+  {
+    icon: ShieldAlert,
+    title: "Protégez-vous des menaces que vous recevez",
+    text: "Faux RIB, fausse banque, faux propriétaire, faux employeur — vos contacts de confiance sont certifiés. Toute tentative d'usurpation déclenche une alerte immédiate.",
+    example: "Ex : vous recevez un email de \"votre banque\" — BLOCKTRUST signale instantanément qu'il n'est pas certifié.",
+  },
 ];
 
 export default function Particuliers() {
@@ -42,7 +48,7 @@ export default function Particuliers() {
         </h2>
       </Reveal>
 
-      <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3 md:gap-6">
+      <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
         {cases.map((c, i) => {
           const Icon = c.icon;
           return (

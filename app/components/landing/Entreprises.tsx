@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Building2, Rocket, Banknote, ShoppingCart, type LucideIcon } from "lucide-react";
+import { Building2, Rocket, Banknote, ShoppingCart, ShieldAlert, type LucideIcon } from "lucide-react";
 import Reveal from "./Reveal";
 
 type UseCase = { icon: LucideIcon; title: string; text: string };
@@ -27,6 +27,11 @@ const cases: UseCase[] = [
     title: "E-commerce",
     text: "Réduisez les abandons panier, augmentez la confiance.",
   },
+  {
+    icon: ShieldAlert,
+    title: "Détectez les usurpations entrantes",
+    text: "Fournisseur frauduleux, faux partenaire, email quasi-identique — vos partenaires certifiés BLOCKTRUST sont identifiables en 1 scan. Toute tentative d'usurpation est détectée immédiatement.",
+  },
 ];
 
 export default function Entreprises() {
@@ -44,7 +49,7 @@ export default function Entreprises() {
         </h2>
       </Reveal>
 
-      <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+      <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 lg:gap-6">
         {cases.map((c, i) => {
           const Icon = c.icon;
           return (

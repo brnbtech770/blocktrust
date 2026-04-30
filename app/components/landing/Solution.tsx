@@ -35,7 +35,7 @@ const steps: Step[] = [
     ringColor: "rgba(0,212,255,0.35)",
     step: "Étape 3",
     title: "Intégrez votre badge partout",
-    text: "Site web, email, documents, appels vidéo, numéro de téléphone — votre identité certifiée visible à chaque échange.",
+    text: "Site web, email, documents, appels vidéo, numéro de téléphone — votre identité certifiée visible à chaque échange. Recevez une alerte si quelqu'un usurpe votre identité auprès de vos contacts.",
   },
 ];
 
