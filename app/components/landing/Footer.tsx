@@ -8,8 +8,8 @@ const links: { label: string; href: string }[] = [
   { label: "Accueil", href: "/" },
   { label: "Tarifs", href: "/pricing" },
   { label: "Vérifier", href: "/verify" },
-  { label: "CGU", href: "/legal/cgu" },
-  { label: "Confidentialité", href: "/legal/privacy" },
+  { label: "CGU", href: "/cgu" },
+  { label: "Confidentialité", href: "/privacy" },
   { label: "Contact", href: "mailto:contact@blocktrust.tech" },
 ];
 
