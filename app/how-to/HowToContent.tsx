@@ -174,16 +174,15 @@ function toneClasses(tone: FlowStep["tone"]) {
 function VerificationFlow() {
   return (
     <section className="relative z-10 mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-      <Reveal className="mx-auto max-w-3xl text-center overflow-visible">
+      <Reveal className="mx-auto max-w-5xl text-center overflow-visible">
         <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
           Schéma technique
         </p>
         <h2 className="font-syne mx-auto pb-2 text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-4xl">
           Comment fonctionne la <span className="text-bt-cyan">vérification</span> ?
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
-          De l&apos;émetteur au verdict — chaque étape est cryptographique, traçable et
-          ancrée sur Polygon.
+        <p className="mx-auto mt-4 text-sm leading-relaxed text-gold sm:text-base lg:whitespace-nowrap">
+          De l&apos;émetteur au verdict — chaque étape est cryptographique, traçable et ancrée sur Polygon.
         </p>
       </Reveal>
 
