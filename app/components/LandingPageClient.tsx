@@ -22,8 +22,8 @@ export default function LandingPageClient() {
       <Navbar />
       <main>
         <Hero />
-        <QuickUnderstand />
         <Problem />
+        <QuickUnderstand />
         <Categories />
         <Solution />
         <Particuliers />
