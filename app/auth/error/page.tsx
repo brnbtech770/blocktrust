@@ -30,7 +30,7 @@ function ErrorContent() {
   return (
     <div className="min-h-screen bg-navy px-4 py-12 font-sans">
       <div className="mb-6 flex justify-center">
-        <Logo size="lg" withText={true} href="/" />
+        <Logo mark="badge" size="lg" withText href="/" className="drop-shadow-[0_0_14px_rgba(0,212,255,0.45)]" />
       </div>
       <div className="mx-auto max-w-[480px] rounded-xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm transition-all hover:border-gold/30">
         <h1 className="font-syne mb-3 text-[1.35rem] font-bold tracking-tight text-white">

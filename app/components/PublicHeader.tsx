@@ -73,7 +73,7 @@ export default function PublicHeader() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
-          <Logo size="md" withText={true} href="/" />
+          <Logo mark="badge" size="md" withText href="/" className="drop-shadow-[0_0_12px_rgba(0,212,255,0.4)]" />
 
           {/* Desktop nav */}
           <nav className="hidden sm:flex gap-6 items-center">

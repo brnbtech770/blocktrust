@@ -2,11 +2,15 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useId } from 'react'
+import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'hero'
   withText?: boolean
   href?: string
+  /** PNG statique (/logo.png) ou badge SVG officiel (aligné Navbar / landing). */
+  mark?: 'png' | 'badge'
   /** Classes Tailwind (ex. taille responsive sur le conteneur image) */
   className?: string
 }
@@ -22,33 +26,38 @@ export function Logo({
   size = 'md',
   withText = true,
   href = '/',
+  mark = 'png',
   className = '',
 }: LogoProps) {
   const px = sizes[size] ?? sizes.md
   const isHero = size === 'hero'
+  const badgeInstanceId = useId().replace(/[^a-zA-Z0-9]/g, '')
+  const showBadge = mark === 'badge' && !isHero
+
+  const wrapperStyle =
+    isHero
+      ? {
+          width: 'min(72vw, 380px)',
+          height: 'min(72vw, 380px)',
+          maxWidth: 380,
+          maxHeight: 380,
+        }
+      : { width: px, height: px }
 
   const image = (
-    <div
-      className={`relative shrink-0 ${className}`.trim()}
-      style={
-        isHero
-          ? {
-              width: 'min(72vw, 380px)',
-              height: 'min(72vw, 380px)',
-              maxWidth: 380,
-              maxHeight: 380,
-            }
-          : { width: px, height: px }
-      }
-    >
-      <Image
-        src="/logo.png"
-        alt="BlockTrust"
-        width={isHero ? 380 : px}
-        height={isHero ? 380 : px}
-        className={isHero ? 'h-full w-full object-contain' : 'h-full w-full object-contain'}
-        priority
-      />
+    <div className={`relative shrink-0 ${className}`.trim()} style={wrapperStyle}>
+      {showBadge ? (
+        <BlockTrustBadge size={px} instanceId={`logo-${badgeInstanceId}`} />
+      ) : (
+        <Image
+          src="/logo.png"
+          alt="BlockTrust"
+          width={isHero ? 380 : px}
+          height={isHero ? 380 : px}
+          className="h-full w-full object-contain"
+          priority
+        />
+      )}
     </div>
   )
 

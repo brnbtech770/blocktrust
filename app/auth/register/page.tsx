@@ -107,7 +107,7 @@ export default function RegisterPage() {
   return (
     <div className="overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12">
       <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
-        <Logo size="lg" withText={true} href="/" />
+        <Logo mark="badge" size="lg" withText href="/" className="drop-shadow-[0_0_14px_rgba(0,212,255,0.45)]" />
       </div>
       <div className={cardClass}>
         <h1 className="font-syne mb-6 text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
