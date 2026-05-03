@@ -62,6 +62,9 @@ export async function runThreatArticlesIngest(): Promise<{
   summarized: number
   skippedNoAnthropicKey: boolean
 }> {
+  const failedPlaceholder =
+    "(Synthèse indisponible — vérifiez ANTHROPIC_API_KEY ou réessayez demain.)"
+
   const queued: QueuedArticle[] = []
   const queuedUrls = new Set<string>()
 
@@ -127,19 +130,21 @@ export async function runThreatArticlesIngest(): Promise<{
     insertBudget -= 1
   }
 
-  if (skippedNoAnthropicKey || insertedNew === 0) {
+  if (skippedNoAnthropicKey) {
     return {
       scraped: queued.length,
       insertedNew,
       skippedExisting,
       summarized: 0,
-      skippedNoAnthropicKey,
+      skippedNoAnthropicKey: true,
     }
   }
 
   const pending = await prisma.threatArticle.findMany({
-    where: { processedAt: null },
-    orderBy: [{ publishedAt: "desc" }, { fetchedAt: "desc" }],
+    where: {
+      OR: [{ processedAt: null }, { summaryFr: failedPlaceholder }],
+    },
+    orderBy: [{ fetchedAt: "desc" }, { publishedAt: "desc" }],
     take: MAX_NEW_ANTHROPIC_PER_RUN,
   })
 
@@ -161,8 +166,7 @@ export async function runThreatArticlesIngest(): Promise<{
               processedAt: new Date(),
             }
           : {
-              summaryFr:
-                "(Synthèse indisponible — vérifiez ANTHROPIC_API_KEY ou réessayez demain.)",
+              summaryFr: failedPlaceholder,
               relevanceScore: 30,
               processedAt: new Date(),
             },

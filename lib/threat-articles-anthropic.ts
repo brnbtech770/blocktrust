@@ -2,20 +2,35 @@
  * Anthropic — résumé court + score de pertinence (veille grand public / PME).
  */
 function extractJsonObject(text: string): { summary: string; score: number } | null {
-  const m = text.match(/\{[\s\S]*\}/)
-  if (!m) return null
   try {
-    const o = JSON.parse(m[0]) as { summary?: unknown; score?: unknown }
-    const summary = typeof o.summary === "string" ? o.summary.trim() : ""
-    const scoreRaw = o.score
-    const score =
-      typeof scoreRaw === "number"
-        ? Math.min(100, Math.max(0, Math.round(scoreRaw)))
-        : typeof scoreRaw === "string"
-          ? Math.min(100, Math.max(0, parseInt(scoreRaw, 10) || 0))
-          : 0
-    if (!summary) return null
-    return { summary, score }
+    const cleaned = text
+      .replace(/```json/gi, "")
+      .replace(/```/g, "")
+      .trim()
+
+    const match = cleaned.match(/\{[\s\S]*\}/)
+    if (!match) return null
+
+    const parsed = JSON.parse(match[0]) as { summary?: unknown; score?: unknown }
+
+    if (
+      typeof parsed.summary === "string" &&
+      parsed.summary.trim().length > 10
+    ) {
+      let score = 50
+      if (typeof parsed.score === "number" && !Number.isNaN(parsed.score)) {
+        score = Math.min(100, Math.max(0, Math.round(parsed.score)))
+      } else if (typeof parsed.score === "string") {
+        const n = parseInt(parsed.score, 10)
+        if (!Number.isNaN(n))
+          score = Math.min(100, Math.max(0, n))
+      }
+      return {
+        summary: parsed.summary.trim(),
+        score,
+      }
+    }
+    return null
   } catch {
     return null
   }
@@ -42,14 +57,12 @@ export async function summarizeThreatForBlockTrust(input: {
     .filter(Boolean)
     .join("\n\n")
 
-  const prompt = `Tu es un analyste cyber pour BLOCKTRUST (identité certifiée, anti-phishing pour particuliers et PME en France).
+  const prompt = `Tu es un expert en cybersécurité francophone.
+Analyse cet article et réponds UNIQUEMENT avec ce JSON valide, sans markdown, sans backticks, sans explication :
+{"summary":"résumé en français en 2-3 phrases simples et accessibles","score":75}
 
-Tâche : à partir du fil d'information ci-dessous, produis STRICTEMENT un JSON UTF-8 valide sans markdown, sans préambule :
-{"summary":"<2 phrases en français clair pour un lecteur non expert>","score":<entier 0 à 100>}
+Remplace le champ "summary" par ton résumé réel du contenu ci-dessous, et "score" par un entier entre 0 et 100 (pertinence pour sensibiliser particuliers et PME : phishing, usurpation, correctifs critiques = score élevé).
 
-Le champ "score" mesure la pertinence pour sensibiliser nos utilisateurs français : phishing, fraude aux virements, usurpation, fuites de données, vulnérabilités à patcher vite, incidents touchant banques/outils grand public → score élevé. Vulgarisation pure technique sans lien direct avec la vigilance utilisateur → score plus bas.
-
-Données :
 ${userBlock}`
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
