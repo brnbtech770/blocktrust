@@ -34,6 +34,14 @@ async function getEmailFromSession(req: NextRequest): Promise<string | null> {
   return (token?.email as string | undefined) ?? null
 }
 
+/**
+ * Page publique `/verify` (+ ?token=…). Sous-routes `/verify/[id]`, `/verify/qr/…` → session requise (abonnés).
+ */
+function isProtectedVerifySubpath(pathname: string): boolean {
+  if (pathname === '/verify' || pathname === '/verify/') return false
+  return pathname.startsWith('/verify/')
+}
+
 function isProtectedApi(pathname: string): boolean {
   const isProtectedStripeApi =
     pathname.startsWith('/api/stripe') && !pathname.includes('/webhook')
@@ -93,8 +101,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  const isVerifyPath = pathname === '/verify' || pathname.startsWith('/verify/')
-  if (isVerifyPath) {
+  if (isProtectedVerifySubpath(pathname)) {
     try {
       const email = await getEmailFromSession(request)
       if (!email) {
