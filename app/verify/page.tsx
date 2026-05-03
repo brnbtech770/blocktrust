@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Clock, ShieldAlert } from "lucide-react";
+import { Clock, Search, ShieldAlert } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Logo } from "@/app/components/ui/Logo";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
@@ -55,6 +55,20 @@ function VerifyContent() {
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [entityName, setEntityName] = useState<string | null>(null);
   const [certifiedAt, setCertifiedAt] = useState<string | null>(null);
+  const [manualIdInput, setManualIdInput] = useState("");
+
+  const handleManualVerify = () => {
+    const raw = manualIdInput.trim();
+    if (!raw) return;
+
+    let id = raw;
+    const urlMatch = raw.match(/\/verify\/([^/?#\s]+)/);
+    if (urlMatch?.[1]) {
+      id = urlMatch[1];
+    }
+
+    window.location.href = `/verify/${encodeURIComponent(id)}`;
+  };
 
   const context = useMemo(
     () => ({
@@ -136,16 +150,45 @@ function VerifyContent() {
 
       <main className="flex flex-1 flex-col items-center justify-center px-4 pb-12 pt-4">
         {!token && (
-          <div className="max-w-md text-center">
-            <ShieldAlert className="mx-auto mb-4 h-10 w-10 text-[#00d4ff]/50" aria-hidden />
-            <p className="font-syne text-lg text-[#00d4ff]/90">
-              INVALIDE — Lien incomplet
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-white/45">
-              Aucun jeton sécurisé n&apos;a été fourni dans l&apos;URL. Scannez le QR code officiel depuis un message
-              certifié BLOCKTRUST™ ou ouvrez le lien reçu de votre interlocuteur.
-            </p>
-          </div>
+          <>
+            <div className="mx-auto mt-8 w-full max-w-sm">
+              <p className="mb-3 text-center text-xs text-white/40">
+                Vérifier un badge manuellement
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="URL ou ID du badge…"
+                  aria-label="URL ou identifiant du badge à vérifier"
+                  className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#00d4ff]/50"
+                  value={manualIdInput}
+                  onChange={(e) => setManualIdInput(e.target.value)}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && handleManualVerify()
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={handleManualVerify}
+                  className="flex items-center gap-1.5 rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/20 px-4 py-2.5 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/30"
+                >
+                  <Search className="h-4 w-4 shrink-0" aria-hidden />
+                  Vérifier
+                </button>
+              </div>
+            </div>
+
+            <div className="mx-auto mt-10 max-w-md text-center">
+              <ShieldAlert className="mx-auto mb-4 h-10 w-10 text-[#00d4ff]/50" aria-hidden />
+              <p className="font-syne text-lg text-[#00d4ff]/90">
+                INVALIDE — Lien incomplet
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-white/45">
+                Aucun jeton sécurisé n&apos;a été fourni dans l&apos;URL. Scannez le QR code officiel depuis un message
+                certifié BLOCKTRUST™ ou ouvrez le lien reçu de votre interlocuteur.
+              </p>
+            </div>
+          </>
         )}
 
         {tokenFixApplied && (
