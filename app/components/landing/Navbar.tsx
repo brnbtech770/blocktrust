@@ -66,8 +66,7 @@ export default function Navbar() {
               <Link
                 key={href}
                 href={href}
-                className="text-sm font-medium transition-colors hover:text-white"
-                style={{ color: 'var(--bt-muted)' }}
+                className="text-white/60 hover:text-white text-sm transition"
               >
                 {label}
               </Link>
@@ -147,7 +146,7 @@ export default function Navbar() {
                 <Link
                   key={href}
                   href={href}
-                  className="py-3 px-4 rounded-lg text-sm font-medium text-white hover:bg-white/5"
+                  className="py-3 px-4 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition"
                   onClick={() => setMenuOpen(false)}
                 >
                   {label}
