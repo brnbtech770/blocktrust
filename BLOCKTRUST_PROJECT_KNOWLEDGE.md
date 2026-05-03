@@ -1,23 +1,21 @@
 # BlockTrust — Document de Référence Projet
 
-**Version:** 7.0 final  
-**Date:** 30 avril 2026  
+**Version:** 8.0 final  
+**Date:** 4 mai 2026  
 **Auteur:** Olivier Bernabé (BRNB TECH SAS)  
-**Statut:** Production live — 100% technique — Score 8.5/10
+**Statut:** Production live — 100% technique — Score 9/10  
 
 ---
 
 ## 1. VISION & POSITIONNEMENT
 
 ### Headlines validées (Deborah + Laurianne)
-> "La preuve que c'est vous. La certitude que c'est eux." ✅
+> "L'identité numérique qui protège vos échanges." ✅ (H1)
+> "La preuve que c'est vous. La certitude que c'est eux." ✅ (sous-titre cyan/gold)
 
-### Hero actuel
-- **Pill :** ✦ Certifié ✦ Protégé ✦ Infalsifiable (sans points séparateurs)
-- **H1 :** "La carte d'identité numérique de tout ce que vous envoyez."
-- **Sous-titre :** "La preuve que c'est vous. La certitude que c'est eux." (cyan/gold)
-- **CTA :** "Certifier mon identité" + "Inscription en 30 secondes — certification après abonnement"
-- **Stats :** Infalsifiable / Anti-usurpation / On-chain
+### Double dimension — Règle absolue
+- **Émission :** prouver que c'est bien VOUS qui envoyez
+- **Réception :** détecter que l'autre est bien qui il prétend être
 
 ### Positionnement — La 4ème couche
 | Solution | Ce qu'elle fait | Ce qu'elle NE fait PAS |
@@ -27,10 +25,6 @@
 | Équipe IT interne | Sécurise le SI entreprise | Ne certifie pas l'identité externe |
 | **BLOCKTRUST** | **Certifie votre identité + protège les menaces entrantes** | Complémentaire |
 
-### Double dimension — Règle absolue
-- **Émission :** prouver que c'est bien VOUS qui envoyez
-- **Réception :** détecter que l'autre est bien qui il prétend être
-
 ### Équipe (BRNB TECH SAS — transformation en cours)
 | Nom | Rôle | Capital |
 |-----|------|---------|
@@ -39,52 +33,42 @@
 | Déborah Bernabé épouse Slama | Marketing | 15% (nom propre) |
 | Laurianne Winter | DAF & Chef de projet | 15% (nom propre) |
 
-**Structure juridique en cours :**
-- BERNABÉ HOLDING SASU (100€ capital, Olivier 100%)
-- BRNB TECH SAS (1 000€ capital, 4 associés)
-- Les deux créées simultanément — juriste en charge
-- Banque : Qonto | APE : 6201Z
-- Contrat de licence marque BLOCKTRUST (Olivier → SAS) à prévoir
+**Structure juridique :**
+- BERNABÉ HOLDING SASU (100€) + BRNB TECH SAS (1 000€) — simultanément
+- Juriste en charge | Banque : Qonto | APE : 6201Z
 
 ---
 
 ## 2. PROPRIÉTÉ INTELLECTUELLE
 
-### Marque BLOCKTRUST
-- **Numéro INPI :** 5253718
-- **Date de dépôt :** 30 avril 2026
-- **Lieu :** INPI en ligne (92)
-- **Type :** Marque française — verbale
+- **Marque BLOCKTRUST** — n°5253718 — 30/04/2026 — INPI France
 - **Déposant :** Olivier Bernabé (nom propre)
 - **Classes :** 35, 38, 42, 45
-- **Symbole :** BLOCKTRUST™ (™ dans navbar + footer)
-- **EUIPO Europe :** à déposer dans 6 mois max (priorité unioniste)
-- **BLOCKTRUST SEAL :** à étudier ultérieurement
-
-### Protection de la technologie
-- Code source → droit d'auteur automatique
-- Architecture → secret des affaires (NDA)
-- Données → droit sui generis base de données
+- **Symbole :** BLOCKTRUST™ (navbar + footer)
+- **EUIPO Europe :** à déposer dans 6 mois max
+- **Contrat de licence** Olivier → BRNB TECH SAS à rédiger
 
 ---
 
 ## 3. STACK TECHNIQUE
 
 ```
-Framework    : Next.js 16.2.x (App Router) — package.json
+Framework    : Next.js 16.2.4 (App Router) — package.json ^16.2.4
 Language     : TypeScript (strict)
-Style        : TailwindCSS
-Auth         : NextAuth v5
-ORM          : Prisma 6 (@prisma/client 6.19.x) + prisma.config.ts
+Style        : TailwindCSS 4
+Auth         : NextAuth v5 (beta)
+ORM          : Prisma 6 (6.19.3) — schema prisma/ + prisma.config.ts
 DB           : PostgreSQL via Neon
 Paiements    : Stripe (subscriptions + Stripe Identity)
 Emails       : Resend (domaine blocktrust.tech vérifié)
 Storage      : Vercel Blob (blocktrust-blob, IAD1, Private)
-JWT          : jose (ES256 / RS256)
+JWT          : jose + clés PEM (algo selon déploiement : RS256 / ES256 selon paire)
 Blockchain   : Polygon Mainnet (Chain ID 137) via Alchemy
 Rate Limiting: Upstash Redis (distribué) + in-memory fallback
+Surveillance : @upstash/qstash — analyse globale auto-chaînée ~5 min + détection événementielle après chaque vérif (/api/verify)
 Monitoring   : Sentry (@sentry/nextjs — production uniquement)
-Proxy        : proxy.ts (migré depuis middleware.ts Next.js 16)
+Proxy        : proxy.ts (Next.js 16)
+IA Veille    : Claude Haiku 4.5 (Anthropic API) — ingest menaces RSS
 Déploiement  : Vercel (plan Hobby)
 Repo         : github.com/brnbtech770/blocktrust
 ```
@@ -92,16 +76,9 @@ Repo         : github.com/brnbtech770/blocktrust
 ### Charte graphique
 ```
 #0a1628 navy | #00d4ff cyan | #BDA76B gold | #E05252 rouge
-BLOCKTRUST™ = toujours majuscules
-KYC = jargon interne (jamais visible utilisateur)
+BLOCKTRUST™ = toujours majuscules — marque visuelle badge SVG (BlockTrustBadge) en UI
+KYC = jargon interne uniquement
 "contact/contacts" = remplace "entité/entités" côté utilisateur
-```
-
-### Imports critiques
-```typescript
-import { prisma } from '@/app/lib/db'
-import { auth } from '@/app/lib/auth-server'
-// AccountType : PERSONAL / BUSINESS
 ```
 
 ---
@@ -116,7 +93,7 @@ import { auth } from '@/app/lib/auth-server'
 | Famille | 14,99€ | 5 | 100 | 100 |
 | Famille+ | 24,99€ | 10 | 300 | 300 |
 
-### B2B (pricing dégressif par user — à implémenter)
+### B2B (pricing dégressif par user — à implémenter Stripe)
 | Plan | Prix/mois | Users | Vérifs/mois | White Label |
 |------|-----------|-------|-------------|-------------|
 | Starter | 29€ | 3 | 200 | ✅ |
@@ -125,65 +102,87 @@ import { auth } from '@/app/lib/auth-server'
 | Enterprise | Sur devis | Illimité | Illimité | ✅ |
 
 **Pricing dégressif validé Deborah/Laurianne :**
-- 1-3 users : 9,99€/user
-- 4-10 users : 7,99€/user
-- 11-50 users : 5,99€/user
-- 50+ : Enterprise sur devis
-*(à implémenter dans Stripe — tranches à finaliser)*
-
-**Toggle annuel : -20% engagement annuel**
+- 1-3 users : 9,99€/user | 4-10 : 7,99€/user | 11-50 : 5,99€/user
 
 ---
 
 ## 5. FONCTIONNALITÉS EN PRODUCTION
 
-### Auth & Sécurité
-- Google OAuth, Email/Password, Magic Link
-- Proxy Edge (proxy.ts — Next.js 16)
-- Upstash Redis rate limiting distribué
-- Sentry monitoring production
+### Landing Page (ordre des sections)
+1. Navbar (BLOCKTRUST™, Comment ça marche, Vérifier, Tarifs, Actualités → `/menaces`, FAQ, Connexion, CTA)
+2. Hero (H1 identité protégée + sous-titre cyan/gold + stats)
+3. Problem (4 cards dont "Un faux vous circule déjà")
+4. QuickUnderstand (3 cas concrets : RIB / Email frauduleux / Fournisseur)
+5. Categories (anti-objection antivirus)
+6. **ThreatAlert** (menaces permanentes + stats ×2/20+/90%)
+7. Solution (3 étapes + alerte usurpation)
+8. Particuliers (4 cards dont protection menaces entrantes)
+9. Entreprises (5 cards dont Trust Circle B2B + FOVI)
+10. Integration (4 tabs)
+11. PricingTeaser
+12. FinalCTA
+13. Footer (BLOCKTRUST™, CGU ✅, Privacy ✅)
 
-### Paiement & KYC
-- Stripe checkout B2C + B2B (14 Price IDs)
-- Stripe Identity — "Vérification d'identité" côté utilisateur
-- INSEE API Sirene 3.11 (SIRET B2B)
+### Onboarding (4 interventions)
+- QuickUnderstand : 3 cas concrets icônes Lucide
+- /pricing : badge inclus sans frais cachés
+- /auth/register : 3 étapes avant formulaire
+- Dashboard : guide PAR OÙ COMMENCER (si 0 certificat)
 
-### Certificats & Cryptographie
-- Signatures ES256 + SHA-256
-- QR code rotatif dynamique
+### Page /verify — Architecture 3 niveaux
+| Niveau | Page | Accès | Données |
+|--------|------|-------|---------|
+| Public | `/verify` | Tout le monde | Verdict + nom + date |
+| Abonné | `/verify/[id]` | Compte + abonnement | Trust Score + Polygon + Hash |
+| Admin | `/admin/certificates/[id]` | Admin | Tout + logs + actions |
+
+**Verdicts /verify :**
+- ✅ Vert → VALIDE
+- 🟡 Orange → EXPIRÉ  
+- 🔴 Rouge → RÉVOQUÉ / INVALIDE
+- 🚨 Rouge vif animé → FALSIFIÉ
+
+**Trust Circle Cas 1/Cas 2 :**
+- Cas 1 (partenaire sans badge) → bannière orange ⚠️
+- Cas 2 (partenaire avec badge mais mismatch) → 🚨 FRAUDE CERTAINE
+- Partenaire certifié confirmé → pastille verte ✅
+
+### Agent de Surveillance — Architecture réelle
+```
+Option C (immédiat) : chaque vérif persistée (/api/verify/[id])
+  → after(runEventualAnomalyCheck) — non bloquant
+  → AdminAlert temps réel (volume / IPs / agrégation fraude — dédup ~45 min)
+
+Option A (~5 min) : POST /api/cron/qstash-surveillance — signature Upstash (Receiver)
+  → runAnomalyDetection() + retry Polygon optionnel
+  → scheduleNextSurveillanceRun() (delay 300 s)
+
+Cron quotidien Vercel 03h00 UTC (/api/cron/anomaly-detection, Bearer CRON_SECRET)
+  → même analyse globale + retry Polygon — amorce Option A si QSTASH_TOKEN défini (fire-and-forget)
+```
+
+**Règles de détection (vue synthétique) :**
+
+| Vue | Exemples de seuils / règles |
+|-----|-------------------------------|
+| Temps réel (par cert., 1h) | Volume scan >20 \| IPs distinctes >10 \| cumul `FRAUD_ALERT` ; dédoublonnage ~45 min |
+| Globale (cron / QStash) | Volume/cert >50 en 1h \| taux global `FRAUD_ALERT` >10 % /24h \| certificat `REVOKED` encore vu |
+
+### Veille Cyber — Agent IA
+- **Sources :** CERT-FR, Cybermalveillance.gouv.fr, ZATAZ
+- **Fréquence :** cron quotidien 5h UTC (`/api/cron/threat-articles`)
+- **IA :** Claude Haiku 4.5 (Anthropic API) — résumés FR (`ANTHROPIC_MODEL` surchargeable)
+- **Table :** ThreatArticle (Prisma)
+- **Page :** /menaces (publique, SSR)
+- **Navbar :** lien "Actualités" → /menaces
+- **Coût :** ~1€/mois (ordre de grandeur selon volumes)
 
 ### Blockchain Polygon Mainnet RÉEL ✅
 - Burn address `0x000000000000000000000000000000000000dEaD`
 - Wallet `BlockTrust Anchor` (~122 POL)
 - Ancrage auto + retry + email confirmation PolygonScan
 
-### Landing Page (état 30/04/2026)
-**Ordre des sections :**
-1. Navbar (BLOCKTRUST™, CTA "Certifier mon identité")
-2. Hero (pill ✦ Certifié ✦ Protégé ✦ Infalsifiable, sous-titre cyan/gold)
-3. Problem (4 cards dont "Un faux vous circule déjà" rouge)
-4. QuickUnderstand (3 cas concrets : RIB / Email frauduleux typosquatting / Nouveau fournisseur)
-5. Categories (anti-objection antivirus — 3 cartes hiérarchisées)
-6. Solution (3 étapes + alerte usurpation identité)
-7. Particuliers (4 cards dont protection menaces entrantes)
-8. Entreprises (5 cards dont Trust Circle B2B + Network / partenaires certifiés)
-9. Integration (4 tabs)
-10. PricingTeaser ("À partir de 4,99€" + "badge inclus sans frais cachés")
-11. FinalCTA
-12. Footer (BLOCKTRUST™, CGU ✅ /cgu, Confidentialité ✅ /privacy, LinkedIn)
-
-**Onboarding (4 interventions) :**
-- QuickUnderstand : 3 cas concrets avec icônes Lucide charte
-- /pricing : badge inclus sans frais cachés
-- /auth/register : 3 étapes avant formulaire
-- Dashboard : guide dynamique PAR OÙ COMMENCER (si 0 certificat) — lien étape 3 → /dashboard/certificates
-
-### Effets visuels
-- Halos néon CSS (text-shadow) sur labels de section
-- Fond quadrillé supprimé
-- Icônes Lucide uniquement (pas d'emojis dans QuickUnderstand)
-
-### Emails (9 templates Resend)
+### Emails (9 templates Resend — principaux métier transactionnel)
 | Template | Déclencheur |
 |----------|-------------|
 | CertificateAnchoredEmail | Ancrage Polygon — lien PolygonScan |
@@ -196,63 +195,37 @@ import { auth } from '@/app/lib/auth-server'
 | MagicLinkEmail | Connexion magic link |
 | PasswordResetEmail | Réinitialisation |
 
----
-
-## 6. ROADMAP TRUST CIRCLE — CAS 1 / CAS 2
-
-### Cas 1 — Partenaire SANS badge
-→ Alerte orange : "⚠️ Ce contact ne fait pas partie de votre réseau certifié."
-
-### Cas 2 — Partenaire AVEC badge
-→ Alerte rouge : "🚨 FRAUDE DÉTECTÉE — identité ne correspond pas."
-
-### Priorité
-| Feature | Effort |
-|---------|--------|
-| Enrichir /verify logique Cas 1/2 | 2 jours |
-| Alertes dashboard Trust Circle | 3 jours |
-| Extension Chrome TrustScan | 2-3 mois |
-| Plugin email Outlook/Gmail | 2-3 mois |
+*(Dossier `emails/` : templates additionnels hors cette liste courte.)*
 
 ---
 
-## 7. FEEDBACKS RÉSEAU
+## 6. SÉCURITÉ
 
-### F_44_FREELANCE Jessica → corrigés ✅
-### H_39_Entrepreneur → corrigés ✅
-### H_65_PDG
-- Objection "équipe IT" → à traiter dans plaquette B2B
-- Pricing trop cher → débat en cours
+### Architecture en couches
+```
+Couche 1 : Proxy Edge (proxy.ts)
+Couche 2 : Upstash Redis rate limiting distribué
+Couche 3 : NextAuth + JWT fail-closed
+Couche 4 : Server Components auth() + redirect()
+Couche 5 : Prisma ownership checks
+Couche 6 : timingSafeEqual hash comparison
+Couche 7 : Sentry monitoring production
+Couche 8 : Agent surveillance événementiel + QStash + cron quotidien
+```
 
-### FEEDBACKS_BOARD Laurianne/Deborah → corrigés ✅
-- Headline validée, "Ancré"→"Protégé", "entité"→"contact"
-- Pricing dégressif → à implémenter
-
----
-
-## 8. STRATÉGIE COMMERCIALE
-
-### Pivot stratégique (validé 28/04)
-**Cibles prioritaires :** grandes entreprises + banques + organismes publics
-Particuliers en second — réseaux sociaux après INPI + SAS
-
-### Objections préparées
-| Objection | Réponse |
-|-----------|---------|
-| "On a déjà un antivirus" | BLOCKTRUST certifie l'identité externe |
-| "On a déjà une équipe IT" | IT = sécurité interne, BLOCKTRUST = identité externe |
-| "C'est trop cher" | 1 fraude évitée > 12 mois d'abonnement |
-| "Mes clients ne connaissent pas BLOCKTRUST" | Premier dans votre réseau = avantage concurrentiel |
-
-### Leviers actifs
-- Agence immo Olivier (dogfood)
-- Koray (connecteur banques/crypto)
-- Juriste/formaliste (client direct + prescripteur)
-- Réseaux sociaux → après INPI ✅ + SAS officielle
+### BLOCKTRUST vs Phishing-as-a-Service
+| Vecteur d'attaque | Aujourd'hui | Extension Chrome (futur) |
+|---|---|---|
+| Email typosquatté | ⚠️ Partiel | ✅ Automatique |
+| Faux document/RIB | ✅ Complet | ✅ |
+| Faux site web | ✅ QR invalide | ✅ |
+| Usurpation partenaire certifié | ✅ Cas 1/2 | ✅ |
+| SMS phishing | ❌ | ❌ |
+| Contournement 2FA (AiTM) | ❌ | ❌ |
 
 ---
 
-## 9. VARIABLES VERCEL (toutes configurées)
+## 7. VARIABLES VERCEL (toutes configurées)
 
 | Variable | Statut |
 |----------|--------|
@@ -268,17 +241,22 @@ Particuliers en second — réseaux sociaux après INPI + SAS
 | CRON_SECRET | ✅ |
 | ADMIN_EMAILS | ✅ |
 | DATABASE_URL | ✅ |
-| POLYGON_RPC_URL | ✅ Alchemy Mainnet |
+| POLYGON_RPC_URL | ✅ Alchemy |
 | POLYGON_CHAIN_ID | ✅ 137 |
 | POLYGON_PRIVATE_KEY | ✅ Sensitive |
 | POLYGON_CONTRACT_ADDRESS | ✅ burn address |
 | UPSTASH_REDIS_REST_URL/TOKEN | ✅ Sensitive |
+| NEXT_PUBLIC_APP_URL | ✅ URL publique (QStash, webhooks, OpenGraph) |
 | NEXT_PUBLIC_SENTRY_DSN | ✅ |
 | SENTRY_AUTH_TOKEN | ✅ Sensitive |
+| ANTHROPIC_API_KEY | ✅ Sensitive |
+| QSTASH_TOKEN | ✅ Sensitive |
+| QSTASH_CURRENT_SIGNING_KEY | ✅ Sensitive |
+| QSTASH_NEXT_SIGNING_KEY | ✅ Sensitive |
 
 ---
 
-## 10. SUPPORTS & OUTILS
+## 8. SUPPORTS & OUTILS
 
 | Outil | Usage |
 |-------|-------|
@@ -286,73 +264,75 @@ Particuliers en second — réseaux sociaux après INPI + SAS
 | GitHub brnbtech770/blocktrust | Versioning |
 | Vercel | Déploiement auto |
 | Neon PostgreSQL | Base de données |
-| Prisma | ORM |
+| Prisma 6 | ORM |
 | Vercel Blob | Storage documents |
 | Stripe + Stripe Identity | Paiements + KYC |
 | INSEE API Sirene 3.11 | Vérification SIRET |
 | NextAuth v5 | Auth multi-provider |
 | Upstash Redis | Rate limiting |
+| Upstash QStash | Surveillance périodique chainée (~5 min) |
 | Sentry | Monitoring prod |
 | Polygon + Alchemy | Blockchain |
 | MetaMask | Wallet anchor |
 | Resend + React Email | Emails transactionnels |
+| Anthropic API (Claude Haiku 4.5) | Veille cyber IA |
 | Lovable | Prototype référence |
 | Google Drive | Docs équipe |
-| INPI | Marque déposée ✅ |
+| INPI | Marque n°5253718 ✅ |
 | Qonto | Banque (à ouvrir) |
 
 ---
 
-## 11. CHANTIERS RESTANTS
+## 9. CHANTIERS RESTANTS
 
-### 🔴 Commercial
-- [ ] 1er client B2B signé (priorité absolue)
+### 🔴 Commercial (priorité absolue)
+- [ ] 1er client B2B signé
 - [ ] Appel Koray
+- [ ] Revue Jérôme Benbihi (Adenis) — gratuit
 - [ ] Plaquette B2B (Deborah)
-- [ ] Réponse objection "équipe IT" dans plaquette
+- [ ] Réseaux sociaux → après SAS officielle
 
-### 🔴 Juridique
+### 🔴 Juridique (Laurianne)
 - [ ] Création BERNABÉ HOLDING SASU + BRNB TECH SAS
 - [ ] Ouverture Qonto (2 comptes)
-- [ ] Contrat de licence marque Olivier → SAS
-- [ ] EUIPO Europe (dans 6 mois max — priorité unioniste)
+- [ ] Contrat licence marque Olivier → SAS
+- [ ] EUIPO Europe (6 mois max)
 - [ ] DPIA + avocat
-- [ ] CGU/CGV + avocat
+- [ ] CGU/CGV — encadrer "certifié" et "alerte immédiate"
 - [ ] SOPs incident response + RGPD
 
 ### 🟡 Produit
 - [ ] Pricing B2B dégressif par user (Stripe)
 - [ ] Accordion détail par plan /pricing
-- [ ] Trust Circle Cas 1/Cas 2 sur /verify
 - [ ] Témoignages + chiffres réels landing
 - [ ] SASU → SAS dans le code (après immatriculation)
+- [ ] Boutons admin AIAlert (Investiguer/Résoudre/Ignorer)
 
 ### 🔵 Long terme
-- Extension Chrome TrustScan
-- Plugin email Outlook/Gmail
-- App mobile + NFC
+- Extension Chrome TrustScan (3-4 mois)
+- Plugin email Outlook/Gmail (4-6 mois)
+- App mobile + NFC (6-12 mois)
 - SSO / SAML + SCIM Enterprise
 - WAF Cloudflare + pentest
 - ISO 27001
 
 ---
 
-## 12. OBJECTIFS 9-10/10
+## 10. OBJECTIFS 9-10/10
 
-Score actuel : **8.5/10**
+Score actuel : **9/10**
 
 | Action | Impact |
 |--------|--------|
 | 1 client B2B signé | +++++ |
 | Témoignages réels | +++ |
-| DPIA + SOPs + EUIPO | ++ |
-| Trust Circle Cas 1/2 | +++ |
+| EUIPO + DPIA + SOPs | ++ |
 | Extension Chrome | ++ |
 | Partenariats prescripteurs | +++++ |
 
 ---
 
-## 13. RÈGLES ABSOLUES
+## 11. RÈGLES ABSOLUES
 
 - PrismaClient → `@/app/lib/db`
 - userId → `session.user.id` uniquement
@@ -360,16 +340,16 @@ Score actuel : **8.5/10**
 - POLYGON_PRIVATE_KEY jamais loggée
 - "KYC" jamais visible utilisateur
 - "entité" → "contact" côté utilisateur
-- Silver/bronze/gold supprimés
 - BLOCKTRUST™ = majuscules toujours
+- Stats non vérifiables interdites sur landing
 
 ---
 
-## 14. DOCUMENTS PRODUITS
+## 12. DOCUMENTS PRODUITS
 
 | Document | Contenu |
 |----------|---------|
-| BLOCKTRUST_PROJECT_KNOWLEDGE.md | Ce fichier (référence repo) |
+| BLOCKTRUST_PROJECT_KNOWLEDGE.md | **Ce fichier** (référence projet v8) |
 | BLOCKTRUST_Plan_Juridique_Laurianne.docx | DPIA + ISO + CGU |
 | BLOCKTRUST_Depot_Marque_INPI.docx | Dossier dépôt INPI |
 | BLOCKTRUST_Plan_Commercial_Deborah_Laurianne.docx | Plan 4 semaines |
@@ -378,32 +358,27 @@ Score actuel : **8.5/10**
 
 ---
 
-## 15. ACCÈS
+## 13. ACCÈS
 
 | Ressource | Info |
 |-----------|------|
 | Production | https://blocktrust.tech |
 | Admin | https://blocktrust.tech/admin/dashboard |
+| Menaces | https://blocktrust.tech/menaces |
 | GitHub | github.com/brnbtech770/blocktrust |
 | Vercel | vercel.com → blocktrust-mvp |
 | Alchemy | dashboard.alchemy.com |
-| Upstash | console.upstash.com |
+| Upstash | console.upstash.com (Redis + QStash) |
 | Sentry | sentry.io → brnb-tech/javascript-nextjs |
+| Anthropic | console.anthropic.com |
 | PolygonScan | polygonscan.com |
-| INPI | depot.inpi.fr (marque n°5253718 déposée) |
+| INPI | depot.inpi.fr (marque n°5253718) |
 | Support | support@blocktrust.tech |
 | Commercial | commercial@blocktrust.tech |
 
 ---
 
-### Page /how-to — Vérification
-
-- Sous-titre gold (desktop single line) sous « Comment fonctionne la vérification ? » :  
-  *De l'émetteur au verdict — chaque étape est cryptographique, traçable et ancrée sur Polygon.*
-
----
-
-*Mis à jour le 30 avril 2026 — Session Claude*  
-*Milestones : INPI n°5253718 ✅ + Technique 100% + Onboarding + Protection menaces entrantes*  
-*Règle absolue : ce fichier est mis à jour après chaque session*  
+*Mis à jour le 4 mai 2026 — Session Cursor · aligné codebase `main`*
+*Milestones : Agent surveillance événementiel + QStash + Veille cyber IA + Trust Circle Cas 1/2 + Page /verify + Logo badge officiel défaut UI + INPI ✅*
+*Règle absolue : ce fichier est mis à jour après chaque session*
 *→ Uploader dans Project Knowledge Claude + commit GitHub*
