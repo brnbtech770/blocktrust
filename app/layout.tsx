@@ -28,7 +28,7 @@ const ICON_CACHE_QUERY = "v=badge-svg-2";
 
 const SITE_TITLE = "BLOCKTRUST™ — Certification d'identité numérique";
 const SITE_DESCRIPTION =
-  "CV, devis, contrat, document important. BlockTrust prouve que c'est bien vous — et que rien n'a été modifié. Vérifiable par n'importe qui, en 1 scan.";
+  "L'identité numérique qui protège vos échanges. Prouvez qui vous êtes, vérifiez à qui vous parlez et certifiez chaque interaction — vérifiable par n'importe qui, en 1 scan.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
