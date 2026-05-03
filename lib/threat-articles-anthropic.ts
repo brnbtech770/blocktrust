@@ -15,7 +15,7 @@ function extractJsonObject(text: string): { summary: string; score: number } | n
 
     if (
       typeof parsed.summary === "string" &&
-      parsed.summary.trim().length > 10
+      parsed.summary.trim().length >= 5
     ) {
       let score = 50
       if (typeof parsed.score === "number" && !Number.isNaN(parsed.score)) {
@@ -45,8 +45,10 @@ export async function summarizeThreatForBlockTrust(input: {
   const key = process.env.ANTHROPIC_API_KEY?.trim()
   if (!key) return null
 
+  /** Modèle par défaut aligné deprecation Haiku 3.5 → Haiku 4.5 */
   const model =
-    process.env.ANTHROPIC_MODEL?.trim() || "claude-3-5-haiku-20241022"
+    process.env.ANTHROPIC_MODEL?.trim() ||
+    "claude-haiku-4-5-20251001"
 
   const userBlock = [
     `Source: ${input.source}`,
@@ -74,7 +76,7 @@ ${userBlock}`
     },
     body: JSON.stringify({
       model,
-      max_tokens: 500,
+      max_tokens: 768,
       messages: [{ role: "user", content: prompt }],
     }),
   })
@@ -88,7 +90,20 @@ ${userBlock}`
   const data = (await res.json()) as {
     content?: Array<{ type?: string; text?: string }>
   }
-  const text = data.content?.find((b) => b.type === "text")?.text ?? ""
+
+  /** Plusieurs blocs `text` possibles avec les modèles récents */
+  const text =
+    data.content
+      ?.filter(
+        (
+          b,
+        ): b is { type: "text"; text: string } =>
+          b?.type === "text" && typeof b.text === "string",
+      )
+      .map((b) => b.text.trim())
+      .filter(Boolean)
+      .join("\n") ?? ""
+
   const parsed = extractJsonObject(text)
   if (!parsed) {
     console.error("[anthropic-threat] JSON parse failed", text.slice(0, 400))
