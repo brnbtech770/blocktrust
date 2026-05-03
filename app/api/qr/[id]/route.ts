@@ -1,5 +1,5 @@
 // app/api/qr/[id]/route.ts
-// Génère un QR code pour un certificat
+// Génère un QR code pour un certificat (pas d’écriture Verification — pas d’hook agent événementiel ici).
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'

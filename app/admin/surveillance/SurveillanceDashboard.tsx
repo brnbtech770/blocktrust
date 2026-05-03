@@ -88,7 +88,8 @@ export default function SurveillanceDashboard() {
             Surveillance IA — Détection d&apos;anomalies
           </h1>
           <p className="mt-2 text-sm" style={{ color: 'var(--bt-muted)' }}>
-            Agent TypeScript exécuté via Vercel Cron (toutes les 15 min) ou manuellement ci-dessous.
+            Surveillance temps réel à chaque scan · Analyse globale via QStash toutes les 5 min ·
+            Analyse manuelle disponible ci-dessous.
           </p>
         </div>
         <button

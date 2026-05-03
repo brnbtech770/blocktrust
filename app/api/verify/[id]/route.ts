@@ -2,7 +2,7 @@
 // Route publique de vérification V2 — rate limit, anti-fraude, en-têtes no-store
 // ============================================================
 
-import { NextRequest, NextResponse } from 'next/server'
+import { after, NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 import { hashIp } from '@/app/lib/auth'
 import { auth } from '@/app/lib/auth-server'
@@ -16,6 +16,7 @@ import {
   logRateLimitedVerification,
   verifyRateLimitHeaders,
 } from '@/lib/verify-fraud'
+import { runEventualAnomalyCheck } from '@/lib/agents/eventual-anomaly-check'
 
 function quotaJson(remaining: number, limit: number) {
   const unlimited = limit === Number.POSITIVE_INFINITY
@@ -189,6 +190,11 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           },
         },
       })
+      after(() => {
+        runEventualAnomalyCheck(certificate.id, session.user.id).catch((err: unknown) =>
+          console.error('[anomaly]', err)
+        )
+      })
       return NextResponse.json(
         {
           status: 'REVOKED',
@@ -353,6 +359,12 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           ...(anomalyMeta ? { anomaly: anomalyMeta } : {}),
         },
       },
+    })
+
+    after(() => {
+      runEventualAnomalyCheck(certificate.id, session.user.id).catch((err: unknown) =>
+        console.error('[anomaly]', err)
+      )
     })
 
     if (fraudAlert) {
