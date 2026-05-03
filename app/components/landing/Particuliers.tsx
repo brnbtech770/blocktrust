@@ -28,7 +28,7 @@ const cases: UseCase[] = [
   {
     icon: ShieldAlert,
     title: "Protégez-vous des menaces que vous recevez",
-    text: "Faux RIB, fausse banque, faux propriétaire, faux employeur — vos contacts de confiance sont certifiés. Toute tentative d'usurpation déclenche une alerte immédiate.",
+    text: "Vos contacts de confiance certifiés : banque, mutuelle, Ameli, médecin, employeur — toute tentative d'usurpation déclenche une alerte immédiate.",
     example: "Ex : vous recevez un email de \"votre banque\" — BLOCKTRUST signale instantanément qu'il n'est pas certifié.",
   },
 ];
@@ -41,14 +41,17 @@ export default function Particuliers() {
     >
       <Reveal className="mx-auto max-w-3xl text-center overflow-visible">
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
-          Pour les particuliers
+          Pour les particuliers &amp; professionnels
         </p>
         <h2 className="font-syne mx-auto max-w-2xl pb-2 text-2xl font-semibold leading-normal text-white overflow-visible sm:text-3xl lg:text-4xl">
           Protégez votre <span className="text-bt-cyan">réputation personnelle</span> en ligne
         </h2>
+        <p className="text-white/40 text-sm text-center mb-8 mt-4 max-w-xl mx-auto">
+          Particuliers, indépendants, freelances — BLOCKTRUST s&apos;adapte à votre usage
+        </p>
       </Reveal>
 
-      <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+      <div className="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
         {cases.map((c, i) => {
           const Icon = c.icon;
           return (

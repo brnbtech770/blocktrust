@@ -28,13 +28,17 @@ export default function Hero() {
 
           {/* H1 */}
           <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-[28px] font-bold leading-[1.15] tracking-tight text-white overflow-visible sm:mt-6 sm:text-4xl lg:text-5xl">
-            La carte d&apos;identité numérique de tout ce que vous envoyez.
+            L&apos;identité numérique qui protège vos échanges.
           </h1>
 
           {/* Sous-titre — headline validée équipe (Deborah + Laurianne 28/04/2026) */}
           <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl text-left font-sans text-lg leading-relaxed text-white sm:mt-6 sm:text-xl">
             La preuve que c&apos;est <span className="font-semibold text-bt-cyan">vous</span>.
             La certitude que c&apos;est <span className="font-semibold text-gold">eux</span>.
+          </p>
+          <p className="opacity-0 animate-fade-up [animation-delay:360ms] text-white/40 text-sm leading-relaxed max-w-xl mt-2">
+            Prouvez qui vous êtes, vérifiez à qui vous parlez et certifiez chaque interaction — vérifiable
+            par n&apos;importe qui, en 1 scan, sans compte BLOCKTRUST.
           </p>
 
           {/* CTAs + micro-copy */}
@@ -54,7 +58,7 @@ export default function Hero() {
               </Link>
             </div>
             <p className="text-xs font-light text-white/60">
-              Inscription en 30 secondes — certification après abonnement
+              Inscription en 30 secondes · certification après abonnement · vérification gratuite pour tous
             </p>
           </div>
 

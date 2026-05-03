@@ -649,6 +649,10 @@ const FAQ_ITEMS: { q: string; a: string }[] = [
     a: "Instantanée — moins de 2 secondes. Le verdict s'affiche en temps réel sur la page de vérification.",
   },
   {
+    q: "Comment fonctionne le badge ?",
+    a: "Quand vous créez un badge BLOCKTRUST, nous générons une empreinte unique de votre identité — comme une signature manuscrite, mais impossible à copier ou falsifier. Cette empreinte est enregistrée de façon permanente sur la blockchain Polygon, une base de données publique et immuable. En 1 scan de votre QR code, n'importe qui peut vérifier en temps réel que c'est bien vous — sans application, sans compte, sans friction.",
+  },
+  {
     q: "Est-ce que mon badge peut être copié ?",
     a: "Non — le QR code est rotatif et invalide après chaque scan. Chaque certificat est ancré sur la blockchain Polygon, ce qui rend toute falsification cryptographiquement détectable.",
   },
