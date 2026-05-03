@@ -87,7 +87,7 @@ function ResetPasswordContent() {
     return (
       <div style={{ padding: "48px 16px" }}>
         <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
-          <Logo mark="badge" size="lg" withText href="/" className="drop-shadow-[0_0_14px_rgba(0,212,255,0.45)]" />
+          <Logo size="lg" withText href="/" className="drop-shadow-[0_0_14px_rgba(0,212,255,0.45)]" />
         </div>
         <div className={cardClass}>
           <h1 className="font-syne mb-4 text-xl font-bold tracking-tight text-gold">
@@ -109,7 +109,7 @@ function ResetPasswordContent() {
   return (
     <div style={{ padding: "48px 16px" }}>
       <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
-        <Logo mark="badge" size="lg" withText href="/" className="drop-shadow-[0_0_14px_rgba(0,212,255,0.45)]" />
+        <Logo size="lg" withText href="/" className="drop-shadow-[0_0_14px_rgba(0,212,255,0.45)]" />
       </div>
       <div className={cardClass}>
         <h1 className="font-syne mb-6 text-2xl font-bold tracking-tight text-gold">

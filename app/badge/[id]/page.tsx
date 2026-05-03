@@ -1,6 +1,7 @@
 import { prisma } from "@/app/lib/db";
 import { notFound } from "next/navigation";
 import QRCodeImage from "@/app/components/QRCode";
+import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 
 export default async function BadgePage({
   params,
@@ -69,16 +70,16 @@ export default async function BadgePage({
     <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-blue-950 flex items-center justify-center p-4">
       <div className="bg-blue-900/30 backdrop-blur-lg p-8 rounded-3xl border border-blue-800/50 max-w-md w-full">
         <div className="text-center mb-6">
-          <div className="relative inline-block mb-2">
-            <span className="text-4xl block">🛡️</span>
-            <div className="absolute inset-0 text-4xl blur-sm opacity-50">🛡️</div>
+          <div className="mb-4 flex flex-col items-center gap-3">
+            <BlockTrustBadge
+              size={56}
+              instanceId={`badge-static-${certificate.id.slice(0, 8)}`}
+              className="mx-auto shrink-0 drop-shadow-[0_0_14px_rgba(0,212,255,0.45)]"
+            />
+            <h1 className="font-syne text-2xl font-bold leading-none tracking-wider neon-cyan">
+              BLOCKTRUST<span className="text-[10px] align-super">™</span>
+            </h1>
           </div>
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent relative">
-            BLOCKTRUST
-            <span className="absolute inset-0 text-2xl font-bold bg-gradient-to-r from-cyan-400 to-cyan-300 bg-clip-text text-transparent blur-[2px] opacity-30">
-              BLOCKTRUST
-            </span>
-          </h1>
           <p className="text-gray-300 text-sm mt-2">Certificat de confiance vérifié</p>
         </div>
 

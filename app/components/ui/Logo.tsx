@@ -9,7 +9,7 @@ interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'hero'
   withText?: boolean
   href?: string
-  /** PNG statique (/logo.png) ou badge SVG officiel (aligné Navbar / landing). */
+  /** Badge SVG officiel (défaut, aligné Navbar / landing) ou PNG (/logo.png) si besoin. */
   mark?: 'png' | 'badge'
   /** Classes Tailwind (ex. taille responsive sur le conteneur image) */
   className?: string
@@ -26,7 +26,7 @@ export function Logo({
   size = 'md',
   withText = true,
   href = '/',
-  mark = 'png',
+  mark = 'badge',
   className = '',
 }: LogoProps) {
   const px = sizes[size] ?? sizes.md

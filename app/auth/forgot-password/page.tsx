@@ -28,7 +28,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="px-4 py-12">
       <div className="mb-6 flex justify-center">
-        <Logo mark="badge" size="lg" withText href="/" className="drop-shadow-[0_0_14px_rgba(0,212,255,0.45)]" />
+        <Logo size="lg" withText href="/" className="drop-shadow-[0_0_14px_rgba(0,212,255,0.45)]" />
       </div>
       <div className="mx-auto max-w-[420px] rounded-xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm transition-all hover:border-gold/30">
         <h1 className="font-syne mb-6 text-2xl font-bold tracking-tight text-white">
