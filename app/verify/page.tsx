@@ -232,6 +232,9 @@ function VerifyContent() {
             >
               BLOCKTRUST™ — Certifier votre identité →
             </a>
+            <p className="mt-4 text-xs text-white/30">
+              Connectez-vous pour voir si ce contact fait partie de votre réseau de confiance
+            </p>
           </div>
         )}
 

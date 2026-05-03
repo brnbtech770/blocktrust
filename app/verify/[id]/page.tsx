@@ -5,6 +5,7 @@
 
 import { headers } from 'next/headers'
 import Link from 'next/link'
+import { AlertTriangle, ShieldAlert, ShieldCheck } from 'lucide-react'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
@@ -63,6 +64,53 @@ function tryJtiFromUnverifiedJwt(raw: string): string | null {
 }
 
 type SignatureForVerify = Prisma.SignatureGetPayload<{ include: typeof signatureVerifyInclude }>
+
+/**
+ * Contacts Trust Circle confirmés (user-centric), des deux côtés de la relation.
+ */
+async function collectTrustedPeerUserIds(viewerId: string): Promise<Set<string>> {
+  const [outMutual, outConfirmed, inbound] = await Promise.all([
+    prisma.userTrustRelation.findMany({
+      where: {
+        fromUserId: viewerId,
+        isMutual: true,
+        toUserId: { not: null },
+      },
+      select: { toUserId: true },
+    }),
+    prisma.userTrustRelation.findMany({
+      where: {
+        fromUserId: viewerId,
+        isMutual: false,
+        status: 'CONFIRMED',
+        toUserId: { not: null },
+      },
+      select: { toUserId: true },
+    }),
+    prisma.userTrustRelation.findMany({
+      where: { toUserId: viewerId, status: 'CONFIRMED' },
+      select: { fromUserId: true },
+    }),
+  ])
+
+  const set = new Set<string>()
+  for (const row of outMutual) if (row.toUserId) set.add(row.toUserId)
+  for (const row of outConfirmed) if (row.toUserId) set.add(row.toUserId)
+  for (const row of inbound) set.add(row.fromUserId)
+  return set
+}
+
+/** Certificats « Portfolio » connus pour l’utilisateur émetteur (aligné KYC BlockTrust). */
+async function issuerCertificatePortfolioIds(issuerUserId: string): Promise<Set<string>> {
+  const rows = await prisma.certificate.findMany({
+    where: {
+      entity: { userId: issuerUserId },
+      status: { in: ['ACTIVE', 'ANCHORED', 'PENDING'] },
+    },
+    select: { id: true },
+  })
+  return new Set(rows.map((r) => r.id))
+}
 
 async function resolveSignatureForPublicVerify(rawId: string): Promise<SignatureForVerify | null> {
   const lookupKey = tryJtiFromUnverifiedJwt(rawId) ?? rawId
@@ -344,6 +392,56 @@ export default async function VerifyPublicPage({
     })
   }
 
+  const viewerUserId = session.user.id
+  const issuerUserId = entity.userId
+
+  type TrustUiKind = null | 'cas1' | 'cas2' | 'in_network'
+  let trustUi: TrustUiKind = null
+
+  if (viewerUserId !== issuerUserId) {
+    const peers = await collectTrustedPeerUserIds(viewerUserId)
+    const inCircle = peers.has(issuerUserId)
+    if (!inCircle) {
+      trustUi = 'cas1'
+    } else {
+      const portfolio = await issuerCertificatePortfolioIds(issuerUserId)
+      if (portfolio.has(cert.id)) trustUi = 'in_network'
+      else trustUi = 'cas2'
+    }
+  }
+
+  if (trustUi === 'cas2') {
+    await prisma.verification.create({
+      data: {
+        certificateId: cert.id,
+        ipHash: hashedIp,
+        userAgent: userAgent.slice(0, 500),
+        referer,
+        result: 'FRAUD_ALERT',
+        signatureJti: signature.jti,
+        metadata: {
+          verdict: 'TRUST_CIRCLE_CERT_MISMATCH',
+          referer,
+          verifierUserId: viewerUserId,
+          timestamp: new Date().toISOString(),
+        },
+      },
+    })
+    await createAdminFraudAlert({
+      type: 'FRAUD_ALERT',
+      entityId: entity.id,
+      certificateId: cert.id,
+      userId: entity.userId,
+      metadata: {
+        ipHash: hashedIp,
+        userAgent: userAgent.slice(0, 200),
+        reason: 'TRUST_CIRCLE_CERT_MISMATCH',
+        verifierUserId: viewerUserId,
+      },
+    })
+    return <TrustCircleFraudCertainView />
+  }
+
   await prisma.verification.create({
     data: {
       certificateId: cert.id,
@@ -386,6 +484,8 @@ export default async function VerifyPublicPage({
       signature={signature}
       verificationsLast30Days={verificationsLast30Days}
       quotaFooter={quotaFooter}
+      trustCircleCas1Banner={trustUi === 'cas1'}
+      trustCircleInNetworkBadge={trustUi === 'in_network'}
     />
   )
 }
@@ -554,12 +654,80 @@ function SuspiciousScanningView() {
   )
 }
 
+function TrustCircleFraudCertainView() {
+  const actions = [
+    'Ne répondez pas à ce message',
+    'Contactez votre interlocuteur par un autre canal',
+    'Signalez cette tentative de fraude',
+    'Prévenez votre réseau de confiance',
+  ]
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-[#0a1628] px-4 py-12 text-center font-sans text-white/85">
+      <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-6">
+        <div className="relative">
+          <div
+            className="absolute inset-0 animate-pulse rounded-full bg-[#E05252]/30 blur-2xl"
+            aria-hidden
+          />
+          <div
+            className="relative z-10 flex h-28 w-28 items-center justify-center rounded-full border-2 border-[#E05252]/60 bg-[#E05252]/10 animate-pulse"
+          >
+            <ShieldAlert className="h-12 w-12 text-[#E05252]" strokeWidth={2} aria-hidden />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <span className="font-syne block text-xl font-bold uppercase tracking-widest text-[#E05252]">
+            FRAUDE CERTAINE
+          </span>
+          <p className="text-sm text-white/70">
+            Ce contact fait partie de votre réseau certifié mais ce badge{' '}
+            <span className="font-semibold text-white/85">ne correspond pas</span> à son certificat
+            enregistré.
+          </p>
+          <p className="text-xs text-white/50">
+            Quelqu&apos;un se fait passer pour lui. Ne partagez aucune information.
+          </p>
+        </div>
+
+        <div className="w-full rounded-xl border border-[#E05252]/25 bg-[#E05252]/10 p-4 text-left">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-[#E05252]">
+            Actions immédiates
+          </p>
+          <ul className="space-y-2">
+            {actions.map((item) => (
+              <li key={item} className="flex items-center gap-2 text-xs text-white/60">
+                <span className="text-[#E05252]" aria-hidden>
+                  →
+                </span>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <a
+          href="mailto:security@blocktrust.tech?subject=Fraude%20d%C3%A9tect%C3%A9e%20%E2%80%94%20Trust%20Circle"
+          className="w-full rounded-xl border border-[#E05252]/40 bg-[#E05252]/20 py-3 text-center text-sm font-semibold text-[#E05252] transition hover:bg-[#E05252]/30"
+        >
+          Signaler cette fraude →
+        </a>
+      </div>
+      <footer className="mt-4 flex justify-center opacity-60">
+        <Logo size="sm" withText={false} />
+      </footer>
+    </div>
+  )
+}
+
 function ValidView({
   entity,
   certificate,
   signature,
   verificationsLast30Days,
   quotaFooter,
+  trustCircleCas1Banner = false,
+  trustCircleInNetworkBadge = false,
 }: {
   entity: Prisma.EntityGetPayload<{ include: { user: { select: { trustScore: true } } } }>
   certificate: {
@@ -578,6 +746,8 @@ function ValidView({
   signature: { contextHash: string | null; dynamicToken: string | null; maxScans: number }
   verificationsLast30Days: number
   quotaFooter?: { remaining: number; limit: number } | null
+  trustCircleCas1Banner?: boolean
+  trustCircleInNetworkBadge?: boolean
 }) {
   const name = entityDisplayName(entity)
   const level = certificate.level
@@ -619,6 +789,13 @@ function ValidView({
             Vérifié par BLOCKTRUST
             {anchored ? ' — Ancré sur Polygon' : ''}
           </p>
+
+          {trustCircleInNetworkBadge ? (
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
+              <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" strokeWidth={2} aria-hidden />
+              <span className="text-xs text-emerald-400">Dans votre réseau de confiance certifié</span>
+            </div>
+          ) : null}
 
           <div className="mb-6 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center">
             <p className="text-xs uppercase tracking-wider text-white/50">TrustScore (titulaire)</p>
@@ -704,6 +881,27 @@ function ValidView({
             </ul>
           </div>
         </div>
+
+        {trustCircleCas1Banner ? (
+          <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-400" strokeWidth={2} aria-hidden />
+              <span className="text-xs font-semibold uppercase tracking-widest text-amber-400">
+                Contact non certifié dans votre réseau
+              </span>
+            </div>
+            <p className="text-xs leading-relaxed text-white/60">
+              Ce contact n&apos;est pas dans votre réseau de confiance certifié. Le certificat est valide mais vous
+              n&apos;avez pas encore établi de relation de confiance avec cette personne.
+            </p>
+            <Link
+              href="/dashboard/trust-circle"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs text-amber-400/80 transition hover:text-amber-400"
+            >
+              Ajouter à mon réseau de confiance →
+            </Link>
+          </div>
+        ) : null}
 
         {quotaFooter ? (
           <p className="mt-4 text-center font-mono text-xs text-white/40">
