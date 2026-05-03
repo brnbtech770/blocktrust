@@ -25,6 +25,8 @@ const spaceGrotesk = Space_Grotesk({
 const SITE_URL = "https://blocktrust.tech";
 /** Invalider cache navigateur (Safari/iOS très agressif). Incrémenter après nouveau favicon. */
 const ICON_CACHE_QUERY = "v=badge-svg-2";
+/** Incrémenter après régénération opengraph-image.png (réseaux cachent agressivement). */
+const OG_IMAGE_CACHE_QUERY = "v=h1-protection-1";
 
 const SITE_TITLE = "BLOCKTRUST™ — Certification d'identité numérique";
 const SITE_DESCRIPTION =
@@ -67,13 +69,13 @@ export const metadata: Metadata = {
     siteName: "BlockTrust",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: [{ url: `/opengraph-image.png?${ICON_CACHE_QUERY}` }],
+    images: [{ url: `/opengraph-image.png?${OG_IMAGE_CACHE_QUERY}` }],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    images: [`/opengraph-image.png?${ICON_CACHE_QUERY}`],
+    images: [`/opengraph-image.png?${OG_IMAGE_CACHE_QUERY}`],
   },
   robots: {
     index: true,

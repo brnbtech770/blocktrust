@@ -87,36 +87,36 @@ const textSvg = `
     ✦  CERTIFIÉ  ·  ANCRÉ  ·  INFALSIFIABLE
   </text>
 
-  <!-- Titre principal (2 lignes) -->
-  <text x="${TEXT_X}" y="270"
+  <!-- Titre principal — aligné H1 landing (30/04/2026 Laurianne) -->
+  <text x="${TEXT_X}" y="260"
         font-family="${FONT_STACK}"
-        font-size="52"
+        font-size="46"
         font-weight="800"
         fill="#ffffff"
         letter-spacing="-0.5">
-    La carte d'identité
+    L&apos;identité numérique qui
   </text>
-  <text x="${TEXT_X}" y="335"
+  <text x="${TEXT_X}" y="324"
         font-family="${FONT_STACK}"
-        font-size="52"
+        font-size="46"
         font-weight="800"
         fill="${CYAN}"
         letter-spacing="-0.5">
-    numérique
+    protège vos échanges.
   </text>
 
   <!-- Trait gold décoratif -->
-  <line x1="${TEXT_X}" y1="370" x2="${TEXT_X + 100}" y2="370"
+  <line x1="${TEXT_X}" y1="362" x2="${TEXT_X + 100}" y2="362"
         stroke="url(#goldText)" stroke-width="2" stroke-linecap="round"/>
 
-  <!-- Sous-titre -->
-  <text x="${TEXT_X}" y="420"
+  <!-- Sous-titre (cohérence metadata) -->
+  <text x="${TEXT_X}" y="412"
         font-family="${FONT_STACK}"
-        font-size="26"
+        font-size="24"
         font-weight="500"
         fill="#ffffff"
         opacity="0.78">
-    de tout ce que vous envoyez.
+    Vérifiable par n&apos;importe qui, en 1 scan.
   </text>
 
   <!-- URL bas-gauche -->
