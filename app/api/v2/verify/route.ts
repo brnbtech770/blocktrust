@@ -1,23 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/app/lib/db";
+import { hashIp } from "@/app/lib/auth";
 import { canonicalizeEmailContext, sha256Hex } from "@/lib/v2/context";
 import { verifyToken } from "@/lib/v2/jwt";
 import { sendEmail } from "@/lib/email";
 import { FraudAlertEmail, subject as fraudAlertSubject } from "@/emails/FraudAlertEmail";
 import { btErrorDevDetails, btLog } from "@/lib/prodLog";
 
-const prisma = new PrismaClient();
-
 function getIp(req: NextRequest) {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+}
+
+function entityDisplayName(entity: {
+  entityType: string;
+  legalName: string | null;
+  tradeName: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+}) {
+  if (entity.entityType === "INDIVIDUAL") {
+    const name = [entity.firstName, entity.lastName].filter(Boolean).join(" ").trim();
+    return name || entity.email;
+  }
+  return entity.legalName || entity.tradeName || entity.email;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    // Expected input:
-    // { token, context: { from,to,subject,date,body? } }
     const token = String(body.token || "");
     const context = body.context;
 
@@ -36,11 +48,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ verdict: "INVALID", reason: "token_missing_claims" }, { status: 400 });
     }
 
-    // Compute ctx hash from provided context
     const canonical = canonicalizeEmailContext(context);
     const computedHash = sha256Hex(canonical);
 
-    // Fetch signature record
     const sig = await prisma.signature.findUnique({ where: { jti } });
     if (!sig) {
       return NextResponse.json({ verdict: "INVALID", reason: "unknown_jti" }, { status: 404 });
@@ -60,24 +70,36 @@ export async function POST(req: NextRequest) {
       reason = "context_hash_mismatch";
     }
 
-    // Minimal anti-replay: if verified multiple times from different UA/IP -> warning
     const ip = getIp(req);
     const ua = req.headers.get("user-agent") || "unknown";
+    const ipHash = hashIp(ip);
 
-    // Note: Le modèle Verification n'a pas de champ jti direct, on utilise signatureJti
-    // Pour l'instant, on crée une vérification basique
     await prisma.verification.create({
       data: {
         certificateId: sig.certificateId,
-        ipHash: ip, // TODO: Hasher l'IP avec hashIp() pour RGPD
-        userAgent: ua,
-        result: verdict === "VALID" || verdict === "VALID_WITH_WARNING" ? "VALID" : "FRAUD_ALERT",
+        ipHash,
+        userAgent: ua.slice(0, 500),
+        result:
+          verdict === "VALID" || verdict === "VALID_WITH_WARNING" ? "VALID" : "FRAUD_ALERT",
         signatureJti: jti,
       },
     });
 
-    // Alerte fraude : envoyer email au propriétaire du certificat
-    if (verdict === "TAMPERED" || verdict === "FRAUD_ALERT") {
+    let entityName: string | undefined;
+    let certifiedAt: string | undefined;
+
+    if (verdict === "VALID") {
+      const cert = await prisma.certificate.findUnique({
+        where: { id: sig.certificateId },
+        include: { entity: true },
+      });
+      if (cert?.entity) {
+        entityName = entityDisplayName(cert.entity);
+        certifiedAt = cert.issuedAt.toISOString();
+      }
+    }
+
+    if (verdict === "TAMPERED") {
       const certWithOwner = await prisma.certificate.findUnique({
         where: { id: certificateId },
         include: {
@@ -89,19 +111,19 @@ export async function POST(req: NextRequest) {
         },
       });
       const ownerEmail = certWithOwner?.entity?.user?.email;
-      if (ownerEmail) {
-        const entityName =
-          certWithOwner!.entity.entityType === "INDIVIDUAL"
-            ? `${certWithOwner!.entity.firstName || ""} ${certWithOwner!.entity.lastName || ""}`.trim() ||
-              certWithOwner!.entity.email
-            : certWithOwner!.entity.legalName || certWithOwner!.entity.email;
+      if (ownerEmail && certWithOwner?.entity) {
+        const fraudEntityName =
+          certWithOwner.entity.entityType === "INDIVIDUAL"
+            ? `${certWithOwner.entity.firstName || ""} ${certWithOwner.entity.lastName || ""}`.trim() ||
+              certWithOwner.entity.email
+            : certWithOwner.entity.legalName || certWithOwner.entity.email;
         const baseUrl =
           process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "https://blocktrust.tech";
         await sendEmail({
           to: ownerEmail,
           subject: fraudAlertSubject,
           react: FraudAlertEmail({
-            entityName,
+            entityName: fraudEntityName,
             tokenId: jti,
             timestamp: new Date().toISOString(),
             ip: ip !== "unknown" ? ip : undefined,
@@ -114,10 +136,7 @@ export async function POST(req: NextRequest) {
               "Fraud alert email failed"
             );
           } else {
-            btLog(
-              `[Verify] Fraud alert email envoyé à: ${ownerEmail}`,
-              "Fraud alert email sent"
-            );
+            btLog(`[Verify] Fraud alert email envoyé à: ${ownerEmail}`, "Fraud alert email sent");
           }
         });
       }
@@ -129,10 +148,11 @@ export async function POST(req: NextRequest) {
       entityId,
       certificateId,
       jti,
+      ...(entityName ? { entityName } : {}),
+      ...(certifiedAt ? { certifiedAt } : {}),
     });
-  } catch (e: any) {
-    return NextResponse.json({ verdict: "ERROR", error: e?.message || "verify_failed" }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : "verify_failed";
+    return NextResponse.json({ verdict: "ERROR", reason: msg, error: msg }, { status: 500 });
   }
 }
