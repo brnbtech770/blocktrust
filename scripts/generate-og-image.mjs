@@ -12,7 +12,8 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
 
-const SRC_BADGE = join(ROOT, "scripts", "og-badge-source.png");
+/** Même source que les favicons PNG (bouclier + coche — plus de badge Bitcoin raster). */
+const SRC_SVG = join(ROOT, "public", "favicon.svg");
 const OUT = join(ROOT, "app", "opengraph-image.png");
 
 const W = 1200;
@@ -30,9 +31,9 @@ const FONT_STACK =
   "Helvetica Neue, Helvetica, Arial, system-ui, -apple-system, sans-serif";
 
 // --- Calculs zones -----------------------------------------------------------
-// Badge à droite : hauteur 440, ratio source 974x903 -> width ~ 474
+// Badge à droite : carré (favicon SVG 1:1)
 const BADGE_H = 440;
-const BADGE_W = Math.round(BADGE_H * (974 / 903));
+const BADGE_W = BADGE_H;
 const BADGE_RIGHT_MARGIN = 60;
 const BADGE_LEFT = W - BADGE_W - BADGE_RIGHT_MARGIN;
 const BADGE_TOP = Math.round((H - BADGE_H) / 2);
@@ -137,8 +138,8 @@ async function main() {
   );
   console.log(`[og] Texte : x=${TEXT_X} -> ${TEXT_MAX_X}`);
 
-  const badgeBuf = await sharp(SRC_BADGE)
-    .resize({ height: BADGE_H, fit: "inside", withoutEnlargement: false })
+  const badgeBuf = await sharp(SRC_SVG, { density: 300 })
+    .resize({ height: BADGE_H, width: BADGE_W, fit: "inside", withoutEnlargement: false })
     .png({ compressionLevel: 9, quality: 92 })
     .toBuffer();
 

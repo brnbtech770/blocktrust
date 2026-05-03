@@ -23,6 +23,9 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 const SITE_URL = "https://blocktrust.tech";
+/** Invalider cache navigateur (Safari/iOS très agressif). Incrémenter après nouveau favicon. */
+const ICON_CACHE_QUERY = "v=badge-svg-2";
+
 const SITE_TITLE = "BLOCKTRUST™ — Certification d'identité numérique";
 const SITE_DESCRIPTION =
   "CV, devis, contrat, document important. BlockTrust prouve que c'est bien vous — et que rien n'a été modifié. Vérifiable par n'importe qui, en 1 scan.";
@@ -50,12 +53,12 @@ export const metadata: Metadata = {
   publisher: "BRNB TECH SASU",
   icons: {
     icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-      { url: "/favicon.png", sizes: "32x32", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: `/favicon.svg?${ICON_CACHE_QUERY}`, type: "image/svg+xml" },
+      { url: `/favicon.png?${ICON_CACHE_QUERY}`, sizes: "32x32", type: "image/png" },
+      { url: `/icon-512.png?${ICON_CACHE_QUERY}`, sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
-    shortcut: ["/favicon.png"],
+    apple: [{ url: `/apple-touch-icon.png?${ICON_CACHE_QUERY}`, sizes: "180x180", type: "image/png" }],
+    shortcut: [`/favicon.png?${ICON_CACHE_QUERY}`],
   },
   openGraph: {
     type: "website",
@@ -64,11 +67,13 @@ export const metadata: Metadata = {
     siteName: "BlockTrust",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
+    images: [{ url: `/opengraph-image.png?${ICON_CACHE_QUERY}` }],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
+    images: [`/opengraph-image.png?${ICON_CACHE_QUERY}`],
   },
   robots: {
     index: true,

@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "node prisma/seed.js",
-    "cleanup-bots": "tsx scripts/cleanup-bots.ts"
+    "cleanup-bots": "tsx scripts/cleanup-bots.ts",
+    "icons:generate": "node scripts/generate-icons.mjs && node scripts/generate-og-image.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
@@ -48,6 +49,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "prisma": "^6.19.3",
+    "sharp": "^0.33.5",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"

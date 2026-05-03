@@ -1,5 +1,6 @@
-// Génère toutes les icônes BlockTrust à partir du badge source.
-// - public/apple-touch-icon.png  (180x180, fond navy)  -> iMessage SMS preview
+// Génère toutes les icônes BlockTrust à partir du même SVG que favicon (<public/favicon.svg>).
+// Ancienne source raster (Bitcoin) abandonnée : une seule source de vérité graphique.
+// - public/apple-touch-icon.png  (180x180, fond navy)  -> Safari / iOS Favorites / onglets
 // - public/icon-512.png          (512x512, fond navy)  -> PWA / Slack / Discord
 // - public/favicon.png           (32x32,  fond navy)   -> tab navigateur fallback
 // - public/logo.png              (640x640, transparent) -> composant <Logo>
@@ -13,10 +14,25 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
-const SRC_BADGE = join(ROOT, "scripts", "og-badge-source.png");
+const SRC_SVG = join(ROOT, "public", "favicon.svg");
 
 const NAVY = { r: 10, g: 22, b: 40, alpha: 1 };
 const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
+
+/**
+ * Rasterise le badge SVG à la taille cible (haute densité pour qualité).
+ */
+async function svgToPngBuffer(targetPx) {
+  return sharp(SRC_SVG, { density: 300 })
+    .resize({
+      width: targetPx,
+      height: targetPx,
+      fit: "inside",
+      withoutEnlargement: false,
+    })
+    .png()
+    .toBuffer();
+}
 
 /**
  * Compose le badge sur un canvas carré.
@@ -26,15 +42,7 @@ const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 };
 async function makeIcon({ size, background, outPath, fillRatio }) {
   const target = Math.round(size * fillRatio);
 
-  const badgeBuf = await sharp(SRC_BADGE)
-    .resize({
-      width: target,
-      height: target,
-      fit: "inside",
-      withoutEnlargement: false,
-    })
-    .png()
-    .toBuffer();
+  const badgeBuf = await svgToPngBuffer(target);
 
   const badgeMeta = await sharp(badgeBuf).metadata();
   const left = Math.round((size - (badgeMeta.width ?? target)) / 2);
