@@ -2,10 +2,14 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { ScanLine } from 'lucide-react'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 
-const navLinks = [
+type NavLink = { label: string; href: string; verifyScan?: boolean }
+
+const navLinks: NavLink[] = [
   { label: 'Comment ça marche', href: '/how-to' },
+  { label: 'Vérifier', href: '/verify', verifyScan: true },
   { label: 'Tarifs', href: '/pricing' },
   { label: 'FAQ', href: '/pricing#faq' },
 ]
@@ -38,16 +42,27 @@ export default function Navbar() {
 
         {/* Desktop nav centre */}
         <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map(({ label, href }) => (
-            <Link
-              key={href}
-              href={href}
-              className="text-sm font-medium transition-colors hover:text-white"
-              style={{ color: 'var(--bt-muted)' }}
-            >
-              {label}
-            </Link>
-          ))}
+          {navLinks.map(({ label, href, verifyScan }) =>
+            verifyScan ? (
+              <Link
+                key={href}
+                href={href}
+                className="text-white/60 hover:text-white text-sm transition flex items-center gap-1.5"
+              >
+                <ScanLine className="w-4 h-4" aria-hidden />
+                {label}
+              </Link>
+            ) : (
+              <Link
+                key={href}
+                href={href}
+                className="text-sm font-medium transition-colors hover:text-white"
+                style={{ color: 'var(--bt-muted)' }}
+              >
+                {label}
+              </Link>
+            ),
+          )}
         </nav>
 
         {/* Desktop droite */}
@@ -97,16 +112,28 @@ export default function Navbar() {
           }}
         >
           <nav className="flex flex-col gap-1 px-4 py-4">
-            {navLinks.map(({ label, href }) => (
-              <Link
-                key={href}
-                href={href}
-                className="py-3 px-4 rounded-lg text-sm font-medium text-white hover:bg-white/5"
-                onClick={() => setMenuOpen(false)}
-              >
-                {label}
-              </Link>
-            ))}
+            {navLinks.map(({ label, href, verifyScan }) =>
+              verifyScan ? (
+                <Link
+                  key={href}
+                  href={href}
+                  className="flex items-center gap-1.5 py-3 px-4 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <ScanLine className="w-4 h-4 shrink-0" aria-hidden />
+                  {label}
+                </Link>
+              ) : (
+                <Link
+                  key={href}
+                  href={href}
+                  className="py-3 px-4 rounded-lg text-sm font-medium text-white hover:bg-white/5"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {label}
+                </Link>
+              ),
+            )}
             <div className="border-t mt-2 pt-2" style={{ borderColor: 'var(--bt-border)' }}>
               <Link
                 href="/auth/signin"
