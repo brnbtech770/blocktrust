@@ -536,6 +536,27 @@ enum VerificationResult {
 }
 
 // ============================================================
+// VEILLE CYBER — RSS (cron) + synthèses Claude
+// ============================================================
+
+model ThreatArticle {
+  id             String    @id @default(cuid())
+  /// CERT_FR | CYBERMALVEILLANCE | ZATAZ
+  source         String
+  sourceUrl      String    @unique
+  title          String    @db.Text
+  excerpt        String?   @db.Text
+  summaryFr      String    @default("") @db.Text
+  relevanceScore Int       @default(0)
+  publishedAt    DateTime?
+  fetchedAt      DateTime  @default(now())
+  processedAt    DateTime?
+
+  @@index([relevanceScore(sort: Desc), publishedAt(sort: Desc)])
+  @@index([processedAt])
+}
+
+// ============================================================
 // TRUST CIRCLE
 // ============================================================
 

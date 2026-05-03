@@ -7,6 +7,7 @@ import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 const links: { label: string; href: string }[] = [
   { label: "Accueil", href: "/" },
   { label: "Tarifs", href: "/pricing" },
+  { label: "Actualités", href: "/menaces" },
   { label: "Vérifier", href: "/verify" },
   { label: "CGU", href: "/cgu" },
   { label: "Confidentialité", href: "/privacy" },

@@ -2,15 +2,16 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ScanLine } from 'lucide-react'
+import { Newspaper, ScanLine } from 'lucide-react'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 
-type NavLink = { label: string; href: string; verifyScan?: boolean }
+type NavLink = { label: string; href: string; verifyScan?: boolean; newsp?: boolean }
 
 const navLinks: NavLink[] = [
   { label: 'Comment ça marche', href: '/how-to' },
   { label: 'Vérifier', href: '/verify', verifyScan: true },
   { label: 'Tarifs', href: '/pricing' },
+  { label: 'Actualités', href: '/menaces', newsp: true },
   { label: 'FAQ', href: '/pricing#faq' },
 ]
 
@@ -42,7 +43,7 @@ export default function Navbar() {
 
         {/* Desktop nav centre */}
         <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map(({ label, href, verifyScan }) =>
+          {navLinks.map(({ label, href, verifyScan, newsp }) =>
             verifyScan ? (
               <Link
                 key={href}
@@ -50,6 +51,15 @@ export default function Navbar() {
                 className="text-white/60 hover:text-white text-sm transition flex items-center gap-1.5"
               >
                 <ScanLine className="w-4 h-4" aria-hidden />
+                {label}
+              </Link>
+            ) : newsp ? (
+              <Link
+                key={href}
+                href={href}
+                className="text-white/60 hover:text-white text-sm transition flex items-center gap-1.5"
+              >
+                <Newspaper className="w-4 h-4 shrink-0" aria-hidden />
                 {label}
               </Link>
             ) : (
@@ -112,7 +122,7 @@ export default function Navbar() {
           }}
         >
           <nav className="flex flex-col gap-1 px-4 py-4">
-            {navLinks.map(({ label, href, verifyScan }) =>
+            {navLinks.map(({ label, href, verifyScan, newsp }) =>
               verifyScan ? (
                 <Link
                   key={href}
@@ -121,6 +131,16 @@ export default function Navbar() {
                   onClick={() => setMenuOpen(false)}
                 >
                   <ScanLine className="w-4 h-4 shrink-0" aria-hidden />
+                  {label}
+                </Link>
+              ) : newsp ? (
+                <Link
+                  key={href}
+                  href={href}
+                  className="flex items-center gap-1.5 py-3 px-4 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <Newspaper className="w-4 h-4 shrink-0" aria-hidden />
                   {label}
                 </Link>
               ) : (
