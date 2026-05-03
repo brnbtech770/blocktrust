@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/app/lib/auth-server";
 import { isAdmin } from "@/app/lib/admin";
 import LandingPageClient from "@/app/components/LandingPageClient";
+import ThreatAlert from "@/app/components/landing/ThreatAlert";
 
 export const dynamic = "force-dynamic";
 
@@ -12,5 +13,5 @@ export default async function HomePage() {
   if (email && isAdmin(email)) {
     redirect("/admin/dashboard");
   }
-  return <LandingPageClient />;
+  return <LandingPageClient threatAlert={<ThreatAlert />} />;
 }

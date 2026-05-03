@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Navbar from "./landing/Navbar";
 import Hero from "./landing/Hero";
 import QuickUnderstand from "./landing/QuickUnderstand";
@@ -13,7 +14,8 @@ import PricingTeaser from "./landing/PricingTeaser";
 import FinalCTA from "./landing/FinalCTA";
 import Footer from "./landing/Footer";
 
-export default function LandingPageClient() {
+/** Passé depuis `app/page.tsx` (RSC) pour conserver `ThreatAlert` en Server Component. */
+export default function LandingPageClient({ threatAlert }: { threatAlert: ReactNode }) {
   return (
     <div
       className="min-h-screen overflow-x-hidden"
@@ -25,6 +27,7 @@ export default function LandingPageClient() {
         <Problem />
         <QuickUnderstand />
         <Categories />
+        {threatAlert}
         <Solution />
         <Particuliers />
         <Entreprises />
