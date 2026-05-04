@@ -65,14 +65,12 @@ h5, h6 {
   font-weight: 600;
 }
 
-/* Zone contenu dashboard (data-dashboard-main) : titres blancs, sans néon */
-[data-dashboard-main] h1,
-[data-dashboard-main] h2,
-[data-dashboard-main] h3,
-[data-dashboard-main] h4 {
+.neon-white {
   color: #ffffff;
-  text-shadow: none;
-  filter: none;
+  text-shadow:
+    0 0 6px rgba(255, 255, 255, 0.9),
+    0 0 14px rgba(255, 255, 255, 0.55),
+    0 0 28px rgba(255, 255, 255, 0.35);
 }
 
 /* Données techniques : IBM Plex Mono (hashes, timestamps, badges techniques, ticker) */

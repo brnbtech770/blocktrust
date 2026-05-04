@@ -31,11 +31,16 @@ export default function DashboardSidebarNav({ items }: { items: SidebarItem[] })
             href={item.href}
             className={`group flex items-center gap-2 rounded-lg px-3 py-2 font-sans text-sm transition-all ${
               isActive
-                ? 'bg-white/10 text-white'
+                ? 'border border-gold/25 bg-gold/10 text-gold'
                 : 'text-white/50 hover:bg-white/5 hover:text-white'
             }`}
           >
-            <Icon size={18} strokeWidth={2} className="shrink-0 text-bt-cyan/90" aria-hidden />
+            <Icon
+              size={18}
+              strokeWidth={2}
+              className={`shrink-0 ${isActive ? 'text-gold' : 'text-bt-cyan/90'}`}
+              aria-hidden
+            />
             <span>{item.name}</span>
           </Link>
         )

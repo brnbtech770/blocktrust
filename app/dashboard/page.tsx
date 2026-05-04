@@ -192,10 +192,10 @@ export default async function Dashboard({
         )}
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="font-syne text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
+          <h1 className="font-syne text-2xl font-bold text-gold sm:text-3xl lg:text-4xl">
             Tableau de bord
           </h1>
-          <p className="mt-2 text-sm text-white/50">
+          <p className="neon-white mt-2 text-sm font-medium">
             Bienvenue, {firstName}
           </p>
         </div>
@@ -301,8 +301,9 @@ export default async function Dashboard({
         {certificates.length > 0 && (
           <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
             <div className="mb-4 flex items-center justify-between gap-2">
-              <h2 className="font-syne text-xl font-semibold tracking-tight text-white sm:text-2xl">
-                Blockchain (Polygon)
+              <h2 className="font-syne text-xl font-semibold tracking-tight sm:text-2xl">
+                <span className="text-gold">Blockchain</span>
+                <span className="text-white/70"> (Polygon)</span>
               </h2>
               <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
                 Ancrage on-chain
@@ -347,7 +348,7 @@ export default async function Dashboard({
         )}
 
         <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-gold/30 sm:p-6">
-          <h2 className="font-syne mb-3 text-xl font-semibold tracking-tight text-white sm:mb-4 sm:text-2xl">
+          <h2 className="font-syne mb-3 text-xl font-semibold tracking-tight text-gold sm:mb-4 sm:text-2xl">
             Actions rapides
           </h2>
           <div className="mb-6">
