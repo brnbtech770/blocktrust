@@ -124,7 +124,11 @@ export default async function Dashboard({
     const isAnchoredOnChain = (c: (typeof certificates)[number]) =>
       c.blockchainStatus === "ANCHORED" || Boolean(c.polygonTxHash || c.txHash);
 
-    const blockchainStats = certificates.reduce(
+    const certsForPolygonKpi = certificates.filter(
+      (c) => c.status === "ACTIVE" || c.status === "ANCHORED"
+    );
+
+    const blockchainStats = certsForPolygonKpi.reduce(
       (acc, c) => {
         if (isAnchoredOnChain(c)) acc.anchored += 1;
         else if (c.blockchainStatus === "FAILED") acc.failed += 1;
@@ -134,7 +138,7 @@ export default async function Dashboard({
       { anchored: 0, pending: 0, failed: 0 }
     );
 
-    const lastAnchored = certificates.find(
+    const lastAnchored = certsForPolygonKpi.find(
       (c) => isAnchoredOnChain(c) && c.polygonExplorerUrl
     );
 

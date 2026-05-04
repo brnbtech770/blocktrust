@@ -44,7 +44,10 @@ export async function GET(): Promise<NextResponse<DashboardStats | { error: stri
         },
       }),
       prisma.certificate.findMany({
-        where: { entity: { userId } },
+        where: {
+          entity: { userId },
+          status: { in: ["ACTIVE", "ANCHORED"] },
+        },
         select: {
           blockchainStatus: true,
           polygonTxHash: true,
