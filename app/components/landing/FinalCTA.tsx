@@ -28,7 +28,7 @@ export default function FinalCTA() {
         />
 
         <div className="mx-auto flex justify-center">
-          <BlockTrustBadge size={64} instanceId="final-cta" />
+          <BlockTrustBadge size={64} instanceId="final-cta" showWatermark={false} />
         </div>
 
         <h2 className="font-syne mx-auto mt-6 max-w-2xl pb-4 text-2xl font-semibold leading-normal text-white overflow-visible sm:text-3xl lg:text-4xl">

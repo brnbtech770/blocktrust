@@ -261,6 +261,7 @@ export default async function Dashboard({
             <BlockTrustBadge
               size={80}
               instanceId="dashboard-trustscore"
+              showWatermark={false}
               className="shrink-0 self-center sm:self-start"
             />
             <div className="flex-1 min-w-0">

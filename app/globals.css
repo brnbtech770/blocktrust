@@ -110,6 +110,23 @@ h5, h6 {
   z-index: 0;
 }
 
+/* Halo Hero (#hero) — cercle stable sur Safari / Chrome mobile (animation hors Tailwind si besoin) */
+@keyframes bt-hero-glow-pulse {
+  0%, 100% {
+    opacity: 0.58;
+  }
+  50% {
+    opacity: 0.98;
+  }
+}
+
+.hero-badge-glow {
+  animation: bt-hero-glow-pulse 2.4s ease-in-out infinite;
+  border-radius: 50%;
+  /* Force une boîte carrée avant clip ; évite une ellipse si % mal résolus */
+  flex-shrink: 0;
+}
+
 /* ============================================================
    Effets néon sur labels de section (text-shadow non supporté
    nativement par Tailwind)

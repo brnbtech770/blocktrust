@@ -43,7 +43,7 @@ export default function Problem() {
   return (
     <section
       id="probleme"
-      className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24"
+      className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-12 pb-16 sm:pt-16 sm:pb-24 lg:py-24"
     >
       <Reveal className="mx-auto max-w-3xl text-center">
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-red">

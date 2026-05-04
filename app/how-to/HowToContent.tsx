@@ -286,7 +286,7 @@ function ParticulierDemoCreate() {
         >
           <div className="text-[10px] uppercase tracking-wider text-bt-cyan">Étape 3 — Badge généré</div>
           <div className="howto-pop mx-auto">
-            <BlockTrustBadge size={80} instanceId="howto-create" />
+            <BlockTrustBadge size={80} instanceId="howto-create" showWatermark={false} />
           </div>
         </div>
       </div>
@@ -306,7 +306,7 @@ function ParticulierDemoIntegrate() {
           </div>
           <div className="relative shrink-0">
             <div className="howto-pulse-node rounded-full">
-              <BlockTrustBadge size={56} instanceId="howto-integrate" />
+              <BlockTrustBadge size={56} instanceId="howto-integrate" showWatermark={false} />
             </div>
             {/* Tooltip animé */}
             <div className="howto-tooltip pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-md border border-bt-cyan/40 bg-navy/95 px-3 py-1.5 text-[10px] font-medium text-bt-cyan shadow-glow-cyan">
@@ -378,7 +378,7 @@ function ParticulierDemoCall() {
           style={{ animationDelay: "0.9s" }}
         >
           <div className="howto-pop shrink-0">
-            <BlockTrustBadge size={56} instanceId="howto-call" />
+            <BlockTrustBadge size={56} instanceId="howto-call" showWatermark={false} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="font-syne text-sm font-bold text-white">Olivier Bernabé</div>
@@ -737,7 +737,7 @@ function HowToFinalCTA() {
           }}
         />
         <div className="mx-auto flex justify-center">
-          <BlockTrustBadge size={100} instanceId="howto-final-cta" />
+          <BlockTrustBadge size={100} instanceId="howto-final-cta" showWatermark={false} />
         </div>
         <h2 className="font-syne mx-auto mt-6 max-w-2xl pb-4 text-2xl font-semibold leading-normal text-white sm:text-3xl lg:text-4xl">
           Prêt à protéger votre <span className="text-bt-cyan">identité digitale&nbsp;?</span>

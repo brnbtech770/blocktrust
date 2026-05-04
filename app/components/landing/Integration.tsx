@@ -149,6 +149,7 @@ export default function Integration() {
                 <BlockTrustBadge
                   size={200}
                   instanceId="integration-preview"
+                  showWatermark={false}
                   className="shrink-0"
                 />
                 <p className="mt-3 font-mono text-xs text-bt-cyan/60">

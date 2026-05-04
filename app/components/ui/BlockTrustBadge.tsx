@@ -13,8 +13,8 @@ import { type CSSProperties, useEffect, useId, useState } from "react";
  * stable est généré via React.useId().
  */
 export interface BlockTrustBadgeProps {
-  /** Rendered width/height in px. Defaults to 320. */
-  size?: number;
+  /** Rendered width/height in px, ou `"fill"` pour occuper 100 % du parent carré. */
+  size?: number | "fill";
   /** Optional className to apply to the outer wrapper. */
   className?: string;
   /** Override the wordmark. Defaults to "BLOCKTRUST". */
@@ -83,6 +83,7 @@ export function BlockTrustBadge({
   instanceId,
   showWatermark = true,
 }: BlockTrustBadgeProps) {
+  const fillParent = size === "fill";
   // useId fournit un id stable côté serveur et client (Next.js SSR safe).
   const reactId = useId();
   // useId peut contenir des ":" — on les remplace pour rester safe en URL fragment.
@@ -98,10 +99,11 @@ export function BlockTrustBadge({
     glow: `bt-glow-${uid}`,
   } as const;
 
-  const svgBoxStyle: CSSProperties = {
-    width: size,
-    height: size,
-  };
+  const svgBoxStyle: CSSProperties = fillParent
+    ? { width: "100%", height: "100%" }
+    : { width: size, height: size };
+
+  const svgSize = fillParent ? "100%" : size;
 
   /** Horodatage affiché uniquement après montage (évite mismatch SSR / hydratation). */
   const [timestamp, setTimestamp] = useState<string | null>(null);
@@ -120,13 +122,22 @@ export function BlockTrustBadge({
 
   return (
     <div className={`relative inline-flex flex-col items-center select-none ${className ?? ""}`}>
-      <div className="relative shrink-0" style={svgBoxStyle} role="img" aria-label={`${label} verified badge`}>
+      <div
+        className={
+          fillParent
+            ? "relative flex h-full w-full min-h-0 min-w-0 items-center justify-center"
+            : "relative shrink-0"
+        }
+        style={svgBoxStyle}
+        role="img"
+        aria-label={`${label} verified badge`}
+      >
       <svg
         viewBox="0 0 200 200"
-        width={size}
-        height={size}
+        width={svgSize}
+        height={svgSize}
         xmlns="http://www.w3.org/2000/svg"
-        className="block"
+        className="block max-h-full max-w-full"
       >
         <defs>
           {/* Hex clip so circuits + scanline never escape the badge */}

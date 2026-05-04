@@ -5,7 +5,8 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+
+import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
 
 const DIMS = {
   sm: { w: 240, h: 280 },
@@ -166,20 +167,35 @@ export default function CertificateBadgeSection({
           </div>
           <div className="mb-4">
             <label className="block text-xs text-gray-400 mb-2">Taille</label>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid w-full grid-cols-3 gap-2">
               {(['sm', 'md', 'lg'] as const).map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => setSize(s)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                  className="min-w-0 rounded-lg px-2 py-2.5 text-center text-[11px] font-medium leading-tight transition-colors sm:px-3 sm:text-sm"
                   style={{
                     background: size === s ? '#00d4ff' : 'rgba(0,212,255,0.1)',
                     color: size === s ? '#0a1628' : '#00d4ff',
                     border: `1px solid ${size === s ? '#00d4ff' : 'rgba(0,212,255,0.3)'}`,
                   }}
                 >
-                  {s === 'sm' ? 'Petit (240×280)' : s === 'md' ? 'Moyen (320×400)' : 'Grand (400×480)'}
+                  {s === 'sm' ? (
+                    <>
+                      Petit
+                      <span className="mt-0.5 block text-[10px] font-normal opacity-80 sm:text-xs">240×280</span>
+                    </>
+                  ) : s === 'md' ? (
+                    <>
+                      Moyen
+                      <span className="mt-0.5 block text-[10px] font-normal opacity-80 sm:text-xs">320×400</span>
+                    </>
+                  ) : (
+                    <>
+                      Grand
+                      <span className="mt-0.5 block text-[10px] font-normal opacity-80 sm:text-xs">400×480</span>
+                    </>
+                  )}
                 </button>
               ))}
             </div>
@@ -286,32 +302,34 @@ export default function CertificateBadgeSection({
           <h2 className="font-syne mb-4 text-base font-bold tracking-tight text-white">
             Aperçu en direct
           </h2>
-          <div
-            className="flex justify-center rounded-2xl overflow-hidden"
-            style={{ boxShadow: '0 0 40px rgba(0,212,255,0.1)' }}
-          >
-            <img
-              src={`/api/badge/${badgeId}?size=${size}`}
-              alt="Badge BlockTrust"
-              width={dims.w}
-              height={dims.h}
-              style={{ width: dims.w, height: dims.h }}
-              key={`${size}-${badgeId}`}
-            />
+          <div className="flex w-full flex-col items-center">
+            <div
+              className="flex w-full items-center justify-center rounded-2xl border border-white/10 bg-black/25 p-6 sm:p-8"
+              style={{
+                boxShadow: '0 0 40px rgba(0,212,255,0.1)',
+                minHeight: size === 'sm' ? 304 : size === 'md' ? 432 : 512,
+              }}
+            >
+              <img
+                src={`/api/badge/${badgeId}?size=${size}`}
+                alt="Badge BlockTrust"
+                width={dims.w}
+                height={dims.h}
+                className="h-auto max-w-full shrink-0 rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
+                style={{ width: dims.w, height: dims.h }}
+                key={`${size}-${badgeId}`}
+              />
+            </div>
+            <div className="mt-1 w-full max-w-full shrink-0 px-4 sm:px-8">
+              <div className="mx-auto w-full" style={{ maxWidth: dims.w }}>
+                <VerifyBadgeButton certId={badgeId} href={verifyPageUrl} />
+              </div>
+            </div>
           </div>
           <p className="text-sm text-gray-400 mt-4 text-center">
-            Voici comment votre badge apparaîtra sur votre site web.
+            Voici comment votre badge apparaîtra sur votre site web. Utilisez le bouton pour ouvrir la vérification
+            officielle (même lien que le QR).
           </p>
-          <div className="mt-4 text-center">
-            <Link
-              href={verifyPageUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-[#00d4ff] hover:underline"
-            >
-              Voir la page de vérification →
-            </Link>
-          </div>
         </div>
       </div>
     </div>

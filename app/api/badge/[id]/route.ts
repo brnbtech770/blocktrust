@@ -1,5 +1,5 @@
 // app/api/badge/[id]/route.ts
-// Badge SVG design Lovable — vertical, tailles sm/md/lg (public, sans auth)
+// Badge SVG vertical — tailles sm / md / lg (coordonnées calibrées, sans chevauchements)
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -9,10 +9,122 @@ import QRCode from 'qrcode'
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
 
 const DIMS = {
-  sm: { w: 240, h: 280, fontSize: 14, qr: 70 },
-  md: { w: 320, h: 400, fontSize: 16, qr: 110 },
-  lg: { w: 400, h: 480, fontSize: 18, qr: 140 },
+  sm: { w: 240, h: 280 },
+  md: { w: 320, h: 400 },
+  lg: { w: 400, h: 480 },
 } as const
+
+type SizeKey = keyof typeof DIMS
+
+/** Grille typo + positions (px). Les `y` des <text> sont des baselines SVG : garder des marges réelles sous le QR et entre ID / pied. */
+const BADGE_LAYOUT: Record<
+  SizeKey,
+  {
+    qrPx: number
+    shieldCy: number
+    shieldRFrac: number
+    blocktrustY: number
+    subtitleY: number
+    pillRectY: number
+    pillH: number
+    pillTextY: number
+    nameY: number
+    qrY: number
+    certIdY: number
+    footerY: number
+    fsTrust: number
+    fsSub: number
+    fsPill: number
+    fsName: number
+    fsCertId: number
+    fsFoot: number
+    pillHalfWFrac: number
+    letterTrust: number
+    shortPillLabel: boolean
+    certIdChars: number
+    qrPad: number
+    qrCornerRx: number
+  }
+> = {
+  sm: {
+    qrPx: 54,
+    shieldCy: 34,
+    shieldRFrac: 0.14,
+    blocktrustY: 58,
+    subtitleY: 72,
+    pillRectY: 82,
+    pillH: 14,
+    pillTextY: 92,
+    nameY: 106,
+    qrY: 124,
+    certIdY: 204,
+    footerY: 262,
+    fsTrust: 11,
+    fsSub: 8,
+    fsPill: 8,
+    fsName: 10,
+    fsCertId: 7,
+    fsFoot: 7,
+    pillHalfWFrac: 0.42,
+    letterTrust: 1.6,
+    shortPillLabel: true,
+    certIdChars: 12,
+    qrPad: 6,
+    qrCornerRx: 8,
+  },
+  md: {
+    qrPx: 92,
+    shieldCy: 52,
+    shieldRFrac: 0.165,
+    blocktrustY: 94,
+    subtitleY: 112,
+    pillRectY: 122,
+    pillH: 18,
+    pillTextY: 134,
+    nameY: 152,
+    qrY: 168,
+    certIdY: 296,
+    footerY: 366,
+    fsTrust: 14,
+    fsSub: 10,
+    fsPill: 10,
+    fsName: 13,
+    fsCertId: 8,
+    fsFoot: 9,
+    pillHalfWFrac: 0.39,
+    letterTrust: 2.2,
+    shortPillLabel: false,
+    certIdChars: 18,
+    qrPad: 7,
+    qrCornerRx: 10,
+  },
+  lg: {
+    qrPx: 112,
+    shieldCy: 64,
+    shieldRFrac: 0.165,
+    blocktrustY: 114,
+    subtitleY: 134,
+    pillRectY: 146,
+    pillH: 20,
+    pillTextY: 160,
+    nameY: 180,
+    qrY: 198,
+    certIdY: 356,
+    footerY: 428,
+    fsTrust: 17,
+    fsSub: 11,
+    fsPill: 11,
+    fsName: 15,
+    fsCertId: 9,
+    fsFoot: 10,
+    pillHalfWFrac: 0.37,
+    letterTrust: 2.8,
+    shortPillLabel: false,
+    certIdChars: 22,
+    qrPad: 8,
+    qrCornerRx: 12,
+  },
+}
 
 function escapeXml(s: string): string {
   return s
@@ -29,8 +141,10 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const size = (req.nextUrl.searchParams.get('size') ?? 'md') as keyof typeof DIMS
+    const rawSize = req.nextUrl.searchParams.get('size') ?? 'md'
+    const size = (rawSize in DIMS ? rawSize : 'md') as SizeKey
     const dims = DIMS[size] ?? DIMS.md
+    const L = BADGE_LAYOUT[size] ?? BADGE_LAYOUT.md
 
     const certificate = await prisma.certificate.findFirst({
       where: { OR: [{ publicId: id }, { id }] },
@@ -67,8 +181,8 @@ export async function GET(
         ? `${entity.firstName || ''} ${entity.lastName || ''}`.trim() || entity.email
         : entity.legalName || entity.tradeName || entity.email
     const fullName = entityName || 'Contact certifié'
-    const maxChars = size === 'sm' ? 18 : size === 'md' ? 22 : 26
-    const displayName = fullName.length > maxChars ? fullName.substring(0, maxChars) + '...' : fullName
+    const maxChars = size === 'sm' ? 20 : size === 'md' ? 26 : 30
+    const displayName = fullName.length > maxChars ? fullName.substring(0, maxChars) + '…' : fullName
 
     const signature = certificate.signatures[0]
     const hasValidDynamicToken =
@@ -82,7 +196,7 @@ export async function GET(
           ? `${baseUrl}/verify/${signature.jti}?h=${signature.contextHash}`
           : `${baseUrl}/verify/${certificate.publicId || certificate.id}`
 
-    const qrPx = size === 'sm' ? Math.min(dims.qr, 72) : dims.qr
+    const qrPx = L.qrPx
 
     let qrBase64 = ''
     try {
@@ -99,57 +213,19 @@ export async function GET(
     const w = dims.w
     const h = dims.h
     const cx = w / 2
-    const fs = dims.fontSize
+    const shieldROut = w * L.shieldRFrac
+    const shieldRIn = shieldROut * 0.72
+    const pillHalfW = w * L.pillHalfWFrac
+    const pillRx = Math.round(L.pillH / 2)
 
-    let shieldCy: number
-    let blocktrustY: number
-    let subtitleY: number
-    let pillRectY: number
-    let pillH: number
-    let pillTextY: number
-    let nameY: number
-    let qrY: number
-    let fsTrust: number
-    let fsSub: number
-    let fsPill: number
-    let fsName: number
-    let fsCertId: number
-    let fsFoot: number
+    const qrPad = L.qrPad
+    const qrOuterTop = L.qrY - qrPad
+    const qrOuterH = L.qrPx + 2 * qrPad
+    const qrOuterBottom = qrOuterTop + qrOuterH
+    const dividerY = qrOuterBottom + Math.round(Math.min(10, Math.max(5, L.fsCertId * 0.7)))
 
-    if (size === 'sm') {
-      shieldCy = 50
-      blocktrustY = 66
-      subtitleY = 80
-      pillRectY = 88
-      pillH = 17
-      pillTextY = 100
-      nameY = 116
-      qrY = 126
-      fsTrust = 13
-      fsSub = 9
-      fsPill = 9
-      fsName = 11
-      fsCertId = 7
-      fsFoot = 7
-    } else {
-      shieldCy = h * 0.22
-      blocktrustY = h * 0.41
-      subtitleY = h * 0.48
-      pillRectY = h * 0.51
-      pillH = 22
-      pillTextY = h * 0.51 + 15
-      nameY = h * 0.61
-      qrY = h * 0.66
-      fsTrust = fs + 4
-      fsSub = fs - 3
-      fsPill = fs - 4
-      fsName = fs - 1
-      fsCertId = fs - 6
-      fsFoot = fs - 6
-    }
-
-    const certIdY = qrY + qrPx + (size === 'sm' ? 9 : 14)
-    const pillHalfW = size === 'sm' ? w * 0.46 : w * 0.22
+    const certIdSnippet = `${certificate.id.slice(0, L.certIdChars)}…`
+    const pillLabel = L.shortPillLabel ? '✓ Blockchain' : '✓ Certifié Blockchain'
 
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"
@@ -157,73 +233,62 @@ export async function GET(
   xmlns:xlink="http://www.w3.org/1999/xlink">
 
   <defs>
-    <radialGradient id="bgGrad" cx="50%" cy="30%" r="70%">
+    <radialGradient id="bgGrad" cx="50%" cy="28%" r="72%">
       <stop offset="0%" stop-color="#0d2044"/>
       <stop offset="100%" stop-color="#060e1a"/>
     </radialGradient>
-    <radialGradient id="glowBlue" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.15"/>
+    <radialGradient id="glowBlue" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.14"/>
       <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="glowGold" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#BDA76B" stop-opacity="0.1"/>
+    <radialGradient id="glowGold" cx="50%" cy="72%" r="45%">
+      <stop offset="0%" stop-color="#BDA76B" stop-opacity="0.08"/>
       <stop offset="100%" stop-color="#BDA76B" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
-  <!-- Fond -->
   <rect width="${w}" height="${h}" rx="16" fill="url(#bgGrad)"/>
+  <ellipse cx="${cx}" cy="${h * 0.28}" rx="${w * 0.55}" ry="${h * 0.22}" fill="url(#glowBlue)"/>
+  <ellipse cx="${cx}" cy="${h * 0.72}" rx="${w * 0.38}" ry="${h * 0.18}" fill="url(#glowGold)"/>
 
-  <!-- Halo bleu centre-haut -->
-  <ellipse cx="${cx}" cy="${h * 0.25}" rx="${w * 0.6}" ry="${h * 0.25}" fill="url(#glowBlue)"/>
+  <rect width="${w}" height="${h}" rx="16" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.28"/>
 
-  <!-- Halo doré centre-bas -->
-  <ellipse cx="${cx}" cy="${h * 0.7}" rx="${w * 0.4}" ry="${h * 0.2}" fill="url(#glowGold)"/>
+  <circle cx="${cx}" cy="${L.shieldCy}" r="${shieldROut}" fill="rgba(0,212,255,0.07)" stroke="#00d4ff" stroke-width="1" opacity="0.45"/>
+  <circle cx="${cx}" cy="${L.shieldCy}" r="${shieldRIn}" fill="rgba(0,212,255,0.1)" stroke="#00d4ff" stroke-width="1.4" opacity="0.55"/>
 
-  <!-- Bordure extérieure -->
-  <rect width="${w}" height="${h}" rx="16" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.3"/>
-
-  <!-- Cercle bouclier externe -->
-  <circle cx="${cx}" cy="${shieldCy}" r="${w * 0.18}" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="1" opacity="0.4"/>
-
-  <!-- Cercle bouclier interne -->
-  <circle cx="${cx}" cy="${shieldCy}" r="${w * 0.13}" fill="rgba(0,212,255,0.12)" stroke="#00d4ff" stroke-width="1.5" opacity="0.6"/>
-
-  <!-- Bouclier SVG centré -->
-  <g transform="translate(${cx - w * 0.07}, ${shieldCy - w * 0.09})">
+  <g transform="translate(${cx - w * 0.07}, ${L.shieldCy - w * 0.09})">
     <path d="M${w * 0.07} 0 L${w * 0.14} ${w * 0.03} L${w * 0.14} ${w * 0.09} C${w * 0.14} ${w * 0.13} ${w * 0.07} ${w * 0.16} ${w * 0.07} ${w * 0.16} C${w * 0.07} ${w * 0.16} 0 ${w * 0.13} 0 ${w * 0.09} L0 ${w * 0.03} Z" fill="none" stroke="#00d4ff" stroke-width="1.8" stroke-linejoin="round"/>
     <path d="M${w * 0.03} ${w * 0.08} L${w * 0.06} ${w * 0.11} L${w * 0.11} ${w * 0.05}" fill="none" stroke="#00d4ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 
-  <!-- BLOCKTRUST -->
-  <text x="${cx}" y="${blocktrustY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fsTrust}" font-weight="700" letter-spacing="${size === 'sm' ? 2 : 3}" fill="#ffffff">BLOCKTRUST</text>
+  <text x="${cx}" y="${L.blocktrustY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${L.fsTrust}" font-weight="700" letter-spacing="${L.letterTrust}" fill="#ffffff">BLOCKTRUST</text>
 
-  <!-- Sous-titre -->
-  <text x="${cx}" y="${subtitleY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fsSub}" fill="rgba(232,234,240,0.5)" letter-spacing="1">Identité Vérifiée</text>
+  <text x="${cx}" y="${L.subtitleY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${L.fsSub}" fill="rgba(232,234,240,0.52)" letter-spacing="0.5">Identité Vérifiée</text>
 
-  <!-- Badge Certifié Blockchain -->
-  <rect x="${cx - pillHalfW}" y="${pillRectY}" width="${pillHalfW * 2}" height="${pillH}" rx="${Math.round(pillH / 2)}" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="0.8"/>
-  <text x="${cx}" y="${pillTextY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fsPill}" fill="#00d4ff">${size === 'sm' ? '✓ Blockchain' : '✓ Certifié Blockchain'}</text>
+  <rect x="${cx - pillHalfW}" y="${L.pillRectY}" width="${pillHalfW * 2}" height="${L.pillH}" rx="${pillRx}" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="0.75"/>
+  <text x="${cx}" y="${L.pillTextY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${L.fsPill}" fill="#00d4ff">${pillLabel}</text>
 
-  <!-- Nom de l'entité -->
-  <text x="${cx}" y="${nameY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fsName}" font-weight="600" fill="#ffffff">${escapeXml(displayName)}</text>
+  <text x="${cx}" y="${L.nameY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${L.fsName}" font-weight="600" fill="#ffffff">${escapeXml(displayName)}</text>
 
-  <!-- QR Code -->
-  <image x="${cx - qrPx / 2}" y="${qrY}" width="${qrPx}" height="${qrPx}" xlink:href="data:image/png;base64,${qrBase64}"/>
+  <rect x="${cx - qrPx / 2 - qrPad}" y="${qrOuterTop}" width="${qrPx + 2 * qrPad}" height="${qrOuterH}" rx="${L.qrCornerRx}" fill="#ffffff"/>
 
-  <!-- ID certificat -->
-  <text x="${cx}" y="${certIdY}" text-anchor="middle" font-family="monospace" font-size="${fsCertId}" fill="rgba(232,234,240,0.35)">${certificate.id.substring(0, 20)}...</text>
+  <image x="${cx - qrPx / 2}" y="${L.qrY}" width="${qrPx}" height="${qrPx}" xlink:href="data:image/png;base64,${qrBase64}"/>
 
-  <!-- Powered by Polygon -->
-  <text x="${cx - 18}" y="${h - 12}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fsFoot}" fill="rgba(232,234,240,0.3)">Powered by</text>
-  <text x="${cx + 22}" y="${h - 12}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fsFoot}" font-weight="700" fill="#7B3FE4">Polygon</text>
+  <line x1="${Math.round(cx - w * 0.38)}" x2="${Math.round(cx + w * 0.38)}" y1="${dividerY}" y2="${dividerY}" stroke="rgba(232,234,240,0.12)" stroke-width="1"/>
+
+  <text x="${cx}" y="${L.certIdY}" text-anchor="middle" font-family="monospace" font-size="${L.fsCertId}" fill="rgba(232,234,240,0.42)">${escapeXml(certIdSnippet)}</text>
+
+  <text x="${cx}" y="${L.footerY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${L.fsFoot}" fill="rgba(232,234,240,0.38)">
+    <tspan>Powered by </tspan><tspan fill="#7B3FE4" font-weight="700">Polygon</tspan>
+  </text>
 
 </svg>`
 
     return new NextResponse(svg, {
       headers: {
         'Content-Type': 'image/svg+xml',
-        'Cache-Control': 'public, max-age=300',
+        // SVG calibré côté serveur : TTL court pour voir les retouches après déploiissement sans attendre trop longtemps
+        'Cache-Control': 'public, max-age=120, stale-while-revalidate=300',
       },
     })
   } catch (error) {

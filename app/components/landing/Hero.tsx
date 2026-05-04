@@ -8,11 +8,11 @@ export default function Hero() {
   return (
     <section
       id="hero"
-      className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 pb-14 sm:pt-16 sm:pb-20 lg:pt-24 lg:pb-28"
+      className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-10 pb-8 sm:pb-12 lg:pt-24 lg:pb-28"
     >
-      <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-5 lg:gap-12">
+      <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-5 lg:gap-12 lg:items-center">
         {/* Texte */}
-        <div className="lg:col-span-3 order-1">
+        <div className="order-1 lg:col-span-3">
           {/* Pill eyebrow */}
           <div
             className="opacity-0 animate-fade-up [animation-delay:0ms] inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm sm:text-base font-mono tracking-wider neon-gold"
@@ -96,20 +96,29 @@ export default function Hero() {
           </ul>
         </div>
 
-        {/* Badge BlockTrust SVG — float + glow-pulse cyan */}
-        <div className="lg:col-span-2 order-2 flex justify-center lg:justify-end">
-          <div className="opacity-0 animate-fade-in [animation-delay:300ms]">
-            <div className="relative w-56 sm:w-72 lg:w-80 aspect-square animate-float drop-shadow-[0_0_40px_rgba(0,212,255,0.4)]">
-              {/* Halo cyan pulsé en arrière-plan */}
+        {/* Badge — mobile : largeur vue = carré implicite ; halo centré largeur×hauteur identiques (Safari) */}
+        <div className="order-2 flex w-full justify-center lg:col-span-2 lg:w-auto lg:justify-end lg:self-center">
+          <div className="opacity-0 animate-fade-in [animation-delay:300ms] flex w-full flex-col items-center px-1 pt-6 pb-16 sm:px-2 sm:pt-8 sm:pb-20 lg:max-w-none lg:px-0 lg:pb-0 lg:pt-0">
+            <div
+              className="relative isolate mx-auto aspect-square w-[min(17.5rem,88vw)] shrink-0 animate-float overflow-visible drop-shadow-[0_0_36px_rgba(0,212,255,0.38)] sm:w-[min(18rem,90vw)] lg:h-80 lg:w-80 lg:max-w-none"
+              style={{ WebkitTransform: "translateZ(0)" }}
+            >
               <div
                 aria-hidden
-                className="absolute inset-[-12%] rounded-full animate-glow-pulse"
+                className="hero-badge-glow pointer-events-none absolute left-1/2 top-1/2 z-0 -translate-x-1/2 -translate-y-1/2 rounded-full"
                 style={{
+                  width: "124%",
+                  height: "124%",
                   background:
-                    "radial-gradient(circle at center, rgba(0,212,255,0.4) 0%, rgba(0,212,255,0.1) 45%, rgba(0,212,255,0) 75%)",
+                    "radial-gradient(circle at 50% 50%, rgba(0,212,255,0.44) 0%, rgba(0,212,255,0.14) 42%, transparent 70%)",
                 }}
               />
-              <BlockTrustBadge className="relative !w-full !h-full [&_svg]:!h-full [&_svg]:!w-full" />
+              <BlockTrustBadge
+                instanceId="hero-badge"
+                size="fill"
+                showWatermark={false}
+                className="relative z-10 flex h-full w-full flex-col items-center justify-center [&_svg]:block"
+              />
             </div>
           </div>
         </div>

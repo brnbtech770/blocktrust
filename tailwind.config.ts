@@ -50,7 +50,8 @@ export default {
       animation: {
         "fade-up": "fadeUp 0.7s ease-out forwards",
         "fade-in": "fadeIn 0.7s ease-out forwards",
-        "glow-pulse": "glowPulse 2.4s ease-in-out infinite",
+        /** Pulse du halo landing — opacité uniquement pour garder un cercle strict */
+        "glow-pulse-opacity": "glowPulseOpacity 2.4s ease-in-out infinite",
         float: "float 4s ease-in-out infinite",
         "spin-slow": "spin 18s linear infinite",
         "draw-line": "drawLine 1.2s ease-out forwards",
@@ -64,15 +65,9 @@ export default {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
-        glowPulse: {
-          "0%, 100%": {
-            boxShadow:
-              "0 0 20px rgba(0,212,255,0.3), 0 0 40px rgba(0,212,255,0.15)",
-          },
-          "50%": {
-            boxShadow:
-              "0 0 40px rgba(0,212,255,0.6), 0 0 80px rgba(0,212,255,0.25)",
-          },
+        glowPulseOpacity: {
+          "0%, 100%": { opacity: "0.58" },
+          "50%": { opacity: "0.98" },
         },
         float: {
           "0%, 100%": { transform: "translateY(0px)" },
