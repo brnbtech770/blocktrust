@@ -7,6 +7,7 @@ import { auth } from "@/app/lib/auth-server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import QRCodeImage from "@/app/components/QRCode";
+import VerifyBadgeButton from "@/app/components/VerifyBadgeButton";
 import CertificateDetailClient from "@/app/components/dashboard/CertificateDetailClient";
 import CertificateBadgeSection from "@/app/components/dashboard/CertificateBadgeSection";
 import {
@@ -293,10 +294,13 @@ export default async function CertificateDetailPage({
             {/* QR code */}
             <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
               <h2 className="text-xl font-bold text-white mb-4">QR Code de vérification</h2>
-              <div className="flex justify-center mb-4">
-                <div className="bg-white p-4 rounded-xl">
-                  <QRCodeImage url={verifyUrl} size={200} />
+              <div className="mx-auto mb-4 w-full max-w-[280px]">
+                <div className="flex justify-center">
+                  <div className="rounded-xl bg-white p-4">
+                    <QRCodeImage url={verifyUrl} size={200} />
+                  </div>
                 </div>
+                <VerifyBadgeButton certId={certificate.publicId || certificate.id} />
               </div>
               <CertificateDetailClient verifyUrl={verifyUrl} />
             </div>

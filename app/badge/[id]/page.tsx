@@ -1,6 +1,7 @@
 import { prisma } from "@/app/lib/db";
 import { notFound } from "next/navigation";
 import QRCodeImage from "@/app/components/QRCode";
+import VerifyBadgeButton from "@/app/components/VerifyBadgeButton";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 
 export default async function BadgePage({
@@ -64,7 +65,9 @@ export default async function BadgePage({
     where: { entityId: entity.id },
   });
 
-  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/verify/${entity.id}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const certIdForVerify = certificate.publicId || certificate.id;
+  const verifyUrl = `${baseUrl}/verify/${certIdForVerify}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-blue-950 flex items-center justify-center p-4">
@@ -83,10 +86,13 @@ export default async function BadgePage({
           <p className="text-gray-300 text-sm mt-2">Certificat de confiance vérifié</p>
         </div>
 
-        <div className="flex justify-center mb-6">
-          <div className="bg-white p-6 rounded-2xl shadow-2xl border-2 border-cyan-400/30 hover:border-cyan-400/50 transition-colors">
-            <QRCodeImage url={verifyUrl} size={250} />
+        <div className="mx-auto mb-6 w-full max-w-[290px]">
+          <div className="flex justify-center">
+            <div className="rounded-2xl border-2 border-cyan-400/30 bg-white p-6 shadow-2xl transition-colors hover:border-cyan-400/50">
+              <QRCodeImage url={verifyUrl} size={250} />
+            </div>
           </div>
+          <VerifyBadgeButton certId={certIdForVerify} />
         </div>
 
         <div className="space-y-4 mb-6">

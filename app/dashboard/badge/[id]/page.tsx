@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import DashboardSidebarClient from '@/app/components/DashboardSidebarClient'
+import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
 import { Copy, Download, ExternalLink, Check } from 'lucide-react'
 
 interface BadgeData {
@@ -229,16 +230,19 @@ export default function DashboardBadgePage() {
         {/* QR Code */}
         <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30 mb-6">
             <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">QR Code</h2>
-          <div className="flex items-center gap-6">
-            <div className="bg-white p-4 rounded-xl">
-              <img
-                src={`/api/qr/${badgeId}?format=png`}
-                alt="QR Code"
-                width={200}
-                height={200}
-              />
+          <div className="flex items-start gap-6">
+            <div className="flex w-[200px] shrink-0 flex-col sm:w-auto sm:max-w-[232px]">
+              <div className="rounded-xl bg-white p-4">
+                <img
+                  src={`/api/qr/${badgeId}?format=png`}
+                  alt="QR Code"
+                  width={200}
+                  height={200}
+                />
+              </div>
+              <VerifyBadgeButton certId={badgeId} />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="mb-4 text-base text-white/60">
                 Scannez ce QR code pour vérifier l'authenticité du certificat
               </p>
