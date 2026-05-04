@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Clock, Search, ShieldAlert } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { Clock, RotateCcw, Search, ShieldAlert } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Logo } from "@/app/components/ui/Logo";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 
@@ -49,6 +49,7 @@ function formatCertifiedDate(iso: string | undefined | null): string {
 }
 
 function VerifyContent() {
+  const router = useRouter();
   const sp = useSearchParams();
   const certIdQuery = sp.get("certId")?.trim() ?? "";
   const [token, setToken] = useState("");
@@ -164,6 +165,16 @@ function VerifyContent() {
     verdict === "INVALID" ||
     verdict === "ERROR";
 
+  const resetVerification = () => {
+    setVerdict(null);
+    setManualIdInput("");
+    setEntityName(null);
+    setCertifiedAt(null);
+    setToken("");
+    setTokenFixApplied(false);
+    router.replace("/verify");
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0a1628] text-white antialiased">
       <header className="flex shrink-0 justify-center px-4 pt-8 pb-4">
@@ -180,46 +191,42 @@ function VerifyContent() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-4 pb-12 pt-4">
-        {!token && !certIdQuery && (
-          <>
-            <div className="mx-auto mt-8 w-full max-w-sm">
-              <p className="mb-3 text-center text-xs text-white/40">
-                Vérifier un badge manuellement
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="URL ou ID du badge…"
-                  aria-label="URL ou identifiant du badge à vérifier"
-                  className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#00d4ff]/50"
-                  value={manualIdInput}
-                  onChange={(e) => setManualIdInput(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && handleManualVerify()
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={handleManualVerify}
-                  className="flex items-center gap-1.5 rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/20 px-4 py-2.5 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/30"
-                >
-                  <Search className="h-4 w-4 shrink-0" aria-hidden />
-                  Vérifier
-                </button>
-              </div>
-            </div>
+        <div className="mx-auto mt-8 w-full max-w-sm shrink-0">
+          <p className="mb-3 text-center text-xs text-white/40">
+            Vérifier un badge manuellement
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="URL ou ID du badge…"
+              aria-label="URL ou identifiant du badge à vérifier"
+              className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#00d4ff]/50"
+              value={manualIdInput}
+              onChange={(e) => setManualIdInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleManualVerify()}
+            />
+            <button
+              type="button"
+              onClick={handleManualVerify}
+              className="flex items-center gap-1.5 rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/20 px-4 py-2.5 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/30"
+            >
+              <Search className="h-4 w-4 shrink-0" aria-hidden />
+              Vérifier
+            </button>
+          </div>
+        </div>
 
-            <div className="mx-auto mt-10 max-w-md text-center">
-              <ShieldAlert className="mx-auto mb-4 h-10 w-10 text-[#00d4ff]/50" aria-hidden />
-              <p className="font-syne text-lg text-[#00d4ff]/90">
-                INVALIDE — Lien incomplet
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-white/45">
-                Aucun jeton sécurisé n&apos;a été fourni dans l&apos;URL. Scannez le QR code officiel depuis un message
-                certifié BLOCKTRUST™ ou ouvrez le lien reçu de votre interlocuteur.
-              </p>
-            </div>
-          </>
+        {!token && !certIdQuery && (
+          <div className="mx-auto mt-10 max-w-md text-center">
+            <ShieldAlert className="mx-auto mb-4 h-10 w-10 text-[#00d4ff]/50" aria-hidden />
+            <p className="font-syne text-lg text-[#00d4ff]/90">
+              INVALIDE — Lien incomplet
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-white/45">
+              Aucun jeton sécurisé n&apos;a été fourni dans l&apos;URL. Scannez le QR code officiel depuis un message
+              certifié BLOCKTRUST™ ou ouvrez le lien reçu de votre interlocuteur.
+            </p>
+          </div>
         )}
 
         {tokenFixApplied && (
@@ -315,6 +322,17 @@ function VerifyContent() {
         {verdict && failVerdict && (
           <FailVerdictCard verdict={verdict} />
         )}
+
+        {verdict ? (
+          <button
+            type="button"
+            onClick={resetVerification}
+            className="mt-4 flex items-center gap-1.5 text-xs text-white/40 transition hover:text-white/70 mx-auto"
+          >
+            <RotateCcw className="h-3 w-3 shrink-0" aria-hidden />
+            Nouvelle vérification
+          </button>
+        ) : null}
       </main>
     </div>
   );
