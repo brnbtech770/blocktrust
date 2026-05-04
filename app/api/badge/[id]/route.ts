@@ -9,7 +9,7 @@ import QRCode from 'qrcode'
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
 
 const DIMS = {
-  sm: { w: 240, h: 280, fontSize: 14, qr: 80 },
+  sm: { w: 240, h: 280, fontSize: 14, qr: 70 },
   md: { w: 320, h: 400, fontSize: 16, qr: 110 },
   lg: { w: 400, h: 480, fontSize: 18, qr: 140 },
 } as const
@@ -82,10 +82,12 @@ export async function GET(
           ? `${baseUrl}/verify/${signature.jti}?h=${signature.contextHash}`
           : `${baseUrl}/verify/${certificate.publicId || certificate.id}`
 
+    const qrPx = size === 'sm' ? Math.min(dims.qr, 72) : dims.qr
+
     let qrBase64 = ''
     try {
       const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
-        width: dims.qr,
+        width: qrPx,
         margin: 1,
         color: { dark: '#000000', light: '#ffffff' },
       })
@@ -97,6 +99,57 @@ export async function GET(
     const w = dims.w
     const h = dims.h
     const cx = w / 2
+    const fs = dims.fontSize
+
+    let shieldCy: number
+    let blocktrustY: number
+    let subtitleY: number
+    let pillRectY: number
+    let pillH: number
+    let pillTextY: number
+    let nameY: number
+    let qrY: number
+    let fsTrust: number
+    let fsSub: number
+    let fsPill: number
+    let fsName: number
+    let fsCertId: number
+    let fsFoot: number
+
+    if (size === 'sm') {
+      shieldCy = 50
+      blocktrustY = 66
+      subtitleY = 80
+      pillRectY = 88
+      pillH = 17
+      pillTextY = 100
+      nameY = 116
+      qrY = 126
+      fsTrust = 13
+      fsSub = 9
+      fsPill = 9
+      fsName = 11
+      fsCertId = 7
+      fsFoot = 7
+    } else {
+      shieldCy = h * 0.22
+      blocktrustY = h * 0.41
+      subtitleY = h * 0.48
+      pillRectY = h * 0.51
+      pillH = 22
+      pillTextY = h * 0.51 + 15
+      nameY = h * 0.61
+      qrY = h * 0.66
+      fsTrust = fs + 4
+      fsSub = fs - 3
+      fsPill = fs - 4
+      fsName = fs - 1
+      fsCertId = fs - 6
+      fsFoot = fs - 6
+    }
+
+    const certIdY = qrY + qrPx + (size === 'sm' ? 9 : 14)
+    const pillHalfW = size === 'sm' ? w * 0.46 : w * 0.22
 
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"
@@ -131,39 +184,39 @@ export async function GET(
   <rect width="${w}" height="${h}" rx="16" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.3"/>
 
   <!-- Cercle bouclier externe -->
-  <circle cx="${cx}" cy="${h * 0.22}" r="${w * 0.18}" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="1" opacity="0.4"/>
+  <circle cx="${cx}" cy="${shieldCy}" r="${w * 0.18}" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="1" opacity="0.4"/>
 
   <!-- Cercle bouclier interne -->
-  <circle cx="${cx}" cy="${h * 0.22}" r="${w * 0.13}" fill="rgba(0,212,255,0.12)" stroke="#00d4ff" stroke-width="1.5" opacity="0.6"/>
+  <circle cx="${cx}" cy="${shieldCy}" r="${w * 0.13}" fill="rgba(0,212,255,0.12)" stroke="#00d4ff" stroke-width="1.5" opacity="0.6"/>
 
   <!-- Bouclier SVG centré -->
-  <g transform="translate(${cx - w * 0.07}, ${h * 0.22 - w * 0.09})">
+  <g transform="translate(${cx - w * 0.07}, ${shieldCy - w * 0.09})">
     <path d="M${w * 0.07} 0 L${w * 0.14} ${w * 0.03} L${w * 0.14} ${w * 0.09} C${w * 0.14} ${w * 0.13} ${w * 0.07} ${w * 0.16} ${w * 0.07} ${w * 0.16} C${w * 0.07} ${w * 0.16} 0 ${w * 0.13} 0 ${w * 0.09} L0 ${w * 0.03} Z" fill="none" stroke="#00d4ff" stroke-width="1.8" stroke-linejoin="round"/>
     <path d="M${w * 0.03} ${w * 0.08} L${w * 0.06} ${w * 0.11} L${w * 0.11} ${w * 0.05}" fill="none" stroke="#00d4ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 
   <!-- BLOCKTRUST -->
-  <text x="${cx}" y="${h * 0.41}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${dims.fontSize + 4}" font-weight="700" letter-spacing="3" fill="#ffffff">BLOCKTRUST</text>
+  <text x="${cx}" y="${blocktrustY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fsTrust}" font-weight="700" letter-spacing="${size === 'sm' ? 2 : 3}" fill="#ffffff">BLOCKTRUST</text>
 
   <!-- Sous-titre -->
-  <text x="${cx}" y="${h * 0.48}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${dims.fontSize - 3}" fill="rgba(232,234,240,0.5)" letter-spacing="1">Identité Vérifiée</text>
+  <text x="${cx}" y="${subtitleY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fsSub}" fill="rgba(232,234,240,0.5)" letter-spacing="1">Identité Vérifiée</text>
 
   <!-- Badge Certifié Blockchain -->
-  <rect x="${cx - w * 0.22}" y="${h * 0.51}" width="${w * 0.44}" height="22" rx="11" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="0.8"/>
-  <text x="${cx}" y="${h * 0.51 + 15}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${dims.fontSize - 4}" fill="#00d4ff">✓ Certifié Blockchain</text>
+  <rect x="${cx - pillHalfW}" y="${pillRectY}" width="${pillHalfW * 2}" height="${pillH}" rx="${Math.round(pillH / 2)}" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="0.8"/>
+  <text x="${cx}" y="${pillTextY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fsPill}" fill="#00d4ff">${size === 'sm' ? '✓ Blockchain' : '✓ Certifié Blockchain'}</text>
 
   <!-- Nom de l'entité -->
-  <text x="${cx}" y="${h * 0.61}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${dims.fontSize - 1}" font-weight="600" fill="#ffffff">${escapeXml(displayName)}</text>
+  <text x="${cx}" y="${nameY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fsName}" font-weight="600" fill="#ffffff">${escapeXml(displayName)}</text>
 
   <!-- QR Code -->
-  <image x="${cx - dims.qr / 2}" y="${h * 0.66}" width="${dims.qr}" height="${dims.qr}" xlink:href="data:image/png;base64,${qrBase64}"/>
+  <image x="${cx - qrPx / 2}" y="${qrY}" width="${qrPx}" height="${qrPx}" xlink:href="data:image/png;base64,${qrBase64}"/>
 
   <!-- ID certificat -->
-  <text x="${cx}" y="${h * 0.66 + dims.qr + 14}" text-anchor="middle" font-family="monospace" font-size="${dims.fontSize - 6}" fill="rgba(232,234,240,0.35)">${certificate.id.substring(0, 20)}...</text>
+  <text x="${cx}" y="${certIdY}" text-anchor="middle" font-family="monospace" font-size="${fsCertId}" fill="rgba(232,234,240,0.35)">${certificate.id.substring(0, 20)}...</text>
 
   <!-- Powered by Polygon -->
-  <text x="${cx - 18}" y="${h - 12}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${dims.fontSize - 6}" fill="rgba(232,234,240,0.3)">Powered by</text>
-  <text x="${cx + 22}" y="${h - 12}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${dims.fontSize - 6}" font-weight="700" fill="#7B3FE4">Polygon</text>
+  <text x="${cx - 18}" y="${h - 12}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fsFoot}" fill="rgba(232,234,240,0.3)">Powered by</text>
+  <text x="${cx + 22}" y="${h - 12}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${fsFoot}" font-weight="700" fill="#7B3FE4">Polygon</text>
 
 </svg>`
 
