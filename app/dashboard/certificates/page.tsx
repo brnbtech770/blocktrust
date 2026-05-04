@@ -201,7 +201,7 @@ export default function CertificatesPage() {
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h1 className="font-syne mb-2 text-2xl font-bold tracking-tight text-white drop-shadow-none sm:text-3xl lg:text-4xl">
+          <h1 className="font-syne mb-2 text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
             Mes Certificats
           </h1>
           <p className="font-sans mb-4 max-w-xl text-xs leading-relaxed text-white/40">

@@ -14,6 +14,8 @@ import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
 /** Évite cache / flux RSC sans cookies → auth() null alors que l'utilisateur est connecté */
 export const dynamic = 'force-dynamic'
 
+// Styles couleurs / titres zone principale : DashboardLayout + globals.css [data-dashboard-main]
+
 export default async function DashboardSegmentLayout({
   children,
 }: {

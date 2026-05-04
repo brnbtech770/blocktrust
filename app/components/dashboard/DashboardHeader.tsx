@@ -39,10 +39,11 @@ export default function DashboardHeader() {
         </div>
         <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-4">
           <div className="hidden text-right sm:block">
-            <p className="text-xs" style={{ color: 'var(--bt-muted)' }}>
-              Connecté
-            </p>
-            <p className="truncate text-sm font-semibold text-white">{firstName}</p>
+            <p className="text-xs text-white/40">Connecté</p>
+            <p className="truncate text-sm text-white/70">{firstName}</p>
+            {session?.user?.email ? (
+              <p className="truncate text-xs text-white/40">{session.user.email}</p>
+            ) : null}
           </div>
           <button
             type="button"

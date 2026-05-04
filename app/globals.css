@@ -65,6 +65,16 @@ h5, h6 {
   font-weight: 600;
 }
 
+/* Zone contenu dashboard (data-dashboard-main) : titres blancs, sans néon */
+[data-dashboard-main] h1,
+[data-dashboard-main] h2,
+[data-dashboard-main] h3,
+[data-dashboard-main] h4 {
+  color: #ffffff;
+  text-shadow: none;
+  filter: none;
+}
+
 /* Données techniques : IBM Plex Mono (hashes, timestamps, badges techniques, ticker) */
 .font-mono-bt,
 [data-font="mono-bt"] {
