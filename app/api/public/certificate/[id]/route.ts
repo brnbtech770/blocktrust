@@ -99,7 +99,12 @@ export async function GET(
           userAgent: ua.slice(0, 500),
           referer: req.headers.get("referer"),
           result: "NOT_FOUND",
-          metadata: { source: "public_certificate_api", lookupPrefix: rawId.slice(0, 64) },
+          metadata: {
+            source: "public_certificate_api",
+            lookupPrefix: rawId.slice(0, 64),
+            verdict: "FRAUD",
+            reason: "certificate_not_found",
+          },
         },
       })
       .catch(() => {});
@@ -107,7 +112,10 @@ export async function GET(
 
   if (!certificate?.entity) {
     auditNotFound();
-    return NextResponse.json({ verdict: "INVALID", reason: "not_found" }, { status: 404 });
+    return NextResponse.json(
+      { verdict: "FRAUD", reason: "certificate_not_found" },
+      { status: 404 }
+    );
   }
 
   const entity = certificate.entity;

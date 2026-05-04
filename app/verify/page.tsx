@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Clock, RotateCcw, Search, ShieldAlert } from "lucide-react";
+import { Clock, RotateCcw, Search, ShieldAlert, ShieldOff } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Logo } from "@/app/components/ui/Logo";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
@@ -22,6 +22,7 @@ type Verdict =
   | "REVOKED"
   | "EXPIRED"
   | "INVALID"
+  | "FRAUD"
   | "ERROR";
 
 type VerifyApiSuccess = {
@@ -163,6 +164,7 @@ function VerifyContent() {
     verdict === "REVOKED" ||
     verdict === "EXPIRED" ||
     verdict === "INVALID" ||
+    verdict === "FRAUD" ||
     verdict === "ERROR";
 
   const resetVerification = () => {
@@ -320,7 +322,11 @@ function VerifyContent() {
         )}
 
         {verdict && failVerdict && (
-          <FailVerdictCard verdict={verdict} />
+          verdict === "FRAUD" ? (
+            <FraudCertificateCard />
+          ) : (
+            <FailVerdictCard verdict={verdict} />
+          )
         )}
 
         {verdict ? (
@@ -338,17 +344,70 @@ function VerifyContent() {
   );
 }
 
+function FraudCertificateCard() {
+  const tips = [
+    "Ne transmettez aucune donnée sensible à ce canal.",
+    "Contactez votre interlocuteur par un moyen que vous avez déjà vérifié.",
+    "Signalez une suspicion à security@blocktrust.tech.",
+  ];
+
+  return (
+    <div className="mx-auto flex w-full max-w-sm animate-pulse flex-col items-center gap-6 rounded-[1.75rem] border-2 border-[#ef4444] p-4 text-center shadow-[0_0_32px_rgba(239,68,68,0.22)] sm:p-5">
+      <div className="relative flex w-full flex-col items-center gap-6">
+        <div
+          className="pointer-events-none absolute inset-1 -z-0 scale-[1.4] animate-pulse rounded-full blur-2xl bg-[#ef4444]/28"
+          aria-hidden
+        />
+
+        <div className="relative z-10 flex h-28 w-28 shrink-0 items-center justify-center rounded-full border-2 border-[#ef4444]/80 bg-[#ef4444]/10 shadow-inner">
+          <ShieldAlert className="h-12 w-12 shrink-0 text-[#ef4444]" strokeWidth={2} aria-hidden />
+        </div>
+
+        <p className="font-syne relative z-10 text-lg font-semibold leading-snug text-[#ef4444]">
+          🚨 Tentative de fraude détectée
+        </p>
+
+        <p className="relative z-10 max-w-[22rem] text-sm leading-relaxed text-white/50">
+          Cet identifiant de badge ne correspond à aucun certificat BLOCKTRUST. Il a probablement été falsifié ou
+          modifié.
+        </p>
+
+        <div className="relative z-10 w-full rounded-xl border border-[#ef4444]/40 bg-[#ef4444]/10 p-4 text-left">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#ef4444]">Que faire ?</p>
+          <ul className="space-y-1.5">
+            {tips.map((item) => (
+              <li key={item} className="flex gap-2 text-xs leading-relaxed text-[#fca5a5]/95">
+                <span className="text-[#ef4444]" aria-hidden>
+                  →
+                </span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <a
+          href="https://blocktrust.tech"
+          className="relative z-10 font-syne text-xs text-[#00d4ff]/60 transition hover:text-[#00d4ff]"
+          rel="noopener noreferrer"
+        >
+          BLOCKTRUST™ — Certifier votre identité →
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function FailVerdictCard({
   verdict,
 }: {
-  verdict: Exclude<
-    Verdict,
-    "VALID" | "VALID_WITH_WARNING"
-  >;
+  verdict: Exclude<Verdict, "VALID" | "VALID_WITH_WARNING" | "FRAUD">;
 }) {
   const isTampered = verdict === "TAMPERED";
   const isExpired = verdict === "EXPIRED";
   const isRevoked = verdict === "REVOKED";
+  const isInvalid = verdict === "INVALID";
+  const isError = verdict === "ERROR";
 
   type Visual = {
     halo: string;
@@ -357,7 +416,8 @@ function FailVerdictCard({
     labelClass: string;
     label: string;
     subtitle: string;
-    Icon: typeof ShieldAlert | typeof Clock;
+    Icon: typeof ShieldAlert | typeof Clock | typeof ShieldOff;
+    labelNormalCase?: boolean;
   };
 
   let v: Visual;
@@ -394,17 +454,32 @@ function FailVerdictCard({
         "Ce badge a été modifié ou copié dans un contexte frauduleux. Tentative de fraude probable.",
       Icon: ShieldAlert,
     };
-  } else {
+  } else if (isInvalid) {
     v = {
-      halo: "bg-[#E05252]/22",
-      disk: "border-2 border-[#E05252]/75 bg-[#E05252]/10",
-      iconClass: "text-[#E05252]",
-      labelClass: "text-[#E05252]",
-      label: "INVALIDE",
+      halo: "bg-[#f59e0b]/20",
+      disk: "border-2 border-[#f59e0b]/65 bg-[#f59e0b]/08",
+      iconClass: "text-[#f59e0b]",
+      labelClass: "text-[#f59e0b]",
+      label: "Badge invalide",
       subtitle:
-        "Ce badge ne peut pas être vérifié. Il est peut-être corrompu ou falsifié.",
-      Icon: ShieldAlert,
+        "Le jeton ou le contexte de vérification n’est pas reconnu. Ouvrez le lien ou le QR officiel depuis le message certifié BLOCKTRUST™.",
+      Icon: ShieldOff,
+      labelNormalCase: true,
     };
+  } else if (isError) {
+    v = {
+      halo: "bg-[#f59e0b]/20",
+      disk: "border-2 border-[#f59e0b]/65 bg-[#f59e0b]/08",
+      iconClass: "text-[#f59e0b]",
+      labelClass: "text-[#f59e0b]",
+      label: "Badge invalide",
+      subtitle: "La vérification n’a pas pu aboutir. Réessayez dans un instant ou utilisez un autre lien officiel.",
+      Icon: ShieldOff,
+      labelNormalCase: true,
+    };
+  } else {
+    verdict satisfies never;
+    throw new Error("verdict inattendu");
   }
 
   const IconCmp = v.Icon;
@@ -430,7 +505,9 @@ function FailVerdictCard({
           <IconCmp className={`h-12 w-12 shrink-0 ${v.iconClass}`} strokeWidth={2} aria-hidden />
         </div>
 
-        <span className={`font-syne relative z-10 text-lg font-semibold uppercase tracking-widest ${v.labelClass}`}>
+        <span
+          className={`font-syne relative z-10 text-lg font-semibold ${v.labelNormalCase ? "" : "uppercase tracking-widest"} ${v.labelClass}`}
+        >
           {v.label}
         </span>
 
