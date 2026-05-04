@@ -50,6 +50,7 @@ function formatCertifiedDate(iso: string | undefined | null): string {
 
 function VerifyContent() {
   const sp = useSearchParams();
+  const certIdQuery = sp.get("certId")?.trim() ?? "";
   const [token, setToken] = useState("");
   const [tokenFixApplied, setTokenFixApplied] = useState(false);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
@@ -67,7 +68,7 @@ function VerifyContent() {
       id = urlMatch[1];
     }
 
-    window.location.href = `/verify/${encodeURIComponent(id)}`;
+    window.location.href = `/verify?certId=${encodeURIComponent(id)}`;
   };
 
   const context = useMemo(
@@ -88,6 +89,11 @@ function VerifyContent() {
       return;
     }
 
+    if (certIdQuery) {
+      setToken("");
+      return;
+    }
+
     const search = window.location.search;
     if (search.includes("token%3D")) {
       const fixedSearch = search.replace(/token%3D/g, "token=");
@@ -98,10 +104,14 @@ function VerifyContent() {
         setTokenFixApplied(true);
       }
     }
-  }, [sp]);
+  }, [sp, certIdQuery]);
 
   useEffect(() => {
     if (!token) return;
+
+    setVerdict(null);
+    setEntityName(null);
+    setCertifiedAt(null);
 
     let cancelled = false;
     void (async () => {
@@ -120,6 +130,27 @@ function VerifyContent() {
       cancelled = true;
     };
   }, [token, context]);
+
+  useEffect(() => {
+    if (token || !certIdQuery) return;
+
+    setVerdict(null);
+    setEntityName(null);
+    setCertifiedAt(null);
+
+    let cancelled = false;
+    void (async () => {
+      const res = await fetch(`/api/public/certificate/${encodeURIComponent(certIdQuery)}`);
+      const data = (await res.json()) as VerifyApiSuccess;
+      if (cancelled) return;
+      setVerdict((data.verdict as Verdict) ?? "ERROR");
+      setEntityName(data.entityName ?? null);
+      setCertifiedAt(data.certifiedAt ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token, certIdQuery]);
 
   const dateLabel = formatCertifiedDate(certifiedAt);
   const displayName = entityName?.trim() || "Titulaire certifié";
@@ -149,7 +180,7 @@ function VerifyContent() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-4 pb-12 pt-4">
-        {!token && (
+        {!token && !certIdQuery && (
           <>
             <div className="mx-auto mt-8 w-full max-w-sm">
               <p className="mb-3 text-center text-xs text-white/40">
@@ -200,7 +231,7 @@ function VerifyContent() {
           </div>
         )}
 
-        {token && !verdict && (
+        {(token || certIdQuery) && !verdict && (
           <div className="flex flex-col items-center gap-4">
             <div
               className="h-16 w-16 animate-spin rounded-full border-2 border-[#00d4ff]/30 border-t-[#00d4ff]"
