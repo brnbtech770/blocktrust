@@ -82,16 +82,6 @@ export async function GET(
           ? `${baseUrl}/verify/${signature.jti}?h=${signature.contextHash}`
           : `${baseUrl}/verify/${certificate.publicId || certificate.id}`
 
-    const level = certificate.level ?? 'BRONZE'
-    const levelColor =
-      level === 'GOLD'
-        ? '#BDA76B'
-        : level === 'SILVER'
-          ? '#aab4c2'
-          : level === 'PLATINUM'
-            ? '#E5E4E2'
-            : '#c8895a'
-
     let qrBase64 = ''
     try {
       const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
@@ -165,15 +155,11 @@ export async function GET(
   <!-- Nom de l'entité -->
   <text x="${cx}" y="${h * 0.61}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${dims.fontSize - 1}" font-weight="600" fill="#ffffff">${escapeXml(displayName)}</text>
 
-  <!-- Niveau -->
-  <rect x="${cx - 30}" y="${h * 0.63}" width="60" height="16" rx="4" fill="rgba(189,167,107,0.15)" stroke="${levelColor}" stroke-width="0.8"/>
-  <text x="${cx}" y="${h * 0.63 + 11}" text-anchor="middle" font-family="monospace" font-size="${dims.fontSize - 5}" font-weight="700" fill="${levelColor}">${level}</text>
-
   <!-- QR Code -->
-  <image x="${cx - dims.qr / 2}" y="${h * 0.7}" width="${dims.qr}" height="${dims.qr}" xlink:href="data:image/png;base64,${qrBase64}"/>
+  <image x="${cx - dims.qr / 2}" y="${h * 0.66}" width="${dims.qr}" height="${dims.qr}" xlink:href="data:image/png;base64,${qrBase64}"/>
 
   <!-- ID certificat -->
-  <text x="${cx}" y="${h * 0.7 + dims.qr + 14}" text-anchor="middle" font-family="monospace" font-size="${dims.fontSize - 6}" fill="rgba(232,234,240,0.35)">${certificate.id.substring(0, 20)}...</text>
+  <text x="${cx}" y="${h * 0.66 + dims.qr + 14}" text-anchor="middle" font-family="monospace" font-size="${dims.fontSize - 6}" fill="rgba(232,234,240,0.35)">${certificate.id.substring(0, 20)}...</text>
 
   <!-- Powered by Polygon -->
   <text x="${cx - 18}" y="${h - 12}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${dims.fontSize - 6}" fill="rgba(232,234,240,0.3)">Powered by</text>
