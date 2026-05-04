@@ -188,7 +188,7 @@ export default function PricingPage() {
         )}
       </section>
 
-      {/* Grid */}
+      {/* Grilles tarifaires — sous chaque carte : PlanCard affiche « Sans engagement · Résiliable à tout moment » */}
       <section className="pb-16">
         {mode === 'B2C' ? (
           <PricingGridB2C

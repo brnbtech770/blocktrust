@@ -124,6 +124,9 @@ export default function RegisterPage() {
             <span className="text-white/20" aria-hidden>→</span>
             <span className="text-white/40">3. Vérifiez votre identité</span>
           </div>
+          <p className="mt-2 text-center text-xs text-white/40">
+            Sans engagement · Résiliable à tout moment
+          </p>
         </div>
         <form onSubmit={handleSubmit} autoComplete="on">
           <input

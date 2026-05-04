@@ -193,6 +193,9 @@ export default function PlanCard({
           )}
         </button>
       )}
+      <p className="mt-2 text-center text-xs text-white/40">
+        Sans engagement · Résiliable à tout moment
+      </p>
     </div>
   )
 }
