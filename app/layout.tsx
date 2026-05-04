@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "@/lib/site-metadata";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,15 +23,10 @@ const spaceGrotesk = Space_Grotesk({
   display: "swap",
 });
 
-const SITE_URL = "https://blocktrust.tech";
 /** Invalider cache navigateur (Safari/iOS très agressif). Incrémenter après nouveau favicon. */
 const ICON_CACHE_QUERY = "v=badge-svg-2";
 /** Incrémenter après régénération opengraph-image.png (réseaux cachent agressivement). */
-const OG_IMAGE_CACHE_QUERY = "v=h1-protection-1";
-
-const SITE_TITLE = "BLOCKTRUST™ — Certification d'identité numérique";
-const SITE_DESCRIPTION =
-  "L'identité numérique qui protège vos échanges. Prouvez qui vous êtes, vérifiez à qui vous parlez et certifiez chaque interaction — vérifiable par n'importe qui, en 1 scan.";
+const OG_IMAGE_CACHE_QUERY = "v=seo-canonical-1";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -39,6 +35,9 @@ export const metadata: Metadata = {
     template: "%s — BlockTrust",
   },
   description: SITE_DESCRIPTION,
+  alternates: {
+    canonical: SITE_URL,
+  },
   applicationName: "BlockTrust",
   keywords: [
     "BlockTrust",

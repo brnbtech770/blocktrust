@@ -4,6 +4,7 @@
 
 import { auth } from '@/app/lib/auth-server'
 import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
 import { prisma } from '@/app/lib/db'
 import DashboardSidebar from '@/app/components/DashboardSidebar'
 import DashboardChrome from '@/app/components/DashboardChrome'
@@ -13,6 +14,14 @@ import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
 
 /** Évite cache / flux RSC sans cookies → auth() null alors que l'utilisateur est connecté */
 export const dynamic = 'force-dynamic'
+
+/** Zones connectées : pas d’indexation (évite les extraits Google issus des formulaires internes). */
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 // Styles couleurs / titres zone principale : DashboardLayout + globals.css [data-dashboard-main]
 

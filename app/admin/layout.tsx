@@ -12,8 +12,16 @@ import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 import Link from 'next/link'
 import AdminPageHeader from '@/app/admin/AdminPageHeader'
 import { prisma } from '@/app/lib/db'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 function IconDashboard() {
   return (
