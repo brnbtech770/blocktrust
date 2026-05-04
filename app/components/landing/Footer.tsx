@@ -27,7 +27,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div className="flex flex-col items-start gap-4">
             <Link href="/" className="flex items-center gap-3" style={{ textDecoration: "none" }}>
-              <BlockTrustBadge size={40} instanceId="footer" className="shrink-0" />
+              <BlockTrustBadge size={40} instanceId="footer" showWatermark={false} className="shrink-0" />
               <span className="font-syne text-lg font-bold leading-none tracking-wider text-bt-cyan">
                 BLOCKTRUST<span className="text-[10px] align-super">™</span>
               </span>

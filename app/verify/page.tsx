@@ -115,21 +115,32 @@ function VerifyContent() {
     setEntityName(null);
     setCertifiedAt(null);
 
+    const ac = new AbortController();
     let cancelled = false;
+
     void (async () => {
-      const res = await fetch("/api/v2/verify", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ token, context }),
-      });
-      const data = (await res.json()) as VerifyApiSuccess;
-      if (cancelled) return;
-      setVerdict((data.verdict as Verdict) ?? "ERROR");
-      setEntityName(data.entityName ?? null);
-      setCertifiedAt(data.certifiedAt ?? null);
+      try {
+        const res = await fetch("/api/v2/verify", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ token, context }),
+          signal: ac.signal,
+        });
+        const data = (await res.json()) as VerifyApiSuccess;
+        if (cancelled) return;
+        setVerdict((data.verdict as Verdict) ?? "ERROR");
+        setEntityName(data.entityName ?? null);
+        setCertifiedAt(data.certifiedAt ?? null);
+      } catch (e: unknown) {
+        if (cancelled) return;
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        setVerdict("ERROR");
+      }
     })();
+
     return () => {
       cancelled = true;
+      ac.abort();
     };
   }, [token, context]);
 
@@ -140,17 +151,29 @@ function VerifyContent() {
     setEntityName(null);
     setCertifiedAt(null);
 
+    const ac = new AbortController();
     let cancelled = false;
+
     void (async () => {
-      const res = await fetch(`/api/public/certificate/${encodeURIComponent(certIdQuery)}`);
-      const data = (await res.json()) as VerifyApiSuccess;
-      if (cancelled) return;
-      setVerdict((data.verdict as Verdict) ?? "ERROR");
-      setEntityName(data.entityName ?? null);
-      setCertifiedAt(data.certifiedAt ?? null);
+      try {
+        const res = await fetch(`/api/public/certificate/${encodeURIComponent(certIdQuery)}`, {
+          signal: ac.signal,
+        });
+        const data = (await res.json()) as VerifyApiSuccess;
+        if (cancelled) return;
+        setVerdict((data.verdict as Verdict) ?? "ERROR");
+        setEntityName(data.entityName ?? null);
+        setCertifiedAt(data.certifiedAt ?? null);
+      } catch (e: unknown) {
+        if (cancelled) return;
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        setVerdict("ERROR");
+      }
     })();
+
     return () => {
       cancelled = true;
+      ac.abort();
     };
   }, [token, certIdQuery]);
 
@@ -166,6 +189,9 @@ function VerifyContent() {
     verdict === "INVALID" ||
     verdict === "FRAUD" ||
     verdict === "ERROR";
+
+  const activeQuery = Boolean(token || certIdQuery);
+  const showManualVerifier = !activeQuery;
 
   const resetVerification = () => {
     setVerdict(null);
@@ -192,31 +218,34 @@ function VerifyContent() {
         </Link>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-4 pb-12 pt-4">
-        <div className="mx-auto mt-8 w-full max-w-sm shrink-0">
-          <p className="mb-3 text-center text-xs text-white/40">
-            Vérifier un badge manuellement
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="URL ou ID du badge…"
-              aria-label="URL ou identifiant du badge à vérifier"
-              className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#00d4ff]/50"
-              value={manualIdInput}
-              onChange={(e) => setManualIdInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleManualVerify()}
-            />
-            <button
-              type="button"
-              onClick={handleManualVerify}
-              className="flex items-center gap-1.5 rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/20 px-4 py-2.5 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/30"
-            >
-              <Search className="h-4 w-4 shrink-0" aria-hidden />
-              Vérifier
-            </button>
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center px-4 pb-16 pt-2 sm:max-w-lg sm:pt-4">
+        {showManualVerifier ? (
+          <div className="w-full shrink-0">
+            <p className="mb-3 text-center text-xs text-white/45">
+              Vérifier un badge manuellement
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
+              <input
+                type="text"
+                placeholder="URL ou ID du badge…"
+                aria-label="URL ou identifiant du badge à vérifier"
+                className="min-h-[44px] flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#00d4ff]/50 focus:ring-2 focus:ring-[#00d4ff]/15"
+                value={manualIdInput}
+                onChange={(e) => setManualIdInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleManualVerify()}
+              />
+              <button
+                type="button"
+                onClick={handleManualVerify}
+                disabled={!manualIdInput.trim()}
+                className="flex min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/20 px-5 py-2.5 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/30 disabled:pointer-events-none disabled:opacity-40 sm:px-4"
+              >
+                <Search className="h-4 w-4 shrink-0" aria-hidden />
+                Vérifier
+              </button>
+            </div>
           </div>
-        </div>
+        ) : null}
 
         {!token && !certIdQuery && (
           <div className="mx-auto mt-10 max-w-md text-center">
@@ -231,27 +260,27 @@ function VerifyContent() {
           </div>
         )}
 
-        {tokenFixApplied && (
+        {tokenFixApplied ? (
           <div
             role="status"
-            className="mb-6 w-full max-w-sm rounded-xl border border-bt-cyan/35 bg-[#00d4ff]/10 px-4 py-3 text-center text-sm text-[#00d4ff]"
+            className="mt-8 w-full max-w-sm rounded-xl border border-bt-cyan/35 bg-[#00d4ff]/10 px-4 py-3 text-center text-sm text-[#00d4ff]"
           >
             Lien corrigé automatiquement (jeton encodé).
           </div>
-        )}
+        ) : null}
 
-        {(token || certIdQuery) && !verdict && (
-          <div className="flex flex-col items-center gap-4">
+        {(token || certIdQuery) && !verdict ? (
+          <div className="mt-12 flex flex-col items-center gap-4">
             <div
               className="h-16 w-16 animate-spin rounded-full border-2 border-[#00d4ff]/30 border-t-[#00d4ff]"
               aria-hidden
             />
             <p className="text-sm text-white/50">Vérification en cours...</p>
           </div>
-        )}
+        ) : null}
 
-        {verdict && showSuccess && (
-          <div className="mx-auto flex max-w-sm flex-col items-center gap-6 px-2 text-center">
+        {verdict && showSuccess ? (
+          <div className="mx-auto mt-10 flex w-full max-w-sm flex-col items-center gap-6 px-2 text-center sm:max-w-md">
             <div className="relative">
               <div
                 className="absolute inset-0 scale-125 animate-pulse rounded-full blur-2xl"
@@ -319,28 +348,32 @@ function VerifyContent() {
               Connectez-vous pour voir si ce contact fait partie de votre réseau de confiance
             </p>
           </div>
-        )}
+        ) : null}
 
-        {verdict && failVerdict && (
-          verdict === "FRAUD" ? (
-            <FraudCertificateCard />
-          ) : (
-            <FailVerdictCard verdict={verdict} />
-          )
-        )}
+        {verdict && failVerdict ? (
+          <div className="mt-10 w-full">
+            {verdict === "FRAUD" ? (
+              <FraudCertificateCard />
+            ) : (
+              <FailVerdictCard verdict={verdict} />
+            )}
+          </div>
+        ) : null}
 
         {verdict ? (
           <button
             type="button"
             onClick={resetVerification}
-            className="mt-4 flex items-center gap-1.5 text-xs text-white/40 transition hover:text-white/70 mx-auto"
+            className="mx-auto mt-8 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-white/45 transition hover:bg-white/[0.06] hover:text-white/75"
           >
             <RotateCcw className="h-3 w-3 shrink-0" aria-hidden />
             Nouvelle vérification
           </button>
         ) : null}
 
-        <div className="mx-auto mt-8 max-w-sm border-t border-white/5 pt-6">
+        <div
+          className={`mx-auto w-full max-w-sm border-t border-white/5 pt-6 ${activeQuery || verdict ? "mt-12" : "mt-10"}`}
+        >
           <p className="text-center text-xs italic leading-relaxed text-white/20">
             Un badge BLOCKTRUST™ sans QR scannable ou lien de vérification ne garantit aucune authenticité.
             <span className="mt-1 block text-white/30">

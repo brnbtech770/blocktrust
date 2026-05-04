@@ -34,7 +34,12 @@ export default function Navbar() {
             style={{ textDecoration: 'none' }}
             aria-label="Retour à l'accueil BlockTrust"
           >
-            <BlockTrustBadge size={44} instanceId="navbar" className="shrink-0 drop-shadow-[0_0_12px_rgba(0,212,255,0.6)]" />
+            <BlockTrustBadge
+              size={44}
+              instanceId="navbar"
+              showWatermark={false}
+              className="shrink-0 drop-shadow-[0_0_12px_rgba(0,212,255,0.6)]"
+            />
             <span className="font-syne text-base font-bold leading-none tracking-wider neon-cyan sm:text-lg">
               BLOCKTRUST<span className="text-[10px] align-super">™</span>
             </span>

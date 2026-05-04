@@ -21,6 +21,11 @@ export interface BlockTrustBadgeProps {
   label?: string;
   /** Préfixe unique pour les IDs SVG (defs, clipPath, gradients, filtre). */
   instanceId?: string;
+  /**
+   * Horodatage sous le SVG (filigran). À désactiver dans les logos / headers compacts
+   * pour éviter doublons et texte quasi invisible.
+   */
+  showWatermark?: boolean;
 }
 
 const COLORS = {
@@ -76,6 +81,7 @@ export function BlockTrustBadge({
   className,
   label = "BLOCKTRUST",
   instanceId,
+  showWatermark = true,
 }: BlockTrustBadgeProps) {
   // useId fournit un id stable côté serveur et client (Next.js SSR safe).
   const reactId = useId();
@@ -100,6 +106,7 @@ export function BlockTrustBadge({
   /** Horodatage affiché uniquement après montage (évite mismatch SSR / hydratation). */
   const [timestamp, setTimestamp] = useState<string | null>(null);
   useEffect(() => {
+    if (!showWatermark) return;
     setTimestamp(
       new Date().toLocaleDateString("fr-FR", {
         day: "2-digit",
@@ -109,7 +116,7 @@ export function BlockTrustBadge({
         minute: "2-digit",
       }),
     );
-  }, []);
+  }, [showWatermark]);
 
   return (
     <div className={`relative inline-flex flex-col items-center select-none ${className ?? ""}`}>
@@ -441,11 +448,13 @@ export function BlockTrustBadge({
         </g>
       </svg>
       </div>
-      <div className="mt-2 text-center">
-        <p className="font-mono text-[9px] tracking-widest text-white/20">
-          {timestamp === null ? "\u00a0" : `${timestamp} · BLOCKTRUST™`}
-        </p>
-      </div>
+      {showWatermark ? (
+        <div className="mt-2 max-w-[min(100%,14rem)] text-center">
+          <p className="font-mono text-[9px] tracking-widest text-white/35">
+            {timestamp === null ? "\u00a0" : `${timestamp} · BLOCKTRUST™`}
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }

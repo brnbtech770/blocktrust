@@ -47,7 +47,7 @@ export function Logo({
   const image = (
     <div className={`relative shrink-0 ${className}`.trim()} style={wrapperStyle}>
       {showBadge ? (
-        <BlockTrustBadge size={px} instanceId={`logo-${badgeInstanceId}`} />
+        <BlockTrustBadge size={px} instanceId={`logo-${badgeInstanceId}`} showWatermark={false} />
       ) : (
         <Image
           src="/logo.png"

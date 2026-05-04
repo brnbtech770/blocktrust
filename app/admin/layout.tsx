@@ -154,7 +154,7 @@ export default async function AdminLayout({
             style={{ textDecoration: 'none' }}
             aria-label="Retour au tableau de bord admin BLOCKTRUST"
           >
-            <BlockTrustBadge size={36} instanceId="admin-header" className="shrink-0" />
+            <BlockTrustBadge size={36} instanceId="admin-header" showWatermark={false} className="shrink-0" />
             <span className="font-syne text-base font-bold leading-none tracking-wider text-bt-cyan">
               BLOCKTRUST
             </span>
