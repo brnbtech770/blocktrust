@@ -194,7 +194,7 @@ export default function TrustCirclePage() {
             >
               {tab === 'all' && `Toutes (${totalEntites})`}
               {tab === 'mutual' && `Mutuelles (${data.mutual?.length ?? 0})`}
-              {tab === 'pending' && `En attente (${data.pending?.length ?? 0})`}
+              {tab === 'pending' && `Invitation envoyée (${data.pending?.length ?? 0})`}
               {tab === 'manual' && `Manuelles (${data.manualEntries?.length ?? 0})`}
             </button>
           ))}

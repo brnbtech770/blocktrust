@@ -91,7 +91,42 @@ export async function GET(
   const ua = req.headers.get("user-agent") ?? "unknown";
   const certificate = await resolveCertificateWithEntity(rawId);
 
-  const auditNotFound = () => {
+  /** Si la saisie correspond au préfixe exactement d’un seul certificat (typo / ID falsifié), alerte le titulaire. */
+  async function tryRecordFraudAlertForSinglePrefixMatch(): Promise<boolean> {
+    const prefix = rawId.trim();
+    const PREFIX_MIN_LEN = 14;
+    if (prefix.length < PREFIX_MIN_LEN) return false;
+
+    const matches = await prisma.certificate.findMany({
+      where: {
+        OR: [{ id: { startsWith: prefix } }, { publicId: { startsWith: prefix } }],
+      },
+      select: { id: true },
+      take: 16,
+    });
+    const uniqueIds = [...new Set(matches.map((m) => m.id))];
+    if (uniqueIds.length !== 1) return false;
+
+    await prisma.verification
+      .create({
+        data: {
+          certificateId: uniqueIds[0],
+          ipHash: hashIp(ip),
+          userAgent: ua.slice(0, 500),
+          referer: req.headers.get("referer"),
+          result: "FRAUD_ALERT",
+          metadata: {
+            source: "public_certificate_api",
+            reason: "bad_id_prefix_typo_or_fraud",
+            attemptedLookup: prefix.slice(0, 120),
+          },
+        },
+      })
+      .catch(() => {});
+    return true;
+  }
+
+  const auditNotFoundWithoutCertificate = () => {
     prisma.verification
       .create({
         data: {
@@ -111,7 +146,10 @@ export async function GET(
   };
 
   if (!certificate?.entity) {
-    auditNotFound();
+    const fraudLinked = await tryRecordFraudAlertForSinglePrefixMatch();
+    if (!fraudLinked) {
+      auditNotFoundWithoutCertificate();
+    }
     return NextResponse.json(
       { verdict: "FRAUD", reason: "certificate_not_found" },
       { status: 404 }

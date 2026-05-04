@@ -44,7 +44,7 @@ export default async function EntitiesPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-white tracking-tight mb-2">Mes Contacts</h1>
+          <h1 className="mb-2 text-4xl font-bold tracking-tight text-white drop-shadow-none">Mes Contacts</h1>
           <p className="text-base text-gray-400 max-w-2xl mb-1">
             Personnes ou entreprises que vous certifiez dans votre réseau BlockTrust.
           </p>
@@ -113,8 +113,8 @@ export default async function EntitiesPage() {
                       : "bg-gray-500/20 text-gray-400"
                   }`}>
                     {entity.kycStatus === "VERIFIED" ? "✓ Validé" : 
-                     entity.kycStatus === "PENDING" ? "⏳ En attente" :
-                     entity.kycStatus === "IN_PROGRESS" ? "🔄 En cours" :
+                     entity.kycStatus === "PENDING" ? "⏳ En cours de vérification" :
+                     entity.kycStatus === "IN_PROGRESS" ? "🔄 En cours de vérification" :
                      entity.kycStatus === "REJECTED" ? "✗ Rejeté" :
                      entity.kycStatus === "EXPIRED" ? "⏰ Expiré" : entity.kycStatus}
                   </span>

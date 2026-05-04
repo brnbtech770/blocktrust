@@ -192,10 +192,10 @@ export default async function Dashboard({
         )}
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="font-syne text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
+          <h1 className="font-syne text-2xl font-bold text-white drop-shadow-none sm:text-3xl lg:text-4xl">
             Tableau de bord
           </h1>
-          <p className="font-sans mt-2 text-base leading-relaxed text-white/80">
+          <p className="mt-2 text-sm text-white/60">
             Bienvenue, {firstName}
           </p>
         </div>

@@ -16,7 +16,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="min-h-screen overflow-x-hidden">
       <DashboardHeader />
       <BlockchainTicker />
-      <div className="mx-auto max-w-7xl px-4 py-4 font-sans text-base leading-relaxed text-white/80 sm:px-6 sm:py-5 md:py-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-4 font-sans text-base leading-relaxed text-white/75 sm:px-6 sm:py-5 md:py-6 lg:px-8 [&_h1]:text-white [&_h2]:text-white">
         {children}
       </div>
     </div>
