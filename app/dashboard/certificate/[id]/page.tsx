@@ -9,6 +9,10 @@ import Link from "next/link";
 import QRCodeImage from "@/app/components/QRCode";
 import CertificateDetailClient from "@/app/components/dashboard/CertificateDetailClient";
 import CertificateBadgeSection from "@/app/components/dashboard/CertificateBadgeSection";
+import {
+  getValidationLevelAccentClass,
+  getValidationLevelLabel,
+} from "@/lib/validationLevelDisplay";
 
 export default async function CertificateDetailPage({
   params,
@@ -83,15 +87,11 @@ export default async function CertificateDetailPage({
       EXPIRED: 'bg-gray-500/20 text-gray-400 border-gray-500/50',
     };
 
-    const levelColors = {
-      BRONZE: 'text-amber-600',
-      SILVER: 'text-gray-400',
-      GOLD: 'text-yellow-500',
-      PLATINUM: 'text-purple-500',
-    };
-
     const statusColor = statusColors[certificate.status as keyof typeof statusColors] || statusColors.PENDING;
-    const levelColor = levelColors[certificate.level as keyof typeof levelColors] || levelColors.BRONZE;
+    const levelColor = getValidationLevelAccentClass(certificate.level);
+    const isPolygonAnchored =
+      certificate.blockchainStatus === "ANCHORED" ||
+      Boolean(certificate.polygonTxHash || certificate.txHash);
 
     const htmlCode = `<a href="${verifyUrl}" target="_blank">
   <img src="${badgeUrl}" alt="Certifié BlockTrust" width="320" height="100"/>
@@ -122,8 +122,8 @@ export default async function CertificateDetailPage({
               <span className={`px-4 py-2 rounded-full text-sm font-medium border ${statusColor}`}>
                 {certificate.status}
               </span>
-              <span className={`px-4 py-2 rounded-full text-sm font-semibold bg-gray-800 ${levelColor}`}>
-                {certificate.level}
+              <span className={`rounded-full bg-gray-800 px-4 py-2 text-sm font-semibold ${levelColor}`}>
+                {getValidationLevelLabel(certificate.level)}
               </span>
             </div>
           </div>
@@ -229,8 +229,30 @@ export default async function CertificateDetailPage({
               <h2 className="text-xl font-bold text-white mb-4">Informations du certificat</h2>
               <div className="space-y-3">
                 <div>
-                  <span className="text-gray-400 text-sm">ID public :</span>
-                  <p className="text-white font-mono text-sm">{certificate.publicId || certificate.id}</p>
+                  <span className="text-gray-400 text-sm">ID public</span>
+                  <p className="font-mono text-sm text-white">{certificate.publicId || "—"}</p>
+                  <span className="text-xs text-white/30">ID à partager pour vérification</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 text-sm">ID certificat (interne)</span>
+                  <p className="break-all font-mono text-sm text-white">{certificate.id}</p>
+                  <span className="text-xs text-white/30">ID technique interne</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 text-sm">Polygon</span>
+                  <p className={`text-sm font-semibold ${isPolygonAnchored ? "text-bt-cyan" : "text-amber-300"}`}>
+                    {isPolygonAnchored ? "Ancré ✓" : "En attente"}
+                  </p>
+                  {isPolygonAnchored && certificate.polygonExplorerUrl ? (
+                    <a
+                      href={certificate.polygonExplorerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-block text-xs text-bt-cyan hover:underline"
+                    >
+                      Ouvrir sur PolygonScan ↗
+                    </a>
+                  ) : null}
                 </div>
                 <div>
                   <span className="text-gray-400 text-sm">Créé le :</span>

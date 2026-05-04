@@ -3,6 +3,10 @@
 // ============================================================
 
 import Link from 'next/link'
+import {
+  getValidationLevelAccentClass,
+  getValidationLevelLabel,
+} from '@/lib/validationLevelDisplay'
 
 type CertificateCardProps = {
   certificate: {
@@ -39,15 +43,8 @@ export default function CertificateCard({ certificate, onRevoke }: CertificateCa
     EXPIRED: 'bg-gray-500/20 text-gray-400 border-gray-500/50',
   }
 
-  const levelColors = {
-    BRONZE: 'text-amber-600',
-    SILVER: 'text-gray-400',
-    GOLD: 'text-yellow-500',
-    PLATINUM: 'text-purple-500',
-  }
-
   const statusColor = statusColors[certificate.status as keyof typeof statusColors] || statusColors.PENDING
-  const levelColor = levelColors[certificate.level as keyof typeof levelColors] || levelColors.BRONZE
+  const levelColor = getValidationLevelAccentClass(certificate.level)
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
@@ -64,7 +61,9 @@ export default function CertificateCard({ certificate, onRevoke }: CertificateCa
       <div className="flex items-center gap-6 mb-4 text-sm">
         <div>
           <span className="text-gray-400">Niveau :</span>
-          <span className={`ml-2 font-semibold ${levelColor}`}>{certificate.level}</span>
+          <span className={`ml-2 font-semibold ${levelColor}`}>
+            {getValidationLevelLabel(certificate.level)}
+          </span>
         </div>
         <div>
           <span className="text-gray-400">Créé le :</span>

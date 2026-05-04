@@ -204,6 +204,9 @@ export default function CertificatesPage() {
           <h1 className="font-syne mb-2 text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
             Mes Certificats
           </h1>
+          <p className="font-sans mb-4 max-w-xl text-xs leading-relaxed text-white/40">
+            ID public : à partager pour la vérification. ID technique : usage interne BlockTrust uniquement.
+          </p>
           <p className="font-sans text-base leading-relaxed text-white/80">
             Gérez vos badges de certification
           </p>
@@ -246,6 +249,16 @@ export default function CertificatesPage() {
                         TrustScore: {certificate.trustScore.score}/100 ({certificate.trustScore.level})
                       </p>
                     )}
+                    <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
+                      <div>
+                        <p className="font-mono text-xs text-gray-400">{certificate.publicId ?? "—"}</p>
+                        <span className="text-[10px] text-white/30">ID à partager pour vérification</span>
+                      </div>
+                      <div>
+                        <p className="break-all font-mono text-xs text-gray-500">{certificate.id}</p>
+                        <span className="text-[10px] text-white/30">ID technique interne</span>
+                      </div>
+                    </div>
                     <p className="mt-2 font-sans text-sm text-white/60">
                       Créé le {new Date(certificate.issuedAt).toLocaleDateString("fr-FR", {
                         day: "numeric",

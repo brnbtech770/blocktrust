@@ -45,6 +45,7 @@ export default function StatsBlock() {
       verifications={stats.verifications7d}
       blockchainStatus={stats.blockchainStatus}
       fraudAlerts={stats.fraudAlerts}
+      polygonExplorerUrl={stats.polygonExplorerUrl}
     />
   )
 }

@@ -10,7 +10,7 @@ import { auth } from "@/app/lib/auth-server";
 import { isAdmin } from "@/app/lib/admin";
 import { getVerifyQuotaDisplay } from "@/lib/verify-quotas";
 import Link from "next/link";
-import { Plus, Shield } from "lucide-react";
+import { Plus, Shield, ShieldAlert } from "lucide-react";
 import VerifyBadgeCard from "@/app/components/dashboard/VerifyBadgeCard";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 import type { CertificateTableItem, VerificationEvent } from "@/types/dashboard";
@@ -66,6 +66,16 @@ export default async function Dashboard({
       trustScoreValue < 50 && user.kycStatus !== "VERIFIED";
 
     const userIsAdmin = isAdmin(session.user.email);
+
+    const fraudWeekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const fraudAlertsWeek = await prisma.verification.count({
+      where: {
+        result: "FRAUD_ALERT",
+        verifiedAt: { gte: fraudWeekStart },
+        certificate: { entity: { userId: user.id } },
+      },
+    });
+
     const subscription = await prisma.subscription.findUnique({
       where: { userId: user.id },
     });
@@ -111,11 +121,13 @@ export default async function Dashboard({
       { step: "3", text: "Partagez votre badge", href: "/dashboard/certificates", done: hasCertificate },
     ];
 
+    const isAnchoredOnChain = (c: (typeof certificates)[number]) =>
+      c.blockchainStatus === "ANCHORED" || Boolean(c.polygonTxHash || c.txHash);
+
     const blockchainStats = certificates.reduce(
       (acc, c) => {
-        const status = (c.blockchainStatus || 'PENDING') as 'PENDING' | 'ANCHORED' | 'FAILED';
-        if (status === 'ANCHORED') acc.anchored += 1;
-        else if (status === 'FAILED') acc.failed += 1;
+        if (isAnchoredOnChain(c)) acc.anchored += 1;
+        else if (c.blockchainStatus === "FAILED") acc.failed += 1;
         else acc.pending += 1;
         return acc;
       },
@@ -123,7 +135,7 @@ export default async function Dashboard({
     );
 
     const lastAnchored = certificates.find(
-      (c) => c.blockchainStatus === 'ANCHORED' && c.polygonExplorerUrl
+      (c) => isAnchoredOnChain(c) && c.polygonExplorerUrl
     );
 
     const showSuccessMessage = resolvedSearchParams?.success === "true" || resolvedSearchParams?.certificateCreated === "true";
@@ -176,13 +188,27 @@ export default async function Dashboard({
         )}
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="font-syne text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl mb-2">
-            Bonjour {firstName} 👋
+          <h1 className="font-syne text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
+            Tableau de bord
           </h1>
-          <p className="font-sans text-base leading-relaxed text-white/80">
-            Voici un aperçu de votre activité BLOCKTRUST
+          <p className="font-sans mt-2 text-base leading-relaxed text-white/80">
+            Bienvenue, {firstName}
           </p>
         </div>
+
+        {fraudAlertsWeek > 0 ? (
+          <div className="mb-6 flex items-center gap-3 rounded-xl border border-[#E05252]/30 bg-[#E05252]/10 p-4">
+            <ShieldAlert className="h-5 w-5 shrink-0 text-[#E05252]" aria-hidden />
+            <div>
+              <p className="text-sm font-semibold text-[#E05252]">
+                {fraudAlertsWeek} tentative(s) de fraude détectée(s) cette semaine
+              </p>
+              <p className="mt-0.5 text-xs text-white/50">
+                Quelqu&apos;un a essayé d&apos;utiliser un badge falsifié à votre nom.
+              </p>
+            </div>
+          </div>
+        ) : null}
 
         {showOnboardingGuide && (
           <div className="bg-gradient-to-br from-[#0d1f3c] to-[#0a1628] border border-[#00d4ff]/20 rounded-xl p-6 mb-6">

@@ -45,6 +45,9 @@ export default async function EntitiesPage() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-4xl font-bold text-white tracking-tight mb-2">Mes Contacts</h1>
+          <p className="text-base text-gray-400 max-w-2xl mb-1">
+            Personnes ou entreprises que vous certifiez dans votre réseau BlockTrust.
+          </p>
           <p className="text-gray-400 text-base">
             {entitiesCount}/{maxEntities} utilisées
           </p>

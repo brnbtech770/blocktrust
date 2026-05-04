@@ -155,6 +155,12 @@ export default function TrustCirclePage() {
             <p className="font-mono text-sm text-bt-cyan sm:text-base">
               {data.stats.current} contacts · {(data.mutual?.length ?? 0)} mutuels
             </p>
+            <p className="mt-2 mb-4 max-w-2xl text-xs leading-relaxed text-white/40">
+              <span className="font-semibold text-white/55">Contacts</span> — personnes ou entreprises que vous
+              certifiez dans votre réseau. <span className="font-semibold text-white/55">Trust Circle</span> — relation
+              de confiance mutuelle ; protection Cas&nbsp;1 / Cas&nbsp;2. Ajoutez vos contacts certifiés au Trust Circle
+              pour activer la protection contre l&apos;usurpation.
+            </p>
           </div>
           <button
             onClick={() => setShowInviteModal(true)}

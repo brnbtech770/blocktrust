@@ -159,7 +159,16 @@ export default function CertificateTable({ certificates }: CertificateTableProps
                     >
                       <td className="px-4 py-3">
                         <div className="font-medium text-white">{entityDisplayName(cert.entity)}</div>
-                        <div className="text-xs text-gray-500 font-mono">{cert.publicId ?? cert.id}</div>
+                        <div className="mt-2 space-y-2">
+                          <div>
+                            <p className="font-mono text-xs text-gray-400">{cert.publicId ?? "—"}</p>
+                            <span className="text-[10px] text-white/30">ID à partager pour vérification</span>
+                          </div>
+                          <div>
+                            <p className="break-all font-mono text-xs text-gray-500">{cert.id}</p>
+                            <span className="text-[10px] text-white/30">ID technique interne</span>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3">{statusBadge(cert.status)}</td>
                       <td className="px-4 py-3 font-mono text-sm text-gray-300">{cert.verificationCount}</td>

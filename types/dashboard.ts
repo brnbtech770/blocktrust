@@ -53,4 +53,6 @@ export interface DashboardStats {
   verifications7d: number
   blockchainStatus: 'connected' | 'pending' | 'unavailable'
   fraudAlerts: number
+  /** Lien PolygonScan du dernier certificat ancré (si disponible). */
+  polygonExplorerUrl?: string | null
 }
