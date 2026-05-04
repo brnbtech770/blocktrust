@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, useId } from "react";
+import { type CSSProperties, useEffect, useId, useState } from "react";
 
 /**
  * BlockTrustBadge
@@ -92,18 +92,28 @@ export function BlockTrustBadge({
     glow: `bt-glow-${uid}`,
   } as const;
 
-  const wrapperStyle: CSSProperties = {
+  const svgBoxStyle: CSSProperties = {
     width: size,
     height: size,
   };
 
+  /** Horodatage affiché uniquement après montage (évite mismatch SSR / hydratation). */
+  const [timestamp, setTimestamp] = useState<string | null>(null);
+  useEffect(() => {
+    setTimestamp(
+      new Date().toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    );
+  }, []);
+
   return (
-    <div
-      className={`relative inline-block select-none ${className ?? ""}`}
-      style={wrapperStyle}
-      role="img"
-      aria-label={`${label} verified badge`}
-    >
+    <div className={`relative inline-flex flex-col items-center select-none ${className ?? ""}`}>
+      <div className="relative shrink-0" style={svgBoxStyle} role="img" aria-label={`${label} verified badge`}>
       <svg
         viewBox="0 0 200 200"
         width={size}
@@ -430,6 +440,12 @@ export function BlockTrustBadge({
           </text>
         </g>
       </svg>
+      </div>
+      <div className="mt-2 text-center">
+        <p className="font-mono text-[9px] tracking-widest text-white/20">
+          {timestamp === null ? "\u00a0" : `${timestamp} · BLOCKTRUST™`}
+        </p>
+      </div>
     </div>
   );
 }

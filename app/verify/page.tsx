@@ -261,7 +261,7 @@ function VerifyContent() {
               <BlockTrustBadge
                 size={120}
                 instanceId="verify-public"
-                className="relative z-10 [&>svg]:drop-shadow-[0_0_22px_rgba(16,185,129,0.35)]"
+                className="relative z-10 [&_svg]:drop-shadow-[0_0_22px_rgba(16,185,129,0.35)]"
               />
             </div>
 
@@ -339,6 +339,15 @@ function VerifyContent() {
             Nouvelle vérification
           </button>
         ) : null}
+
+        <div className="mx-auto mt-8 max-w-sm border-t border-white/5 pt-6">
+          <p className="text-center text-xs italic leading-relaxed text-white/20">
+            Un badge BLOCKTRUST™ sans QR scannable ou lien de vérification ne garantit aucune authenticité.
+            <span className="mt-1 block text-white/30">
+              Vérifiez toujours avant de faire confiance.
+            </span>
+          </p>
+        </div>
       </main>
     </div>
   );

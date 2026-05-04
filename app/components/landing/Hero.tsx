@@ -109,7 +109,7 @@ export default function Hero() {
                     "radial-gradient(circle at center, rgba(0,212,255,0.4) 0%, rgba(0,212,255,0.1) 45%, rgba(0,212,255,0) 75%)",
                 }}
               />
-              <BlockTrustBadge className="relative !w-full !h-full [&>svg]:!w-full [&>svg]:!h-full" />
+              <BlockTrustBadge className="relative !w-full !h-full [&_svg]:!h-full [&_svg]:!w-full" />
             </div>
           </div>
         </div>

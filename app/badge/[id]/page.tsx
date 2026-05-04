@@ -93,6 +93,10 @@ export default async function BadgePage({
             </div>
           </div>
           <VerifyBadgeButton certId={certIdForVerify} />
+          <p className="mx-auto mt-4 max-w-xs text-center text-xs italic leading-relaxed text-white/20">
+            Ce badge n&apos;est valide que s&apos;il est accompagné de son QR code ou de son lien de vérification
+            officiel.
+          </p>
         </div>
 
         <div className="space-y-4 mb-6">
