@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Logo } from "@/app/components/ui/Logo";
+import { sanitizeCallbackUrl } from "@/app/lib/auth-callback-url";
 
 const pageBg = "#0a1628";
 
@@ -88,33 +89,37 @@ function urlQueryDiagnostic(sp: ReturnType<typeof useSearchParams>): string | nu
 }
 
 /**
- * Pour signIn('google') : si callback est une URL absolue même origine, envoyer un chemin relatif
- * (réduit InvalidCallbackUrl côté assertConfig).
+ * Pour signIn('google') : si callback est une URL absolue autorisée, envoyer un chemin relatif
+ * (réduit InvalidCallbackUrl côté assertConfig). `safeCallbackUrl` est déjà passée par sanitizeCallbackUrl.
  */
-function googleCallbackUrl(raw: string): string {
-  const t = (raw || "/dashboard").trim();
+function googleSignInCallbackUrl(safeCallbackUrl: string): string {
+  const t = safeCallbackUrl.trim();
   if (typeof window === "undefined") {
     return t.startsWith("/") ? t : "/dashboard";
   }
   if (t.startsWith("http://") || t.startsWith("https://")) {
     try {
       const u = new URL(t);
-      if (u.origin === window.location.origin) {
+      const originOk =
+        u.origin === window.location.origin ||
+        u.hostname === "blocktrust.tech" ||
+        u.hostname === "localhost";
+      if (originOk) {
         const pq = `${u.pathname}${u.search}${u.hash}`;
         return pq.length > 0 ? pq : "/";
       }
-      return t;
+      return "/dashboard";
     } catch {
       return "/dashboard";
     }
   }
-  return t.startsWith("/") ? t : `/${t}`;
+  return t.startsWith("/") ? t : "/dashboard";
 }
 
 function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl = sanitizeCallbackUrl(searchParams.get("callbackUrl"));
   const errorParam = searchParams.get("error");
   const reasonParam = searchParams.get("reason");
   const clearedOAuth = searchParams.get("cleared") === "oauth";
@@ -190,7 +195,7 @@ function SignInContent() {
 
   function handleGoogle() {
     // Auth.js v5 : flux sign-in OAuth via signIn() (POST/CSRF) — pas de GET /api/auth/signin/google.
-    signIn("google", { callbackUrl: googleCallbackUrl(callbackUrl) });
+    signIn("google", { callbackUrl: googleSignInCallbackUrl(callbackUrl) });
   }
 
   return (

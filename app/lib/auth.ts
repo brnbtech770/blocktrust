@@ -8,6 +8,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import authEdgeConfig from "./auth.edge.config";
+import { isSafeCallbackUrl } from "./auth-callback-url";
 
 /**
  * Configuration NextAuth avec Google OAuth
@@ -266,19 +267,17 @@ export const authOptions: NextAuthConfig = {
       return session;
     },
     async redirect({ url, baseUrl }) {
+      const origin = new URL(baseUrl).origin;
+      const fallback = `${origin}/dashboard`;
       try {
-        if (url.startsWith('/')) {
-          return `${baseUrl}${url}`;
-        }
-        const target = new URL(url);
-        const origin = new URL(baseUrl).origin;
-        if (target.origin === origin) {
-          return url;
+        const resolved = new URL(url, baseUrl).href;
+        if (isSafeCallbackUrl(resolved, baseUrl)) {
+          return resolved;
         }
       } catch {
         /* URL invalide */
       }
-      return baseUrl;
+      return fallback;
     },
   },
   logger: {
