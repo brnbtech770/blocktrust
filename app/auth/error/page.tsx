@@ -108,8 +108,8 @@ function ErrorContent() {
           >
             Réessayer la connexion
           </Link>
-          <Link href="/api/debug-auth" className="text-center text-sm text-[#00d4ff] hover:underline">
-            /api/debug-auth (diagnostic serveur)
+          <Link href="/api/health" className="text-center text-sm text-[#00d4ff] hover:underline">
+            /api/health (vérif déploiement)
           </Link>
         </div>
       </div>

@@ -63,9 +63,9 @@ function signinReasonMessage(code: string | null): string | null {
   if (!code) return null;
   const map: Record<string, string> = {
     "no-session-cookie":
-      "Aucun cookie de session détecté après la redirection. Réessayez Google, ou vérifiez bloqueurs / mode privé. Ensuite ouvrez /api/debug-auth dans cet onglet.",
+      "Aucun cookie de session détecté après la redirection. Réessayez Google, ou vérifiez bloqueurs / mode privé. Consultez les logs Vercel filtrés sur [auth] ou ouvrez /api/health pour comparer le SHA de déploiement.",
     "jwt-cookie-unreadable":
-      "Cookie de session présent mais non lu (JWT invalide, secret, chunk ou hôte). Ouvrez /api/debug-auth dans cet onglet et vérifiez jwtFromCookie + layoutDiagnostic.",
+      "Cookie de session présent mais non lu (JWT invalide, secret, chunk ou hôte). Consultez les logs Vercel filtrés sur [auth] ou /api/health (authRelease, prefetchRscAuthBypass).",
     "user-not-in-db":
       "Session avec email mais utilisateur introuvable en base. Contact support ou vérifiez la base.",
   };
@@ -283,12 +283,12 @@ function SignInContent() {
               </li>
               <li>
                 <a
-                  href="/api/debug-auth"
+                  href="/api/health"
                   className="text-[#00d4ff] underline hover:brightness-110"
                 >
-                  /api/debug-auth
+                  /api/health
                 </a>{" "}
-                — contrôle serveur (variables, adapter) dans ce navigateur.
+                — vérif déploiement (SHA Git, authRelease) sans exposer la session.
               </li>
             </ol>
           </div>

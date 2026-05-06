@@ -34,7 +34,6 @@ export async function GET() {
       deployStaleWarning: looksLikePreSigninFix
         ? 'Ce SHA (5b4c46e) est antérieur au correctif Google sign-in pleine page. Redéployez depuis Git (main) ou vérifiez l’échec du build Vercel.'
         : null,
-      debugAuthExpectedFields: ['debugAuthVersion', 'layoutDiagnostic', 'hostVsNextAuth'] as const,
     },
     {
       headers: {

@@ -5,11 +5,11 @@
 1. **GitHub** : SHA du dernier commit sur `main` (page du repo ou `git rev-parse origin/main`).
 2. **Prod** : ouvrir `https://blocktrust.tech/api/health` et lire `vercelGitCommitSha` (les 7 premiers caractères suffisent pour comparer).
 
-Si les deux diffèrent, **blocktrust.tech n’exécute pas le code que vous croyez** — les correctifs auth / `debug-auth` ne peuvent pas être validés.
+Si les deux diffèrent, **blocktrust.tech n’exécute pas le code que vous croyez** — les correctifs auth ne peuvent pas être validés via `/api/health`.
 
 ## Symptômes typiques
 
-- `authRelease` ou `debugAuthVersion` en prod **en retard** sur le repo.
+- `authRelease` ou les indicateurs `/api/health` en prod **en retard** sur le repo.
 - Échec OAuth « identique » après des changements pourtant poussés sur `main`.
 
 ## Actions dans Vercel
@@ -21,7 +21,7 @@ Si les deux diffèrent, **blocktrust.tech n’exécute pas le code que vous croy
 
 ## Après alignement des SHA
 
-Refaire le flux Google puis ouvrir **`/api/debug-auth` dans le même navigateur** : avec `debugAuthVersion` ≥ 6, le bloc `jwtFromCookie` permet de trancher (cookie illisible vs session vide, etc.).
+Refaire le flux Google puis comparer **`/api/health`** (SHA, `authRelease`) avec Git ; en cas de problème persistant, consulter les **logs Vercel** au moment du clic (filtre `[auth]`).
 
 ## www vs apex (cookies OAuth)
 

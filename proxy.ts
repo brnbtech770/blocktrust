@@ -57,6 +57,16 @@ function isProtectedApi(pathname: string): boolean {
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
+  // Défense en profondeur : ne jamais exposer l’ancienne route de diagnostic auth en prod.
+  if (
+    pathname === '/api/debug-auth' ||
+    pathname.startsWith('/api/debug-auth/')
+  ) {
+    if (process.env.NODE_ENV !== 'development') {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+  }
+
   // ─── www → apex redirect ───
   let canonicalHost: string | null = null
   const base = process.env.NEXTAUTH_URL || process.env.AUTH_URL
@@ -186,6 +196,7 @@ export const config = {
     '/admin/:path*',
     '/verify',
     '/verify/:path*',
+    '/api/debug-auth',
     '/api/certificates/:path*',
     '/api/entities/:path*',
     '/api/stripe/:path*',
