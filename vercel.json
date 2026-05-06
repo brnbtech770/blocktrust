@@ -1,4 +1,9 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "github": {
+    "silent": true
+  },
+  "ignoreCommand": "echo \"${VERCEL_GIT_COMMIT_REF:-}\" | grep -qE dependabot && exit 0; git log -1 --format=%s | grep -qE dependabot",
   "crons": [
     {
       "path": "/api/cron/anomaly-detection",

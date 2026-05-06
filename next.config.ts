@@ -1,6 +1,9 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
+// Stripe n’est pas importé ici (initialisation lazy dans lib/stripe.ts, usage dans les handlers).
+// serverExternalPackages évite de bundler le SDK côté serveur au chargement des routes.
+
 /**
  * CSP — tunnel Sentry via même origine (/monitoring → connect-src 'self').
  * Extensions : OAuth Google ; régions EU/US *.ingest*.sentry.io ; iframes Stripe (checkout / Identity).
@@ -48,6 +51,7 @@ const CONTENT_SECURITY_POLICY = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["stripe"],
   images: {
     formats: ["image/webp"],
   },
