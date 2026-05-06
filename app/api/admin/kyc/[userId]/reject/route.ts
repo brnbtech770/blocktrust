@@ -3,6 +3,13 @@ import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
 import { sendKYCRejectedEmail } from '@/lib/kyc-email'
+import { z } from 'zod'
+
+const rejectBodySchema = z
+  .object({
+    reason: z.string().max(2000).optional(),
+  })
+  .strict()
 
 export async function PATCH(
   req: NextRequest,
@@ -14,19 +21,31 @@ export async function PATCH(
   }
 
   const { userId } = await params
-  const body = await req.json().catch(() => ({}))
-  const reason = (body.reason as string) || 'Vérification refusée'
+
+  let reasonText = 'Vérification refusée'
+  try {
+    const json = await req.json()
+    const parsed = rejectBodySchema.safeParse(json)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Corps invalide' }, { status: 400 })
+    }
+    if (parsed.data.reason?.trim()) {
+      reasonText = parsed.data.reason.trim()
+    }
+  } catch {
+    // corps vide : défaut
+  }
 
   await prisma.user.update({
     where: { id: userId },
     data: {
       kycStatus:         'REJECTED',
       kycRejectedAt:     new Date(),
-      kycRejectedReason: reason,
+      kycRejectedReason: reasonText,
     },
   })
 
-  sendKYCRejectedEmail(userId, reason).catch(console.error)
+  sendKYCRejectedEmail(userId, reasonText).catch(console.error)
 
   return NextResponse.json({ success: true })
 }

@@ -9,9 +9,11 @@ import { prisma } from '@/app/lib/db'
 import { deleteUserAdmin } from '@/lib/admin-delete-user'
 import { z } from 'zod'
 
-const bodySchema = z.object({
-  ids: z.array(z.string().min(1)).min(1).max(100),
-})
+const bodySchema = z
+  .object({
+    ids: z.array(z.string().min(1)).min(1).max(100),
+  })
+  .strict()
 
 export async function POST(req: NextRequest) {
   try {

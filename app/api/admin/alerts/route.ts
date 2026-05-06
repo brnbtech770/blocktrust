@@ -37,9 +37,11 @@ export async function GET(req: NextRequest) {
   }
 }
 
-const patchSchema = z.object({
-  markAllRead: z.literal(true),
-})
+const patchSchema = z
+  .object({
+    markAllRead: z.literal(true),
+  })
+  .strict()
 
 export async function PATCH(req: NextRequest) {
   try {

@@ -3,6 +3,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import type { CertificateStatus, Prisma } from '@prisma/client'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
@@ -16,10 +17,12 @@ import {
   notifyAnchorSuccess,
 } from '@/lib/polygon'
 
-const actionSchema = z.object({
-  action: z.enum(['activate', 'suspend', 'reactivate', 'revoke', 'reject']),
-  reason: z.string().optional(),
-})
+const actionSchema = z
+  .object({
+    action: z.enum(['activate', 'suspend', 'reactivate', 'revoke', 'reject']),
+    reason: z.string().optional(),
+  })
+  .strict()
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -57,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     }
 
     // Déterminer le nouveau statut
-    let newStatus: string
+    let newStatus: CertificateStatus
     const currentStatus = certificate.status
 
     switch (action) {
@@ -115,8 +118,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         return NextResponse.json({ error: 'Action invalide' }, { status: 400 })
     }
 
-    // Mettre à jour le certificat
-    const updateData: any = {
+    const updateData: Prisma.CertificateUpdateInput = {
       status: newStatus,
     }
 
