@@ -1,87 +1,538 @@
-# BlockTrust — Règles Cursor (contexte projet)
-
-Référence étendue : `BLOCKTRUST_PROJECT_KNOWLEDGE.md`, `SECURITY.md`, `ENV_CHECKLIST.md`. Ce fichier résume ce dont l’agent a besoin pour coder sans diverger du produit.
-
----
-
-## Produit & ton
-
-- **BlockTrust** : plateforme d’identité et de confiance — certification des contacts, badges / QR, vérification publique, signatures JWT (contexte email), Trust Circle, KYC (Stripe Identity), plans B2C/B2B (Stripe), white label API (`bt_live_*`).
-- **Double promesse** : émission (« prouver que c’est bien vous ») + réception (« savoir si l’autre est authentique »).
-- **Marque** : BLOCKTRUST™ en majuscules dans l’UI ; palette navy `#0a1628`, cyan `#00d4ff`, or `#BDA76B`.
-- **Lexique UI** : préférer « contact(s) » plutôt que « entité » pour l’utilisateur final ; « KYC » = jargon interne seulement.
-- **Langue** : lorsque l’utilisateur écrit en français, répondre en français ; commits et docs peuvent rester en français si le dépôt le fait déjà.
+# BLOCKTRUST — Cursor Rules
+# Fichier de référence pour Cursor Composer
+# Version 8.0 — 6 mai 2026
 
 ---
 
-## Stack (vérité `package.json`)
+## 🎯 CONTEXTE PROJET
 
-- **Next.js 16** (App Router), **React 19**, **TypeScript strict**.
-- **Auth** : NextAuth v5 (`auth()` depuis `@/app/lib/auth-server`, options dans `app/lib/auth.ts`).
-- **Données** : **Prisma 6** + PostgreSQL (`DATABASE_URL` / `DIRECT_URL`).
-- **UI** : Tailwind CSS 4, composants sous `app/components/`.
-- **Paiements / identité** : Stripe (billing + Identity webhooks).
-- **Emails** : Resend + templates React sous `emails/`.
-- **Observabilité** : Sentry (`@sentry/nextjs`).
-- **Dev** : `npm run dev` → port **3004** (voir `package.json`).
+Tu es un expert CTO/architecte senior travaillant sur BLOCKTRUST,
+une plateforme SaaS de certification d'identité numérique anti-fraude.
 
----
-
-## Arborescence importante
-
-| Zone | Rôle |
-|------|------|
-| `app/` | Routes App Router, layouts, pages, **API** sous `app/api/**`. |
-| `app/lib/` | DB (`db.ts`), auth serveur, helpers métier liés à Next. |
-| `lib/` | Logique partagée (JWT v2, Stripe, emails helpers, rate limit, etc.). |
-| `prisma/` | Schéma, migrations, seed. |
-| `proxy.ts` | Couche Edge (ex-middleware) : www→apex, garde `/admin`, `/api/admin/*`, APIs protégées listées dans le fichier — **compléter toujours avec `auth()` / `isAdmin()` dans les handlers**. |
-| `emails/` | Templates React Email. |
-
-Ne pas confondre `@/app/lib/...` et `@/lib/...`.
+**Société :** BRNB TECH SAS (transformation en cours depuis SASU)
+**Fondateur :** Olivier Bernabé (CEO)
+**Site :** https://blocktrust.tech
+**Repo :** github.com/brnbtech770/blocktrust
+**Déploiement :** Vercel (auto-deploy sur push main)
 
 ---
 
-## Authentification & admin
+## 🏗️ STACK TECHNIQUE
 
-- Session : **`auth()`** dans Server Components et routes qui utilisent déjà ce pattern ; pour certaines API, **`getAuthUser`** (`app/lib/auth.ts`).
-- Admin : **`isAdmin(email)`** et liste **`ADMIN_EMAILS`** (`app/lib/admin.ts`) — variable d’env `ADMIN_EMAILS` en prod (virgules).
-- Routes **`/api/admin/**`** : protégées par le proxy **et** doivent rester cohérentes côté handler (défense en profondeur).
-- **`allowDangerousEmailAccountLinking`** : désactivé par défaut ; n’activer via env qu’en connaissance de cause (`SECURITY.md`).
-
----
-
-## Sécurité (obligatoire)
-
-- **Ne pas** réintroduire de route publique type diagnostic session (`/api/debug-auth` supprimée). En prod le **`proxy.ts`** renvoie 404 sur ce chemin si quelqu’un le recrée.
-- **Activation certificat** : **`PENDING → ACTIVE`** réservée au **flux admin**, pas à `PATCH` utilisateur sur `app/api/certificates/[id]/status/route.ts` (403 si tentative).
-- **PATCH/PUT API** : valider avec **Zod** (ou équivalent) ; **whitelist** des champs ; **ne jamais** passer `req.body` brut à Prisma.
-- **Secrets** : pas de `console.log` d’emails complets, tokens, mots de passe, clés API, JWT — utiliser **`redactEmailRecipient`** (`lib/email.ts`), IDs tronqués, ou **`lib/prodLog.ts`** (`btLog` / `btError`) sur routes sensibles / webhooks.
-- **White Label** : génération de clés via **`generateUniqueApiKeyPair`** (`lib/api-key.ts`) pour une paire `apiKey`/`apiKeyHash` cohérente et unique ; format public `bt_live_*`.
-- Variables sensibles : voir `SECURITY.md` et `ENV_CHECKLIST.md`.
-
----
-
-## Modèle métier (rappel)
-
-- **User** : plan, Stripe, KYC, Trust Score, organisations / comptes perso selon schéma Prisma.
-- **Entity** : contact certifiable (SIRET, types perso/pro).
-- **Certificate** : statuts et transitions — respecter la logique métier (révocation utilisateur vs activation admin).
-- **API V2** (`app/api/v2/issue`, `verify`, `sign`) : JWT sur contexte canonique (`lib/v2/`).
-- **Trust Circle**, **plans**, **surveillance**, **menaces** (`/menaces`) : décrits dans `BLOCKTRUST_PROJECT_KNOWLEDGE.md`.
+```
+Framework    : Next.js 16.1.6 (App Router)
+Language     : TypeScript (strict — jamais de any)
+Style        : TailwindCSS (jamais de CSS inline sauf dégradés complexes)
+Auth         : NextAuth v5
+ORM          : Prisma 5 (v6.19.3) + prisma.config.ts
+DB           : PostgreSQL via Neon
+Paiements    : Stripe (subscriptions + Stripe Identity KYC)
+Emails       : Resend + React Email
+Storage      : Vercel Blob (blocktrust-blob, IAD1, Private)
+JWT          : jose (ES256 / RS256)
+Blockchain   : Polygon Mainnet (Chain ID 137) via Alchemy
+Rate Limit   : Upstash Redis (distribué) + in-memory fallback
+Monitoring   : Sentry (production uniquement)
+Proxy        : proxy.ts (Next.js 16 — pas middleware.ts)
+Surveillance : QStash (5 min) + événementiel temps réel
+IA Veille    : Claude Haiku 4.5 (Anthropic API)
+```
 
 ---
 
-## Conventions de code
+## 📁 IMPORTS CRITIQUES — TOUJOURS UTILISER CES CHEMINS
 
-- Modifier **uniquement** ce qui est demandé ; pas de refactor cosmétique ni fichiers markdown non demandés.
-- Aligner style, imports et patterns sur les fichiers voisins.
-- Après changements significatifs : **`npm run build`** doit passer (TypeScript inclus).
-- Accessibilité et cohérence UI : réutiliser composants existants (`app/components/ui/`, charte couleurs).
+```typescript
+// ✅ TOUJOURS
+import { prisma } from '@/app/lib/db'
+import { auth } from '@/app/lib/auth-server'
+
+// ❌ JAMAIS
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient() // memory leak
+```
 
 ---
 
-## Documentation
+## 🔑 RÈGLES TYPESCRIPT
 
-- Pour onboarding humain détaillé (pricing, landing, cron, Polygon, etc.) : **`BLOCKTRUST_PROJECT_KNOWLEDGE.md`**.
-- Le **README.md** peut être partiellement daté ; en cas de conflit, préférer **le code** et **`BLOCKTRUST_PROJECT_KNOWLEDGE.md`**.
+```typescript
+// AccountType enum
+type AccountType = 'PERSONAL' | 'BUSINESS' // pas INDIVIDUAL
+
+// Plan IDs
+type Plan = 'ESSENTIEL' | 'PREMIUM' | 'FAMILLE' | 'FAMILLE_PLUS' 
+          | 'STARTER' | 'TEAM' | 'BUSINESS' | 'ENTERPRISE'
+
+// Status certificat
+type CertificateStatus = 'PENDING' | 'ACTIVE' | 'REVOKED' | 'EXPIRED'
+
+// Blockchain status
+type BlockchainStatus = 'PENDING' | 'ANCHORED' | 'FAILED'
+
+// Trust levels
+type TrustLevel = 'MUTUAL' | 'UNILATERAL' | 'MANUAL_VERIFIED' | 'UNVERIFIED'
+```
+
+---
+
+## 🎨 CHARTE GRAPHIQUE — RÈGLES ABSOLUES
+
+```
+Couleurs :
+#0a1628  → navy (fond principal)
+#060d1a  → deep navy (fond secondaire)
+#0d1f3c  → mid navy (cards)
+#00d4ff  → cyan (accents, CTAs, textes importants)
+#BDA76B  → gold (accents premium, bordures)
+#E05252  → rouge (alertes, danger, fraude)
+#10b981  → vert émeraude (succès, valide)
+#f59e0b  → orange (avertissement, expiré)
+
+Polices :
+font-sans   → Inter (corps de texte)
+font-syne   → Space Grotesk (titres, wordmarks)
+font-mono   → IBM Plex Mono (données techniques, hashes)
+
+Règles :
+- BLOCKTRUST = TOUJOURS en majuscules
+- BLOCKTRUST™ dans navbar et footer
+- Jamais "BlockTrust" ou "blocktrust"
+- Tailwind uniquement (pas de CSS modules)
+- Icônes : lucide-react UNIQUEMENT (pas d'emojis dans l'UI)
+- Pas de fond quadrillé sur la landing
+```
+
+---
+
+## 🔒 RÈGLES DE SÉCURITÉ — CRITIQUES
+
+### IDOR — Toujours vérifier l'ownership
+```typescript
+// ❌ DANGEREUX
+const cert = await prisma.certificate.findUnique({
+  where: { id: params.id }
+})
+
+// ✅ CORRECT
+const cert = await prisma.certificate.findUnique({
+  where: { 
+    id: params.id,
+    entity: { userId: session.user.id }
+  }
+})
+```
+
+### Mass Assignment — Whitelister les champs
+```typescript
+// ❌ DANGEREUX
+await prisma.user.update({ where: { id }, data: body })
+
+// ✅ CORRECT
+const { name, email } = body
+await prisma.user.update({ where: { id }, data: { name, email } })
+```
+
+### Comparaisons sécurisées
+```typescript
+// TOUJOURS timingSafeEqual pour les secrets
+import { timingSafeEqual } from 'crypto'
+const safe = timingSafeEqual(Buffer.from(a), Buffer.from(b))
+```
+
+### Logs sans données sensibles
+```typescript
+// ❌ JAMAIS
+console.log(`User ${email} action ${token}`)
+
+// ✅ CORRECT
+console.log(`[action] userId=${id.slice(0,8)}...`)
+```
+
+### Secrets — Règles absolues
+- Jamais de secret dans le code source
+- Jamais de secret dans les logs
+- Jamais apiKeyHash dans les réponses API
+- Jamais POLYGON_PRIVATE_KEY dans les logs
+- Jamais wallet.address comme destinataire ancrage Polygon
+- TOUJOURS la burn address : 0x000000000000000000000000000000000000dEaD
+
+### userId — Toujours depuis la session
+```typescript
+// ❌ JAMAIS depuis le body/query
+const userId = req.body.userId
+
+// ✅ TOUJOURS depuis la session
+const session = await auth()
+const userId = session.user.id
+```
+
+---
+
+## 🌐 ROUTES ET ACCÈS
+
+### Routes publiques (sans auth)
+```
+/                    → Landing page
+/pricing             → Tarifs
+/how-to              → Guide
+/cgu                 → CGU
+/privacy             → Politique confidentialité
+/verify              → Vérification publique (sans compte)
+/badge/[id]          → Badge public
+/menaces             → Veille cyber
+/api/public/*        → API publique (rate limitée)
+/api/v2/verify       → Vérification JWT publique
+/api/health          → Health check
+```
+
+### Routes protégées (auth requise)
+```
+/dashboard/*         → Abonné connecté
+/verify/[id]         → Abonné connecté + quota
+/admin/*             → ADMIN_EMAILS uniquement
+/api/admin/*         → Admin uniquement
+```
+
+### Protection proxy (proxy.ts)
+```typescript
+// /verify public — NE PAS protéger
+// /verify/[id] — protéger (abonnés)
+// /dashboard/* — protéger
+// /admin/* — protéger + vérifier ADMIN_EMAILS
+```
+
+---
+
+## 💰 PRICING
+
+### B2C
+```
+Essentiel  4,99€/mois  — 1 profil,  20 contacts,  10 vérifs
+Premium    9,99€/mois  — 1 profil, 100 contacts,  50 vérifs
+Famille   14,99€/mois  — 5 profils, 100 contacts, 100 vérifs
+Famille+  24,99€/mois  — 10 profils, 300 contacts, 300 vérifs
+```
+
+### B2B
+```
+Starter    29€/mois  —  3 users, 200 vérifs, White Label ✅
+Team       79€/mois  — 10 users, 500 vérifs, White Label ✅
+Business  199€/mois  — 50 users, illimité,   White Label ✅
+Enterprise sur devis — illimité, illimité,   White Label ✅
+```
+
+**Toggle annuel : -20% engagement annuel (jamais "offre de lancement")**
+
+---
+
+## 📧 EMAILS — TEMPLATES EXISTANTS
+
+```typescript
+// 9 templates dans emails/
+CertificateAnchoredEmail   // Ancrage Polygon + lien PolygonScan
+PaymentConfirmationEmail   // Souscription Stripe
+KYCApprovedEmail           // Vérification d'identité approuvée
+KYCRejectedEmail           // Vérification rejetée
+TrustCircleInviteEmail     // Invitation Trust Circle
+TrustCircleConfirmedEmail  // Confirmation Trust Circle
+ManualTrustRequestEmail    // Demande manuelle
+MagicLinkEmail             // Connexion magic link
+PasswordResetEmail         // Réinitialisation
+```
+
+---
+
+## ⛓️ BLOCKCHAIN POLYGON
+
+```typescript
+// TOUJOURS la burn address comme destinataire
+const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD'
+
+// Variables d'environnement
+POLYGON_RPC_URL          // Alchemy Mainnet
+POLYGON_CHAIN_ID         // 137
+POLYGON_PRIVATE_KEY      // Sensitive — jamais logger
+POLYGON_CONTRACT_ADDRESS // burn address
+
+// Status après ancrage
+blockchainStatus: 'ANCHORED'
+polygonTxHash: '0x...'
+polygonBlock: number
+polygonExplorerUrl: 'https://polygonscan.com/tx/...'
+```
+
+---
+
+## 🔄 RATE LIMITING
+
+```typescript
+// Prefixes Upstash Redis
+bt:verify    // vérifications certificats
+bt:api       // API publique White Label
+bt:auth      // authentification
+bt:kyc       // KYC Stripe Identity (3/h — coûte 1,50€)
+
+// Fail-soft — TOUJOURS
+try {
+  const { success } = await ratelimit.limit(identifier)
+  if (!success) return new Response('Too Many Requests', { status: 429 })
+} catch {
+  // Redis indisponible → fail open (ne jamais bloquer)
+  console.warn('[ratelimit] Redis unavailable, skip')
+}
+```
+
+---
+
+## 🏗️ ARCHITECTURE DASHBOARD
+
+### Trust Circle — 4 niveaux
+```
+MUTUAL           → Protection Cas 1/Cas 2 complète
+UNILATERAL       → Protection partielle
+MANUAL_VERIFIED  → Vérifié manuellement
+UNVERIFIED       → Non vérifié
+```
+
+### Verdicts /verify
+```
+VALID   → vert émeraude #10b981
+EXPIRED → orange #f59e0b
+REVOKED → rouge #E05252
+TAMPERED/FRAUD → rouge vif #ef4444 + animate-pulse
+INVALID → rouge #E05252
+```
+
+### Trust Circle Cas 1/Cas 2
+```
+Cas 1 : partenaire non dans Trust Circle
+→ Bannière orange ⚠️ "Contact non certifié dans votre réseau"
+
+Cas 2 : partenaire dans Trust Circle mais mismatch certificat
+→ 🚨 FRAUDE CERTAINE rouge vif animé
+→ Enregistrer Verification avec result: 'FRAUD_ALERT'
+```
+
+---
+
+## 📝 RÈGLES DE RÉDACTION UI
+
+```
+✅ "contact/contacts"    (jamais "entité/entités" côté utilisateur)
+✅ "vérification d'identité" (jamais "KYC" côté utilisateur)
+✅ "Certifié · Protégé · Infalsifiable" (pill hero)
+✅ "Sans engagement · Résiliable à tout moment"
+✅ "-20% engagement annuel" (jamais "offre de lancement")
+✅ "À partir de 4,99€/mois"
+✅ BLOCKTRUST™ dans navbar et footer
+❌ Silver/Bronze/Gold comme niveaux (remplacé par Essentiel/Premium/Business)
+❌ KYC visible utilisateur
+❌ Entité visible utilisateur
+❌ "offre de lancement"
+```
+
+---
+
+## 🚀 WORKFLOW DE DÉVELOPPEMENT
+
+### Règle absolue : Audit avant modification
+```
+1. AUDIT — Lire les fichiers existants AVANT de modifier
+2. PROPOSER — Décrire les changements
+3. IMPLÉMENTER — Un fix à la fois
+4. BUILD — npm run build doit être vert
+5. COMMIT — Message clair et précis
+6. PUSH — git push origin main
+```
+
+### Format de commit
+```
+feat: nouvelle fonctionnalité
+fix: correction de bug
+security: correction sécurité
+design: changement visuel
+refactor: refactoring
+docs: documentation
+chore: maintenance
+```
+
+### Turbopack — DÉSACTIVÉ
+```typescript
+// next.config.ts — ne jamais activer turbopack
+// Cause des problèmes de cache Prisma
+```
+
+---
+
+## 🔧 VARIABLES D'ENVIRONNEMENT
+
+```bash
+# Auth
+NEXTAUTH_SECRET              # Sensitive
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET         # Sensitive
+
+# DB
+DATABASE_URL
+
+# Stripe
+STRIPE_SECRET_KEY            # Sensitive
+STRIPE_WEBHOOK_SECRET        # Sensitive
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
+# JWT
+BLOCKTRUST_JWT_PRIVATE_KEY   # Sensitive
+BLOCKTRUST_JWT_PUBLIC_KEY
+
+# Email
+RESEND_API_KEY               # Sensitive
+
+# Storage
+BLOB_READ_WRITE_TOKEN
+
+# INSEE
+INSEE_CONSUMER_KEY           # Sensitive
+INSEE_CONSUMER_SECRET        # Sensitive
+
+# Polygon
+POLYGON_RPC_URL              # Alchemy Mainnet
+POLYGON_CHAIN_ID             # 137
+POLYGON_PRIVATE_KEY          # Sensitive — JAMAIS LOGGER
+POLYGON_CONTRACT_ADDRESS     # burn address
+
+# Rate Limiting
+UPSTASH_REDIS_REST_URL       # Sensitive
+UPSTASH_REDIS_REST_TOKEN     # Sensitive
+
+# Surveillance
+QSTASH_TOKEN                 # Sensitive
+QSTASH_CURRENT_SIGNING_KEY   # Sensitive
+QSTASH_NEXT_SIGNING_KEY      # Sensitive
+
+# Monitoring
+NEXT_PUBLIC_SENTRY_DSN
+SENTRY_AUTH_TOKEN            # Sensitive
+
+# IA Veille
+ANTHROPIC_API_KEY            # Sensitive
+
+# Cron
+CRON_SECRET
+ADMIN_EMAILS
+```
+
+---
+
+## ⚠️ ANTI-PATTERNS — NE JAMAIS FAIRE
+
+```typescript
+// ❌ PrismaClient ad hoc
+const prisma = new PrismaClient()
+
+// ❌ userId depuis body/query
+const userId = req.body.userId
+
+// ❌ wallet.address comme destinataire
+to: wallet.address
+
+// ❌ POLYGON_PRIVATE_KEY dans les logs
+console.log(process.env.POLYGON_PRIVATE_KEY)
+
+// ❌ apiKeyHash dans les réponses
+return { apiKeyHash: config.apiKeyHash }
+
+// ❌ "KYC" visible utilisateur
+<p>Complétez votre KYC</p>
+
+// ❌ "entité" visible utilisateur
+<p>Mes entités</p>
+
+// ❌ Stats non vérifiables sur landing
+<p>99,9% de disponibilité</p>
+
+// ❌ Silver/Bronze/Gold comme niveaux
+badge.level === 'BRONZE'
+
+// ❌ Turbopack activé
+experimental: { turbopack: true }
+
+// ❌ startsWith pour comparaison de hash
+hash.startsWith(providedHash) // timing attack
+
+// ❌ IP en clair dans la DB
+ipAddress: request.ip // RGPD violation
+```
+
+---
+
+## ✅ PATTERNS RECOMMANDÉS
+
+```typescript
+// ✅ Session auth
+const session = await auth()
+if (!session?.user?.id) redirect('/auth/signin')
+
+// ✅ Ownership check Prisma
+const cert = await prisma.certificate.findUnique({
+  where: { id, entity: { userId: session.user.id } }
+})
+
+// ✅ Fire-and-forget (ne jamais bloquer la réponse)
+someAsyncOperation().catch(err => 
+  console.error('[operation]', err)
+)
+
+// ✅ IP hashing RGPD
+import { createHash } from 'crypto'
+const ipHash = createHash('sha256')
+  .update(ip + process.env.NEXTAUTH_SECRET)
+  .digest('hex')
+
+// ✅ Token generation sécurisé
+import { randomBytes } from 'crypto'
+const token = randomBytes(32).toString('base64url')
+
+// ✅ Fail-soft rate limiting
+try {
+  const { success } = await ratelimit.limit(id)
+  if (!success) return new Response(null, { status: 429 })
+} catch { /* fail open */ }
+
+// ✅ Server Component par défaut
+// "use client" uniquement si useState/useEffect nécessaire
+
+// ✅ Sentry en production uniquement
+enabled: process.env.NODE_ENV === 'production'
+```
+
+---
+
+## 🌐 INFORMATIONS IMPORTANTES
+
+### Marque
+- BLOCKTRUST™ déposé à l'INPI — n°5253718 — 30/04/2026
+- Déposant : Olivier Bernabé (nom propre)
+- Classes : 35, 38, 42, 45
+
+### Blockchain
+- Premier ancrage réel effectué sur Polygon Mainnet ✅
+- Wallet "BlockTrust Anchor" (~122 POL)
+- Burn address = destination IMMUABLE
+
+### Sécurité
+- 8 couches de sécurité en place
+- Agent surveillance QStash (5 min) + événementiel
+- Trust Circle Cas 1/Cas 2 opérationnel
+- npm audit 0 vulnérabilités critiques
+
+### Commercial
+- Produit horizontal multi-secteurs
+- PAS de verticalisation forcée
+- Cibles prioritaires : grandes entreprises + banques + organismes publics
+- Réseaux sociaux : après SAS officielle + INPI
+
+---
+
+*BLOCKTRUST .cursorrules — Version 8.0 — 6 mai 2026*
+*À mettre à jour après chaque session majeure*
