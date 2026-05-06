@@ -53,6 +53,9 @@ export const registerHourLimiter = makeLimiter(3, "1 h", "bt:register:h");
 // Inscription : 10 req / jour par IP — fenêtre longue
 export const registerDayLimiter = makeLimiter(10, "1 d", "bt:register:d");
 
+// Magic link (Auth.js email) : 3 envois / h par identifiant (IP ou email)
+export const magicLinkHourLimiter = makeLimiter(3, "1 h", "bt:magiclink:h");
+
 export type RedisLimitResult = {
   success: boolean;
   remaining: number;

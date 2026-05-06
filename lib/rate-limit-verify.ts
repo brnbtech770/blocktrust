@@ -9,10 +9,12 @@
 // La fonction sync `checkRateLimitVerify` reste exposée pour rétrocompat.
 // Préférer `checkRateLimitVerifyAsync` côté nouveau code.
 
+import type { Ratelimit } from "@upstash/ratelimit";
 import {
   tryRedisLimit,
   verifyMinuteLimiter,
   verifyHourLimiter,
+  magicLinkHourLimiter,
 } from "@/lib/rate-limit-redis";
 
 const LIMIT_PER_MINUTE = 10
@@ -130,4 +132,50 @@ export async function checkRateLimitVerifyAsync(
   }
 
   return checkRateLimitVerify(ip)
+}
+
+// --- Magic link (NextAuth provider id "email") : 3 tentatives / heure / identifiant ---
+
+/** Limiteur partagé magic link (Redis si configuré, sinon mémoire via checkRateLimit). */
+export const authRatelimit: Ratelimit | null = magicLinkHourLimiter;
+
+const MAGIC_AUTH_LIMIT_PER_HOUR = 3;
+const MAGIC_AUTH_WINDOW_MS = 3_600_000;
+
+const magicAuthStore = new Map<string, { count: number; resetAt: number }>();
+
+function pruneMagicAuth() {
+  const now = Date.now();
+  for (const [k, e] of magicAuthStore.entries()) {
+    if (e.resetAt < now) magicAuthStore.delete(k);
+  }
+}
+
+function checkMagicAuthMemory(identifier: string): { limited: boolean } {
+  pruneMagicAuth();
+  const now = Date.now();
+  let e = magicAuthStore.get(identifier);
+  if (!e || e.resetAt < now) {
+    magicAuthStore.set(identifier, {
+      count: 1,
+      resetAt: now + MAGIC_AUTH_WINDOW_MS,
+    });
+    return { limited: false };
+  }
+  if (e.count >= MAGIC_AUTH_LIMIT_PER_HOUR) {
+    return { limited: true };
+  }
+  e.count += 1;
+  return { limited: false };
+}
+
+export async function checkRateLimit(
+  limiter: Ratelimit | null,
+  identifier: string,
+): Promise<{ limited: boolean }> {
+  const redisResult = await tryRedisLimit(limiter, identifier);
+  if (redisResult !== null) {
+    return { limited: !redisResult.success };
+  }
+  return checkMagicAuthMemory(identifier);
 }
