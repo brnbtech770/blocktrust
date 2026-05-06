@@ -1,6 +1,52 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
+/**
+ * CSP — tunnel Sentry via même origine (/monitoring → connect-src 'self').
+ * Extensions : OAuth Google ; régions EU/US *.ingest*.sentry.io ; iframes Stripe (checkout / Identity).
+ */
+const CONTENT_SECURITY_POLICY = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  [
+    "script-src",
+    "'self'",
+    "'unsafe-eval'",
+    "'unsafe-inline'",
+    "https://js.stripe.com",
+  ].join(" "),
+  [
+    "style-src",
+    "'self'",
+    "'unsafe-inline'",
+    "https://fonts.googleapis.com",
+  ].join(" "),
+  ["font-src", "'self'", "data:", "https://fonts.gstatic.com"].join(" "),
+  ["img-src", "'self'", "data:", "https:", "blob:"].join(" "),
+  [
+    "connect-src",
+    "'self'",
+    "https://api.stripe.com",
+    "https://polygon-mainnet.g.alchemy.com",
+    "https://api.anthropic.com",
+    "https://*.ingest.sentry.io",
+    "https://*.ingest.de.sentry.io",
+    "https://accounts.google.com",
+    "https://oauth2.googleapis.com",
+    "https://www.googleapis.com",
+  ].join(" "),
+  [
+    "frame-src",
+    "https://js.stripe.com",
+    "https://hooks.stripe.com",
+    "https://*.stripe.com",
+    "https://accounts.google.com",
+  ].join(" "),
+  "worker-src blob:",
+].join("; ");
+
 const nextConfig: NextConfig = {
   images: {
     formats: ["image/webp"],
@@ -10,6 +56,11 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: [
+          { key: "X-DNS-Prefetch-Control", value: "on" },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           {
@@ -21,8 +72,8 @@ const nextConfig: NextConfig = {
             value: "camera=(), microphone=(), geolocation=()",
           },
           {
-            key: "Strict-Transport-Security",
-            value: "max-age=63072000; includeSubDomains; preload",
+            key: "Content-Security-Policy",
+            value: CONTENT_SECURITY_POLICY,
           },
         ],
       },
