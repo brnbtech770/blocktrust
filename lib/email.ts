@@ -19,6 +19,18 @@ function getResend(): Resend | null {
 
 const FROM = 'BlockTrust <noreply@blocktrust.tech>'
 
+/** Réduit les PII dans les logs (domaine conservé pour le diagnostic). */
+export function redactEmailRecipient(to: string | string[]): string {
+  const list = Array.isArray(to) ? to : [to]
+  return list
+    .map((addr) => {
+      const at = addr.lastIndexOf('@')
+      if (at <= 0) return '[redacted]'
+      return `***${addr.slice(at)}`
+    })
+    .join(', ')
+}
+
 export type SendEmailParams = {
   to: string | string[]
   subject: string
@@ -34,7 +46,10 @@ export async function sendEmail({ to, subject, react, replyTo }: SendEmailParams
   try {
     const resend = getResend()
     if (!resend) {
-      console.warn('[Email] RESEND_API_KEY manquant — email non envoyé:', { to, subject })
+      console.warn('[Email] RESEND_API_KEY manquant — email non envoyé:', {
+        to: redactEmailRecipient(to),
+        subject,
+      })
       return { data: null, error: new Error('RESEND_API_KEY not set') }
     }
 

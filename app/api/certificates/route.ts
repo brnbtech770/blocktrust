@@ -9,7 +9,7 @@ import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import QRCode from 'qrcode'
 import { checkCertificateQuota } from '@/lib/checkQuota'
-import { sendEmail } from '@/lib/email'
+import { redactEmailRecipient, sendEmail } from '@/lib/email'
 import { CertificateCreatedEmail, subject as certificateCreatedSubject } from '@/emails/CertificateCreatedEmail'
 import { createAdminAlert } from '@/lib/admin-alerts'
 
@@ -346,8 +346,12 @@ export async function POST(req: NextRequest) {
           embedSnippet: `<a href="${verifyUrl}" target="_blank" rel="noopener">Vérifier ce certificat BlockTrust</a>`,
         }),
       }).then(({ error }) => {
-        if (error) console.error('[Certificate] Created email échoué:', { to: recipientEmail, error })
-        else console.log('[Certificate] Created email envoyé à:', recipientEmail)
+        if (error)
+          console.error('[Certificate] Created email échoué:', {
+            to: redactEmailRecipient(recipientEmail),
+            error,
+          })
+        else console.log('[Certificate] Created certificateId=', certificate.id.slice(0, 8))
       })
     }
 

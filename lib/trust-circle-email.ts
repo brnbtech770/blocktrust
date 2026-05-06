@@ -5,7 +5,7 @@
 // coupe la lambda avant que l'email ne parte.
 
 import { prisma } from '@/app/lib/db'
-import { sendEmail } from '@/lib/email'
+import { redactEmailRecipient, sendEmail } from '@/lib/email'
 import React from 'react'
 import { ADMIN_EMAILS } from '@/app/lib/admin'
 import { TrustCircleInviteEmail, getTrustCircleInviteSubject } from '@/emails/TrustCircleInviteEmail'
@@ -48,9 +48,12 @@ export async function sendTrustCircleInviteEmail(
     }),
   })
   if (error) {
-    console.error('[TrustCircle] Invite email échoué:', { to: user.email, error })
+    console.error('[TrustCircle] Invite email échoué:', {
+      to: redactEmailRecipient(user.email),
+      error,
+    })
   } else {
-    console.log('[TrustCircle] Invite email envoyé à:', user.email)
+    console.log('[TrustCircle] Invite email envoyé toUserId=', toUserId.slice(0, 8))
   }
 }
 
@@ -71,9 +74,12 @@ export async function sendTrustCircleExternalInviteEmail(
     }),
   })
   if (error) {
-    console.error('[TrustCircle] External invite email échoué:', { to: email, error })
+    console.error('[TrustCircle] External invite email échoué:', {
+      to: redactEmailRecipient(email),
+      error,
+    })
   } else {
-    console.log('[TrustCircle] External invite email envoyé à:', email)
+    console.log('[TrustCircle] External invite email envoyé')
   }
 }
 
@@ -87,32 +93,42 @@ export async function sendMutualTrustEmail(userIdA: string, userIdB: string): Pr
 
   const sends: Promise<unknown>[] = []
   if (userA?.email) {
+    const emailA = userA.email
     sends.push(
       sendEmail({
-        to: userA.email,
+        to: emailA,
         subject: getMutualTrustSubject(partnerNameA),
         react: React.createElement(MutualTrustEmail, {
           userName: userA.name || 'Utilisateur',
           partnerName: partnerNameA,
         }),
       }).then(({ error }) => {
-        if (error) console.error('[TrustCircle] Mutual email échoué:', { to: userA.email, error })
-        else console.log('[TrustCircle] Mutual email envoyé à:', userA.email)
+        if (error)
+          console.error('[TrustCircle] Mutual email échoué:', {
+            to: redactEmailRecipient(emailA),
+            error,
+          })
+        else console.log('[TrustCircle] Mutual email envoyé userId=', userIdA.slice(0, 8))
       })
     )
   }
   if (userB?.email) {
+    const emailB = userB.email
     sends.push(
       sendEmail({
-        to: userB.email,
+        to: emailB,
         subject: getMutualTrustSubject(partnerNameB),
         react: React.createElement(MutualTrustEmail, {
           userName: userB.name || 'Utilisateur',
           partnerName: partnerNameB,
         }),
       }).then(({ error }) => {
-        if (error) console.error('[TrustCircle] Mutual email échoué:', { to: userB.email, error })
-        else console.log('[TrustCircle] Mutual email envoyé à:', userB.email)
+        if (error)
+          console.error('[TrustCircle] Mutual email échoué:', {
+            to: redactEmailRecipient(emailB),
+            error,
+          })
+        else console.log('[TrustCircle] Mutual email envoyé userId=', userIdB.slice(0, 8))
       })
     )
   }
@@ -135,8 +151,12 @@ export async function sendAdminManualRequestEmail(
   await Promise.all(
     ADMIN_EMAILS.map((adminEmail) =>
       sendEmail({ to: adminEmail, subject, react }).then(({ error }) => {
-        if (error) console.error('[TrustCircle] Admin email échoué:', { to: adminEmail, error })
-        else console.log('[TrustCircle] Admin email envoyé à:', adminEmail)
+        if (error)
+          console.error('[TrustCircle] Admin email échoué:', {
+            to: redactEmailRecipient(adminEmail),
+            error,
+          })
+        else console.log('[TrustCircle] Admin notification envoyée')
       })
     )
   )
@@ -161,8 +181,11 @@ export async function sendManualEntryApprovedEmail(
     }),
   })
   if (error) {
-    console.error('[TrustCircle] Approved email échoué:', { to: user.email, error })
+    console.error('[TrustCircle] Approved email échoué:', {
+      to: redactEmailRecipient(user.email),
+      error,
+    })
   } else {
-    console.log('[TrustCircle] Approved email envoyé à:', user.email)
+    console.log('[TrustCircle] Approved email envoyé userId=', userId.slice(0, 8))
   }
 }

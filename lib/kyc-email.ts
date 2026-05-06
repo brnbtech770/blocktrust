@@ -3,7 +3,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
-import { sendEmail } from '@/lib/email'
+import { redactEmailRecipient, sendEmail } from '@/lib/email'
 import React from 'react'
 import { KYCApprovedEmail, subject as subjectApproved } from '@/emails/KYCApprovedEmail'
 import { KYCRejectedEmail, subject as subjectRejected } from '@/emails/KYCRejectedEmail'
@@ -25,8 +25,12 @@ export async function sendKYCApprovedEmail(userId: string): Promise<void> {
       userName: user.name || 'Utilisateur',
     }),
   })
-  if (error) console.error('[KYC] Approved email échoué:', { to: user.email, error })
-  else console.log('[KYC] Approved email envoyé à:', user.email)
+  if (error)
+    console.error('[KYC] Approved email échoué:', {
+      to: redactEmailRecipient(user.email),
+      error,
+    })
+  else console.log('[KYC] Approved email envoyé userId=', userId.slice(0, 8))
 }
 
 export async function sendKYCRejectedEmail(userId: string, reason?: string): Promise<void> {
@@ -44,8 +48,12 @@ export async function sendKYCRejectedEmail(userId: string, reason?: string): Pro
       reason,
     }),
   })
-  if (error) console.error('[KYC] Rejected email échoué:', { to: user.email, error })
-  else console.log('[KYC] Rejected email envoyé à:', user.email)
+  if (error)
+    console.error('[KYC] Rejected email échoué:', {
+      to: redactEmailRecipient(user.email),
+      error,
+    })
+  else console.log('[KYC] Rejected email envoyé userId=', userId.slice(0, 8))
 }
 
 export async function sendKYCRetryEmail(
@@ -67,6 +75,10 @@ export async function sendKYCRetryEmail(
       verificationUrl: url,
     }),
   })
-  if (error) console.error('[KYC] Retry email échoué:', { to: user.email, error })
-  else console.log('[KYC] Retry email envoyé à:', user.email)
+  if (error)
+    console.error('[KYC] Retry email échoué:', {
+      to: redactEmailRecipient(user.email),
+      error,
+    })
+  else console.log('[KYC] Retry email envoyé userId=', userId.slice(0, 8))
 }

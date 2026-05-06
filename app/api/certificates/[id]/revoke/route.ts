@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
-import { sendEmail } from '@/lib/email'
+import { redactEmailRecipient, sendEmail } from '@/lib/email'
 import { CertificateRevokedEmail, subject as certificateRevokedSubject } from '@/emails/CertificateRevokedEmail'
 
 const certificateIdSchema = z.string().cuid()
@@ -85,9 +85,7 @@ export async function POST(
     })
 
     // Logger l'événement
-    console.log(
-      `[REVOKE] Certificat ${certificateId} révoqué par utilisateur ${userId} (${session.user.email ?? ''})`
-    )
+    console.log(`[REVOKE] Certificat ${certificateId.slice(0, 8)}… révoqué par userId=${userId.slice(0, 8)}`)
 
     // Email transactionnel : certificat révoqué
     const entityName = certificate.entity.entityType === 'INDIVIDUAL'
@@ -97,8 +95,9 @@ export async function POST(
     const dashboardUrl = `${baseUrl}/dashboard/certificates`
     const owner = await prisma.user.findUnique({ where: { id: certificate.entity.userId } })
     if (owner?.email) {
+      const dest = owner.email
       await sendEmail({
-        to: owner.email,
+        to: dest,
         subject: certificateRevokedSubject,
         react: CertificateRevokedEmail({
           entityName,
@@ -107,8 +106,12 @@ export async function POST(
           dashboardUrl,
         }),
       }).then(({ error }) => {
-        if (error) console.error('[Certificate] Revoked email échoué:', { to: owner.email, error })
-        else console.log('[Certificate] Revoked email envoyé à:', owner.email)
+        if (error)
+          console.error('[Certificate] Revoked email échoué:', {
+            to: redactEmailRecipient(dest),
+            error,
+          })
+        else console.log('[Certificate] Revoked notification envoyée entityUserId=', certificate.entity.userId.slice(0, 8))
       })
     }
 
