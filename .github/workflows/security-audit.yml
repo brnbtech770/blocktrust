@@ -1,0 +1,36 @@
+name: Security Audit
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 9 * * 1"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Security audit
+        run: npm audit --audit-level=high
+      - name: Check for critical vulnerabilities
+        run: |
+          CRITICAL=$(npm audit --json |
+            node -e "
+              const d=require('fs')
+                .readFileSync('/dev/stdin','utf8');
+              const a=JSON.parse(d);
+              console.log(
+                a.metadata?.vulnerabilities?.critical || 0
+              );
+            ")
+          if [ "$CRITICAL" -gt "0" ]; then
+            echo "CRITICAL vulnerabilities found!"
+            exit 1
+          fi
