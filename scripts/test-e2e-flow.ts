@@ -16,6 +16,7 @@ dotenv.config({ path: '.env' })
 
 import crypto from 'node:crypto'
 import { PrismaClient, Prisma } from '@prisma/client'
+import { generateQrDynamicToken } from '../lib/qr-dynamic-token'
 
 const prisma = new PrismaClient()
 
@@ -187,7 +188,7 @@ async function main() {
     )
 
     // 6. Génération QR rotatif + URL /verify/qr/[token]
-    const dynamicToken = crypto.randomBytes(32).toString('hex')
+    const dynamicToken = generateQrDynamicToken()
     const tokenExpiry = new Date(Date.now() + 24 * 3600 * 1000)
     const updatedSig = await prisma.signature.updateMany({
       where: { certificateId: cert.id, revoked: false },

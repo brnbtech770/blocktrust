@@ -3,9 +3,9 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import crypto from 'crypto'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
+import { generateQrDynamicToken } from '@/lib/qr-dynamic-token'
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
 
@@ -44,7 +44,7 @@ export async function POST(
       return NextResponse.json({ error: 'Aucune signature valide pour ce certificat' }, { status: 404 })
     }
 
-    const dynamicToken = crypto.randomBytes(32).toString('hex')
+    const dynamicToken = generateQrDynamicToken()
     const tokenExpiry = new Date(Date.now() + 24 * 3600 * 1000)
 
     await prisma.signature.update({

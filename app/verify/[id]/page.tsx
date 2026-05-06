@@ -28,6 +28,7 @@ import {
   getTrustScoreLabel,
   persistUserTrustScore,
 } from '@/lib/trustscore'
+import { timingSafeEqualUtf8 } from '@/lib/qr-dynamic-token'
 
 export const dynamic = 'force-dynamic'
 
@@ -292,7 +293,7 @@ export default async function VerifyPublicPage({
   const expectedHash = signature.contextHash ?? ''
   const verdict: PageVerdict = !ctxHashFromQuery
     ? 'VALID'
-    : expectedHash === ctxHashFromQuery
+    : timingSafeEqualUtf8(expectedHash, ctxHashFromQuery)
       ? 'VALID'
       : 'FRAUD_ALERT'
 

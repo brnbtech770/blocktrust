@@ -6,8 +6,8 @@
 import { headers } from 'next/headers'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import crypto from 'crypto'
 import { prisma } from '@/app/lib/db'
+import { generateQrDynamicToken, timingSafeEqualUtf8 } from '@/lib/qr-dynamic-token'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { Logo } from '@/app/components/ui/Logo'
@@ -111,7 +111,12 @@ export default async function VerifyQRTokenPage({
     },
   })
 
-  if (!signature || signature.revoked) {
+  const tokenOk =
+    signature != null &&
+    signature.dynamicToken != null &&
+    timingSafeEqualUtf8(signature.dynamicToken, token)
+
+  if (!signature || signature.revoked || !tokenOk) {
     return <QRExpiredView reason="introuvable" />
   }
 
@@ -131,7 +136,10 @@ export default async function VerifyQRTokenPage({
   }
 
   const expectedHash = signature.contextHash ?? ''
-  if (ctxHashFromQuery && expectedHash !== ctxHashFromQuery) {
+  if (
+    ctxHashFromQuery &&
+    !timingSafeEqualUtf8(expectedHash, ctxHashFromQuery)
+  ) {
     await prisma.verification.create({
       data: {
         certificateId: cert.id,
@@ -152,7 +160,7 @@ export default async function VerifyQRTokenPage({
     )
   }
 
-  const newDynamicToken = crypto.randomBytes(32).toString('hex')
+  const newDynamicToken = generateQrDynamicToken()
   const newTokenExpiry = new Date(Date.now() + 24 * 3600 * 1000)
 
   await prisma.$transaction([
