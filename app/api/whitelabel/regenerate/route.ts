@@ -3,15 +3,19 @@
 // La nouvelle clé n'est retournée EN CLAIR qu'une seule fois (à cet appel).
 // ============================================================
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { generateUniqueApiKeyPair, maskApiKey } from '@/lib/api-key'
+import { ensureStrictEmptyBody } from '@/lib/api-json-body'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const invalid = await ensureStrictEmptyBody(req)
+  if (invalid) return invalid
+
   const session = await auth()
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })

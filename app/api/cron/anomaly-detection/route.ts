@@ -8,6 +8,7 @@ import { isAdmin } from '@/app/lib/admin'
 import { runAnomalyDetection } from '@/lib/agents/anomaly-detector'
 import { retryFailedAnchors } from '@/lib/polygon'
 import { scheduleNextSurveillanceRun } from '@/lib/qstash-scheduler'
+import { ensureStrictEmptyBody } from '@/lib/api-json-body'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -51,8 +52,11 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
+    const invalid = await ensureStrictEmptyBody(req)
+    if (invalid) return invalid
+
     const session = await auth()
     if (!session?.user?.email || !isAdmin(session.user.email)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 })

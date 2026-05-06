@@ -3,6 +3,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { generateQrDynamicToken } from '@/lib/qr-dynamic-token'
@@ -21,9 +22,14 @@ export async function POST(
 
     const { certId } = await params
 
+    const certIdParsed = z.string().cuid().safeParse(certId)
+    if (!certIdParsed.success) {
+      return NextResponse.json({ error: 'Données invalides' }, { status: 400 })
+    }
+
     const certificate = await prisma.certificate.findFirst({
       where: {
-        id: certId,
+        id: certIdParsed.data,
         entity: { userId: session.user.id },
       },
       select: { id: true },
@@ -34,7 +40,7 @@ export async function POST(
 
     const signature = await prisma.signature.findFirst({
       where: {
-        certificateId: certId,
+        certificateId: certIdParsed.data,
         revoked: false,
       },
       orderBy: { issuedAt: 'desc' },

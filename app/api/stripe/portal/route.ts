@@ -6,9 +6,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { stripe } from '@/lib/stripe'
+import { ensureStrictEmptyBody } from '@/lib/api-json-body'
 
 export async function POST(req: NextRequest) {
   try {
+    const invalid = await ensureStrictEmptyBody(req)
+    if (invalid) return invalid
+
     // Vérifier l'authentification
     const session = await auth()
     

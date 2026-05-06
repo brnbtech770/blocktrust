@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { persistUserTrustScore } from '@/lib/trustscore'
 
 export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ token: string }> }
+  _req: NextRequest,
+  { params }: { params: Promise<{ token: string }> },
 ) {
   const session = await auth()
   if (!session?.user?.id) {
@@ -14,8 +15,13 @@ export async function POST(
 
   const { token } = await params
 
+  const tokenParsed = z.string().uuid().safeParse(token)
+  if (!tokenParsed.success) {
+    return NextResponse.json({ error: 'Données invalides' }, { status: 400 })
+  }
+
   const relation = await prisma.userTrustRelation.findFirst({
-    where: { inviteToken: token },
+    where: { inviteToken: tokenParsed.data },
   })
 
   if (!relation) {

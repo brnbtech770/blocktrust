@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { auth } from "@/app/lib/auth-server";
 import { prisma } from "@/app/lib/db";
 import { canonicalizeEmailContext, sha256Hex } from "@/lib/v2/context";
 import { signToken } from "@/lib/v2/jwt";
 import crypto from "crypto";
+
+const emailContextSchema = z.object({
+  from: z.string().trim().min(1).max(500),
+  to: z.string().trim().min(1).max(500),
+  subject: z.string().trim().min(1).max(998),
+  date: z.string().min(1).max(64),
+  body: z.string().max(200_000).optional(),
+});
+
+const issueBodySchema = z.object({
+  entityId: z.string().cuid(),
+  certificateId: z.string().cuid(),
+  context: emailContextSchema,
+  expiresInSeconds: z.number().int().min(60).max(604800).optional(),
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,22 +28,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-
-    // Expected input (V2):
-    // {
-    //   entityId, certificateId,
-    //   context: { from, to, subject, date, body? },
-    //   expiresInSeconds?: number
-    // }
-
-    const entityId = String(body.entityId || "");
-    const certificateId = String(body.certificateId || "");
-    const context = body.context;
-
-    if (!entityId || !certificateId || !context) {
-      return NextResponse.json({ error: "Missing entityId/certificateId/context" }, { status: 400 });
+    let json: unknown;
+    try {
+      json = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Données invalides" }, { status: 400 });
     }
+
+    const parsed = issueBodySchema.safeParse(json);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Données invalides" }, { status: 400 });
+    }
+
+    const { entityId, certificateId, context } = parsed.data;
 
     const certificate = await prisma.certificate.findUnique({
       where: { id: certificateId },
@@ -46,7 +59,7 @@ export async function POST(req: NextRequest) {
     const ctxHash = sha256Hex(canonical);
 
     const jti = crypto.randomUUID();
-    const expiresInSeconds = Number(body.expiresInSeconds || 3600);
+    const expiresInSeconds = parsed.data.expiresInSeconds ?? 3600;
 
     const signature = await prisma.signature.create({
       data: {

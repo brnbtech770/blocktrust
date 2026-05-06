@@ -1,11 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { z } from "zod";
 import { getAuthUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/db";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2026-02-25.clover",
 });
+
+const checkoutBodySchema = z
+  .object({
+    priceId: z.string().min(1).max(128).optional(),
+    planId: z
+      .enum([
+        "essentiel",
+        "premium",
+        "famille",
+        "famille-plus",
+        "starter",
+        "team",
+        "business",
+      ])
+      .optional(),
+    billingPeriod: z.enum(["monthly", "yearly"]).optional(),
+  })
+  .refine(
+    (d) => !!(d.priceId || (d.planId && d.billingPeriod)),
+    { message: "Données invalides" },
+  );
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,8 +39,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { priceId, planId, billingPeriod } = body;
+    let json: unknown;
+    try {
+      json = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Données invalides" }, { status: 400 });
+    }
+    const parsedBody = checkoutBodySchema.safeParse(json);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: "Données invalides" }, { status: 400 });
+    }
+    const { priceId, planId, billingPeriod } = parsedBody.data;
 
     // Si priceId est fourni directement, l'utiliser
     // Sinon, déterminer le priceId depuis planId et billingPeriod

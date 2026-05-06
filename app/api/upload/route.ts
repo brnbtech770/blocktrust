@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
+import { z } from 'zod'
 import { auth } from '@/app/lib/auth-server'
+import { jsonInvalidBody } from '@/lib/api-json-body'
 
 /**
  * Types MIME acceptés pour l'upload de documents (KYC + Trust manuel).
@@ -71,12 +73,23 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Purpose explicite (formulaire) — fallback "kyc" pour rétro-compatibilité.
+  const purposeMetaSchema = z
+    .object({
+      purpose: z.enum(['kyc', 'trust-manual']).optional(),
+    })
+    .strict()
+
   const rawPurpose = formData.get('purpose')
-  const purpose: Purpose =
-    typeof rawPurpose === 'string' && rawPurpose in PURPOSE_PREFIXES
-      ? (rawPurpose as Purpose)
-      : 'kyc'
+  const purposeParsed = purposeMetaSchema.safeParse({
+    purpose:
+      typeof rawPurpose === 'string' && rawPurpose.length > 0
+        ? rawPurpose
+        : undefined,
+  })
+  if (!purposeParsed.success) {
+    return jsonInvalidBody()
+  }
+  const purpose: Purpose = purposeParsed.data.purpose ?? 'kyc'
   const prefix = PURPOSE_PREFIXES[purpose]
 
   const token = process.env.BLOB_READ_WRITE_TOKEN

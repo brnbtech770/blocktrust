@@ -2,15 +2,19 @@
 // Déclenche un webhook de test signé HMAC vers le webhookUrl configuré.
 // ============================================================
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { sendWebhook } from '@/lib/webhooks'
+import { ensureStrictEmptyBody } from '@/lib/api-json-body'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const invalid = await ensureStrictEmptyBody(req)
+  if (invalid) return invalid
+
   const session = await auth()
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })

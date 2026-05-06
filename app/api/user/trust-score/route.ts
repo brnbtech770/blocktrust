@@ -1,7 +1,7 @@
 // GET : score en base (session) — POST : recalcul + persistance.
 // ============================================================
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import {
@@ -9,6 +9,7 @@ import {
   getTrustScoreColor,
   getTrustScoreLabel,
 } from '@/lib/trustscore'
+import { ensureStrictEmptyBody } from '@/lib/api-json-body'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -36,7 +37,10 @@ export async function GET() {
   })
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const invalid = await ensureStrictEmptyBody(req)
+  if (invalid) return invalid
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

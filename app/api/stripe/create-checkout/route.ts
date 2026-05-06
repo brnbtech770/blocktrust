@@ -3,6 +3,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { stripe } from '@/lib/stripe'
@@ -88,6 +89,10 @@ async function createStripeCheckoutUrlForSessionUser(email: string, priceId: str
   return checkoutSession.url
 }
 
+const postCheckoutSchema = z.object({
+  priceId: z.string().min(1).max(128),
+})
+
 export async function POST(req: NextRequest) {
   try {
     const session = await auth()
@@ -96,12 +101,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    const body = await req.json()
-    const { priceId } = body
-
-    if (!priceId || typeof priceId !== 'string') {
-      return NextResponse.json({ error: 'priceId requis' }, { status: 400 })
+    let json: unknown
+    try {
+      json = await req.json()
+    } catch {
+      return NextResponse.json({ error: 'Données invalides' }, { status: 400 })
     }
+    const parsed = postCheckoutSchema.safeParse(json)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Données invalides' }, { status: 400 })
+    }
+    const { priceId } = parsed.data
 
     const url = await createStripeCheckoutUrlForSessionUser(session.user.email, priceId)
     return NextResponse.json({ url })

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/app/lib/db";
 import { hashIp } from "@/app/lib/auth";
 import { canonicalizeEmailContext, sha256Hex } from "@/lib/v2/context";
@@ -26,16 +27,34 @@ function entityDisplayName(entity: {
   return entity.legalName || entity.tradeName || entity.email;
 }
 
+const emailContextSchema = z.object({
+  from: z.string().trim().min(1).max(500),
+  to: z.string().trim().min(1).max(500),
+  subject: z.string().trim().min(1).max(998),
+  date: z.string().min(1).max(64),
+  body: z.string().max(200_000).optional(),
+});
+
+const verifyBodySchema = z.object({
+  token: z.string().min(1).max(24_000),
+  context: emailContextSchema,
+});
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-
-    const token = String(body.token || "");
-    const context = body.context;
-
-    if (!token || !context) {
-      return NextResponse.json({ error: "Missing token/context" }, { status: 400 });
+    let json: unknown;
+    try {
+      json = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Données invalides" }, { status: 400 });
     }
+
+    const bodyParsed = verifyBodySchema.safeParse(json);
+    if (!bodyParsed.success) {
+      return NextResponse.json({ error: "Données invalides" }, { status: 400 });
+    }
+
+    const { token, context } = bodyParsed.data;
 
     const payload = await verifyToken(token);
 

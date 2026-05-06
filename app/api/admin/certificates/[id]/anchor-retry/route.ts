@@ -3,6 +3,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
@@ -34,7 +35,13 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
     )
   }
 
-  const { id } = await params
+  const { id: paramId } = await params
+
+  const idParsed = z.string().cuid().safeParse(paramId)
+  if (!idParsed.success) {
+    return NextResponse.json({ error: 'Données invalides' }, { status: 400 })
+  }
+  const id = idParsed.data
 
   const cert = await prisma.certificate.findUnique({
     where: { id },
