@@ -4,12 +4,8 @@
 
 import { prisma } from '@/app/lib/db'
 import { requireAdminPage } from '@/app/lib/require-admin-page'
-import Stripe from 'stripe'
+import { stripe } from '@/lib/stripe'
 import VerifyBadgeCard from '@/app/components/dashboard/VerifyBadgeCard'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-02-25.clover',
-})
 
 async function calculateMRR(): Promise<number> {
   try {

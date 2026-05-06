@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import { z } from "zod";
 import { getAuthUser } from "@/app/lib/auth";
 import { prisma } from "@/app/lib/db";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-02-25.clover",
-});
+import { stripe } from "@/lib/stripe";
 
 const checkoutBodySchema = z
   .object({

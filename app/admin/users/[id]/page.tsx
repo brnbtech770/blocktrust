@@ -5,11 +5,8 @@
 import { prisma } from '@/app/lib/db'
 import { requireAdminPage } from '@/app/lib/require-admin-page'
 import { notFound } from 'next/navigation'
-import Stripe from 'stripe'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-02-25.clover',
-})
+import type Stripe from 'stripe'
+import { stripe } from '@/lib/stripe'
 
 export default async function AdminUserDetailPage({
   params,

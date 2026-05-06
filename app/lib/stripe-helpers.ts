@@ -2,13 +2,9 @@
 // Helpers pour vérifier et mettre à jour les plans depuis Stripe
 // ============================================================
 
-import Stripe from 'stripe'
+import { stripe } from '@/lib/stripe'
 import { prisma } from './db'
 import { findPlanFromPriceId } from './auth'
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2026-02-25.clover',
-})
 
 /**
  * Vérifie si un utilisateur a une subscription active dans Stripe
