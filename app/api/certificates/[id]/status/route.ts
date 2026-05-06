@@ -56,10 +56,19 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Certificat non trouvé' }, { status: 404 });
     }
 
-    // Vérifier les transitions de statut valides
     const currentStatus = certificate.status;
+
+    // Passage PENDING → ACTIVE : réservé au flux admin uniquement
+    if (currentStatus === 'PENDING' && status === 'ACTIVE') {
+      return NextResponse.json(
+        { error: 'Activation réservée aux administrateurs' },
+        { status: 403 }
+      );
+    }
+
+    // Vérifier les transitions de statut valides (utilisateur)
     const validTransitions: Record<string, string[]> = {
-      PENDING: ['ACTIVE', 'REVOKED'],
+      PENDING: ['REVOKED'],
       ACTIVE: ['SUSPENDED', 'REVOKED'],
       ANCHORED: ['SUSPENDED', 'REVOKED'],
       SUSPENDED: ['ACTIVE', 'REVOKED'],
