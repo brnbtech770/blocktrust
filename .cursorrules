@@ -1,0 +1,87 @@
+# BlockTrust — Règles Cursor (contexte projet)
+
+Référence étendue : `BLOCKTRUST_PROJECT_KNOWLEDGE.md`, `SECURITY.md`, `ENV_CHECKLIST.md`. Ce fichier résume ce dont l’agent a besoin pour coder sans diverger du produit.
+
+---
+
+## Produit & ton
+
+- **BlockTrust** : plateforme d’identité et de confiance — certification des contacts, badges / QR, vérification publique, signatures JWT (contexte email), Trust Circle, KYC (Stripe Identity), plans B2C/B2B (Stripe), white label API (`bt_live_*`).
+- **Double promesse** : émission (« prouver que c’est bien vous ») + réception (« savoir si l’autre est authentique »).
+- **Marque** : BLOCKTRUST™ en majuscules dans l’UI ; palette navy `#0a1628`, cyan `#00d4ff`, or `#BDA76B`.
+- **Lexique UI** : préférer « contact(s) » plutôt que « entité » pour l’utilisateur final ; « KYC » = jargon interne seulement.
+- **Langue** : lorsque l’utilisateur écrit en français, répondre en français ; commits et docs peuvent rester en français si le dépôt le fait déjà.
+
+---
+
+## Stack (vérité `package.json`)
+
+- **Next.js 16** (App Router), **React 19**, **TypeScript strict**.
+- **Auth** : NextAuth v5 (`auth()` depuis `@/app/lib/auth-server`, options dans `app/lib/auth.ts`).
+- **Données** : **Prisma 6** + PostgreSQL (`DATABASE_URL` / `DIRECT_URL`).
+- **UI** : Tailwind CSS 4, composants sous `app/components/`.
+- **Paiements / identité** : Stripe (billing + Identity webhooks).
+- **Emails** : Resend + templates React sous `emails/`.
+- **Observabilité** : Sentry (`@sentry/nextjs`).
+- **Dev** : `npm run dev` → port **3004** (voir `package.json`).
+
+---
+
+## Arborescence importante
+
+| Zone | Rôle |
+|------|------|
+| `app/` | Routes App Router, layouts, pages, **API** sous `app/api/**`. |
+| `app/lib/` | DB (`db.ts`), auth serveur, helpers métier liés à Next. |
+| `lib/` | Logique partagée (JWT v2, Stripe, emails helpers, rate limit, etc.). |
+| `prisma/` | Schéma, migrations, seed. |
+| `proxy.ts` | Couche Edge (ex-middleware) : www→apex, garde `/admin`, `/api/admin/*`, APIs protégées listées dans le fichier — **compléter toujours avec `auth()` / `isAdmin()` dans les handlers**. |
+| `emails/` | Templates React Email. |
+
+Ne pas confondre `@/app/lib/...` et `@/lib/...`.
+
+---
+
+## Authentification & admin
+
+- Session : **`auth()`** dans Server Components et routes qui utilisent déjà ce pattern ; pour certaines API, **`getAuthUser`** (`app/lib/auth.ts`).
+- Admin : **`isAdmin(email)`** et liste **`ADMIN_EMAILS`** (`app/lib/admin.ts`) — variable d’env `ADMIN_EMAILS` en prod (virgules).
+- Routes **`/api/admin/**`** : protégées par le proxy **et** doivent rester cohérentes côté handler (défense en profondeur).
+- **`allowDangerousEmailAccountLinking`** : désactivé par défaut ; n’activer via env qu’en connaissance de cause (`SECURITY.md`).
+
+---
+
+## Sécurité (obligatoire)
+
+- **Ne pas** réintroduire de route publique type diagnostic session (`/api/debug-auth` supprimée). En prod le **`proxy.ts`** renvoie 404 sur ce chemin si quelqu’un le recrée.
+- **Activation certificat** : **`PENDING → ACTIVE`** réservée au **flux admin**, pas à `PATCH` utilisateur sur `app/api/certificates/[id]/status/route.ts` (403 si tentative).
+- **PATCH/PUT API** : valider avec **Zod** (ou équivalent) ; **whitelist** des champs ; **ne jamais** passer `req.body` brut à Prisma.
+- **Secrets** : pas de `console.log` d’emails complets, tokens, mots de passe, clés API, JWT — utiliser **`redactEmailRecipient`** (`lib/email.ts`), IDs tronqués, ou **`lib/prodLog.ts`** (`btLog` / `btError`) sur routes sensibles / webhooks.
+- **White Label** : génération de clés via **`generateUniqueApiKeyPair`** (`lib/api-key.ts`) pour une paire `apiKey`/`apiKeyHash` cohérente et unique ; format public `bt_live_*`.
+- Variables sensibles : voir `SECURITY.md` et `ENV_CHECKLIST.md`.
+
+---
+
+## Modèle métier (rappel)
+
+- **User** : plan, Stripe, KYC, Trust Score, organisations / comptes perso selon schéma Prisma.
+- **Entity** : contact certifiable (SIRET, types perso/pro).
+- **Certificate** : statuts et transitions — respecter la logique métier (révocation utilisateur vs activation admin).
+- **API V2** (`app/api/v2/issue`, `verify`, `sign`) : JWT sur contexte canonique (`lib/v2/`).
+- **Trust Circle**, **plans**, **surveillance**, **menaces** (`/menaces`) : décrits dans `BLOCKTRUST_PROJECT_KNOWLEDGE.md`.
+
+---
+
+## Conventions de code
+
+- Modifier **uniquement** ce qui est demandé ; pas de refactor cosmétique ni fichiers markdown non demandés.
+- Aligner style, imports et patterns sur les fichiers voisins.
+- Après changements significatifs : **`npm run build`** doit passer (TypeScript inclus).
+- Accessibilité et cohérence UI : réutiliser composants existants (`app/components/ui/`, charte couleurs).
+
+---
+
+## Documentation
+
+- Pour onboarding humain détaillé (pricing, landing, cron, Polygon, etc.) : **`BLOCKTRUST_PROJECT_KNOWLEDGE.md`**.
+- Le **README.md** peut être partiellement daté ; en cas de conflit, préférer **le code** et **`BLOCKTRUST_PROJECT_KNOWLEDGE.md`**.
