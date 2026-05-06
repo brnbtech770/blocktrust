@@ -344,7 +344,7 @@ export default async function VerifyPublicPage({
           revokeUrl,
         }),
       }).then(({ error }) => {
-        if (error) console.error('[Verify] Fraud alert email échoué:', { to: owner.email, error })
+        if (error) console.error('[Verify] Fraud alert email échoué:', { certId: cert.id, error })
       })
     }
     return <FraudAlertView />

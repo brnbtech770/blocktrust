@@ -160,7 +160,7 @@ model Organization {
   country    String  @default("FR")
 
   ownerId String
-  owner   User   @relation("OrganizationOwner", fields: [ownerId], references: [id])
+  owner   User   @relation("OrganizationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
   planId           String?
   plan             Plan?   @relation(fields: [planId], references: [id])
@@ -206,7 +206,7 @@ model PersonalAccount {
   name String @default("Mon compte")
 
   ownerId String
-  owner   User   @relation("PersonalAccountOwner", fields: [ownerId], references: [id])
+  owner   User   @relation("PersonalAccountOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
   planId           String?
   plan             Plan?   @relation(fields: [planId], references: [id])
@@ -318,7 +318,7 @@ model Entity {
 
   // Organisation optionnelle (B2B)
   organizationId String?
-  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   entityType EntityType @default(BUSINESS)
 
@@ -847,7 +847,7 @@ model AdminAlert {
   entityId    String?
   entity      Entity?  @relation(fields: [entityId], references: [id], onDelete: SetNull)
   userId      String?
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   metadata    Json?
   read        Boolean  @default(false)
   createdAt   DateTime @default(now())

@@ -7,6 +7,7 @@ import { requireAdminPage } from '@/app/lib/require-admin-page'
 import { notFound } from 'next/navigation'
 import type Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
+import { adminUserDetailSelect } from '@/lib/prisma-admin-user'
 
 export default async function AdminUserDetailPage({
   params,
@@ -19,15 +20,7 @@ export default async function AdminUserDetailPage({
 
   const user = await prisma.user.findUnique({
     where: { id },
-    include: {
-      plan: true,
-      entities: {
-        include: {
-          certificates: true,
-          trustScore: true,
-        },
-      },
-    },
+    select: adminUserDetailSelect,
   })
 
   if (!user) {

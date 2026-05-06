@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
+import { adminUserListSelect } from '@/lib/prisma-admin-user'
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,21 +17,14 @@ export async function GET(req: NextRequest) {
     }
 
     const users = await prisma.user.findMany({
-      include: {
-        plan: true,
-        entities: {
-          include: {
-            certificates: true,
-          },
-        },
-      },
+      select: adminUserListSelect,
       orderBy: { createdAt: 'desc' },
     })
 
     // Formater les données
     const formatted = users.map((user) => {
       const totalCertificates = user.entities.reduce(
-        (sum, entity) => sum + entity.certificates.length,
+        (sum, entity) => sum + entity._count.certificates,
         0
       )
 

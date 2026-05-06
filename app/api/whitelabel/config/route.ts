@@ -16,7 +16,19 @@ export const dynamic = 'force-dynamic'
 async function getUserAndPlan(email: string) {
   return prisma.user.findUnique({
     where: { email },
-    include: { plan: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      company: true,
+      companyName: true,
+      plan: {
+        select: {
+          whitelabelEnabled: true,
+          apiRequestsPerMonth: true,
+        },
+      },
+    },
   })
 }
 

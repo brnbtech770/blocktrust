@@ -24,6 +24,9 @@ export async function deleteAdminUserTransaction(
   const entityIds = entityRows.map((e) => e.id)
 
   if (entityIds.length > 0) {
+    await tx.aIAlert.deleteMany({
+      where: { entityId: { in: entityIds } },
+    })
     await tx.adminAlert.deleteMany({
       where: { entityId: { in: entityIds } },
     })
@@ -55,6 +58,15 @@ export async function deleteAdminUserTransaction(
   await tx.personalAccountMember.deleteMany({ where: { userId } })
 
   await tx.adminAlert.deleteMany({ where: { userId } })
+
+  await tx.whiteLabelConfig.deleteMany({ where: { userId } })
+
+  await tx.kYCVerification.deleteMany({ where: { userId } })
+
+  await tx.account.deleteMany({ where: { userId } })
+  await tx.session.deleteMany({ where: { userId } })
+
+  await tx.userDevice.deleteMany({ where: { userId } })
 
   await tx.userTrustRelation.deleteMany({
     where: { OR: [{ fromUserId: userId }, { toUserId: userId }] },
