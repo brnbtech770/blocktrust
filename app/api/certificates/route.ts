@@ -12,6 +12,7 @@ import { checkCertificateQuota } from '@/lib/checkQuota'
 import { redactEmailRecipient, sendEmail } from '@/lib/email'
 import { CertificateCreatedEmail, subject as certificateCreatedSubject } from '@/emails/CertificateCreatedEmail'
 import { createAdminAlert } from '@/lib/admin-alerts'
+import { redis } from '@/lib/rate-limit-redis'
 
 // ─────────────────────────────────────────────
 // GET — Liste des certificats de l'utilisateur
@@ -116,6 +117,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 })
     }
 
+    const lockKey = `lock:quota:cert:${session.user.id}`
+    let lockHeld = false
+    if (redis) {
+      try {
+        const acquired = await redis.set(lockKey, '1', { nx: true, ex: 10 })
+        if (acquired !== 'OK') {
+          return NextResponse.json(
+            {
+              error: 'Requête en cours, réessayez dans quelques secondes',
+              code: 'CONCURRENT_REQUEST',
+            },
+            { status: 429 }
+          )
+        }
+        lockHeld = true
+      } catch (lockErr) {
+        console.warn('[certificates] Redis lock KO, continue sans lock', lockErr)
+      }
+    }
+
+    try {
     // Vérifier le quota selon le plan
     const quotaCheck = await checkCertificateQuota(user.id)
     if (!quotaCheck.allowed) {
@@ -371,6 +393,15 @@ export async function POST(req: NextRequest) {
       },
       qrCodeDataUrl,
     })
+    } finally {
+      if (redis && lockHeld) {
+        try {
+          await redis.del(lockKey)
+        } catch (unlockErr) {
+          console.warn('[certificates] Redis unlock KO', unlockErr)
+        }
+      }
+    }
   } catch (error) {
     console.error('❌ Certificate create error:', error)
     return NextResponse.json(
