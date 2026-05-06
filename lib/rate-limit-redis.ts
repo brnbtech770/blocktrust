@@ -16,7 +16,8 @@ const isRedisConfigured =
   !!process.env.UPSTASH_REDIS_REST_URL &&
   !!process.env.UPSTASH_REDIS_REST_TOKEN;
 
-const redis: Redis | null = isRedisConfigured
+/** Client Redis partagé — null si non configuré (fail-soft côté appelants). */
+export const redis: Redis | null = isRedisConfigured
   ? new Redis({
       url: process.env.UPSTASH_REDIS_REST_URL!,
       token: process.env.UPSTASH_REDIS_REST_TOKEN!,

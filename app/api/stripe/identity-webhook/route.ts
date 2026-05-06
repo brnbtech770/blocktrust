@@ -9,6 +9,10 @@ import { prisma } from '@/app/lib/db'
 import { btError, btErrorDevDetails, btLog } from '@/lib/prodLog'
 import { createKycSubmittedAdminAlertIfNew } from '@/lib/admin-alerts'
 import { persistUserTrustScore } from '@/lib/trustscore'
+import {
+  stripeWebhookAlreadyHandled,
+  stripeWebhookMarkHandled,
+} from '@/lib/stripe-webhook-idempotency'
 
 const identityWebhookSecret = process.env.STRIPE_IDENTITY_WEBHOOK_SECRET!
 
@@ -43,7 +47,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
+  const duplicate = await stripeWebhookAlreadyHandled(event.id)
+  if (duplicate) {
+    btLog(
+      `[stripe] Event ${event.id} déjà traité`,
+      'Stripe identity webhook duplicate skipped'
+    )
+    return NextResponse.json({ received: true })
+  }
+
   if (!event.type.startsWith('identity.')) {
+    await stripeWebhookMarkHandled(event.id)
     return NextResponse.json({ received: true })
   }
 
@@ -132,6 +146,8 @@ export async function POST(req: NextRequest) {
           `Identity webhook event not handled: ${event.type}`
         )
     }
+
+    await stripeWebhookMarkHandled(event.id)
 
     return NextResponse.json({ received: true })
   } catch (error) {

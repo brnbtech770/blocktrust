@@ -14,6 +14,10 @@ import {
   createNewPaymentAdminAlertIfNew,
 } from '@/lib/admin-alerts'
 import { persistUserTrustScore } from '@/lib/trustscore'
+import {
+  stripeWebhookAlreadyHandled,
+  stripeWebhookMarkHandled,
+} from '@/lib/stripe-webhook-idempotency'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
@@ -205,6 +209,15 @@ export async function POST(req: NextRequest) {
       'Webhook signature verification failed'
     )
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+  }
+
+  const duplicate = await stripeWebhookAlreadyHandled(event.id)
+  if (duplicate) {
+    btLog(
+      `[stripe] Event ${event.id} déjà traité`,
+      'Stripe webhook duplicate skipped'
+    )
+    return NextResponse.json({ received: true })
   }
 
   btLog(`📩 Webhook reçu: ${event.type}`, `Webhook reçu: ${event.type}`)
@@ -503,6 +516,8 @@ export async function POST(req: NextRequest) {
           `Événement webhook non géré: ${event.type}`
         )
     }
+
+    await stripeWebhookMarkHandled(event.id)
 
     return NextResponse.json({ received: true })
   } catch (error: any) {
