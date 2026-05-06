@@ -7,9 +7,11 @@ import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 
-const bodySchema = z.object({
-  maxScans: z.number().int().min(1).max(999999).optional(),
-})
+const bodySchema = z
+  .object({
+    maxScans: z.number().int().min(1).max(999999).optional(),
+  })
+  .strict()
 
 export async function PATCH(
   req: NextRequest,

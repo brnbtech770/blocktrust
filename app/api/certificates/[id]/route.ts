@@ -3,14 +3,17 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { CertificateStatus, Prisma } from '@prisma/client';
 import { getAuthUser } from '@/app/lib/auth';
 import { prisma } from '@/app/lib/db';
 import { z } from 'zod';
 
-const actionSchema = z.object({
-  action: z.enum(['suspend', 'reactivate', 'revoke']),
-  reason: z.string().optional(),
-});
+const actionSchema = z
+  .object({
+    action: z.enum(['suspend', 'reactivate', 'revoke']),
+    reason: z.string().optional(),
+  })
+  .strict();
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -26,9 +29,19 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     }
 
     const { id } = await params;
-    const body = await req.json();
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Corps invalide' }, { status: 400 });
+    }
 
-    if (body?.action === 'activate') {
+    if (
+      body &&
+      typeof body === 'object' &&
+      !Array.isArray(body) &&
+      (body as { action?: unknown }).action === 'activate'
+    ) {
       return NextResponse.json(
         { error: "L'activation est réservée à l'administration BlockTrust" },
         { status: 403 }
@@ -71,7 +84,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     }
 
     // Déterminer le nouveau statut selon l'action et le statut actuel
-    let newStatus: string;
+    let newStatus: CertificateStatus;
     const currentStatus = certificate.status;
 
     switch (action) {
@@ -112,24 +125,20 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         );
     }
 
-    // Préparer les données de mise à jour
-    const updateData: any = {
+    const updateData: Prisma.CertificateUpdateInput = {
       status: newStatus,
     };
 
-    // Si révocation, ajouter la date et la raison
     if (action === 'revoke') {
       updateData.revokedAt = new Date();
       if (reason) {
         updateData.revocationReason = reason;
       }
     } else if (String(currentStatus) === 'REVOKED' && newStatus !== 'REVOKED') {
-      // Si on sort de REVOKED, supprimer les champs de révocation
       updateData.revokedAt = null;
       updateData.revocationReason = null;
     }
 
-    // Mettre à jour le certificat
     const updatedCertificate = await prisma.certificate.update({
       where: { id },
       data: updateData,

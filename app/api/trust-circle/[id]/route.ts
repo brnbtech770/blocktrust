@@ -3,8 +3,15 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getAuthUser, checkPlanFeature } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/db'
+
+const deleteBodySchema = z
+  .object({
+    type: z.enum(['manual', 'mutual', 'relation']).optional(),
+  })
+  .strict()
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -18,13 +25,19 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    let body: { type?: string } = {}
+    let typeFromBody: string | undefined
     try {
-      body = await req.json()
+      const json = await req.json()
+      const parsed = deleteBodySchema.safeParse(json)
+      if (!parsed.success) {
+        return NextResponse.json({ error: 'Corps invalide' }, { status: 400 })
+      }
+      typeFromBody = parsed.data.type
     } catch {
-      body = {}
+      typeFromBody = undefined
     }
-    const type = body.type || new URL(req.url).searchParams.get('type') || 'mutual'
+    const type =
+      typeFromBody || new URL(req.url).searchParams.get('type') || 'mutual'
 
     // User-centric — body attendu : { type: 'manual' } | { type: 'relation' }
     // (alias historique : 'mutual' = même traitement que 'relation')

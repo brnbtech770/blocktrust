@@ -91,9 +91,11 @@ export async function GET(req: NextRequest) {
 // ─────────────────────────────────────────────
 // POST — Créer un certificat
 // ─────────────────────────────────────────────
-const createCertificateSchema = z.object({
-  entityId: z.string().cuid(),
-})
+const createCertificateSchema = z
+  .object({
+    entityId: z.string().cuid(),
+  })
+  .strict()
 
 export async function POST(req: NextRequest) {
   try {

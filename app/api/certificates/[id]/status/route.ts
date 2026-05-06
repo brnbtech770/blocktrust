@@ -3,14 +3,17 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import type { CertificateStatus, Prisma } from '@prisma/client';
 import { getAuthUser } from '@/app/lib/auth';
 import { prisma } from '@/app/lib/db';
 import { z } from 'zod';
 
-const statusSchema = z.object({
-  status: z.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'ANCHORED', 'EXPIRED']),
-  reason: z.string().optional(),
-});
+const statusSchema = z
+  .object({
+    status: z.enum(['PENDING', 'ACTIVE', 'SUSPENDED', 'REVOKED', 'ANCHORED', 'EXPIRED']),
+    reason: z.string().optional(),
+  })
+  .strict();
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -86,24 +89,20 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Préparer les données de mise à jour
-    const updateData: any = {
-      status,
+    const updateData: Prisma.CertificateUpdateInput = {
+      status: status as CertificateStatus,
     };
 
-    // Si révocation, ajouter la date et la raison
     if (status === 'REVOKED') {
       updateData.revokedAt = new Date();
       if (reason) {
         updateData.revocationReason = reason;
       }
     } else if (String(currentStatus) === 'REVOKED' && String(status) !== 'REVOKED') {
-      // Si on sort de REVOKED, supprimer les champs de révocation
       updateData.revokedAt = null;
       updateData.revocationReason = null;
     }
 
-    // Mettre à jour le certificat
     const updatedCertificate = await prisma.certificate.update({
       where: { id },
       data: updateData,

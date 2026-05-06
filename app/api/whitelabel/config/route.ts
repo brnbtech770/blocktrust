@@ -4,6 +4,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import type { Prisma } from '@prisma/client'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { generateUniqueApiKeyPair, maskApiKey } from '@/lib/api-key'
@@ -103,29 +104,36 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'plan_required' }, { status: 403 })
   }
 
-  const body = await req.json().catch(() => ({}))
-  const data: Record<string, unknown> = {}
+  const raw = await req.json().catch(() => null)
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    return NextResponse.json({ error: 'Corps invalide' }, { status: 400 })
+  }
+  const body = raw as Record<string, unknown>
+
+  const patch: Prisma.WhiteLabelConfigUpdateInput = {}
+  const fallbackCompany =
+    user.companyName ?? user.company ?? user.name ?? 'Mon entreprise'
 
   if (typeof body.companyName === 'string' && body.companyName.trim().length > 0) {
-    data.companyName = body.companyName.trim().slice(0, 100)
+    patch.companyName = body.companyName.trim().slice(0, 100)
   }
   const colorRegex = /^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/
   if (typeof body.primaryColor === 'string' && colorRegex.test(body.primaryColor)) {
-    data.primaryColor = body.primaryColor
+    patch.primaryColor = body.primaryColor
   }
   if (typeof body.secondaryColor === 'string' && colorRegex.test(body.secondaryColor)) {
-    data.secondaryColor = body.secondaryColor
+    patch.secondaryColor = body.secondaryColor
   }
   if (typeof body.logoUrl === 'string') {
     const trimmed = body.logoUrl.trim()
-    data.logoUrl = trimmed.length > 0 ? trimmed.slice(0, 500) : null
+    patch.logoUrl = trimmed.length > 0 ? trimmed.slice(0, 500) : null
   }
   if (typeof body.webhookUrl === 'string') {
     const trimmed = body.webhookUrl.trim()
     if (trimmed.length === 0) {
-      data.webhookUrl = null
+      patch.webhookUrl = null
     } else if (/^https?:\/\//i.test(trimmed)) {
-      data.webhookUrl = trimmed.slice(0, 500)
+      patch.webhookUrl = trimmed.slice(0, 500)
     } else {
       return NextResponse.json(
         { error: 'invalid_webhook_url', message: 'Must start with http(s)://' },
@@ -134,29 +142,48 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
-  if (Object.keys(data).length === 0) {
+  if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: 'no_changes' }, { status: 400 })
   }
 
   const { apiKey, apiKeyHash } = await generateUniqueApiKeyPair(prisma)
 
+  const companyNameCreate =
+    typeof patch.companyName === 'string' ? patch.companyName : fallbackCompany
+  const primaryCreate =
+    typeof patch.primaryColor === 'string' ? patch.primaryColor : '#00d4ff'
+  const secondaryCreate =
+    typeof patch.secondaryColor === 'string' ? patch.secondaryColor : '#BDA76B'
+  const logoCreate: string | null =
+    patch.logoUrl === undefined
+      ? null
+      : typeof patch.logoUrl === 'string'
+        ? patch.logoUrl
+        : null
+  const webhookCreateResolved: string | null =
+    patch.webhookUrl === undefined
+      ? null
+      : typeof patch.webhookUrl === 'string'
+        ? patch.webhookUrl
+        : null
+
+  const createData: Prisma.WhiteLabelConfigUncheckedCreateInput = {
+    userId: user.id,
+    companyName: companyNameCreate,
+    primaryColor: primaryCreate,
+    secondaryColor: secondaryCreate,
+    logoUrl: logoCreate,
+    webhookUrl: webhookCreateResolved,
+    apiKey,
+    apiKeyHash,
+    webhookSecret: randomBytes(32).toString('hex'),
+    apiCallsLimit: user.plan?.apiRequestsPerMonth ?? 1000,
+  }
+
   const config = await prisma.whiteLabelConfig.upsert({
     where: { userId: user.id },
-    update: data,
-    create: {
-      userId: user.id,
-      companyName:
-        (data.companyName as string | undefined) ??
-        user.companyName ??
-        user.company ??
-        user.name ??
-        'Mon entreprise',
-      apiKey,
-      apiKeyHash,
-      webhookSecret: randomBytes(32).toString('hex'),
-      apiCallsLimit: user.plan?.apiRequestsPerMonth ?? 1000,
-      ...data,
-    },
+    update: patch,
+    create: createData,
   })
 
   return NextResponse.json({ config: serializeConfig(config) })
