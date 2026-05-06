@@ -7,9 +7,11 @@ import { z } from 'zod'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 
-const bodySchema = z.object({
-  accepted: z.boolean(),
-})
+const bodySchema = z
+  .object({
+    accepted: z.boolean(),
+  })
+  .strict()
 
 export async function PATCH(req: NextRequest) {
   let json: unknown
