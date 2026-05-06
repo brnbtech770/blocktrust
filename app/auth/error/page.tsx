@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/app/components/ui/Logo";
+import { sanitizeCallbackUrl } from "@/app/lib/auth-callback-url";
 
 function shortMessage(code: string | null): string {
   if (!code) return "Une erreur d’authentification s’est produite.";
@@ -25,7 +26,7 @@ function shortMessage(code: string | null): string {
 function ErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
-  const callbackUrl = searchParams.get("callbackUrl");
+  const safeCallback = sanitizeCallbackUrl(searchParams.get("callbackUrl"));
 
   return (
     <div className="min-h-screen bg-navy px-4 py-12 font-sans">
@@ -97,13 +98,7 @@ function ErrorContent() {
 
         <div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column", gap: "12px" }}>
           <Link
-            href={
-              callbackUrl &&
-              callbackUrl.startsWith("/") &&
-              !callbackUrl.startsWith("//")
-                ? `/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`
-                : "/auth/signin"
-            }
+            href={`/auth/signin?callbackUrl=${encodeURIComponent(safeCallback)}`}
             className="block w-full rounded-lg bg-bt-cyan py-3 text-center text-sm font-bold text-navy transition hover:bg-bt-cyan/90"
           >
             Réessayer la connexion
