@@ -6,7 +6,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
-import { generateApiKey, maskApiKey } from '@/lib/api-key'
+import { generateUniqueApiKeyPair, maskApiKey } from '@/lib/api-key'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -26,7 +26,7 @@ export async function POST() {
     return NextResponse.json({ error: 'plan_required' }, { status: 403 })
   }
 
-  const { apiKey, apiKeyHash } = generateApiKey()
+  const { apiKey, apiKeyHash } = await generateUniqueApiKeyPair(prisma)
 
   const config = await prisma.whiteLabelConfig.upsert({
     where: { userId: user.id },

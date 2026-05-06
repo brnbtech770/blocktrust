@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
-import { generateApiKey, maskApiKey } from '@/lib/api-key'
+import { generateUniqueApiKeyPair, maskApiKey } from '@/lib/api-key'
 import { randomBytes } from 'node:crypto'
 
 export const runtime = 'nodejs'
@@ -75,7 +75,7 @@ export async function GET() {
 
   // Création paresseuse à la 1ère visite : génère apiKey + secret
   if (!config) {
-    const { apiKey, apiKeyHash } = generateApiKey()
+    const { apiKey, apiKeyHash } = await generateUniqueApiKeyPair(prisma)
     const webhookSecret = randomBytes(32).toString('hex')
     config = await prisma.whiteLabelConfig.create({
       data: {
@@ -138,6 +138,8 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'no_changes' }, { status: 400 })
   }
 
+  const { apiKey, apiKeyHash } = await generateUniqueApiKeyPair(prisma)
+
   const config = await prisma.whiteLabelConfig.upsert({
     where: { userId: user.id },
     update: data,
@@ -149,8 +151,8 @@ export async function PATCH(req: NextRequest) {
         user.company ??
         user.name ??
         'Mon entreprise',
-      apiKey: generateApiKey().apiKey,
-      apiKeyHash: generateApiKey().apiKeyHash,
+      apiKey,
+      apiKeyHash,
       webhookSecret: randomBytes(32).toString('hex'),
       apiCallsLimit: user.plan?.apiRequestsPerMonth ?? 1000,
       ...data,

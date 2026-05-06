@@ -12,6 +12,7 @@
 //   2. par timing-safe equal sur la valeur en clair stockée
 
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
+import type { PrismaClient } from '@prisma/client'
 
 const PREFIX = 'bt_live_'
 
@@ -20,6 +21,23 @@ export function generateApiKey(): { apiKey: string; apiKeyHash: string } {
   const apiKey = `${PREFIX}${raw}`
   const apiKeyHash = hashApiKey(apiKey)
   return { apiKey, apiKeyHash }
+}
+
+/**
+ * Génère une paire clé + hash unique pour WhiteLabelConfig (évite collision DB si appels concurrents rares).
+ */
+export async function generateUniqueApiKeyPair(
+  db: Pick<PrismaClient, 'whiteLabelConfig'>
+): Promise<{ apiKey: string; apiKeyHash: string }> {
+  for (let attempts = 0; attempts < 5; attempts++) {
+    const pair = generateApiKey()
+    const existing = await db.whiteLabelConfig.findUnique({
+      where: { apiKey: pair.apiKey },
+      select: { id: true },
+    })
+    if (!existing) return pair
+  }
+  throw new Error('Impossible de générer une clé API unique')
 }
 
 export function hashApiKey(apiKey: string): string {
