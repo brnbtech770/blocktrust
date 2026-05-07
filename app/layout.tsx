@@ -29,25 +29,30 @@ const ICON_CACHE_QUERY = "v=badge-svg-2";
 const OG_IMAGE_CACHE_QUERY = "v=seo-canonical-1";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: new URL("https://blocktrust.tech"),
   title: {
     default: SITE_TITLE,
     template: "%s — BlockTrust",
   },
   description: SITE_DESCRIPTION,
   alternates: {
-    canonical: SITE_URL,
+    canonical: "https://blocktrust.tech",
+    languages: {
+      "fr-FR": "https://blocktrust.tech",
+    },
   },
   applicationName: "BlockTrust",
   keywords: [
-    "BlockTrust",
-    "identité numérique",
-    "blockchain",
-    "Polygon",
-    "certificat",
-    "KYC",
-    "anti-phishing",
-    "badge vérifié",
+    "certification identité numérique",
+    "protection usurpation identité",
+    "anti fraude identité",
+    "blocktrust",
+    "solution française cybersécurité",
+    "certifier documents en ligne",
+    "protection phishing",
+    "badge certifié blockchain",
+    "faux RIB protection",
+    "identité numérique France",
   ],
   authors: [{ name: "BRNB TECH SASU" }],
   creator: "BRNB TECH SASU",
