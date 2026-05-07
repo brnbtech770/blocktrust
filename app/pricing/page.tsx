@@ -119,6 +119,9 @@ export default function PricingPage() {
           <span className="text-white">Tarifs </span>
           <span className="text-gold">transparents</span>
         </h1>
+        <p className="text-white/40 text-sm text-center mt-2">
+          Sans engagement · Résiliable à tout moment
+        </p>
         <p className="text-white/50 text-sm text-center mt-2">
           Le badge BLOCKTRUST est inclus dans votre abonnement.
           Sans frais cachés — annulable à tout moment.
@@ -188,7 +191,7 @@ export default function PricingPage() {
         )}
       </section>
 
-      {/* Grilles tarifaires — sous chaque carte : PlanCard affiche « Sans engagement · Résiliable à tout moment » */}
+      {/* Grilles tarifaires — sous chaque bouton : PlanCard affiche la mention résiliation */}
       <section className="pb-16">
         {mode === 'B2C' ? (
           <PricingGridB2C

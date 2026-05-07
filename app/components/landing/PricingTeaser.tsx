@@ -72,7 +72,7 @@ export default function PricingTeaser() {
           Voir tous les plans
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Link>
-        <p className="text-center text-xs text-white/40">
+        <p className="text-white/30 text-xs text-center mt-3">
           Sans engagement · Résiliable à tout moment
         </p>
       </Reveal>
