@@ -343,6 +343,11 @@ model Entity {
   description String? @db.Text
   logoUrl     String?
 
+  /// Adresse wallet optionnelle (ETH / MATIC / BTC / etc.)
+  walletAddress String?
+  /// ex. ethereum | polygon | bitcoin | solana | autre
+  walletNetwork String?
+
   // Vérification
   kycStatus       KycStatus       @default(PENDING)
   validationLevel ValidationLevel @default(BRONZE)
