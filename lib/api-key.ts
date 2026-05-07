@@ -58,6 +58,28 @@ export function isValidApiKeyShape(apiKey: string | null | undefined): apiKey is
   return Boolean(apiKey && /^bt_live_[a-f0-9]{16,}$/i.test(apiKey))
 }
 
+// ─── Extension Chrome (TrustScan) — préfixe bt_ext_ + 64 caractères hex (32 octets) ───
+
+const EXT_PREFIX = "bt_ext_"
+
+export function generateExtensionApiKey(): { apiKey: string; apiKeyHash: string; maskedDisplay: string } {
+  const raw = randomBytes(32).toString("hex")
+  const apiKey = `${EXT_PREFIX}${raw}`
+  const apiKeyHash = hashApiKey(apiKey)
+  const maskedDisplay = `${EXT_PREFIX}${"•".repeat(24)}${raw.slice(-4)}`
+  return { apiKey, apiKeyHash, maskedDisplay }
+}
+
+export function maskExtensionApiKey(apiKey: string): string {
+  if (!apiKey || apiKey.length < 16) return "••••••••"
+  const tail = apiKey.slice(-4)
+  return `${EXT_PREFIX}${"•".repeat(24)}${tail}`
+}
+
+export function isValidExtensionApiKeyShape(apiKey: string | null | undefined): apiKey is string {
+  return Boolean(apiKey && /^bt_ext_[a-f0-9]{64}$/i.test(apiKey))
+}
+
 /**
  * Comparaison timing-safe entre la clé reçue et la clé stockée.
  * Retourne false si les longueurs diffèrent (pas d'exception).

@@ -1,0 +1,185 @@
+// lib/extension-verify-sender.ts
+// Logique métier TrustScan — correspondance expéditeur ↔ contacts certifiés.
+// ============================================================
+
+import type { Certificate, Entity } from "@prisma/client";
+
+type CertStatus = "PENDING" | "ACTIVE" | "REVOKED" | "EXPIRED" | "ANCHORED" | "SUSPENDED";
+
+export type ExtensionVerifyStatus = "CERTIFIED" | "IN_CONTACTS" | "UNKNOWN" | "FRAUD";
+
+export type ExtensionVerifyPayload = {
+  verified: boolean;
+  status: ExtensionVerifyStatus;
+  entityName: string | null;
+  trustScore: number | null;
+  badgeUrl: string | null;
+  certifiedDomains: string[];
+  certifiedEmails: string[];
+  message: string;
+};
+
+type EntityWithCerts = Entity & {
+  certificates: Certificate[];
+  trustScore: { score: number } | null;
+};
+
+export function normalizeSenderEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+export function normalizeSenderDomain(domain: string): string {
+  const t = domain.trim().toLowerCase();
+  if (!t) return "";
+  try {
+    const u = t.includes("://") ? new URL(t) : new URL(`https://${t}`);
+    return u.hostname.replace(/^www\./, "");
+  } catch {
+    return t.replace(/^www\./, "").split("/")[0] ?? t;
+  }
+}
+
+function entityHostFromWebsite(website: string | null | undefined): string | null {
+  if (!website?.trim()) return null;
+  try {
+    const u = website.startsWith("http") ? new URL(website) : new URL(`https://${website}`);
+    return u.hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function entityDisplayName(e: EntityWithCerts): string {
+  if (e.tradeName?.trim()) return e.tradeName.trim();
+  if (e.legalName?.trim()) return e.legalName.trim();
+  const fn = e.firstName?.trim() ?? "";
+  const ln = e.lastName?.trim() ?? "";
+  const full = `${fn} ${ln}`.trim();
+  if (full) return full;
+  return e.email;
+}
+
+function entityMatchesSender(e: EntityWithCerts, emailNorm: string, domainNorm: string): boolean {
+  if (emailNorm && e.email.toLowerCase() === emailNorm) return true;
+  if (emailNorm && e.certifiedEmails.some((x) => x.toLowerCase() === emailNorm)) return true;
+  if (domainNorm) {
+    if (e.certifiedDomains.some((d) => normalizeSenderDomain(d) === domainNorm)) return true;
+    const host = entityHostFromWebsite(e.website);
+    if (host === domainNorm) return true;
+  }
+  return false;
+}
+
+function pickBestCert(certs: Certificate[]): Certificate | null {
+  if (certs.length === 0) return null;
+  const order: CertStatus[] = ["ACTIVE", "ANCHORED", "PENDING", "SUSPENDED", "REVOKED", "EXPIRED"];
+  const sorted = [...certs].sort((a, b) => order.indexOf(a.status as CertStatus) - order.indexOf(b.status as CertStatus));
+  return sorted[0] ?? null;
+}
+
+function certIsFullyActive(c: Certificate, now: Date): boolean {
+  if (c.status === "REVOKED" || c.status === "SUSPENDED") return false;
+  if (c.status === "EXPIRED") return false;
+  if (c.expiresAt && c.expiresAt < now) return false;
+  return c.status === "ACTIVE" || c.status === "ANCHORED";
+}
+
+function certIsFraudish(c: Certificate, now: Date): boolean {
+  if (c.status === "REVOKED" || c.status === "SUSPENDED" || c.status === "EXPIRED") return true;
+  if (c.expiresAt && c.expiresAt < now) return true;
+  return false;
+}
+
+export function buildExtensionVerifyResult(
+  entities: EntityWithCerts[],
+  emailRaw: string,
+  domainRaw: string,
+  baseUrl: string,
+): ExtensionVerifyPayload {
+  const emailNorm = normalizeSenderEmail(emailRaw);
+  const domainNorm = normalizeSenderDomain(domainRaw);
+  const now = new Date();
+
+  if (!emailNorm && !domainNorm) {
+    return {
+      verified: false,
+      status: "UNKNOWN",
+      entityName: null,
+      trustScore: null,
+      badgeUrl: null,
+      certifiedDomains: [],
+      certifiedEmails: [],
+      message: "Paramètres email ou domaine requis.",
+    };
+  }
+
+  const matches = entities.filter((e) => entityMatchesSender(e, emailNorm, domainNorm));
+  if (matches.length === 0) {
+    return {
+      verified: false,
+      status: "UNKNOWN",
+      entityName: null,
+      trustScore: null,
+      badgeUrl: null,
+      certifiedDomains: [],
+      certifiedEmails: [],
+      message: "Aucun contact certifié ne correspond à cet expéditeur.",
+    };
+  }
+
+  const pick =
+    matches.find((e) => {
+      const c = pickBestCert(e.certificates);
+      return c && certIsFullyActive(c, now);
+    }) ??
+    matches.find((e) => e.certificates.some((c) => certIsFraudish(c, now))) ??
+    matches[0];
+
+  const bestCert = pickBestCert(pick.certificates);
+  const hasFraud = pick.certificates.some((c) => certIsFraudish(c, now));
+  const hasActive = bestCert != null && certIsFullyActive(bestCert, now);
+
+  const certifiedDomains = [...pick.certifiedDomains];
+  const certifiedEmails = [...pick.certifiedEmails];
+  const trustScore = pick.trustScore?.score ?? null;
+  const entityName = entityDisplayName(pick);
+  const slug = bestCert?.publicId ?? bestCert?.id ?? null;
+  const badgeUrl = slug ? `${baseUrl.replace(/\/$/, "")}/badge/${slug}` : null;
+
+  if (hasActive) {
+    return {
+      verified: true,
+      status: "CERTIFIED",
+      entityName,
+      trustScore,
+      badgeUrl,
+      certifiedDomains,
+      certifiedEmails,
+      message: "Ce contact possède un badge BLOCKTRUST actif.",
+    };
+  }
+
+  if (hasFraud || (bestCert && certIsFraudish(bestCert, now))) {
+    return {
+      verified: false,
+      status: "FRAUD",
+      entityName,
+      trustScore,
+      badgeUrl,
+      certifiedDomains,
+      certifiedEmails,
+      message: "Badge invalide, expiré ou révoqué pour ce contact.",
+    };
+  }
+
+  return {
+    verified: false,
+    status: "IN_CONTACTS",
+    entityName,
+    trustScore,
+    badgeUrl: null,
+    certifiedDomains,
+    certifiedEmails,
+    message: "Contact présent dans votre liste, sans badge actif.",
+  };
+}

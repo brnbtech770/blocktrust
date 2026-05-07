@@ -56,6 +56,12 @@ export const registerDayLimiter = makeLimiter(10, "1 d", "bt:register:d");
 // Magic link (Auth.js email) : 3 envois / h par identifiant (IP ou email)
 export const magicLinkHourLimiter = makeLimiter(3, "1 h", "bt:magiclink:h");
 
+// API extension Chrome TrustScan — par hash de clé (jamais la clé en clair dans les logs)
+export const extensionVerifyLimiter = makeLimiter(100, "1 m", "bt:extension:verify");
+export const extensionWriteLimiter = makeLimiter(30, "1 m", "bt:extension:write");
+export const extensionMeLimiter = makeLimiter(60, "1 m", "bt:extension:me");
+export const extensionKeygenLimiter = makeLimiter(10, "1 m", "bt:extension:keygen");
+
 export type RedisLimitResult = {
   success: boolean;
   remaining: number;
