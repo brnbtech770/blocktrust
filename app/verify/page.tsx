@@ -34,6 +34,9 @@ type VerifyApiSuccess = {
   certificateId?: string;
   jti?: string;
   error?: string;
+  walletAddress?: string;
+  walletNetwork?: string;
+  walletNetworkDisplay?: string;
 };
 
 function formatCertifiedDate(iso: string | undefined | null): string {
@@ -58,6 +61,8 @@ function VerifyContent() {
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [entityName, setEntityName] = useState<string | null>(null);
   const [certifiedAt, setCertifiedAt] = useState<string | null>(null);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [walletNetworkDisplay, setWalletNetworkDisplay] = useState<string | null>(null);
   const [manualIdInput, setManualIdInput] = useState("");
 
   const handleManualVerify = () => {
@@ -114,6 +119,8 @@ function VerifyContent() {
     setVerdict(null);
     setEntityName(null);
     setCertifiedAt(null);
+    setWalletAddress(null);
+    setWalletNetworkDisplay(null);
 
     const ac = new AbortController();
     let cancelled = false;
@@ -131,6 +138,14 @@ function VerifyContent() {
         setVerdict((data.verdict as Verdict) ?? "ERROR");
         setEntityName(data.entityName ?? null);
         setCertifiedAt(data.certifiedAt ?? null);
+        setWalletAddress(data.walletAddress?.trim() ? data.walletAddress : null);
+        setWalletNetworkDisplay(
+          data.walletNetworkDisplay?.trim()
+            ? data.walletNetworkDisplay
+            : data.walletNetwork?.trim()
+              ? data.walletNetwork
+              : null,
+        );
       } catch (e: unknown) {
         if (cancelled) return;
         if (e instanceof DOMException && e.name === "AbortError") return;
@@ -150,6 +165,8 @@ function VerifyContent() {
     setVerdict(null);
     setEntityName(null);
     setCertifiedAt(null);
+    setWalletAddress(null);
+    setWalletNetworkDisplay(null);
 
     const ac = new AbortController();
     let cancelled = false;
@@ -164,6 +181,14 @@ function VerifyContent() {
         setVerdict((data.verdict as Verdict) ?? "ERROR");
         setEntityName(data.entityName ?? null);
         setCertifiedAt(data.certifiedAt ?? null);
+        setWalletAddress(data.walletAddress?.trim() ? data.walletAddress : null);
+        setWalletNetworkDisplay(
+          data.walletNetworkDisplay?.trim()
+            ? data.walletNetworkDisplay
+            : data.walletNetwork?.trim()
+              ? data.walletNetwork
+              : null,
+        );
       } catch (e: unknown) {
         if (cancelled) return;
         if (e instanceof DOMException && e.name === "AbortError") return;
@@ -198,6 +223,8 @@ function VerifyContent() {
     setManualIdInput("");
     setEntityName(null);
     setCertifiedAt(null);
+    setWalletAddress(null);
+    setWalletNetworkDisplay(null);
     setToken("");
     setTokenFixApplied(false);
     router.replace("/verify");
@@ -314,6 +341,21 @@ function VerifyContent() {
               Certifié le {dateLabel}
               {" · "}Vérifié à l&apos;instant
             </p>
+
+            {walletAddress?.trim() ? (
+              <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 mt-2 text-left w-full">
+                <p className="text-[#00d4ff] text-xs uppercase tracking-widest mb-2">
+                  Wallet certifié
+                </p>
+                <p className="font-mono text-white/70 text-xs break-all">{walletAddress.trim()}</p>
+                <p className="text-white/30 text-xs mt-1">
+                  Réseau : {walletNetworkDisplay ?? "—"}
+                </p>
+                <p className="text-white/20 text-xs mt-1 italic">
+                  Cette adresse wallet est certifiée et liée à l&apos;identité vérifiée ci-dessus.
+                </p>
+              </div>
+            ) : null}
 
             <div className="h-px w-full bg-white/10" aria-hidden />
 

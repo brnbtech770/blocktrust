@@ -14,6 +14,7 @@ import {
   getValidationLevelAccentClass,
   getValidationLevelLabel,
 } from "@/lib/validationLevelDisplay";
+import { walletNetworkLabelFr } from "@/lib/wallet-validation";
 
 export default async function CertificateDetailPage({
   params,
@@ -222,6 +223,15 @@ export default async function CertificateDetailPage({
                     <p className="text-white">{entity.description}</p>
                   </div>
                 )}
+                {entity.walletAddress?.trim() && entity.walletNetwork?.trim() ? (
+                  <div>
+                    <span className="text-gray-400 text-sm">Wallet certifié :</span>
+                    <p className="break-all font-mono text-sm text-bt-cyan">{entity.walletAddress.trim()}</p>
+                    <p className="mt-1 text-xs text-white/45">
+                      Réseau : {walletNetworkLabelFr(entity.walletNetwork.trim())}
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </div>
 

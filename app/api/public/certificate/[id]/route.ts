@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
 import { hashIp } from "@/app/lib/auth";
 import { checkRateLimitVerifyAsync } from "@/lib/rate-limit-verify";
+import { walletNetworkLabelFr } from "@/lib/wallet-validation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -204,11 +205,25 @@ export async function GET(
     })
     .catch(() => {});
 
+  const walletAddressTrim = entity.walletAddress?.trim() ?? "";
+  const walletNetworkTrim = entity.walletNetwork?.trim() ?? "";
+  const showWalletPublic =
+    verdict === "VALID" &&
+    walletAddressTrim.length > 0 &&
+    walletNetworkTrim.length > 0;
+
   return NextResponse.json({
     verdict,
     entityName,
     certifiedAt,
     certificateId: certificatePublicId,
     certificateStatus: status,
+    ...(showWalletPublic
+      ? {
+          walletAddress: walletAddressTrim,
+          walletNetworkDisplay: walletNetworkLabelFr(walletNetworkTrim),
+          walletNetwork: walletNetworkTrim,
+        }
+      : {}),
   });
 }

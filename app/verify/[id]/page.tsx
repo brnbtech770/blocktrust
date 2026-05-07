@@ -29,6 +29,7 @@ import {
   persistUserTrustScore,
 } from '@/lib/trustscore'
 import { timingSafeEqualUtf8 } from '@/lib/qr-dynamic-token'
+import { walletNetworkLabelFr } from '@/lib/wallet-validation'
 
 export const dynamic = 'force-dynamic'
 
@@ -832,6 +833,16 @@ function ValidView({
               <p className="mb-1 text-xs uppercase tracking-wider text-white/50">Contact officiel</p>
               <p className="break-all font-mono text-sm text-gold">{entity.email}</p>
             </div>
+
+            {entity.walletAddress?.trim() && entity.walletNetwork?.trim() ? (
+              <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+                <p className="mb-1 text-xs uppercase tracking-widest text-[#00d4ff]">Wallet certifié</p>
+                <p className="break-all font-mono text-xs text-white/70">{entity.walletAddress.trim()}</p>
+                <p className="mt-1 text-xs text-white/35">
+                  Réseau : {walletNetworkLabelFr(entity.walletNetwork.trim())}
+                </p>
+              </div>
+            ) : null}
 
             <div>
               <p className="mb-1 text-xs uppercase tracking-wider text-white/50">Vérifications (30 derniers jours)</p>

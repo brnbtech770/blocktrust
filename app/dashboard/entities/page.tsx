@@ -5,6 +5,7 @@
 import { prisma } from "@/app/lib/db";
 import { auth } from "@/app/lib/auth-server";
 import Link from "next/link";
+import { walletNetworkLabelFr } from "@/lib/wallet-validation";
 
 export default async function EntitiesPage() {
   const session = await auth();
@@ -100,6 +101,16 @@ export default async function EntitiesPage() {
                     </code>
                   </div>
                 )}
+
+                {entity.walletAddress?.trim() && entity.walletNetwork?.trim() ? (
+                  <div className="mb-4">
+                    <p className="text-gray-400 text-base mb-1 font-medium">Wallet</p>
+                    <p className="break-all font-mono text-sm text-bt-cyan/90">{entity.walletAddress.trim()}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {walletNetworkLabelFr(entity.walletNetwork.trim())}
+                    </p>
+                  </div>
+                ) : null}
 
                 <div className="mb-4">
                   <p className="text-gray-400 text-base font-medium mb-1">Identité vérifiée</p>
