@@ -30,6 +30,9 @@ import {
 } from '@/lib/trustscore'
 import { timingSafeEqualUtf8 } from '@/lib/qr-dynamic-token'
 import { walletNetworkLabelFr } from '@/lib/wallet-validation'
+import {
+  trustedCircleShouldWarnUncertifiedDomainContext,
+} from '@/lib/certified-contact'
 
 export const dynamic = 'force-dynamic'
 
@@ -479,6 +482,15 @@ export default async function VerifyPublicPage({
     },
   })
 
+  const trustedCircleUncertDomainWarn =
+    trustUi === 'in_network' &&
+    trustedCircleShouldWarnUncertifiedDomainContext({
+      certifiedDomains: entity.certifiedDomains ?? [],
+      forwardedHost: headersList.get('x-forwarded-host'),
+      host: headersList.get('host'),
+      referer,
+    })
+
   return (
     <ValidView
       entity={entity}
@@ -488,6 +500,7 @@ export default async function VerifyPublicPage({
       quotaFooter={quotaFooter}
       trustCircleCas1Banner={trustUi === 'cas1'}
       trustCircleInNetworkBadge={trustUi === 'in_network'}
+      trustedCircleUncertDomainWarn={trustedCircleUncertDomainWarn}
     />
   )
 }
@@ -730,6 +743,7 @@ function ValidView({
   quotaFooter,
   trustCircleCas1Banner = false,
   trustCircleInNetworkBadge = false,
+  trustedCircleUncertDomainWarn = false,
 }: {
   entity: Prisma.EntityGetPayload<{ include: { user: { select: { trustScore: true } } } }>
   certificate: {
@@ -750,6 +764,7 @@ function ValidView({
   quotaFooter?: { remaining: number; limit: number } | null
   trustCircleCas1Banner?: boolean
   trustCircleInNetworkBadge?: boolean
+  trustedCircleUncertDomainWarn?: boolean
 }) {
   const name = entityDisplayName(entity)
   const level = certificate.level
@@ -796,6 +811,18 @@ function ValidView({
             <div className="mb-4 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-2">
               <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-400" strokeWidth={2} aria-hidden />
               <span className="text-xs text-emerald-400">Dans votre réseau de confiance certifié</span>
+            </div>
+          ) : null}
+
+          {trustedCircleUncertDomainWarn ? (
+            <div
+              role="alert"
+              className="mb-4 flex items-start gap-2 rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2.5 text-left"
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" strokeWidth={2} aria-hidden />
+              <p className="text-xs leading-relaxed text-amber-100/95">
+                Vous consultez ce badge depuis un domaine non certifié pour ce contact.
+              </p>
             </div>
           ) : null}
 

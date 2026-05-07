@@ -2,7 +2,16 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { Clock, RotateCcw, Search, ShieldAlert, ShieldOff } from "lucide-react";
+import {
+  Clock,
+  Globe,
+  Mail,
+  Phone,
+  RotateCcw,
+  Search,
+  ShieldAlert,
+  ShieldOff,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Logo } from "@/app/components/ui/Logo";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
@@ -37,6 +46,9 @@ type VerifyApiSuccess = {
   walletAddress?: string;
   walletNetwork?: string;
   walletNetworkDisplay?: string;
+  certifiedDomains?: string[];
+  certifiedEmails?: string[];
+  certifiedPhones?: string[];
 };
 
 function formatCertifiedDate(iso: string | undefined | null): string {
@@ -63,6 +75,9 @@ function VerifyContent() {
   const [certifiedAt, setCertifiedAt] = useState<string | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [walletNetworkDisplay, setWalletNetworkDisplay] = useState<string | null>(null);
+  const [certifiedDomains, setCertifiedDomains] = useState<string[]>([]);
+  const [certifiedEmails, setCertifiedEmails] = useState<string[]>([]);
+  const [certifiedPhones, setCertifiedPhones] = useState<string[]>([]);
   const [manualIdInput, setManualIdInput] = useState("");
 
   const handleManualVerify = () => {
@@ -121,6 +136,9 @@ function VerifyContent() {
     setCertifiedAt(null);
     setWalletAddress(null);
     setWalletNetworkDisplay(null);
+    setCertifiedDomains([]);
+    setCertifiedEmails([]);
+    setCertifiedPhones([]);
 
     const ac = new AbortController();
     let cancelled = false;
@@ -146,6 +164,15 @@ function VerifyContent() {
               ? data.walletNetwork
               : null,
         );
+        setCertifiedDomains(
+          Array.isArray(data.certifiedDomains) ? data.certifiedDomains : [],
+        );
+        setCertifiedEmails(
+          Array.isArray(data.certifiedEmails) ? data.certifiedEmails : [],
+        );
+        setCertifiedPhones(
+          Array.isArray(data.certifiedPhones) ? data.certifiedPhones : [],
+        );
       } catch (e: unknown) {
         if (cancelled) return;
         if (e instanceof DOMException && e.name === "AbortError") return;
@@ -167,6 +194,9 @@ function VerifyContent() {
     setCertifiedAt(null);
     setWalletAddress(null);
     setWalletNetworkDisplay(null);
+    setCertifiedDomains([]);
+    setCertifiedEmails([]);
+    setCertifiedPhones([]);
 
     const ac = new AbortController();
     let cancelled = false;
@@ -188,6 +218,15 @@ function VerifyContent() {
             : data.walletNetwork?.trim()
               ? data.walletNetwork
               : null,
+        );
+        setCertifiedDomains(
+          Array.isArray(data.certifiedDomains) ? data.certifiedDomains : [],
+        );
+        setCertifiedEmails(
+          Array.isArray(data.certifiedEmails) ? data.certifiedEmails : [],
+        );
+        setCertifiedPhones(
+          Array.isArray(data.certifiedPhones) ? data.certifiedPhones : [],
         );
       } catch (e: unknown) {
         if (cancelled) return;
@@ -225,6 +264,9 @@ function VerifyContent() {
     setCertifiedAt(null);
     setWalletAddress(null);
     setWalletNetworkDisplay(null);
+    setCertifiedDomains([]);
+    setCertifiedEmails([]);
+    setCertifiedPhones([]);
     setToken("");
     setTokenFixApplied(false);
     router.replace("/verify");
@@ -353,6 +395,66 @@ function VerifyContent() {
                 </p>
                 <p className="text-white/20 text-xs mt-1 italic">
                   Cette adresse wallet est certifiée et liée à l&apos;identité vérifiée ci-dessus.
+                </p>
+              </div>
+            ) : null}
+
+            {(certifiedDomains.length > 0 ||
+              certifiedEmails.length > 0 ||
+              certifiedPhones.length > 0) ? (
+              <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 mt-4 text-left w-full">
+                <p className="text-[#00d4ff] text-xs uppercase tracking-widest mb-3">
+                  Points de contact certifiés
+                </p>
+
+                {certifiedDomains.length > 0 ? (
+                  <div className="mb-3">
+                    <p className="text-white/40 text-xs mb-1">Domaines officiels</p>
+                    {certifiedDomains.map((d) => (
+                      <p
+                        key={d}
+                        className="flex items-center gap-2 font-mono text-white/70 text-xs"
+                      >
+                        <Globe className="size-3 shrink-0 text-cyan-400/90" aria-hidden />
+                        {d}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
+
+                {certifiedEmails.length > 0 ? (
+                  <div className="mb-3">
+                    <p className="text-white/40 text-xs mb-1">Emails officiels</p>
+                    {certifiedEmails.map((e) => (
+                      <p
+                        key={e}
+                        className="flex items-center gap-2 font-mono text-white/70 text-xs break-all"
+                      >
+                        <Mail className="size-3 shrink-0 text-cyan-400/90" aria-hidden />
+                        {e}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
+
+                {certifiedPhones.length > 0 ? (
+                  <div className="mb-3">
+                    <p className="text-white/40 text-xs mb-1">Téléphones officiels</p>
+                    {certifiedPhones.map((p) => (
+                      <p
+                        key={p}
+                        className="flex items-center gap-2 font-mono text-white/70 text-xs"
+                      >
+                        <Phone className="size-3 shrink-0 text-cyan-400/90" aria-hidden />
+                        {p}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
+
+                <p className="text-white/20 text-xs mt-3 italic">
+                  Ces informations sont certifiées et liées à l&apos;identité vérifiée ci-dessus.
+                  Tout contact utilisant d&apos;autres coordonnées doit être considéré comme suspect.
                 </p>
               </div>
             ) : null}

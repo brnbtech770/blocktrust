@@ -212,6 +212,15 @@ export async function GET(
     walletAddressTrim.length > 0 &&
     walletNetworkTrim.length > 0;
 
+  const certifiedDomains = entity.certifiedDomains ?? [];
+  const certifiedEmails = entity.certifiedEmails ?? [];
+  const certifiedPhones = entity.certifiedPhones ?? [];
+  const showCertifiedContacts =
+    verdict === "VALID" &&
+    (certifiedDomains.length > 0 ||
+      certifiedEmails.length > 0 ||
+      certifiedPhones.length > 0);
+
   return NextResponse.json({
     verdict,
     entityName,
@@ -223,6 +232,13 @@ export async function GET(
           walletAddress: walletAddressTrim,
           walletNetworkDisplay: walletNetworkLabelFr(walletNetworkTrim),
           walletNetwork: walletNetworkTrim,
+        }
+      : {}),
+    ...(showCertifiedContacts
+      ? {
+          certifiedDomains,
+          certifiedEmails,
+          certifiedPhones,
         }
       : {}),
   });
