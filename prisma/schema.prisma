@@ -125,6 +125,11 @@ model User {
 
   // White Label / API
   whiteLabelConfig WhiteLabelConfig?
+
+  /// Clé API extension Chrome (TrustScan) — jamais la valeur secrète complète : hash SHA-256 uniquement.
+  extensionApiKeyHash String? @unique
+  /// Indice affichage tableau de bord (ex. suffixe non secret), optionnel.
+  extensionApiKey     String? @unique
 }
 
 enum AccountType {
