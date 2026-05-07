@@ -348,6 +348,11 @@ model Entity {
   /// ex. ethereum | polygon | bitcoin | solana | autre
   walletNetwork String?
 
+  /// Domaines officiels certifiés (anti-miroir / typosquatting)
+  certifiedDomains String[] @default([])
+  certifiedEmails  String[] @default([])
+  certifiedPhones  String[] @default([])
+
   // Vérification
   kycStatus       KycStatus       @default(PENDING)
   validationLevel ValidationLevel @default(BRONZE)
