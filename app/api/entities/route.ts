@@ -7,10 +7,16 @@ import { auth } from '@/app/lib/auth-server';
 import { prisma } from '@/app/lib/db';
 import { z } from 'zod';
 import { checkEntityQuota } from '@/lib/checkQuota';
+import { validateWalletPair } from '@/lib/wallet-validation';
 
 // ─────────────────────────────────────────────
 // Schémas de validation
 // ─────────────────────────────────────────────
+const walletFields = {
+  walletAddress: z.string().max(200).optional().nullable(),
+  walletNetwork: z.string().max(32).optional().nullable(),
+};
+
 const individualSchema = z.object({
   entityType: z.literal('INDIVIDUAL'),
   firstName: z.string().min(1).max(100),
@@ -19,6 +25,7 @@ const individualSchema = z.object({
   phone: z.string().optional().nullable(),
   website: z.string().max(500).optional().nullable().or(z.literal('')),
   description: z.string().max(1000).optional().nullable(),
+  ...walletFields,
 });
 
 const businessSchema = z.object({
@@ -30,6 +37,7 @@ const businessSchema = z.object({
   phone: z.string().optional().nullable(),
   website: z.string().url(), // Requis pour BUSINESS
   description: z.string().max(1000).optional().nullable(),
+  ...walletFields,
 });
 
 const createEntitySchema = z.discriminatedUnion('entityType', [
@@ -92,6 +100,14 @@ export async function POST(req: NextRequest) {
 
     const data = parsed.data;
 
+    const walletCheck = validateWalletPair(data.walletAddress, data.walletNetwork);
+    if (!walletCheck.ok) {
+      return NextResponse.json({ error: walletCheck.message }, { status: 400 });
+    }
+
+    const walletAddressNorm = (data.walletAddress ?? '').trim() || null;
+    const walletNetworkNorm = (data.walletNetwork ?? '').trim().toLowerCase() || null;
+
     // Vérifier le quota selon le plan
     const quotaCheck = await checkEntityQuota(user.id);
     if (!quotaCheck.allowed) {
@@ -145,6 +161,8 @@ export async function POST(req: NextRequest) {
         phone: data.phone || null,
         website: website,
         description: data.description || null,
+        walletAddress: walletAddressNorm,
+        walletNetwork: walletNetworkNorm,
         kycStatus: 'PENDING',
         validationLevel: 'BRONZE',
       };
@@ -195,6 +213,8 @@ export async function POST(req: NextRequest) {
         phone: data.phone || null,
         website: website,
         description: data.description || null,
+        walletAddress: walletAddressNorm,
+        walletNetwork: walletNetworkNorm,
         kycStatus: 'PENDING',
         validationLevel: 'BRONZE',
       };

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
 import Link from "next/link";
 import { UpgradePrompt } from "@/app/components/ui/UpgradePrompt";
 import { buildUpgradePromptProps } from "@/lib/upgradePromptProps";
+import { validateWalletPair } from "@/lib/wallet-validation";
 
 type EntityType = "INDIVIDUAL" | "BUSINESS";
 
@@ -41,8 +42,17 @@ function normalizeSiretInput(raw: string): string {
 
 export default function CreateCertificate() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editIdParam = searchParams.get("edit")?.trim() || null;
+
   const [step, setStep] = useState<1 | 2>(1);
   const [entityType, setEntityType] = useState<EntityType>("BUSINESS");
+  const [editEntityId, setEditEntityId] = useState<string | null>(null);
+  const [editLoadError, setEditLoadError] = useState("");
+  const [loadingEdit, setLoadingEdit] = useState(false);
+
+  const [walletAddress, setWalletAddress] = useState("");
+  const [walletNetwork, setWalletNetwork] = useState("");
   
   // Formulaire B2C (Particulier)
   const [individualData, setIndividualData] = useState<Partial<IndividualData>>({
@@ -74,6 +84,65 @@ export default function CreateCertificate() {
     plan: string;
     max: number;
   } | null>(null);
+
+  useEffect(() => {
+    if (!editIdParam) {
+      setEditEntityId(null);
+      setLoadingEdit(false);
+      setEditLoadError("");
+      return;
+    }
+    let cancelled = false;
+    setLoadingEdit(true);
+    setEditLoadError("");
+    void (async () => {
+      try {
+        const r = await fetch(`/api/entities/${encodeURIComponent(editIdParam)}`, {
+          credentials: "include",
+        });
+        const data = await r.json();
+        if (cancelled) return;
+        if (!r.ok) {
+          setEditLoadError(typeof data?.error === "string" ? data.error : "Chargement impossible");
+          setLoadingEdit(false);
+          return;
+        }
+        const et = data.entityType as EntityType;
+        setEntityType(et);
+        setEditEntityId(data.id as string);
+        setWalletAddress((data.walletAddress as string | null) ?? "");
+        setWalletNetwork((data.walletNetwork as string | null) ?? "");
+        if (et === "INDIVIDUAL") {
+          setIndividualData({
+            firstName: data.firstName ?? "",
+            lastName: data.lastName ?? "",
+            email: data.email ?? "",
+            phone: data.phone ?? "",
+            website: data.website ?? "",
+            description: data.description ?? "",
+          });
+        } else {
+          setBusinessData({
+            legalName: data.legalName ?? "",
+            tradeName: data.tradeName ?? "",
+            siret: data.siret ?? "",
+            email: data.email ?? "",
+            phone: data.phone ?? "",
+            website: data.website ?? "",
+            description: data.description ?? "",
+          });
+        }
+        setStep(1);
+      } catch {
+        if (!cancelled) setEditLoadError("Erreur réseau lors du chargement du contact.");
+      } finally {
+        if (!cancelled) setLoadingEdit(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [editIdParam]);
 
   useEffect(() => {
     if (step !== 2) return;
@@ -119,6 +188,11 @@ export default function CreateCertificate() {
   // Validation de l'étape 1
   const validateStep1 = (): boolean => {
     setError("");
+    const walletCheck = validateWalletPair(walletAddress, walletNetwork);
+    if (!walletCheck.ok) {
+      setError(walletCheck.message);
+      return false;
+    }
     try {
       if (entityType === "INDIVIDUAL") {
         individualSchema.parse({
@@ -176,6 +250,8 @@ export default function CreateCertificate() {
           phone: individualData.phone || null,
           website: individualData.website || null,
           description: individualData.description || null,
+          walletAddress: walletAddress.trim() || null,
+          walletNetwork: walletNetwork.trim() || null,
         };
       } else {
         // Nettoyer le SIRET
@@ -191,6 +267,8 @@ export default function CreateCertificate() {
           phone: businessData.phone || null,
           website: websiteNormalized,
           description: businessData.description || null,
+          walletAddress: walletAddress.trim() || null,
+          walletNetwork: walletNetwork.trim() || null,
         };
       }
 
@@ -244,6 +322,58 @@ export default function CreateCertificate() {
     }
   };
 
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editEntityId || !validateStep1()) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const websiteInd = normalizeWebsite(individualData.website);
+      const websiteBus = normalizeWebsite(businessData.website);
+
+      const body =
+        entityType === "INDIVIDUAL"
+          ? {
+              walletAddress: walletAddress.trim() || null,
+              walletNetwork: walletNetwork.trim() || null,
+              phone: individualData.phone?.trim() || null,
+              website: websiteInd,
+              description: individualData.description?.trim() || null,
+              firstName: individualData.firstName?.trim(),
+              lastName: individualData.lastName?.trim(),
+            }
+          : {
+              walletAddress: walletAddress.trim() || null,
+              walletNetwork: walletNetwork.trim() || null,
+              phone: businessData.phone?.trim() || null,
+              website: websiteBus,
+              description: businessData.description?.trim() || null,
+              legalName: businessData.legalName?.trim(),
+              tradeName: businessData.tradeName?.trim() || null,
+            };
+
+      const res = await fetch(`/api/entities/${encodeURIComponent(editEntityId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+
+      const out = await res.json();
+      if (!res.ok) {
+        throw new Error(typeof out.error === "string" ? out.error : "Mise à jour impossible");
+      }
+
+      router.push("/dashboard/entities");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Retour à l'étape 1
   const handleBack = () => {
     setStep(1);
@@ -252,6 +382,10 @@ export default function CreateCertificate() {
 
   // Données pour le récapitulatif
   const getSummaryData = () => {
+    const walletSummary =
+      walletAddress.trim() && walletNetwork.trim()
+        ? `${walletAddress.trim()} · ${walletNetwork}`
+        : "Non renseigné";
     if (entityType === "INDIVIDUAL") {
       return {
         type: "Particulier",
@@ -260,6 +394,7 @@ export default function CreateCertificate() {
         phone: individualData.phone || "Non renseigné",
         website: individualData.website || "Non renseigné",
         description: individualData.description || "Non renseigné",
+        wallet: walletSummary,
       };
     } else {
       return {
@@ -271,6 +406,7 @@ export default function CreateCertificate() {
         phone: businessData.phone || "Non renseigné",
         website: businessData.website || "Non renseigné",
         description: businessData.description || "Non renseigné",
+        wallet: walletSummary,
       };
     }
   };
@@ -289,14 +425,17 @@ export default function CreateCertificate() {
 
         <div className="mb-8">
           <h1 className="font-syne text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl mb-2">
-            Créer un certificat
+            {editIdParam ? "Modifier un contact" : "Créer un certificat"}
           </h1>
           <p className="mb-6 font-sans text-base leading-relaxed text-white/80">
-            Remplissez les informations de votre contact
+            {editIdParam
+              ? "Mettez à jour les informations de ce contact."
+              : "Remplissez les informations de votre contact"}
           </p>
           
           {/* Indicateur d'étapes */}
-          <div className="mb-8 flex items-center gap-2 sm:gap-4">
+          {!editIdParam ? (
+            <div className="mb-8 flex items-center gap-2 sm:gap-4">
             <div className={`flex items-center gap-2 ${step >= 1 ? "text-bt-cyan" : "text-white/40"}`}>
               <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                 step >= 1 ? "bg-bt-cyan text-navy" : "bg-white/10 text-white/50"
@@ -314,17 +453,121 @@ export default function CreateCertificate() {
               </div>
               <span className="hidden font-medium sm:inline">Récapitulatif</span>
             </div>
-          </div>
+            </div>
+          ) : null}
         </div>
 
-        {error && (
+        {(error || editLoadError) && (
           <div className="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-lg mb-6">
-            ❌ {error}
+            ❌ {error || editLoadError}
           </div>
         )}
 
-        {step === 1 ? (
-          <form onSubmit={handleContinue} className="space-y-6">
+        {loadingEdit && editIdParam ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-20">
+            <div
+              className="h-12 w-12 animate-spin rounded-full border-2 border-bt-cyan/30 border-t-bt-cyan"
+              aria-hidden
+            />
+            <p className="text-sm text-white/50">Chargement du contact…</p>
+          </div>
+        ) : step === 2 && !editIdParam ? (
+          <div className="space-y-6">
+            {/* Récapitulatif */}
+            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
+              <h2 className="font-syne mb-6 text-xl font-semibold tracking-tight text-white sm:text-2xl">
+                Récapitulatif
+              </h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <span className="font-sans text-sm font-medium uppercase tracking-wider text-white/60">
+                    Type de contact :
+                  </span>
+                  <p className="font-sans font-semibold text-white">{summary.type}</p>
+                </div>
+
+                {entityType === "INDIVIDUAL" ? (
+                  <>
+                    <div>
+                      <span className="text-gray-400 text-sm font-medium">Nom complet :</span>
+                      <p className="text-white font-semibold">{summary.name}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <span className="text-gray-400 text-sm font-medium">Nom légal :</span>
+                      <p className="text-white font-semibold">{summary.legalName}</p>
+                    </div>
+                    {summary.tradeName !== "Non renseigné" && (
+                      <div>
+                        <span className="text-gray-400 text-sm font-medium">Nom commercial :</span>
+                        <p className="text-white font-semibold">{summary.tradeName}</p>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-gray-400 text-sm font-medium">SIRET :</span>
+                      <p className="text-white font-semibold">{summary.siret}</p>
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <span className="text-gray-400 text-sm font-medium">Email :</span>
+                  <p className="text-white font-semibold">{summary.email}</p>
+                </div>
+
+                <div>
+                  <span className="text-gray-400 text-sm font-medium">Téléphone :</span>
+                  <p className="text-white">{summary.phone}</p>
+                </div>
+
+                <div>
+                  <span className="text-gray-400 text-sm font-medium">Site web :</span>
+                  <p className="text-white">{summary.website}</p>
+                </div>
+
+                <div>
+                  <span className="text-gray-400 text-sm font-medium">Description :</span>
+                  <p className="text-white">{summary.description}</p>
+                </div>
+
+                <div>
+                  <span className="text-gray-400 text-sm font-medium">Wallet (optionnel) :</span>
+                  <p className="break-all font-mono text-xs text-white/85">{summary.wallet}</p>
+                </div>
+              </div>
+            </div>
+
+            {certQuota && !certQuota.allowed ? (
+              <UpgradePrompt
+                {...buildUpgradePromptProps(certQuota.plan, certQuota.max)}
+              />
+            ) : null}
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+              <button
+                type="button"
+                onClick={handleBack}
+                className="min-w-0 w-full rounded-lg border border-white/20 py-4 text-sm font-semibold text-white transition-all hover:border-white/40 sm:flex-1 sm:text-base"
+              >
+                ← Retour
+              </button>
+              {certQuota && !certQuota.allowed ? null : (
+                <button
+                  type="button"
+                  onClick={handleGenerateCertificate}
+                  disabled={loading || certQuota === null}
+                  className="min-w-0 w-full rounded-lg bg-bt-cyan py-4 text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 disabled:opacity-50 sm:flex-1 sm:text-base"
+                >
+                  {loading ? "⏳ Génération en cours..." : "🛡️ Générer mon certificat"}
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={editEntityId ? handleSaveEdit : handleContinue} className="space-y-6">
             {/* Sélecteur de type */}
             <div className="mb-8">
               <label className="block text-base font-semibold text-gray-300 mb-3">
@@ -333,8 +576,9 @@ export default function CreateCertificate() {
               <div className="flex gap-4">
                 <button
                   type="button"
+                  disabled={!!editEntityId}
                   onClick={() => setEntityType("INDIVIDUAL")}
-                  className={`min-w-0 flex-1 rounded-lg px-4 py-3 text-sm font-medium transition sm:px-6 sm:text-base ${
+                  className={`min-w-0 flex-1 rounded-lg px-4 py-3 text-sm font-medium transition sm:px-6 sm:text-base disabled:opacity-40 disabled:pointer-events-none ${
                     entityType === "INDIVIDUAL"
                       ? "bg-bt-cyan text-navy"
                       : "border border-white/20 bg-white/5 text-white/70 hover:border-white/40"
@@ -344,8 +588,9 @@ export default function CreateCertificate() {
                 </button>
                 <button
                   type="button"
+                  disabled={!!editEntityId}
                   onClick={() => setEntityType("BUSINESS")}
-                  className={`min-w-0 flex-1 rounded-lg px-4 py-3 text-sm font-medium transition sm:px-6 sm:text-base ${
+                  className={`min-w-0 flex-1 rounded-lg px-4 py-3 text-sm font-medium transition sm:px-6 sm:text-base disabled:opacity-40 disabled:pointer-events-none ${
                     entityType === "BUSINESS"
                       ? "bg-bt-cyan text-navy"
                       : "border border-white/20 bg-white/5 text-white/70 hover:border-white/40"
@@ -399,12 +644,18 @@ export default function CreateCertificate() {
                   <input
                     type="email"
                     required
+                    readOnly={!!editEntityId}
+                    aria-readonly={editEntityId ? true : undefined}
                     value={individualData.email || ""}
                     onChange={(e) =>
                       setIndividualData({ ...individualData, email: e.target.value })
                     }
                     placeholder="jean.dupont@email.com"
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
+                    className={`w-full rounded-lg border px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none ${
+                      editEntityId
+                        ? "cursor-not-allowed border-white/5 bg-white/[0.03] text-white/60"
+                        : "border-white/10 bg-white/5"
+                    }`}
                   />
                 </div>
 
@@ -496,14 +747,21 @@ export default function CreateCertificate() {
                     inputMode="numeric"
                     autoComplete="off"
                     required
+                    readOnly={!!editEntityId}
+                    disabled={!!editEntityId}
                     value={businessData.siret || ""}
                     onInput={(e) => {
+                      if (editEntityId) return;
                       const v = normalizeSiretInput(e.currentTarget.value);
                       setBusinessData({ ...businessData, siret: v });
                     }}
                     placeholder="12345678900014"
                     maxLength={14}
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
+                    className={`w-full rounded-lg border px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none ${
+                      editEntityId
+                        ? "cursor-not-allowed border-white/5 bg-white/[0.03] text-white/60"
+                        : "border-white/10 bg-white/5"
+                    }`}
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     14 chiffres uniquement — les espaces sont retirés automatiquement (ex. coller « 123 456 789 000 14 » devient 12345678900014).
@@ -517,12 +775,17 @@ export default function CreateCertificate() {
                   <input
                     type="email"
                     required
+                    readOnly={!!editEntityId}
                     value={businessData.email || ""}
                     onChange={(e) =>
                       setBusinessData({ ...businessData, email: e.target.value })
                     }
                     placeholder="contact@entreprise.fr"
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
+                    className={`w-full rounded-lg border px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none ${
+                      editEntityId
+                        ? "cursor-not-allowed border-white/5 bg-white/[0.03] text-white/60"
+                        : "border-white/10 bg-white/5"
+                    }`}
                   />
                 </div>
 
@@ -577,103 +840,54 @@ export default function CreateCertificate() {
               </>
             )}
 
+            {/* Wallet crypto optionnel */}
+            <div className="space-y-4 border-t border-white/10 pt-6">
+              <p className="text-xs uppercase tracking-widest text-white/45">
+                Wallet crypto (optionnel)
+              </p>
+              <div className="space-y-2">
+                <label className="text-xs font-medium uppercase tracking-widest text-white/60">
+                  Adresse wallet (optionnel)
+                </label>
+                <input
+                  type="text"
+                  placeholder="0x1234...ABCD ou bc1q..."
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 font-mono text-sm text-white placeholder:text-white/30 focus:border-[#00d4ff]/50 focus:outline-none"
+                  value={walletAddress}
+                  onChange={(e) => setWalletAddress(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium uppercase tracking-widest text-white/60">
+                  Réseau blockchain (optionnel)
+                </label>
+                <select
+                  className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white focus:border-[#00d4ff]/50 focus:outline-none"
+                  value={walletNetwork}
+                  onChange={(e) => setWalletNetwork(e.target.value)}
+                >
+                  <option value="">Sélectionner...</option>
+                  <option value="ethereum">Ethereum</option>
+                  <option value="polygon">Polygon</option>
+                  <option value="bitcoin">Bitcoin</option>
+                  <option value="solana">Solana</option>
+                  <option value="autre">Autre</option>
+                </select>
+              </div>
+            </div>
+
             <button
               type="submit"
               className="min-w-0 w-full rounded-lg bg-bt-cyan py-4 text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:text-base"
             >
-              Continuer →
+              {editEntityId
+                ? loading
+                  ? "⏳ Enregistrement…"
+                  : "Enregistrer les modifications"
+                : "Continuer →"}
             </button>
           </form>
-        ) : (
-          <div className="space-y-6">
-            {/* Récapitulatif */}
-            <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
-              <h2 className="font-syne mb-6 text-xl font-semibold tracking-tight text-white sm:text-2xl">
-                Récapitulatif
-              </h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <span className="font-sans text-sm font-medium uppercase tracking-wider text-white/60">
-                    Type de contact :
-                  </span>
-                  <p className="font-sans font-semibold text-white">{summary.type}</p>
-                </div>
-
-                {entityType === "INDIVIDUAL" ? (
-                  <>
-                    <div>
-                      <span className="text-gray-400 text-sm font-medium">Nom complet :</span>
-                      <p className="text-white font-semibold">{summary.name}</p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div>
-                      <span className="text-gray-400 text-sm font-medium">Nom légal :</span>
-                      <p className="text-white font-semibold">{summary.legalName}</p>
-                    </div>
-                    {summary.tradeName !== "Non renseigné" && (
-                      <div>
-                        <span className="text-gray-400 text-sm font-medium">Nom commercial :</span>
-                        <p className="text-white font-semibold">{summary.tradeName}</p>
-                      </div>
-                    )}
-                    <div>
-                      <span className="text-gray-400 text-sm font-medium">SIRET :</span>
-                      <p className="text-white font-semibold">{summary.siret}</p>
-                    </div>
-                  </>
-                )}
-
-                <div>
-                  <span className="text-gray-400 text-sm font-medium">Email :</span>
-                  <p className="text-white font-semibold">{summary.email}</p>
-                </div>
-
-                <div>
-                  <span className="text-gray-400 text-sm font-medium">Téléphone :</span>
-                  <p className="text-white">{summary.phone}</p>
-                </div>
-
-                <div>
-                  <span className="text-gray-400 text-sm font-medium">Site web :</span>
-                  <p className="text-white">{summary.website}</p>
-                </div>
-
-                <div>
-                  <span className="text-gray-400 text-sm font-medium">Description :</span>
-                  <p className="text-white">{summary.description}</p>
-                </div>
-              </div>
-            </div>
-
-            {certQuota && !certQuota.allowed ? (
-              <UpgradePrompt
-                {...buildUpgradePromptProps(certQuota.plan, certQuota.max)}
-              />
-            ) : null}
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-              <button
-                type="button"
-                onClick={handleBack}
-                className="min-w-0 w-full rounded-lg border border-white/20 py-4 text-sm font-semibold text-white transition-all hover:border-white/40 sm:flex-1 sm:text-base"
-              >
-                ← Retour
-              </button>
-              {certQuota && !certQuota.allowed ? null : (
-                <button
-                  type="button"
-                  onClick={handleGenerateCertificate}
-                  disabled={loading || certQuota === null}
-                  className="min-w-0 w-full rounded-lg bg-bt-cyan py-4 text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 disabled:opacity-50 sm:flex-1 sm:text-base"
-                >
-                  {loading ? "⏳ Génération en cours..." : "🛡️ Générer mon certificat"}
-                </button>
-              )}
-            </div>
-          </div>
         )}
       </div>
     </div>
