@@ -17,12 +17,26 @@ export default async function SettingsPage() {
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { email: true, name: true, image: true },
+    select: {
+      email: true,
+      name: true,
+      image: true,
+      extensionApiKeyHash: true,
+      extensionApiKey: true,
+    },
   })
 
   if (!user?.email) {
     redirect(`/auth/signin?callbackUrl=${encodeURIComponent('/dashboard/settings')}`)
   }
 
-  return <SettingsClient user={{ email: user.email, name: user.name, image: user.image }} />
+  return (
+    <SettingsClient
+      user={{ email: user.email, name: user.name, image: user.image }}
+      extensionKeyInitial={{
+        hasKey: Boolean(user.extensionApiKeyHash),
+        masked: user.extensionApiKey ?? null,
+      }}
+    />
+  )
 }
