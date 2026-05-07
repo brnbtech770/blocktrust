@@ -68,6 +68,7 @@ export async function GET(req: NextRequest) {
         PREMIUM: { maxEntities: 5, maxCertificates: 5, trustCircleEnabled: false, blockchainAnchor: false },
         FAMILLE: { maxEntities: 10, maxCertificates: 10, trustCircleEnabled: true, blockchainAnchor: false },
         "FAMILLE_PLUS": { maxEntities: 999999, maxCertificates: 999999, trustCircleEnabled: true, blockchainAnchor: true },
+        SOLO_PRO: { maxEntities: 100, maxCertificates: 100, trustCircleEnabled: true, blockchainAnchor: true },
         STARTER: { maxEntities: 10, maxCertificates: 10, trustCircleEnabled: false, blockchainAnchor: false },
         TEAM: { maxEntities: 50, maxCertificates: 50, trustCircleEnabled: true, blockchainAnchor: false },
         BUSINESS: { maxEntities: 999999, maxCertificates: 999999, trustCircleEnabled: true, blockchainAnchor: true },

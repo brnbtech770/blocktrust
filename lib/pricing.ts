@@ -20,11 +20,11 @@ export const PLANS_B2C = [
     highlighted: false,
     prices: {
       monthly: {
-        amount: 4.99,
+        amount: 3.99,
         priceId: process.env.STRIPE_PRICE_ESSENTIEL_MONTHLY!,
       },
       yearly: {
-        amount: 47.9,
+        amount: 38.3,
         priceId: process.env.STRIPE_PRICE_ESSENTIEL_YEARLY!,
         saving: "20%",
       },
@@ -32,14 +32,14 @@ export const PLANS_B2C = [
     features: [
       { label: "1 profil certifié", included: true },
       { label: "Jusqu'à 20 contacts", included: true },
-      { label: "10 vérifications / mois", included: true },
+      { label: "Vérifications illimitées*", included: true },
       { label: "Badge QR multi-support", included: true },
       { label: "Ancrage blockchain Polygon", included: true },
     ],
     accordionFeatures: [
       { name: "Profils certifiés", included: true, value: "1" },
       { name: "Contacts", included: true, value: "20" },
-      { name: "Vérifications / mois", included: true, value: "10" },
+      { name: "Vérifications illimitées*", included: true },
       { name: "Badge certifié", included: true },
       { name: "QR rotatif", included: true },
       { name: "Ancrage Polygon", included: true },
@@ -67,7 +67,7 @@ export const PLANS_B2C = [
     features: [
       { label: "1 profil certifié", included: true },
       { label: "Jusqu'à 100 contacts", included: true },
-      { label: "50 vérifications / mois", included: true },
+      { label: "Vérifications illimitées*", included: true },
       { label: "Badge QR multi-support", included: true },
       { label: "Ancrage blockchain Polygon", included: true },
       { label: "Trust Circle (50 contacts)", included: true },
@@ -75,7 +75,7 @@ export const PLANS_B2C = [
     accordionFeatures: [
       { name: "Profils certifiés", included: true, value: "1" },
       { name: "Contacts", included: true, value: "100" },
-      { name: "Vérifications / mois", included: true, value: "50" },
+      { name: "Vérifications illimitées*", included: true },
       { name: "Badge certifié", included: true },
       { name: "QR rotatif", included: true },
       { name: "Ancrage Polygon", included: true },
@@ -103,7 +103,7 @@ export const PLANS_B2C = [
     features: [
       { label: "5 profils indépendants", included: true },
       { label: "100 contacts partagés", included: true },
-      { label: "100 vérifications / mois", included: true },
+      { label: "Vérifications illimitées*", included: true },
       { label: "Badge QR multi-support", included: true },
       { label: "Ancrage blockchain Polygon", included: true },
       { label: "Trust Circle", included: true },
@@ -111,7 +111,7 @@ export const PLANS_B2C = [
     accordionFeatures: [
       { name: "Profils certifiés", included: true, value: "5" },
       { name: "Contacts", included: true, value: "100" },
-      { name: "Vérifications / mois", included: true, value: "100" },
+      { name: "Vérifications illimitées*", included: true },
       { name: "Badge certifié", included: true },
       { name: "QR rotatif", included: true },
       { name: "Ancrage Polygon", included: true },
@@ -139,7 +139,7 @@ export const PLANS_B2C = [
     features: [
       { label: "10 profils indépendants", included: true },
       { label: "300 contacts partagés", included: true },
-      { label: "300 vérifications / mois", included: true },
+      { label: "Vérifications illimitées*", included: true },
       { label: "Badge QR multi-support", included: true },
       { label: "Ancrage blockchain Polygon", included: true },
       { label: "Trust Circle (300 contacts)", included: true },
@@ -147,7 +147,7 @@ export const PLANS_B2C = [
     accordionFeatures: [
       { name: "Profils certifiés", included: true, value: "10" },
       { name: "Contacts", included: true, value: "300" },
-      { name: "Vérifications / mois", included: true, value: "300" },
+      { name: "Vérifications illimitées*", included: true },
       { name: "Badge certifié", included: true },
       { name: "QR rotatif", included: true },
       { name: "Ancrage Polygon", included: true },
@@ -159,24 +159,65 @@ export const PLANS_B2C = [
 
 export const PLANS_B2B = [
   {
-    id: "STARTER",
-    name: "Starter",
-    users: "1-3 utilisateurs",
+    id: "SOLO_PRO",
+    name: "Solo Pro",
+    users: "1 utilisateur",
+    planBadge: "Nouveau",
     highlighted: false,
     prices: {
       monthly: {
-        amount: 29,
+        amount: 9.99,
+        priceId: process.env.STRIPE_PRICE_SOLO_PRO_MONTHLY!,
+      },
+      yearly: {
+        amount: 95.9,
+        priceId: process.env.STRIPE_PRICE_SOLO_PRO_YEARLY!,
+        saving: "20%",
+      },
+    },
+    features: [
+      { label: "Badge certifié multi-support", included: true },
+      { label: "1 utilisateur", included: true },
+      { label: "100 contacts", included: true },
+      { label: "Facturation professionnelle HT", included: true },
+      { label: "Vérifications illimitées*", included: true },
+      { label: "Trust Circle", included: true },
+      { label: "Ancrage Polygon", included: true },
+    ],
+    accordionFeatures: [
+      { name: "1 utilisateur", included: true },
+      { name: "100 contacts", included: true },
+      { name: "Badge certifié BLOCKTRUST", included: true },
+      { name: "QR code rotatif anti-copie", included: true },
+      { name: "Ancrage blockchain Polygon", included: true },
+      { name: "Trust Circle", included: true },
+      { name: "Vérifications illimitées*", included: true },
+      { name: "Facturation HT (TVA déductible)", included: true },
+      { name: "White Label", included: false },
+      { name: "API publique", included: false },
+      { name: "Support prioritaire", included: false },
+    ],
+  },
+  {
+    id: "STARTER",
+    name: "Starter",
+    users: "2 à 5 utilisateurs",
+    highlighted: false,
+    prices: {
+      monthly: {
+        amount: 8.99,
         priceId: process.env.STRIPE_PRICE_STARTER_MONTHLY!,
       },
       yearly: {
-        amount: 278.4,
+        amount: 86.3,
         priceId: process.env.STRIPE_PRICE_STARTER_YEARLY!,
         saving: "20%",
       },
     },
     features: [
-      { label: "Jusqu'à 3 utilisateurs", included: true },
-      { label: "200 vérifications / mois", included: true },
+      { label: "2 à 5 utilisateurs", included: true },
+      { label: "100 contacts par utilisateur", included: true },
+      { label: "Vérifications illimitées*", included: true },
       { label: "Badge multi-support par poste", included: true },
       { label: "White Label", included: true },
       { label: "API publique", included: true },
@@ -184,8 +225,9 @@ export const PLANS_B2B = [
       { label: "Webhooks", included: true },
     ],
     accordionFeatures: [
-      { name: "Utilisateurs", included: true, value: "3" },
-      { name: "Vérifications / mois", included: true, value: "200" },
+      { name: "Utilisateurs", included: true, value: "2 à 5" },
+      { name: "Contacts par utilisateur", included: true, value: "100" },
+      { name: "Vérifications illimitées*", included: true },
       { name: "White Label", included: true },
       { name: "API publique", included: true },
       { name: "Trust Circle", included: true },
@@ -197,22 +239,23 @@ export const PLANS_B2B = [
   {
     id: "TEAM",
     name: "Team",
-    users: "4-10 utilisateurs",
+    users: "6 à 15 utilisateurs",
     highlighted: true,
     prices: {
       monthly: {
-        amount: 79,
+        amount: 7.99,
         priceId: process.env.STRIPE_PRICE_TEAM_MONTHLY!,
       },
       yearly: {
-        amount: 758.4,
+        amount: 76.7,
         priceId: process.env.STRIPE_PRICE_TEAM_YEARLY!,
         saving: "20%",
       },
     },
     features: [
-      { label: "Jusqu'à 10 utilisateurs", included: true },
-      { label: "500 vérifications / mois", included: true },
+      { label: "6 à 15 utilisateurs", included: true },
+      { label: "200 contacts par utilisateur", included: true },
+      { label: "Vérifications illimitées*", included: true },
       { label: "Badge multi-support par poste", included: true },
       { label: "White Label", included: true },
       { label: "API publique", included: true },
@@ -220,8 +263,9 @@ export const PLANS_B2B = [
       { label: "Webhooks", included: true },
     ],
     accordionFeatures: [
-      { name: "Utilisateurs", included: true, value: "10" },
-      { name: "Vérifications / mois", included: true, value: "500" },
+      { name: "Utilisateurs", included: true, value: "6 à 15" },
+      { name: "Contacts par utilisateur", included: true, value: "200" },
+      { name: "Vérifications illimitées*", included: true },
       { name: "White Label", included: true },
       { name: "API publique", included: true },
       { name: "Trust Circle", included: true },
@@ -233,22 +277,23 @@ export const PLANS_B2B = [
   {
     id: "BUSINESS",
     name: "Business",
-    users: "11-50 utilisateurs",
+    users: "16 à 50 utilisateurs",
     highlighted: false,
     prices: {
       monthly: {
-        amount: 199,
+        amount: 5.99,
         priceId: process.env.STRIPE_PRICE_BUSINESS_MONTHLY!,
       },
       yearly: {
-        amount: 1910.4,
+        amount: 57.5,
         priceId: process.env.STRIPE_PRICE_BUSINESS_YEARLY!,
         saving: "20%",
       },
     },
     features: [
-      { label: "Jusqu'à 50 utilisateurs", included: true },
-      { label: "Vérifications illimitées", included: true },
+      { label: "16 à 50 utilisateurs", included: true },
+      { label: "500 contacts par utilisateur", included: true },
+      { label: "Vérifications illimitées*", included: true },
       { label: "Badge multi-support par poste", included: true },
       { label: "White Label", included: true },
       { label: "API publique", included: true },
@@ -257,8 +302,9 @@ export const PLANS_B2B = [
       { label: "Support prioritaire", included: true },
     ],
     accordionFeatures: [
-      { name: "Utilisateurs", included: true, value: "50" },
-      { name: "Vérifications / mois", included: true, value: "Illimité" },
+      { name: "Utilisateurs", included: true, value: "16 à 50" },
+      { name: "Contacts par utilisateur", included: true, value: "500" },
+      { name: "Vérifications illimitées*", included: true },
       { name: "White Label", included: true },
       { name: "API publique", included: true },
       { name: "Trust Circle", included: true },
@@ -276,6 +322,7 @@ export const PLANS_B2B = [
     features: [
       { label: "Tarification sur devis", included: true },
       { label: "Tout inclus", included: true },
+      { label: "Vérifications illimitées*", included: true },
       { label: "SSO / SAML", included: true },
       { label: "Support dédié", included: true },
       { label: "SLA garanti", included: true },
@@ -283,6 +330,7 @@ export const PLANS_B2B = [
     accordionFeatures: [
       { name: "Tarification", included: true, value: "Sur devis" },
       { name: "Tout inclus", included: true },
+      { name: "Vérifications illimitées*", included: true },
       { name: "SSO / SAML", included: true },
       { name: "Support dédié", included: true },
       { name: "SLA garanti", included: true },

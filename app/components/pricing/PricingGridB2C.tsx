@@ -63,7 +63,7 @@ export default function PricingGridB2C({ plans, interval, currentPlan, isAuthent
         const amount = priceInfo?.amount ?? 0
         const priceId = priceInfo?.priceId ?? ''
         const pricePerProfile = plan.profiles > 0 ? amount / plan.profiles : amount
-        const priceUnit = interval === 'monthly' ? '/mois' : '/an'
+        const priceUnit = interval === 'monthly' ? '/mois TTC' : '/an TTC'
 
         return (
           <PlanCard

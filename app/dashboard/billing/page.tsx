@@ -126,6 +126,7 @@ export default function BillingPage() {
       PREMIUM: 'Premium',
       FAMILLE: 'Famille',
       'FAMILLE_PLUS': 'Famille+',
+      SOLO_PRO: 'Solo Pro',
       STARTER: 'Starter',
       TEAM: 'Team',
       BUSINESS: 'Business',

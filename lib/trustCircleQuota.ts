@@ -10,9 +10,10 @@ export const TRUST_CIRCLE_QUOTAS = {
   FAMILLE_PLUS: { poolTotal: 200,  perProfile: null },
 
   // B2B — quota par poste + pool entreprise
-  STARTER:      { poolTotal: 40,   perUser: 20  },
-  TEAM:         { poolTotal: 150,  perUser: 30  },
-  BUSINESS:     { poolTotal: 500,  perUser: 50  },
+  SOLO_PRO:     { poolTotal: 100,  perUser: 100 },
+  STARTER:      { poolTotal: 500,  perUser: 100 },
+  TEAM:         { poolTotal: 3000, perUser: 200 },
+  BUSINESS:     { poolTotal: 25000, perUser: 500 },
   ENTERPRISE:   { poolTotal: null, perUser: null },
 } as const
 
@@ -33,6 +34,7 @@ export function getQuotaForPlan(plan: string) {
     'PREMIUM':      TRUST_CIRCLE_QUOTAS.PREMIUM,
     'FAMILLE':      TRUST_CIRCLE_QUOTAS.FAMILLE,
     'FAMILLE_PLUS': TRUST_CIRCLE_QUOTAS.FAMILLE_PLUS,
+    'SOLO_PRO':     TRUST_CIRCLE_QUOTAS.SOLO_PRO,
     'STARTER':      TRUST_CIRCLE_QUOTAS.STARTER,
     'TEAM':         TRUST_CIRCLE_QUOTAS.TEAM,
     'BUSINESS':     TRUST_CIRCLE_QUOTAS.BUSINESS,
@@ -47,6 +49,7 @@ export function getUpgradePlan(plan: string): string | null {
     'PREMIUM':      'FAMILLE',
     'FAMILLE':      'FAMILLE_PLUS',
     'FAMILLE_PLUS': null,
+    'SOLO_PRO':     'STARTER',
     'STARTER':      'TEAM',
     'TEAM':         'BUSINESS',
     'BUSINESS':     'ENTERPRISE',
@@ -71,9 +74,9 @@ export function buildUpgradeMessage(
     'FAMILLE_FAMILLE_PLUS':
       `Pool familial presque plein (${current}/${limit}). Famille+ : 200 contacts dès 24,99€/mois.`,
     'STARTER_TEAM':
-      `Quota presque atteint (${current}/${limit}). Plan Team : 150 contacts + 30/poste dès 79€/mois.`,
+      `Quota presque atteint (${current}/${limit}). Passez à Team : pool élargi et 200 contacts par utilisateur.`,
     'TEAM_BUSINESS':
-      `Pool entreprise presque plein (${current}/${limit}). Business : 500 contacts dès 199€/mois.`,
+      `Pool entreprise presque plein (${current}/${limit}). Business : 500 contacts par utilisateur.`,
     'BUSINESS_ENTERPRISE':
       `Vous approchez la limite Business (${current}/${limit}). Contactez-nous pour Enterprise illimité.`,
   }

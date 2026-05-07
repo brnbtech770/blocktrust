@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "PlanType" ADD VALUE 'B2B_SOLO_PRO';

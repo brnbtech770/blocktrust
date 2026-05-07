@@ -63,6 +63,8 @@ function mapPriceIdToPlan(priceId: string): string {
     [process.env.STRIPE_PRICE_FAMILLE_PLUS_MONTHLY || '']: 'FAMILLE_PLUS',
     [process.env.STRIPE_PRICE_FAMILLE_PLUS_YEARLY || '']: 'FAMILLE_PLUS',
     // B2B
+    [process.env.STRIPE_PRICE_SOLO_PRO_MONTHLY || '']: 'SOLO_PRO',
+    [process.env.STRIPE_PRICE_SOLO_PRO_YEARLY || '']: 'SOLO_PRO',
     [process.env.STRIPE_PRICE_STARTER_MONTHLY || '']: 'STARTER',
     [process.env.STRIPE_PRICE_STARTER_YEARLY || '']: 'STARTER',
     [process.env.STRIPE_PRICE_TEAM_MONTHLY || '']: 'TEAM',

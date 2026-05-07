@@ -28,7 +28,7 @@ const FAQ = [
   },
   {
     q: 'Proposez-vous des offres pour les entreprises ?',
-    a: 'Oui, notre offre B2B démarre à 29€/mois. Contactez-nous à commercial@blocktrust.tech pour un devis personnalisé.',
+    a: 'Oui : Solo Pro à partir de 9,99€ HT/user/mois (1 poste), puis formules dégressives dès 8,99€ HT/user/mois (Starter, 2 à 5 utilisateurs). Contactez commercial@blocktrust.tech pour Enterprise.',
   },
 ]
 
@@ -212,6 +212,10 @@ export default function PricingPage() {
             onCheckout={handleCheckout}
           />
         )}
+        <p className="mx-auto mt-6 max-w-3xl px-4 text-center text-xs text-white/30 sm:px-6">
+          * Vérifications illimitées pendant la période de lancement (6 mois). Au-delà, des quotas généreux seront
+          appliqués selon votre plan.
+        </p>
       </section>
 
       {/* FAQ */}
@@ -253,7 +257,7 @@ export default function PricingPage() {
         }}
       >
         <p className="mb-4" style={{ color: 'var(--bt-text)' }}>
-          Vous êtes une entreprise ? Découvrez nos offres B2B à partir de 29€/mois
+          Vous êtes une entreprise ? Offres B2B dès 8,99€ HT/user/mois — Solo Pro dès 9,99€ HT (1 utilisateur).
         </p>
         <a
           href="mailto:commercial@blocktrust.tech"

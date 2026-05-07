@@ -22,6 +22,8 @@ export type PlanCardProps = {
   ctaOnClick?: () => void;
   ctaDisabled?: boolean;
   ctaLoading?: boolean;
+  /** Ligne sous le prix (ex. mentions HT/TVA). */
+  priceTaxNote?: string;
 };
 
 const ICONS = {
@@ -80,6 +82,7 @@ export default function PlanCard({
   ctaOnClick,
   ctaDisabled = false,
   ctaLoading = false,
+  priceTaxNote,
 }: PlanCardProps) {
   const [open, setOpen] = useState(false);
   const checkColor = mode === "B2B" ? "#00d4ff" : "var(--bt-gold)";
@@ -145,6 +148,10 @@ export default function PlanCard({
           <span className="font-syne text-2xl font-extrabold text-gold md:text-3xl">{price}</span>
         )}
       </div>
+
+      {priceTaxNote ? (
+        <p className="mb-2 text-center text-xs text-white/30">{priceTaxNote}</p>
+      ) : null}
 
       <div className="mb-4 flex flex-wrap gap-2">
         {badges.map((b, i) => (

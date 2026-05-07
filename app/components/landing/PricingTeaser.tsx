@@ -32,13 +32,14 @@ export default function PricingTeaser() {
             <User className="h-5 w-5 text-bt-cyan" />
           </div>
           <h3 className="font-syne text-base sm:text-lg font-semibold text-white">Particulier</h3>
-          <div className="mt-2 flex items-baseline gap-2">
+          <div className="mt-2 flex flex-wrap items-baseline gap-2">
             <span className="text-sm font-medium text-white/50">À partir de</span>
-            <span className="font-syne text-4xl font-bold text-white">4,99€</span>
-            <span className="text-sm text-white/60">/mois</span>
+            <span className="font-syne text-4xl font-bold text-white">3,99€</span>
+            <span className="text-sm text-white/60">TTC/mois</span>
           </div>
           <p className="mt-3 text-sm sm:text-base leading-relaxed text-white/70">
-            Badge certifié, QR code, signature email, page de vérification publique.
+            Vérifications illimitées* pendant la période de lancement. Badge certifié, QR code, signature email, page
+            de vérification publique.
           </p>
         </Reveal>
 
@@ -50,13 +51,13 @@ export default function PricingTeaser() {
             <Building2 className="h-5 w-5 text-gold" />
           </div>
           <h3 className="font-syne text-base sm:text-lg font-semibold text-white">Entreprise</h3>
-          <div className="mt-2 flex items-baseline gap-2">
+          <div className="mt-2 flex flex-wrap items-baseline gap-2">
             <span className="text-sm font-medium text-white/60">À partir de</span>
-            <span className="font-syne text-3xl font-bold text-white">29€</span>
-            <span className="text-sm text-white/60">/mois</span>
+            <span className="font-syne text-3xl font-bold text-white">8,99€</span>
+            <span className="text-sm text-white/60">HT/user/mois</span>
           </div>
           <p className="mt-1 text-xs text-white/50">
-            Starter · Team · Business · Enterprise sur devis
+            Solo Pro · Starter · Team · Business · Enterprise sur devis
           </p>
           <p className="mt-3 text-sm sm:text-base leading-relaxed text-white/70">
             API B2B, multi-comptes, vérification d&apos;identité avancée, intégrations dédiées.
@@ -72,7 +73,13 @@ export default function PricingTeaser() {
           Voir tous les plans
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Link>
-        <p className="text-white/30 text-xs text-center mt-3">
+        <p className="text-white/30 text-xs text-center mt-3 max-w-lg mx-auto leading-relaxed">
+          * Vérifications illimitées pendant la période de lancement (6 mois).{' '}
+          <Link href="/pricing" className="text-white/45 underline-offset-2 hover:text-bt-cyan">
+            Voir les tarifs
+          </Link>
+        </p>
+        <p className="text-white/30 text-xs text-center mt-2">
           Sans engagement · Résiliable à tout moment
         </p>
       </Reveal>
