@@ -8,6 +8,7 @@ import { prisma } from '@/app/lib/db';
 import { z } from 'zod';
 import { checkEntityQuota } from '@/lib/checkQuota';
 import { validateWalletPair } from '@/lib/wallet-validation';
+import { validateCertifiedContactArrays } from '@/lib/certified-contact';
 
 // ─────────────────────────────────────────────
 // Schémas de validation
@@ -15,6 +16,9 @@ import { validateWalletPair } from '@/lib/wallet-validation';
 const walletFields = {
   walletAddress: z.string().max(200).optional().nullable(),
   walletNetwork: z.string().max(32).optional().nullable(),
+  certifiedDomains: z.array(z.string()).max(10).optional(),
+  certifiedEmails: z.array(z.string()).max(10).optional(),
+  certifiedPhones: z.array(z.string()).max(10).optional(),
 };
 
 const individualSchema = z.object({
@@ -105,6 +109,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: walletCheck.message }, { status: 400 });
     }
 
+    const certified = validateCertifiedContactArrays({
+      certifiedDomains: data.certifiedDomains,
+      certifiedEmails: data.certifiedEmails,
+      certifiedPhones: data.certifiedPhones,
+    });
+    if (!certified.ok) {
+      return NextResponse.json(
+        { error: `${certified.error.field}: ${certified.error.reason}` },
+        { status: 400 },
+      );
+    }
+
     const walletAddressNorm = (data.walletAddress ?? '').trim() || null;
     const walletNetworkNorm = (data.walletNetwork ?? '').trim().toLowerCase() || null;
 
@@ -163,6 +179,9 @@ export async function POST(req: NextRequest) {
         description: data.description || null,
         walletAddress: walletAddressNorm,
         walletNetwork: walletNetworkNorm,
+        certifiedDomains: certified.value.domains,
+        certifiedEmails: certified.value.emails,
+        certifiedPhones: certified.value.phones,
         kycStatus: 'PENDING',
         validationLevel: 'BRONZE',
       };
@@ -215,6 +234,9 @@ export async function POST(req: NextRequest) {
         description: data.description || null,
         walletAddress: walletAddressNorm,
         walletNetwork: walletNetworkNorm,
+        certifiedDomains: certified.value.domains,
+        certifiedEmails: certified.value.emails,
+        certifiedPhones: certified.value.phones,
         kycStatus: 'PENDING',
         validationLevel: 'BRONZE',
       };

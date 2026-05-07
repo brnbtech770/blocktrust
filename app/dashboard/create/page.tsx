@@ -7,6 +7,11 @@ import Link from "next/link";
 import { UpgradePrompt } from "@/app/components/ui/UpgradePrompt";
 import { buildUpgradePromptProps } from "@/lib/upgradePromptProps";
 import { validateWalletPair } from "@/lib/wallet-validation";
+import {
+  CertifiedEmailsTagInput,
+  CertifiedPhonesTagInput,
+  DomainTagInput,
+} from "@/app/components/ui/TagInput";
 
 type EntityType = "INDIVIDUAL" | "BUSINESS";
 
@@ -53,7 +58,10 @@ export default function CreateCertificate() {
 
   const [walletAddress, setWalletAddress] = useState("");
   const [walletNetwork, setWalletNetwork] = useState("");
-  
+  const [certifiedDomains, setCertifiedDomains] = useState<string[]>([]);
+  const [certifiedEmails, setCertifiedEmails] = useState<string[]>([]);
+  const [certifiedPhones, setCertifiedPhones] = useState<string[]>([]);
+
   // Formulaire B2C (Particulier)
   const [individualData, setIndividualData] = useState<Partial<IndividualData>>({
     firstName: "",
@@ -112,6 +120,15 @@ export default function CreateCertificate() {
         setEditEntityId(data.id as string);
         setWalletAddress((data.walletAddress as string | null) ?? "");
         setWalletNetwork((data.walletNetwork as string | null) ?? "");
+        setCertifiedDomains(
+          Array.isArray(data.certifiedDomains) ? [...data.certifiedDomains] : [],
+        );
+        setCertifiedEmails(
+          Array.isArray(data.certifiedEmails) ? [...data.certifiedEmails] : [],
+        );
+        setCertifiedPhones(
+          Array.isArray(data.certifiedPhones) ? [...data.certifiedPhones] : [],
+        );
         if (et === "INDIVIDUAL") {
           setIndividualData({
             firstName: data.firstName ?? "",
@@ -252,6 +269,9 @@ export default function CreateCertificate() {
           description: individualData.description || null,
           walletAddress: walletAddress.trim() || null,
           walletNetwork: walletNetwork.trim() || null,
+          certifiedDomains,
+          certifiedEmails,
+          certifiedPhones,
         };
       } else {
         // Nettoyer le SIRET
@@ -269,6 +289,9 @@ export default function CreateCertificate() {
           description: businessData.description || null,
           walletAddress: walletAddress.trim() || null,
           walletNetwork: walletNetwork.trim() || null,
+          certifiedDomains,
+          certifiedEmails,
+          certifiedPhones,
         };
       }
 
@@ -343,6 +366,9 @@ export default function CreateCertificate() {
               description: individualData.description?.trim() || null,
               firstName: individualData.firstName?.trim(),
               lastName: individualData.lastName?.trim(),
+              certifiedDomains,
+              certifiedEmails,
+              certifiedPhones,
             }
           : {
               walletAddress: walletAddress.trim() || null,
@@ -352,6 +378,9 @@ export default function CreateCertificate() {
               description: businessData.description?.trim() || null,
               legalName: businessData.legalName?.trim(),
               tradeName: businessData.tradeName?.trim() || null,
+              certifiedDomains,
+              certifiedEmails,
+              certifiedPhones,
             };
 
       const res = await fetch(`/api/entities/${encodeURIComponent(editEntityId)}`, {
@@ -386,6 +415,8 @@ export default function CreateCertificate() {
       walletAddress.trim() && walletNetwork.trim()
         ? `${walletAddress.trim()} · ${walletNetwork}`
         : "Non renseigné";
+    const fmtList = (xs: string[]) =>
+      xs.length > 0 ? xs.join(", ") : "Non renseigné";
     if (entityType === "INDIVIDUAL") {
       return {
         type: "Particulier",
@@ -395,6 +426,9 @@ export default function CreateCertificate() {
         website: individualData.website || "Non renseigné",
         description: individualData.description || "Non renseigné",
         wallet: walletSummary,
+        certifiedDomains: fmtList(certifiedDomains),
+        certifiedEmails: fmtList(certifiedEmails),
+        certifiedPhones: fmtList(certifiedPhones),
       };
     } else {
       return {
@@ -407,6 +441,9 @@ export default function CreateCertificate() {
         website: businessData.website || "Non renseigné",
         description: businessData.description || "Non renseigné",
         wallet: walletSummary,
+        certifiedDomains: fmtList(certifiedDomains),
+        certifiedEmails: fmtList(certifiedEmails),
+        certifiedPhones: fmtList(certifiedPhones),
       };
     }
   };
@@ -536,6 +573,19 @@ export default function CreateCertificate() {
                 <div>
                   <span className="text-gray-400 text-sm font-medium">Wallet (optionnel) :</span>
                   <p className="break-all font-mono text-xs text-white/85">{summary.wallet}</p>
+                </div>
+
+                <div>
+                  <span className="text-gray-400 text-sm font-medium">Domaines certifiés :</span>
+                  <p className="break-all font-mono text-xs text-white/85">{summary.certifiedDomains}</p>
+                </div>
+                <div>
+                  <span className="text-gray-400 text-sm font-medium">Emails certifiés :</span>
+                  <p className="break-all font-mono text-xs text-white/85">{summary.certifiedEmails}</p>
+                </div>
+                <div>
+                  <span className="text-gray-400 text-sm font-medium">Téléphones certifiés :</span>
+                  <p className="break-all font-mono text-xs text-white/85">{summary.certifiedPhones}</p>
                 </div>
               </div>
             </div>
@@ -874,6 +924,46 @@ export default function CreateCertificate() {
                   <option value="solana">Solana</option>
                   <option value="autre">Autre</option>
                 </select>
+              </div>
+            </div>
+
+            <div className="space-y-6 border-t border-white/10 pt-6">
+              <p className="text-xs uppercase tracking-widest text-white/45">
+                Points de contact officiels
+              </p>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium uppercase tracking-widest text-white/60">
+                  Domaines officiels (optionnel)
+                </label>
+                <p className="text-xs text-white/30">
+                  Ajoutez vos domaines officiels pour protéger vos contacts contre les sites miroirs. Ex.&nbsp;: monentreprise.fr
+                </p>
+                <DomainTagInput
+                  values={certifiedDomains}
+                  onChange={setCertifiedDomains}
+                  placeholder="mondomaine.fr"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium uppercase tracking-widest text-white/60">
+                  Emails officiels (optionnel)
+                </label>
+                <CertifiedEmailsTagInput
+                  values={certifiedEmails}
+                  onChange={setCertifiedEmails}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium uppercase tracking-widest text-white/60">
+                  Numéros de téléphone officiels (optionnel)
+                </label>
+                <CertifiedPhonesTagInput
+                  values={certifiedPhones}
+                  onChange={setCertifiedPhones}
+                />
               </div>
             </div>
 

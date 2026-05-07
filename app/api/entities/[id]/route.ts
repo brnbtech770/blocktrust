@@ -7,6 +7,9 @@ import { prisma } from "@/app/lib/db";
 import { z } from "zod";
 import { validateWalletPair } from "@/lib/wallet-validation";
 import type { Prisma } from "@prisma/client";
+import {
+  validateCertifiedContactArraysPartial,
+} from "@/lib/certified-contact";
 
 const patchEntitySchema = z
   .object({
@@ -19,6 +22,9 @@ const patchEntitySchema = z
     lastName: z.string().max(100).optional().nullable(),
     legalName: z.string().max(255).optional().nullable(),
     tradeName: z.string().max(255).optional().nullable(),
+    certifiedDomains: z.array(z.string()).max(10).optional(),
+    certifiedEmails: z.array(z.string()).max(10).optional(),
+    certifiedPhones: z.array(z.string()).max(10).optional(),
   })
   .strict();
 
@@ -84,8 +90,33 @@ export async function PATCH(
   }
 
   const p = parsed.data;
-  if (Object.keys(p).length === 0) {
+  const rawBody = bodyJson as Record<string, unknown>;
+  const certPartial: Record<string, unknown> = {};
+  if ("certifiedDomains" in rawBody)
+    certPartial.certifiedDomains = rawBody.certifiedDomains;
+  if ("certifiedEmails" in rawBody)
+    certPartial.certifiedEmails = rawBody.certifiedEmails;
+  if ("certifiedPhones" in rawBody)
+    certPartial.certifiedPhones = rawBody.certifiedPhones;
+
+  if (Object.keys(p).length === 0 && Object.keys(certPartial).length === 0) {
     return NextResponse.json({ error: "Aucun champ à mettre à jour" }, { status: 400 });
+  }
+
+  let certifiedValue: Partial<{
+    domains: string[];
+    emails: string[];
+    phones: string[];
+  }> = {};
+  if (Object.keys(certPartial).length > 0) {
+    const cv = validateCertifiedContactArraysPartial(certPartial);
+    if (!cv.ok) {
+      return NextResponse.json(
+        { error: `${cv.error.field}: ${cv.error.reason}` },
+        { status: 400 },
+      );
+    }
+    certifiedValue = cv.value;
   }
 
   const nextAddr =
@@ -164,6 +195,16 @@ export async function PATCH(
       updateData.tradeName =
         p.tradeName === null ? null : p.tradeName.trim() || null;
     }
+  }
+
+  if (certifiedValue.domains !== undefined) {
+    updateData.certifiedDomains = certifiedValue.domains;
+  }
+  if (certifiedValue.emails !== undefined) {
+    updateData.certifiedEmails = certifiedValue.emails;
+  }
+  if (certifiedValue.phones !== undefined) {
+    updateData.certifiedPhones = certifiedValue.phones;
   }
 
   if (Object.keys(updateData).length === 0) {
