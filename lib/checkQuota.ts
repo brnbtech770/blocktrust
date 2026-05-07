@@ -29,7 +29,9 @@ export async function checkEntityQuota(userId: string): Promise<QuotaCheckResult
 
   // Déterminer le plan actif
   const plan = user.subscription?.plan || 'ESSENTIEL'
-  const maxEntities = getMaxEntities(plan)
+  const fromPlanRow = user.plan?.maxEntities
+  const maxEntities =
+    fromPlanRow != null && fromPlanRow > 0 ? fromPlanRow : getMaxEntities(plan)
 
   // Compter les entités existantes
   const currentEntities = await prisma.entity.count({
@@ -105,9 +107,38 @@ function getMaxEntities(plan: string): number {
     PREMIUM: 100,
     FAMILLE: 100,
     FAMILLE_PLUS: 300,
+    SOLO_PRO: 100,
+    STARTER: 500,
+    TEAM: 3000,
+    BUSINESS: 25000,
+    ENTERPRISE: 999999,
   }
 
-  return limits[plan] || 1
+  return limits[plan] ?? 1
+}
+
+/**
+ * Quota contacts (entités) pour l’extension / dashboards.
+ */
+export async function getEntityQuotaSnapshot(userId: string): Promise<{
+  current: number
+  max: number
+  plan: string
+} | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { plan: true, subscription: true },
+  })
+
+  if (!user) return null
+
+  const planStr = user.subscription?.plan ?? 'ESSENTIEL'
+  const fromPlanRow = user.plan?.maxEntities
+  const max = fromPlanRow != null && fromPlanRow > 0 ? fromPlanRow : getMaxEntities(planStr)
+
+  const current = await prisma.entity.count({ where: { userId } })
+
+  return { current, max, plan: planStr }
 }
 
 /**
