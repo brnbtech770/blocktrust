@@ -79,6 +79,7 @@ export default function PricingGridB2C({ plans, interval, currentPlan, isAuthent
               { label: `${pricePerProfile.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€/profil`, style: 'muted' },
             ]}
             features={mapFeatures(plan)}
+            accordionFeatures={plan.accordionFeatures}
             cta={isCurrent ? 'Plan actuel' : !isAuthenticated ? 'Choisir ce plan' : CTA_LABELS[plan.id] ?? 'Choisir'}
             ctaStyle={CTA_STYLES[plan.id] ?? { background: '#00d4ff', color: '#0a1628' }}
             isPopular={plan.highlighted}

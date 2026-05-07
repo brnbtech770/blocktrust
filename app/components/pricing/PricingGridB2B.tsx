@@ -69,6 +69,7 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
             subtitle={plan.users}
             badges={[{ label: 'Multi-support inclus', style: 'multiSupport' }]}
             features={mapFeatures(plan)}
+            accordionFeatures={plan.accordionFeatures}
             cta={plan.id === 'ENTERPRISE' ? 'Contacter les ventes' : isCurrent ? 'Plan actuel' : !isAuthenticated ? 'Choisir ce plan' : `Choisir ${plan.name}`}
             ctaStyle={CTA_STYLES[plan.id] ?? { background: '#00d4ff', color: '#0a1628' }}
             isPopular={plan.highlighted}
