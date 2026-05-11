@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { ShieldCheck, UserCheck, Link2 } from "lucide-react";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
+import { ESSENTIEL_MONTHLY_EUR, formatPriceFr } from "@/lib/pricing";
 
 export default function Hero() {
+  const essentielTtc = formatPriceFr(ESSENTIEL_MONTHLY_EUR);
   return (
     <section
       id="hero"
@@ -37,8 +39,11 @@ export default function Hero() {
             La certitude que c&apos;est <span className="font-semibold text-gold">eux</span>.
           </p>
           <p className="opacity-0 animate-fade-up [animation-delay:360ms] text-white/40 text-sm leading-relaxed max-w-xl mt-2">
-            Prouvez qui vous êtes, vérifiez à qui vous parlez et certifiez chaque interaction — vérifiable
-            par n&apos;importe qui, en 1 scan, sans compte BLOCKTRUST.
+            Certifiez ce que vous envoyez.
+            <br />
+            Vérifiez ce que vous recevez.
+            <br />
+            Faux RIB, faux conseiller, faux fournisseur — détectés en 1 scan, avant que le mal soit fait.
           </p>
 
           {/* CTAs + micro-copy */}
@@ -58,7 +63,8 @@ export default function Hero() {
               </Link>
             </div>
             <p className="text-xs font-light text-white/60">
-              Inscription en 30 secondes · certification après abonnement · vérification gratuite pour tous
+              Vérification gratuite pour tous · Certifiez votre identité dès {essentielTtc}€ TTC/mois · Sans
+              engagement
             </p>
           </div>
 
@@ -68,29 +74,27 @@ export default function Hero() {
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-bt-cyan" />
               <div>
                 <div className="font-syne text-base font-bold text-gold">
-                  Infalsifiable
+                  Vos envois certifiés
                 </div>
-                <div className="text-xs text-white/60">
-                  certification cryptographique
-                </div>
+                <div className="text-xs text-white/60">Prouvez que c&apos;est bien vous</div>
               </div>
             </li>
             <li className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
               <UserCheck className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
               <div>
                 <div className="font-syne text-base font-bold text-gold">
-                  Anti-usurpation
+                  Vos réceptions protégées
                 </div>
-                <div className="text-xs text-white/60">protection identité</div>
+                <div className="text-xs text-white/60">Détectez les usurpations</div>
               </div>
             </li>
             <li className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
               <Link2 className="mt-0.5 h-5 w-5 shrink-0 text-bt-cyan" />
               <div>
                 <div className="font-syne text-base font-bold text-gold">
-                  On-chain
+                  Ancré blockchain
                 </div>
-                <div className="text-xs text-white/60">ancré blockchain</div>
+                <div className="text-xs text-white/60">Preuve immuable Polygon</div>
               </div>
             </li>
           </ul>
