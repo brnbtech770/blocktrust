@@ -1,9 +1,10 @@
 // emails/FraudAlertEmail.tsx
-// Template : alerte fraude — design sobre, bleu #1e40af, fond blanc
+// Alerte titulaire — tentative d’usurpation / utilisation frauduleuse du badge
 // ============================================================
 
 import {
   Body,
+  Button,
   Container,
   Head,
   Heading,
@@ -16,65 +17,71 @@ import {
 } from '@react-email/components'
 import * as React from 'react'
 
-export const subject = '🚨 Alerte fraude détectée — votre badge utilisé hors contexte'
+export const subject = 'Tentative de fraude détectée — BLOCKTRUST™'
 
-type FraudAlertEmailProps = {
+export type FraudAlertEmailProps = {
   entityName: string
-  tokenId: string
-  timestamp: string
-  ip?: string | null
-  revokeUrl: string
+  /** Libellé lisible humain (ex. « Contexte incorrect », « QR dynamique »). */
+  alertType: string
+  /** Date/heure déjà formatée (ex. fr-FR). */
+  occurredAt: string
+  detail?: string | null
+  dashboardUrl: string
+  reportEmail?: string
 }
 
 export function FraudAlertEmail({
   entityName,
-  tokenId,
-  timestamp,
-  ip,
-  revokeUrl,
+  alertType,
+  occurredAt,
+  detail,
+  dashboardUrl,
+  reportEmail = 'security@blocktrust.tech',
 }: FraudAlertEmailProps) {
   return (
     <Html>
       <Head />
-      <Preview>Alerte : tentative d’utilisation frauduleuse du badge {entityName}</Preview>
+      <Preview>Alerte sécurité : une tentative de fraude concerne votre certificat BLOCKTRUST</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={h1}>🚨 Alerte fraude détectée</Heading>
-          <Text style={alertText}>
-            Une vérification a détecté une utilisation suspecte de votre badge BlockTrust (contexte
-            modifié ou réutilisation hors cadre).
+          <Heading style={h1}>Une tentative de fraude a été détectée</Heading>
+          <Text style={lead}>
+            Une alerte a été enregistrée sur votre certificat pour le contact{' '}
+            <strong style={{ color: '#111827' }}>{entityName}</strong>.
           </Text>
 
           <Section style={box}>
-            <Text style={label}>Contact concerné</Text>
-            <Text style={value}>{entityName}</Text>
-            <Text style={label}>Token / JTI concerné</Text>
-            <Text style={value}>{tokenId}</Text>
-            <Text style={label}>Date / heure</Text>
-            <Text style={value}>{timestamp}</Text>
-            {ip ? (
+            <Text style={label}>Type d&apos;alerte</Text>
+            <Text style={value}>{alertType}</Text>
+            <Text style={label}>Date et heure</Text>
+            <Text style={value}>{occurredAt}</Text>
+            {detail ? (
               <>
-                <Text style={label}>IP de la requête (attaquant)</Text>
-                <Text style={value}>{ip}</Text>
+                <Text style={label}>Détail</Text>
+                <Text style={value}>{detail}</Text>
               </>
             ) : null}
           </Section>
 
           <Text style={text}>
-            Si vous n’êtes pas à l’origine de cette utilisation, nous vous recommandons de révoquer
-            immédiatement le certificat ou la signature concernée pour éviter toute réutilisation
-            abusive.
+            Quelqu&apos;un a pu tenter d&apos;utiliser un badge ou un lien de vérification à votre nom hors de son
+            contexte légitime. Consultez votre tableau de bord pour l&apos;état de vos certificats.
           </Text>
-          <Section style={buttonContainer}>
-            <Link href={revokeUrl} style={buttonDanger}>
-              Révoquer immédiatement
-            </Link>
+
+          <Section style={btnRow}>
+            <Button href={dashboardUrl} style={buttonPrimary}>
+              Voir mon dashboard
+            </Button>
           </Section>
+          <Text style={textMuted}>
+            Signaler un incident :{' '}
+            <Link href={`mailto:${reportEmail}`} style={link}>
+              {reportEmail}
+            </Link>
+          </Text>
 
           <Hr style={hr} />
-          <Text style={footer}>
-            BlockTrust — Certification numérique fiable — Alerte sécurité
-          </Text>
+          <Text style={footer}>BLOCKTRUST™ — Certification numérique</Text>
         </Container>
       </Body>
     </Html>
@@ -82,7 +89,7 @@ export function FraudAlertEmail({
 }
 
 const main = {
-  backgroundColor: '#ffffff',
+  backgroundColor: '#f3f4f6',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
 }
 const container = {
@@ -90,20 +97,19 @@ const container = {
   padding: '32px 24px',
   maxWidth: '560px',
   backgroundColor: '#ffffff',
-  borderRadius: '8px',
+  borderRadius: '12px',
 }
 const h1 = {
-  color: '#1e40af',
+  color: '#b91c1c',
   fontSize: '22px',
-  fontWeight: '600',
-  margin: '0 0 20px',
+  fontWeight: '700',
+  margin: '0 0 16px',
 }
-const alertText = {
+const lead = {
   color: '#374151',
   fontSize: '15px',
   lineHeight: '24px',
   margin: '0 0 16px',
-  fontWeight: '500',
 }
 const text = {
   color: '#374151',
@@ -111,9 +117,16 @@ const text = {
   lineHeight: '22px',
   margin: '0 0 12px',
 }
+const textMuted = {
+  color: '#6b7280',
+  fontSize: '14px',
+  lineHeight: '22px',
+  margin: '16px 0 0',
+}
+const link = { color: '#2563eb' }
 const box = {
   backgroundColor: '#fef2f2',
-  borderLeft: '4px solid #b91c1c',
+  borderLeft: '4px solid #E05252',
   borderRadius: '6px',
   padding: '16px',
   margin: '16px 0',
@@ -132,15 +145,12 @@ const value = {
   fontFamily: 'monospace',
   margin: 0,
 }
-const buttonContainer = {
-  textAlign: 'center' as const,
-  margin: '24px 0',
-}
-const buttonDanger = {
-  backgroundColor: '#b91c1c',
-  color: '#ffffff',
+const btnRow = { textAlign: 'center' as const, margin: '24px 0 8px' }
+const buttonPrimary = {
+  backgroundColor: '#0a1628',
+  color: '#00d4ff',
   padding: '12px 24px',
-  borderRadius: '6px',
+  borderRadius: '8px',
   textDecoration: 'none',
   fontWeight: '600',
   fontSize: '15px',

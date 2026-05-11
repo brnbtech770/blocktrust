@@ -14,6 +14,7 @@ import {
   createAdminFraudAlert,
   evaluateVerifyAnomalies,
   logRateLimitedVerification,
+  notifyCertificateOwnerFraudAlertFireAndForget,
   verifyRateLimitHeaders,
 } from '@/lib/verify-fraud'
 import { runEventualAnomalyCheck } from '@/lib/agents/eventual-anomaly-check'
@@ -124,6 +125,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         entity: {
           select: {
             id: true,
+            userId: true,
             legalName: true,
             email: true,
             siret: true,
@@ -146,6 +148,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           entity: {
             select: {
               id: true,
+              userId: true,
               legalName: true,
               email: true,
               siret: true,
@@ -372,11 +375,17 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         type: 'FRAUD_ALERT',
         entityId: certificate.entityId,
         certificateId: certificate.id,
+        userId: certificate.entity.userId,
         metadata: {
           ipHash: hashedIp,
           userAgent: userAgent.slice(0, 200),
           reason: (signatureVerification?.reason as string) ?? 'FRAUD_ALERT',
         },
+      })
+      notifyCertificateOwnerFraudAlertFireAndForget({
+        certificateId: certificate.id,
+        alertType: 'Anomalie lors de la vérification (signature ou contexte)',
+        detail: (signatureVerification?.reason as string) ?? 'FRAUD_ALERT',
       })
     }
 

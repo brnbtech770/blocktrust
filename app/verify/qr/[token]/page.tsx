@@ -11,6 +11,10 @@ import { generateQrDynamicToken, timingSafeEqualUtf8 } from '@/lib/qr-dynamic-to
 import { Logo } from '@/app/components/ui/Logo'
 import { hashIp } from '@/app/lib/auth'
 import { checkRateLimitVerifyAsync } from '@/lib/rate-limit-verify'
+import {
+  createAdminFraudAlert,
+  notifyCertificateOwnerFraudAlertFireAndForget,
+} from '@/lib/verify-fraud'
 import { Clock } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -88,6 +92,18 @@ export default async function VerifyQRTokenPage({
         result: 'FRAUD_ALERT',
         signatureJti: signature.jti,
       },
+    })
+    await createAdminFraudAlert({
+      type: 'FRAUD_ALERT',
+      entityId: entity.id,
+      certificateId: cert.id,
+      userId: entity.userId,
+      metadata: { reason: 'QR_DYNAMIC_CONTEXT_MISMATCH' },
+    })
+    notifyCertificateOwnerFraudAlertFireAndForget({
+      certificateId: cert.id,
+      alertType: 'Lien QR dynamique — contexte incorrect',
+      detail: 'QR_DYNAMIC_CONTEXT_MISMATCH',
     })
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bt-navy)' }}>

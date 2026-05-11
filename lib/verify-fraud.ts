@@ -2,9 +2,12 @@
 // En-têtes sécurité, alertes admin, détection d’anomalies (flux /verify).
 // ============================================================
 
+import * as React from 'react'
 import { prisma } from '@/app/lib/db'
 import type { Prisma } from '@prisma/client'
 import { createAdminAlert } from '@/lib/admin-alerts'
+import { sendEmailFireAndForget } from '@/lib/email'
+import { FraudAlertEmail, subject as fraudAlertCertificateSubject } from '@/emails/FraudAlertEmail'
 
 export const VERIFY_SECURITY_HEADERS = {
   'Cache-Control': 'no-store',
@@ -106,4 +109,66 @@ export async function evaluateVerifyAnomalies(
     return { kind: 'SUSPICIOUS_VOLUME', distinctIpCount: ipSet.size }
   }
   return { kind: null }
+}
+
+const DASHBOARD_PUBLIC_BASE =
+  process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
+
+function entityDisplayNameForFraudEmail(entity: {
+  entityType: string
+  legalName: string | null
+  tradeName: string | null
+  firstName: string | null
+  lastName: string | null
+  email: string
+}): string {
+  if (entity.entityType === 'INDIVIDUAL') {
+    const n = [entity.firstName, entity.lastName].filter(Boolean).join(' ').trim()
+    return n || entity.email
+  }
+  return entity.legalName || entity.tradeName || entity.email
+}
+
+/**
+ * Email au titulaire du certificat (fire-and-forget). À appeler après persistance d’une Verification FRAUD_ALERT.
+ */
+export function notifyCertificateOwnerFraudAlertFireAndForget(args: {
+  certificateId: string
+  alertType: string
+  detail?: string | null
+}): void {
+  void (async () => {
+    try {
+      const cert = await prisma.certificate.findUnique({
+        where: { id: args.certificateId },
+        include: {
+          entity: {
+            include: { user: { select: { email: true } } },
+          },
+        },
+      })
+      const to = cert?.entity?.user?.email
+      if (!to || !cert.entity) return
+
+      const entityName = entityDisplayNameForFraudEmail(cert.entity)
+      const occurredAt = new Date().toLocaleString('fr-FR', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+      })
+
+      sendEmailFireAndForget({
+        to,
+        subject: fraudAlertCertificateSubject,
+        react: React.createElement(FraudAlertEmail, {
+          entityName,
+          alertType: args.alertType,
+          occurredAt,
+          detail: args.detail ?? undefined,
+          dashboardUrl: `${DASHBOARD_PUBLIC_BASE}/dashboard`,
+        }),
+      })
+    } catch (e) {
+      console.error('[notifyCertificateOwnerFraudAlert]', e)
+    }
+  })()
 }

@@ -4,9 +4,11 @@ import { prisma } from "@/app/lib/db";
 import { hashIp } from "@/app/lib/auth";
 import { canonicalizeEmailContext, sha256Hex } from "@/lib/v2/context";
 import { verifyToken } from "@/lib/v2/jwt";
-import { sendEmail } from "@/lib/email";
-import { FraudAlertEmail, subject as fraudAlertSubject } from "@/emails/FraudAlertEmail";
-import { btErrorDevDetails, btLog } from "@/lib/prodLog";
+import {
+  createAdminFraudAlert,
+  notifyCertificateOwnerFraudAlertFireAndForget,
+} from "@/lib/verify-fraud";
+import { btLog } from "@/lib/prodLog";
 
 function getIp(req: NextRequest) {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -121,44 +123,26 @@ export async function POST(req: NextRequest) {
     if (verdict === "TAMPERED") {
       const certWithOwner = await prisma.certificate.findUnique({
         where: { id: certificateId },
-        include: {
-          entity: {
-            include: {
-              user: { select: { email: true } },
-            },
-          },
-        },
+        include: { entity: true },
       });
-      const ownerEmail = certWithOwner?.entity?.user?.email;
-      if (ownerEmail && certWithOwner?.entity) {
-        const fraudEntityName =
-          certWithOwner.entity.entityType === "INDIVIDUAL"
-            ? `${certWithOwner.entity.firstName || ""} ${certWithOwner.entity.lastName || ""}`.trim() ||
-              certWithOwner.entity.email
-            : certWithOwner.entity.legalName || certWithOwner.entity.email;
-        const baseUrl =
-          process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "https://blocktrust.tech";
-        await sendEmail({
-          to: ownerEmail,
-          subject: fraudAlertSubject,
-          react: FraudAlertEmail({
-            entityName: fraudEntityName,
-            tokenId: jti,
-            timestamp: new Date().toISOString(),
-            ip: ip !== "unknown" ? ip : undefined,
-            revokeUrl: `${baseUrl}/dashboard/certificate/${certificateId}`,
-          }),
-        }).then(({ error }) => {
-          if (error) {
-            btErrorDevDetails(
-              { context: "Fraud alert email", to: ownerEmail, error },
-              "Fraud alert email failed"
-            );
-          } else {
-            btLog(`[Verify] Fraud alert email envoyé à: ${ownerEmail}`, "Fraud alert email sent");
-          }
+      if (certWithOwner?.entity) {
+        await createAdminFraudAlert({
+          type: "FRAUD_ALERT",
+          entityId: certWithOwner.entity.id,
+          certificateId: certWithOwner.id,
+          userId: certWithOwner.entity.userId,
+          metadata: {
+            reason: reason ?? "context_hash_mismatch",
+            jti,
+          },
         });
       }
+      notifyCertificateOwnerFraudAlertFireAndForget({
+        certificateId,
+        alertType: "Contexte du message modifié (JWT)",
+        detail: reason,
+      });
+      btLog(`[v2/verify] FRAUD_ALERT traité cert=${certificateId}`, "Fraud alert pipeline");
     }
 
     return NextResponse.json({

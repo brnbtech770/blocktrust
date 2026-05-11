@@ -18,9 +18,8 @@ import {
   createAdminFraudAlert,
   evaluateVerifyAnomalies,
   logRateLimitedVerification,
+  notifyCertificateOwnerFraudAlertFireAndForget,
 } from '@/lib/verify-fraud'
-import { sendEmail } from '@/lib/email'
-import { FraudAlertEmail, subject as fraudAlertSubject } from '@/emails/FraudAlertEmail'
 import type { Metadata } from 'next'
 import type { Prisma } from '@prisma/client'
 import {
@@ -330,28 +329,12 @@ export default async function VerifyPublicPage({
         reason: 'CONTEXT_MISMATCH_PUBLIC_VERIFY',
       },
     })
-    await persistUserTrustScore(entity.userId)
-    const owner = await prisma.user.findUnique({
-      where: { id: entity.userId },
-      select: { email: true },
+    notifyCertificateOwnerFraudAlertFireAndForget({
+      certificateId: cert.id,
+      alertType: 'Contexte de vérification incorrect',
+      detail: 'CONTEXT_MISMATCH_PUBLIC_VERIFY',
     })
-    const entityName = entityDisplayName(entity)
-    const revokeUrl = `${BASE_URL}/dashboard/certificate/${cert.id}`
-    if (owner?.email) {
-      await sendEmail({
-        to: owner.email,
-        subject: fraudAlertSubject,
-        react: FraudAlertEmail({
-          entityName,
-          tokenId: signature.jti,
-          timestamp: new Date().toLocaleString('fr-FR'),
-          ip,
-          revokeUrl,
-        }),
-      }).then(({ error }) => {
-        if (error) console.error('[Verify] Fraud alert email échoué:', { certId: cert.id, error })
-      })
-    }
+    await persistUserTrustScore(entity.userId)
     return <FraudAlertView />
   }
 
@@ -444,6 +427,11 @@ export default async function VerifyPublicPage({
         reason: 'TRUST_CIRCLE_CERT_MISMATCH',
         verifierUserId: viewerUserId,
       },
+    })
+    notifyCertificateOwnerFraudAlertFireAndForget({
+      certificateId: cert.id,
+      alertType: 'Incohérence avec votre réseau de confiance',
+      detail: 'TRUST_CIRCLE_CERT_MISMATCH',
     })
     return <TrustCircleFraudCertainView />
   }
