@@ -150,7 +150,7 @@ export default async function EntitiesPage() {
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
                       entity.entityType === "BUSINESS"
-                        ? "bg-bt-gold/15 text-bt-gold"
+                        ? "bg-gold/15 text-gold"
                         : "bg-bt-cyan/15 text-bt-cyan"
                     }`}
                   >

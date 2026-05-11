@@ -120,15 +120,19 @@ export default function TrustCirclePage() {
 
   if (sessionStatus === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
-        <div className="text-white text-xl">Chargement...</div>
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-2 bg-[#0a1628] text-sm text-white/40">
+        <div
+          className="h-4 w-4 animate-spin rounded-full border-2 border-[#00d4ff]/30 border-t-[#00d4ff]"
+          aria-hidden
+        />
+        Chargement...
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center bg-[#0a1628]">
         <div className="text-red-400">{error}</div>
       </div>
     )
@@ -136,8 +140,12 @@ export default function TrustCirclePage() {
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-white text-xl">Chargement...</div>
+      <div className="flex items-center justify-center gap-2 bg-[#0a1628] py-20 text-sm text-white/40">
+        <div
+          className="h-4 w-4 animate-spin rounded-full border-2 border-[#00d4ff]/30 border-t-[#00d4ff]"
+          aria-hidden
+        />
+        Chargement...
       </div>
     )
   }

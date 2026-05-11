@@ -203,8 +203,12 @@ export default function CertificatesPage() {
 
   if (sessionStatus === "loading" || loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-white text-xl">Chargement...</div>
+      <div className="flex items-center justify-center gap-2 py-20 text-sm text-white/40">
+        <div
+          className="h-4 w-4 animate-spin rounded-full border-2 border-[#00d4ff]/30 border-t-[#00d4ff]"
+          aria-hidden
+        />
+        Chargement...
       </div>
     );
   }
@@ -286,7 +290,7 @@ export default function CertificatesPage() {
                           </>
                         ) : (
                           <>
-                            <Building2 className="h-4 w-4 shrink-0 text-bt-gold/90" aria-hidden />
+                            <Building2 className="h-4 w-4 shrink-0 text-gold/90" aria-hidden />
                             Entreprise
                           </>
                         )}
