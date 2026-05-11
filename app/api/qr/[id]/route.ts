@@ -32,7 +32,9 @@ export async function GET(
       return new NextResponse('Certificat non trouvé', { status: 404 })
     }
 
-    const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify/${certificate.publicId || certificate.id}`
+    const origin = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const certKey = certificate.publicId || certificate.id
+    const verifyUrl = `${origin}/verify?certId=${encodeURIComponent(certKey)}`
 
     // Générer le QR code selon le format demandé
     if (format === 'svg') {
@@ -63,7 +65,7 @@ export async function GET(
         },
       })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ QR code generation error:', error)
     return new NextResponse('Erreur génération QR code', { status: 500 })
   }
