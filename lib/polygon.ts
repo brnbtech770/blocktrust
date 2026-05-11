@@ -9,6 +9,7 @@ import { ethers } from 'ethers'
 import { prisma } from '@/app/lib/db'
 import { createAdminAlert } from '@/lib/admin-alerts'
 import { sendCertificateAnchoredEmail } from '@/lib/email'
+import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 
 const RPC_URL = process.env.POLYGON_RPC_URL?.trim() || ''
 const PRIVATE_KEY = process.env.POLYGON_PRIVATE_KEY?.trim() || ''
@@ -143,6 +144,7 @@ export async function notifyAnchorSuccess(
       where: { id: certificateId },
       select: {
         id: true,
+        publicId: true,
         polygonAnchoredAt: true,
         entity: {
           select: {
@@ -171,7 +173,7 @@ export async function notifyAnchorSuccess(
     sendCertificateAnchoredEmail(email, {
       userName,
       entityName,
-      certificateId,
+      verifyUrl: buildPublicVerifyUrl(cert.publicId ?? certificateId),
       polygonTxHash: anchor.txHash,
       polygonBlock: anchor.blockNumber,
       polygonExplorerUrl: anchor.explorerUrl,

@@ -13,6 +13,7 @@ import { redactEmailRecipient, sendEmail } from '@/lib/email'
 import { CertificateCreatedEmail, subject as certificateCreatedSubject } from '@/emails/CertificateCreatedEmail'
 import { createAdminAlert } from '@/lib/admin-alerts'
 import { redis } from '@/lib/rate-limit-redis'
+import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 
 // ─────────────────────────────────────────────
 // GET — Liste des certificats de l'utilisateur
@@ -288,7 +289,7 @@ export async function POST(req: NextRequest) {
         },
       })
 
-      // Signature pour le badge et la vérification publique (/verify/[jti]?h=)
+      // Signature pour le badge et liens dynamiques (QR) — vérification publique liste : /verify?certId=
       const jti = certificate.publicId ?? certificate.id
       const contextHash = crypto.createHash('sha256').update(`badge:${certificate.id}`).digest('hex')
       await prisma.signature.create({
@@ -325,16 +326,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Générer l'URL de vérification (jti + contextHash si Signature existe)
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
-    const latestSignature = await prisma.signature.findFirst({
-      where: { certificateId: certificate.id, revoked: false },
-      orderBy: { issuedAt: 'desc' },
-    })
-    const verifyUrl =
-      latestSignature?.jti && latestSignature?.contextHash
-        ? `${baseUrl}/verify/${latestSignature.jti}?h=${latestSignature.contextHash}`
-        : `${baseUrl}/verify/${certificate.publicId || certificate.id}`
+    const verifyUrl = buildPublicVerifyUrl(certificate.publicId || certificate.id)
 
     // Générer le QR code
     let qrCodeDataUrl: string

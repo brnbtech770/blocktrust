@@ -21,7 +21,8 @@ export const subject = '⛓️ Votre certificat BLOCKTRUST est ancré sur Polygo
 export type CertificateAnchoredEmailProps = {
   userName: string
   entityName: string
-  certificateId: string
+  /** Page publique /verify?certId= (jamais /verify/[id] réservé aux abonnés). */
+  verifyUrl: string
   polygonTxHash: string
   polygonBlock: number
   polygonExplorerUrl: string
@@ -31,13 +32,12 @@ export type CertificateAnchoredEmailProps = {
 export function CertificateAnchoredEmail({
   userName,
   entityName,
-  certificateId,
+  verifyUrl,
   polygonTxHash,
   polygonBlock,
   polygonExplorerUrl,
   anchoredAt,
 }: CertificateAnchoredEmailProps) {
-  const verifyUrl = `https://blocktrust.tech/verify/${certificateId}`
   const dateLabel = anchoredAt.toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: 'long',
