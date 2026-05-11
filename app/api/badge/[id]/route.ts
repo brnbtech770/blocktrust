@@ -189,12 +189,12 @@ export async function GET(
       signature?.dynamicToken &&
       signature?.tokenExpiry &&
       signature.tokenExpiry > new Date()
-    const verifyUrl =
-      hasValidDynamicToken && signature.contextHash
+    const publicCertVerify = `${baseUrl}/verify?certId=${encodeURIComponent(certificate.publicId || certificate.id)}`
+    const verifyUrl = hasValidDynamicToken
+      ? signature?.contextHash
         ? `${baseUrl}/verify/qr/${signature.dynamicToken}?h=${signature.contextHash}`
-        : signature?.jti && signature?.contextHash
-          ? `${baseUrl}/verify/${signature.jti}?h=${signature.contextHash}`
-          : `${baseUrl}/verify/${certificate.publicId || certificate.id}`
+        : `${baseUrl}/verify/qr/${signature.dynamicToken}`
+      : publicCertVerify
 
     const qrPx = L.qrPx
 

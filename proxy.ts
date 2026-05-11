@@ -35,10 +35,13 @@ async function getEmailFromSession(req: NextRequest): Promise<string | null> {
 }
 
 /**
- * Page publique `/verify` (+ ?token=…). Sous-routes `/verify/[id]`, `/verify/qr/…` → session requise (abonnés).
+ * Page publique `/verify` (+ ?certId=…, ?token=…).
+ * `/verify/qr/…` : scan QR dynamique (token + contexte), public (rate limit côté page).
+ * Autres sous-routes `/verify/[id]` → session requise (abonnés).
  */
 function isProtectedVerifySubpath(pathname: string): boolean {
   if (pathname === '/verify' || pathname === '/verify/') return false
+  if (pathname.startsWith('/verify/qr/')) return false
   return pathname.startsWith('/verify/')
 }
 
