@@ -213,6 +213,8 @@ export async function GET(
     const w = dims.w
     const h = dims.h
     const cx = w / 2
+    /** Ellipse décorative centrée : rx ≤ cx pour ne pas dépasser le viewBox (évite coupure latérale). */
+    const glowBlueRx = Math.min(w * 0.55, cx - 1)
     const shieldROut = w * L.shieldRFrac
     const shieldRIn = shieldROut * 0.72
     const pillHalfW = w * L.pillHalfWFrac
@@ -248,7 +250,7 @@ export async function GET(
   </defs>
 
   <rect width="${w}" height="${h}" rx="16" fill="url(#bgGrad)"/>
-  <ellipse cx="${cx}" cy="${h * 0.28}" rx="${w * 0.55}" ry="${h * 0.22}" fill="url(#glowBlue)"/>
+  <ellipse cx="${cx}" cy="${h * 0.28}" rx="${glowBlueRx}" ry="${h * 0.22}" fill="url(#glowBlue)"/>
   <ellipse cx="${cx}" cy="${h * 0.72}" rx="${w * 0.38}" ry="${h * 0.18}" fill="url(#glowGold)"/>
 
   <rect width="${w}" height="${h}" rx="16" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.28"/>

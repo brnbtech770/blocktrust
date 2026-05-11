@@ -8,7 +8,6 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
-import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
 import { Copy, Download, ExternalLink, Check, Link2, Clock } from 'lucide-react'
 
@@ -199,11 +198,12 @@ export default function DashboardBadgePage() {
         <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
           <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">Aperçu du badge</h2>
           <div className="flex flex-col items-center justify-center py-8">
-            <div className="mx-auto h-[160px] w-[160px]">
-              <BlockTrustBadge
-                size={160}
-                instanceId={`dashboard-badge-${badgeId}`}
-                showWatermark={false}
+            <div className="flex w-full items-center justify-center rounded-xl bg-[#060d1a] p-6 overflow-hidden">
+              <img
+                src={`/api/badge/${badgeId}?size=md`}
+                alt="Aperçu du badge BLOCKTRUST"
+                className="h-auto max-w-full"
+                style={{ maxWidth: '320px' }}
               />
             </div>
             <p className="mt-4 text-center font-mono text-xs text-white/40">
@@ -350,7 +350,7 @@ export default function DashboardBadgePage() {
           <div>
             <p className="mb-2 text-base font-medium text-white/60">Lien de vérification</p>
             <a
-            href={publicVerifyHref}
+              href={publicVerifyHref}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-sm text-bt-cyan hover:text-bt-cyan/90"

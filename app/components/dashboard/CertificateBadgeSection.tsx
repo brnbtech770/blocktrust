@@ -299,19 +299,15 @@ export default function CertificateBadgeSection({
           </h2>
           <div className="flex w-full flex-col items-center">
             <div
-              className="flex w-full items-center justify-center rounded-2xl border border-white/10 bg-black/25 p-6 sm:p-8"
-              style={{
-                boxShadow: '0 0 40px rgba(0,212,255,0.1)',
-                minHeight: size === 'sm' ? 304 : size === 'md' ? 432 : 512,
-              }}
+              className="flex w-full items-center justify-center overflow-hidden rounded-xl bg-[#060d1a] p-6 shadow-[0_0_40px_rgba(0,212,255,0.1)] sm:p-8"
             >
               <img
                 src={`/api/badge/${badgeId}?size=${size}`}
-                alt="Badge BlockTrust"
+                alt="Aperçu du badge BLOCKTRUST"
                 width={dims.w}
                 height={dims.h}
-                className="h-auto max-w-full shrink-0 rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
-                style={{ width: dims.w, height: dims.h }}
+                className="h-auto max-w-full rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
+                style={{ maxWidth: dims.w }}
                 key={`${size}-${badgeId}`}
               />
             </div>
