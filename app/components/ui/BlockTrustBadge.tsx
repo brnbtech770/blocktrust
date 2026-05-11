@@ -202,7 +202,7 @@ function BadgeFace({
             className="mt-0.5 font-sans text-white/60"
             style={{ fontSize: s * 0.04 }}
           >
-            Identité vérifiée
+            Vérification d&apos;identité
           </p>
         </div>
 
