@@ -19,13 +19,13 @@ async function main() {
     // Plans B2C - Mensuel
     console.log("📦 Création des plans B2C (Mensuel)...\n");
 
-    // Essentiel - 4,99€/mois
+    // Essentiel - 3,99€/mois (aligné lib/pricing.ts)
     const essentielProduct = await stripe.products.create({
       name: "BlockTrust Essentiel",
       description: "Plan Essentiel - Certificats de base pour particuliers",
     });
     const essentielPrice = await stripe.prices.create({
-      unit_amount: 499, // 4,99€
+      unit_amount: 399, // 3,99€
       currency: "eur",
       recurring: {
         interval: "month",
@@ -83,7 +83,7 @@ async function main() {
     console.log("\n📦 Création des plans B2C (Annuel)...\n");
 
     const essentielYearly = await stripe.prices.create({
-      unit_amount: 4790, // 47,90€ (annuel)
+      unit_amount: 3830, // 38,30€ / an (-20% vs 12×3,99), aligné lib/pricing
       currency: "eur",
       recurring: {
         interval: "year",
@@ -125,7 +125,7 @@ async function main() {
     // Plans B2B - Mensuel
     console.log("\n📦 Création des plans B2B (Mensuel)...\n");
 
-    // Starter - 29€/mois
+    // Starter B2B — legacy seed (forfait plate mensuel) ; grille live = HT/user dans lib/pricing.ts
     const starterProduct = await stripe.products.create({
       name: "BlockTrust Starter",
       description: "Plan Starter - Pour petites entreprises",

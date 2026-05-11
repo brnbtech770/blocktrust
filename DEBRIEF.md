@@ -49,8 +49,8 @@ BlockTrust est une plateforme SaaS de certification et vérification d'authentic
 - ✅ **Page pricing** (`/pricing`) - 805+ lignes avec :
   - Toggle B2C / B2B
   - Toggle Mensuel / Annuel
-  - Plans B2C : Essentiel (4,99€), Premium (9,99€), Famille (14,99€), Famille+ (24,99€)
-  - Plans B2B : Starter (29€), Team (59€), Business (149€), Enterprise (sur devis)
+  - Plans B2C : Essentiel (3,99€), Premium (9,99€), Famille (14,99€), Famille+ (24,99€)
+  - Plans B2B : dégressif HT/user (Solo Pro, Starter, Team, Business), Enterprise (sur devis)
 - ✅ **Checkout Stripe** (`/api/stripe/checkout`)
   - Création automatique de customer Stripe
   - Sauvegarde du `stripeCustomerId` dans la DB
@@ -396,15 +396,15 @@ BLOCKTRUST_JWT_PUBLIC_KEY=-----BEGIN PUBLIC KEY-----...
 ## 💰 Modèle de Pricing
 
 ### Plans B2C
-- **Essentiel**: 4,99€/mois - 1 entité, 1 certificat
+- **Essentiel**: 3,99€/mois - 1 entité, 1 certificat
 - **Premium**: 9,99€/mois - 5 entités, 5 certificats
 - **Famille**: 14,99€/mois - 10 entités, 10 certificats, Trust Circle
 - **Famille+**: 24,99€/mois - Illimité, Trust Circle, Blockchain Anchor
 
 ### Plans B2B
-- **Starter**: 29€/mois - 10 entités, 10 certificats
-- **Team**: 59€/mois - 50 entités, 50 certificats, Trust Circle
-- **Business**: 149€/mois - Illimité, Trust Circle, Blockchain Anchor
+- **Starter B2B**: prix HT/user/mois dégressif (voir `lib/pricing.ts`)
+- **Team B2B**: prix HT/user/mois dégressif (voir `lib/pricing.ts`)
+- **Business B2B**: prix HT/user/mois dégressif (voir `lib/pricing.ts`)
 - **Enterprise**: Sur devis
 
 ---

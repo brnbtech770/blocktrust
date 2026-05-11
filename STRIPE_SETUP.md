@@ -28,7 +28,7 @@ NEXT_PUBLIC_APP_URL="https://blocktrust.tech"
 
 ### Plan Essentiel
 - **Nom** : BlockTrust Essentiel
-- **Prix** : 4,99€ / mois (recurring)
+- **Prix** : 3,99€ / mois (recurring)
 - **Copiez le Price ID** → `STRIPE_PRICE_ESSENTIEL`
 
 ### Plan Premium

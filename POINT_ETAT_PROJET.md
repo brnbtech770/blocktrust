@@ -47,7 +47,7 @@
 | **Checkout (création session)** | ✅ Opérationnel | `POST /api/stripe/create-checkout` avec body `{ priceId }`. Crée ou réutilise le customer Stripe, retourne `{ url }` vers Stripe Checkout. |
 | **Webhook Stripe** | ✅ Implémenté | `POST /api/stripe/webhook` gère : `checkout.session.completed`, `invoice.payment_succeeded`, `customer.subscription.deleted`, `customer.subscription.updated`. Met à jour `Subscription` en BDD et envoie l’email « Paiement réussi » (Resend). |
 | **Variables requises** | À configurer | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_PRICE_ESSENTIEL`, `STRIPE_PRICE_PREMIUM`, `STRIPE_PRICE_FAMILLE`, `STRIPE_PRICE_FAMILLE_PLUS` (Price IDs mensuels). Voir `STRIPE_SETUP.md`. |
-| **Page Pricing** | ✅ Opérationnel | 4 plans B2C (Essentiel 4,99 €, Premium 9,99 €, Famille 14,99 €, Famille+ 24,99 €). CTA selon état : non connecté → « Commencer — 4,99€/mois » (signIn Google) ; connecté autre plan → « Choisir ce plan » (create-checkout) ; plan actuel → « Plan actuel » désactivé. Données plans servies par `GET /api/pricing` (depuis `lib/pricing.ts`). |
+| **Page Pricing** | ✅ Opérationnel | 4 plans B2C (Essentiel 3,99 €, Premium 9,99 €, Famille 14,99 €, Famille+ 24,99 €). CTA selon état : non connecté → checkout ou sign-in ; connecté autre plan → « Choisir ce plan » (create-checkout) ; plan actuel → « Plan actuel » désactivé. Données plans servies par `GET /api/pricing` (depuis `lib/pricing.ts`). |
 
 ---
 
@@ -145,7 +145,7 @@ Référence détaillée : `ENV_CHECKLIST.md`, `STRIPE_SETUP.md`.
 
 - **Un seul blocage de build** : `app/admin/alerts/page.tsx` utilise un `include` sur `prisma.aIAlert` alors que le modèle **AIAlert** n’a pas de relations `entity` / `certificate` dans le schema. Il faut soit ajouter ces relations dans `prisma/schema.prisma`, soit supprimer cet `include` et gérer entity/certificate autrement.
 - **Tout le reste décrit ci-dessus** (auth, session.plan, Stripe checkout + webhook, pricing, emails, dashboard, API core) est **implémenté et considéré opérationnel** sous réserve que les env soient configurées.
-- **Pas de plan gratuit** : le moins cher est Essentiel 4,99 €/mois ; la page Pricing est alignée avec ça.
+- **Pas de plan gratuit** : le moins cher est Essentiel 3,99 €/mois ; la page Pricing est alignée avec ça.
 - **Port dev** : `3004` (`npm run dev`).
 
 Ce document peut être partagé tel quel à Claude pour continuer le travail (correction du build admin/alerts, puis vérifications ciblées si besoin).

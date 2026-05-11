@@ -208,7 +208,7 @@ const userId = session.user.id
 
 ### B2C
 ```
-Essentiel  4,99€/mois  — 1 profil,  20 contacts,  10 vérifs
+Essentiel  3,99€/mois  — 1 profil,  20 contacts,  vérifs illimitées*
 Premium    9,99€/mois  — 1 profil, 100 contacts,  50 vérifs
 Famille   14,99€/mois  — 5 profils, 100 contacts, 100 vérifs
 Famille+  24,99€/mois  — 10 profils, 300 contacts, 300 vérifs
@@ -324,7 +324,7 @@ Cas 2 : partenaire dans Trust Circle mais mismatch certificat
 ✅ "Certifié · Protégé · Infalsifiable" (pill hero)
 ✅ "Sans engagement · Résiliable à tout moment"
 ✅ "-20% engagement annuel" (jamais "offre de lancement")
-✅ "À partir de 4,99€/mois"
+✅ "À partir de 3,99€/mois"
 ✅ BLOCKTRUST™ dans navbar et footer
 ❌ Silver/Bronze/Gold comme niveaux (remplacé par Essentiel/Premium/Business)
 ❌ KYC visible utilisateur

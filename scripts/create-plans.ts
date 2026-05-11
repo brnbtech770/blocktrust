@@ -44,7 +44,7 @@ async function main() {
     {
       name: 'Essentiel',
       type: PlanType.B2C_ESSENTIEL,
-      price: 4.99,
+      price: 3.99,
       interval: BillingInterval.MONTHLY,
       maxProfiles: 1,
       maxEntities: 1,
@@ -61,7 +61,7 @@ async function main() {
     {
       name: 'Essentiel (Annuel)',
       type: PlanType.B2C_ESSENTIEL,
-      price: 47.90,
+      price: 38.3,
       interval: BillingInterval.YEARLY,
       maxProfiles: 1,
       maxEntities: 1,
