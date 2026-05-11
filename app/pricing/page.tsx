@@ -212,6 +212,15 @@ export default function PricingPage() {
             onCheckout={handleCheckout}
           />
         )}
+        <div className="mx-auto mt-8 max-w-2xl rounded-xl border border-white/5 bg-white/[0.02] p-4 text-center">
+          <p className="text-xs leading-relaxed text-white/40">
+            <span className="font-semibold text-white/60">Contacts</span> = personnes ou entreprises dont vous
+            enregistrez les coordonnées officielles (domaine, email, téléphone, wallet).
+            <span className="mx-2">·</span>
+            <span className="font-semibold text-white/60">Réseau de confiance</span> = contacts qui ont aussi un
+            badge BLOCKTRUST — protection maximale activée automatiquement.
+          </p>
+        </div>
         <p className="mx-auto mt-6 max-w-3xl px-4 text-center text-xs text-white/30 sm:px-6">
           * Vérifications illimitées pendant la période de lancement (6 mois). Au-delà, des quotas généreux seront
           appliqués selon votre plan.

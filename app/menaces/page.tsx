@@ -43,6 +43,17 @@ const featuredArticles = [
     relevanceScore: 98,
     fetchedAt: new Date("2026-05-07"),
   },
+  {
+    id: "clonage-vocal-appels-silencieux",
+    title: "Appels silencieux : l'IA clone votre voix en 3 secondes",
+    source: "Bitdefender / Le Parisien",
+    sourceUrl:
+      "https://www.cnews.fr/vie-numerique/2026-05-04/arnaque-aux-appels-silencieux-attention-cette-nouvelle-escroquerie-qui",
+    summaryFr:
+      "Un simple 'allô' suffit. En 2026, les cybercriminels utilisent des appels silencieux pour capturer votre empreinte vocale en 3 secondes via l'IA. Votre voix clonée sert ensuite à arnaquer vos proches ou contourner les systèmes bancaires. L'usurpation de numéro a bondi de 517% en 2025.",
+    relevanceScore: 97,
+    fetchedAt: new Date("2026-05-04"),
+  },
 ] as const
 
 export default async function MenacesPage() {
@@ -84,7 +95,7 @@ export default async function MenacesPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {featuredArticles.map((article) => (
               <Link
                 key={article.id}
