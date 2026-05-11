@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { ArrowRight, Sparkles, Building2, User } from "lucide-react";
+import {
+  ESSENTIEL_MONTHLY_EUR,
+  formatPriceFr,
+  STARTER_MONTHLY_PER_USER_HT_EUR,
+} from "@/lib/pricing";
 import Reveal from "./Reveal";
 
 export default function PricingTeaser() {
@@ -34,7 +39,9 @@ export default function PricingTeaser() {
           <h3 className="font-syne text-base sm:text-lg font-semibold text-white">Particulier</h3>
           <div className="mt-2 flex flex-wrap items-baseline gap-2">
             <span className="text-sm font-medium text-white/50">À partir de</span>
-            <span className="font-syne text-4xl font-bold text-white">3,99€</span>
+            <span className="font-syne text-4xl font-bold text-white">
+              {formatPriceFr(ESSENTIEL_MONTHLY_EUR)}€
+            </span>
             <span className="text-sm text-white/60">TTC/mois</span>
           </div>
           <p className="mt-3 text-sm sm:text-base leading-relaxed text-white/70">
@@ -53,7 +60,9 @@ export default function PricingTeaser() {
           <h3 className="font-syne text-base sm:text-lg font-semibold text-white">Entreprise</h3>
           <div className="mt-2 flex flex-wrap items-baseline gap-2">
             <span className="text-sm font-medium text-white/60">À partir de</span>
-            <span className="font-syne text-3xl font-bold text-white">8,99€</span>
+            <span className="font-syne text-3xl font-bold text-white">
+              {formatPriceFr(STARTER_MONTHLY_PER_USER_HT_EUR)}€
+            </span>
             <span className="text-sm text-white/60">HT/user/mois</span>
           </div>
           <p className="mt-1 text-xs text-white/50">

@@ -157,6 +157,23 @@ export const PLANS_B2C = [
   },
 ] as const;
 
+/** Montant formaté « 3,99 » (séparateur virgule FR). */
+export function formatPriceFr(amount: number): string {
+  return amount.toLocaleString("fr-FR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/** Prix mensuel Essentiel (EUR TTC) — source unique pour textes marketing. */
+export const ESSENTIEL_MONTHLY_EUR = PLANS_B2C[0].prices.monthly.amount;
+
+/** CTA landing section particuliers → /pricing */
+export const LANDING_CTA_B2C_LABEL = `Démarrer à partir de ${formatPriceFr(ESSENTIEL_MONTHLY_EUR)}€ TTC/mois`;
+
+/** Invitations / renvois forfait entrée B2C */
+export const JOIN_BLOCKTRUST_ESSENTIEL_LABEL = `Rejoindre BLOCKTRUST — ${formatPriceFr(ESSENTIEL_MONTHLY_EUR)}€ TTC/mois`;
+
 export const PLANS_B2B = [
   {
     id: "SOLO_PRO",
@@ -337,6 +354,15 @@ export const PLANS_B2B = [
     ],
   },
 ] as const;
+
+/** Solo Pro — EUR HT / utilisateur / mois (référence produit). */
+export const SOLO_PRO_MONTHLY_HT_EUR = PLANS_B2B[0].prices!.monthly.amount;
+
+/** Starter (2–5 postes) — prix dégressif affiché sur la landing. */
+export const STARTER_MONTHLY_PER_USER_HT_EUR = PLANS_B2B[1].prices!.monthly.amount;
+
+/** CTA landing section entreprises → /pricing?tab=entreprises */
+export const LANDING_CTA_B2B_LABEL = `Démarrer à partir de ${formatPriceFr(STARTER_MONTHLY_PER_USER_HT_EUR)}€ HT/user/mois`;
 
 export type PlanB2C = (typeof PLANS_B2C)[number];
 export type PlanB2B = (typeof PLANS_B2B)[number];
