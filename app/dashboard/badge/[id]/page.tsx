@@ -9,6 +9,8 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
+import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
+import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 import { Copy, Download, ExternalLink, Check, Link2, Clock } from 'lucide-react'
 
 interface BadgeData {
@@ -179,7 +181,7 @@ export default function DashboardBadgePage() {
   }
 
   const badgeId = badgeData.publicId || badgeData.id
-  const publicVerifyHref = `https://blocktrust.tech/verify?certId=${encodeURIComponent(badgeId)}`
+  const publicVerifyHref = buildPublicVerifyUrl(badgeId)
 
   return (
     <>
@@ -199,16 +201,16 @@ export default function DashboardBadgePage() {
           <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">Aperçu du badge</h2>
           <div className="flex flex-col items-center justify-center py-8">
             <div className="flex w-full items-center justify-center rounded-xl bg-[#060d1a] p-6 overflow-hidden">
-              <img
-                src={`/api/badge/${badgeId}?size=md`}
-                alt="Aperçu du badge BLOCKTRUST"
-                className="h-auto max-w-full"
-                style={{ maxWidth: '320px' }}
+              <BlockTrustBadge
+                size={280}
+                certId={badgeId}
+                verifyUrl={publicVerifyHref}
+                showVerifyButton
+                instanceId={`badge-preview-${badgeId.slice(0, 12)}`}
+                showWatermark={false}
+                className="max-w-full drop-shadow-[0_0_24px_rgba(0,212,255,0.2)]"
               />
             </div>
-            <p className="mt-4 text-center font-mono text-xs text-white/40">
-              {badgeData.publicId || badgeData.id}
-            </p>
           </div>
         </div>
 
