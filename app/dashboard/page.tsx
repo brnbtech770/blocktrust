@@ -202,20 +202,6 @@ export default async function Dashboard({
           </p>
         </div>
 
-        {fraudAlertsWeek > 0 ? (
-          <div className="mb-6 flex items-center gap-3 rounded-xl border border-[#E05252]/30 bg-[#E05252]/10 p-4">
-            <ShieldAlert className="h-5 w-5 shrink-0 text-[#E05252]" aria-hidden />
-            <div>
-              <p className="text-sm font-semibold text-[#E05252]">
-                {fraudAlertsWeek} tentative(s) de fraude détectée(s) cette semaine
-              </p>
-              <p className="mt-0.5 text-xs text-white/50">
-                Quelqu&apos;un a essayé d&apos;utiliser un badge falsifié à votre nom.
-              </p>
-            </div>
-          </div>
-        ) : null}
-
         {showOnboardingGuide && (
           <div className="bg-gradient-to-br from-[#0d1f3c] to-[#0a1628] border border-[#00d4ff]/20 rounded-xl p-6 mb-6">
             <p className="text-[#00d4ff] text-xs uppercase tracking-widest mb-4">
@@ -258,48 +244,40 @@ export default async function Dashboard({
           </div>
         )}
 
-        <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-            <BlockTrustBadge
-              size={80}
-              instanceId="dashboard-trustscore"
-              showWatermark={false}
-              className="shrink-0 self-center sm:self-start"
-            />
-            <div className="flex-1 min-w-0">
-              <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-                <h2 className="font-syne text-lg font-semibold tracking-tight text-white sm:text-xl">
-                  TrustScore
-                </h2>
-                <p className="font-mono text-sm tabular-nums" style={{ color: trustScoreColor }}>
-                  <span className="text-xl font-semibold">{trustScoreValue}</span>
-                  <span className="text-white/50">/100</span>
-                  <span className="ml-2 text-xs uppercase tracking-wider text-white/60">
-                    {trustScoreLabel}
-                  </span>
-                </p>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${trustScoreValue}%`,
-                    background: trustScoreColor,
-                  }}
-                />
-              </div>
-              {showKycTrustHint && (
-                <p className="mt-3 font-sans text-sm text-white/65">
-                  Vérifiez votre identité pour améliorer votre score
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
         <Suspense fallback={<KpiGridSkeleton />}>
           <StatsBlock />
         </Suspense>
+
+        {fraudAlertsWeek > 0 ? (
+          <div className="mb-6 flex items-start gap-4 rounded-xl border-2 border-[#E05252]/50 bg-[#E05252]/10 p-5">
+            <div className="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#E05252]/20">
+              <ShieldAlert className="h-5 w-5 text-[#E05252]" aria-hidden />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-syne mb-1 text-base font-bold text-[#E05252]">
+                Tentative de fraude détectée
+              </p>
+              <p className="text-sm leading-relaxed text-white/70">
+                {fraudAlertsWeek} tentative(s) d&apos;usurpation de votre identité ont été détectées ces
+                7 derniers jours. Quelqu&apos;un a essayé d&apos;utiliser un badge falsifié à votre nom.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Link
+                  href="/dashboard/certificates"
+                  className="flex items-center gap-1 text-sm font-semibold text-[#E05252] transition hover:text-white"
+                >
+                  Voir mes certificats →
+                </Link>
+                <a
+                  href="mailto:security@blocktrust.tech"
+                  className="text-sm text-white/40 transition hover:text-white/70"
+                >
+                  Signaler à BLOCKTRUST
+                </a>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {certificates.length > 0 && (
           <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
@@ -382,13 +360,51 @@ export default async function Dashboard({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <Suspense fallback={<CertificateTableSkeleton />}>
               <CertificateTable certificates={certificateTableItems} />
             </Suspense>
           </div>
-          <div>
+          <div className="flex flex-col gap-4 sm:gap-6 lg:col-span-1">
+            <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+                <BlockTrustBadge
+                  size={80}
+                  instanceId="dashboard-trustscore"
+                  showWatermark={false}
+                  className="shrink-0 self-center sm:self-start"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+                    <h2 className="font-syne text-lg font-semibold tracking-tight text-white sm:text-xl">
+                      TrustScore
+                    </h2>
+                    <p className="font-mono text-sm tabular-nums" style={{ color: trustScoreColor }}>
+                      <span className="text-xl font-semibold">{trustScoreValue}</span>
+                      <span className="text-white/50">/100</span>
+                      <span className="ml-2 text-xs uppercase tracking-wider text-white/60">
+                        {trustScoreLabel}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${trustScoreValue}%`,
+                        background: trustScoreColor,
+                      }}
+                    />
+                  </div>
+                  {showKycTrustHint && (
+                    <p className="mt-3 font-sans text-sm text-white/65">
+                      Vérifiez votre identité pour améliorer votre score
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
             <Suspense fallback={<ActivityFeedSkeleton />}>
               <ActivityFeed initialEvents={initialActivity} />
             </Suspense>
@@ -396,13 +412,14 @@ export default async function Dashboard({
         </div>
       </>
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Erreur dans Dashboard:', error);
+    const message = error instanceof Error ? error.message : 'Une erreur inattendue s\'est produite';
     return (
       <div className="p-8">
         <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
           <p className="text-red-400 font-semibold mb-2">Erreur lors du chargement du tableau de bord</p>
-          <p className="text-red-300 text-sm">{error?.message || 'Une erreur inattendue s\'est produite'}</p>
+          <p className="text-red-300 text-sm">{message}</p>
         </div>
       </div>
     );
