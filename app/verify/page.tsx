@@ -36,6 +36,57 @@ function isAbortError(e: unknown): boolean {
   );
 }
 
+/** URL absolue ou chemin relatif type /verify?… (base prod pour le parse). */
+function tryParseUserPastedUrl(input: string): URL | null {
+  const t = input.trim();
+  if (!t) return null;
+  try {
+    return new URL(t);
+  } catch {
+    try {
+      return new URL(t, "https://blocktrust.tech");
+    } catch {
+      return null;
+    }
+  }
+}
+
+function extractVtFromUrl(input: string): string | null {
+  const url = tryParseUserPastedUrl(input);
+  if (!url) return null;
+  const vt = url.searchParams.get("vt")?.trim();
+  return vt && vt.length > 0 ? vt : null;
+}
+
+function extractCertId(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return trimmed;
+
+  const url = tryParseUserPastedUrl(trimmed);
+  if (url) {
+    const certId = url.searchParams.get("certId")?.trim();
+    if (certId && certId.length > 0) return certId;
+
+    const segments = url.pathname.split("/").filter(Boolean);
+    const verifyIdx = segments.indexOf("verify");
+    if (verifyIdx >= 0 && segments[verifyIdx + 1]) {
+      const idSegment = segments[verifyIdx + 1];
+      if (idSegment !== "qr" && idSegment.length > 5) return idSegment;
+    }
+  }
+
+  const pathMatch = trimmed.match(/\/verify\/([^/?#\s]+)/);
+  if (
+    pathMatch?.[1] &&
+    pathMatch[1] !== "qr" &&
+    pathMatch[1].length > 5
+  ) {
+    return pathMatch[1];
+  }
+
+  return trimmed;
+}
+
 type Verdict =
   | "VALID"
   | "VALID_WITH_WARNING"
@@ -104,11 +155,14 @@ function VerifyContent() {
     const raw = manualIdInput.trim();
     if (!raw) return;
 
-    let id = raw;
-    const urlMatch = raw.match(/\/verify\/([^/?#\s]+)/);
-    if (urlMatch?.[1]) {
-      id = urlMatch[1];
+    const vt = extractVtFromUrl(raw);
+    if (vt) {
+      window.location.href = `/verify?vt=${encodeURIComponent(vt)}`;
+      return;
     }
+
+    const id = extractCertId(raw);
+    if (!id) return;
 
     window.location.href = `/verify?certId=${encodeURIComponent(id)}`;
   };
