@@ -11,12 +11,12 @@ import Link from "next/link";
 import {
   AlertCircle,
   Building2,
+  Check,
   Copy,
   Inbox,
   Plus,
-  Search,
-  Smartphone,
   User,
+  Smartphone,
 } from "lucide-react";
 import { UpgradePrompt } from "@/app/components/ui/UpgradePrompt";
 import { buildUpgradePromptProps } from "@/lib/upgradePromptProps";
@@ -60,6 +60,7 @@ export default function CertificatesPage() {
     plan: string;
     max: number;
   } | null>(null);
+  const [copiedCertId, setCopiedCertId] = useState<string | null>(null);
 
   useEffect(() => {
     if (sessionStatus === "loading") {
@@ -123,8 +124,8 @@ export default function CertificatesPage() {
       );
       
       setCertificates(certificatesWithTrustScore);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Erreur");
     } finally {
       setLoading(false);
     }
@@ -174,16 +175,17 @@ export default function CertificatesPage() {
     }
   };
 
-  const handleVerify = (certificate: Certificate) => {
-    const verifyUrl = certificate.publicId 
-      ? `${window.location.origin}/verify/${certificate.publicId}`
-      : `${window.location.origin}/verify/${certificate.id}`;
-    window.open(verifyUrl, "_blank");
+  const handleCopyVerifyLink = (certificate: Certificate) => {
+    const certId = certificate.publicId || certificate.id;
+    const url = `https://blocktrust.tech/verify?certId=${encodeURIComponent(certId)}`;
+    void navigator.clipboard.writeText(url);
+    setCopiedCertId(certificate.id);
+    setTimeout(() => setCopiedCertId(null), 2000);
   };
 
   const handleCopyEmbed = (certificate: Certificate) => {
     const badgeId = certificate.publicId || certificate.id;
-    const embedCode = `<a href="${window.location.origin}/verify/${badgeId}" target="_blank" rel="noopener noreferrer" title="Vérifier sur BlockTrust">
+    const embedCode = `<a href="${window.location.origin}/verify?certId=${encodeURIComponent(badgeId)}" target="_blank" rel="noopener noreferrer" title="Vérifier sur BlockTrust">
   <img src="${window.location.origin}/api/badge/${badgeId}" alt="Badge BlockTrust vérifié" width="150" height="200" />
 </a>`;
     navigator.clipboard.writeText(embedCode);
@@ -327,11 +329,20 @@ export default function CertificatesPage() {
                     <>
                       <button
                         type="button"
-                        onClick={() => handleVerify(certificate)}
+                        onClick={() => handleCopyVerifyLink(certificate)}
                         className="inline-flex items-center gap-2 rounded-lg bg-bt-cyan/20 px-4 py-2 text-sm font-medium text-bt-cyan transition hover:bg-bt-cyan/30"
                       >
-                        <Search className="h-4 w-4 shrink-0" aria-hidden />
-                        Vérifier
+                        {copiedCertId === certificate.id ? (
+                          <>
+                            <Check className="h-4 w-4 shrink-0" aria-hidden />
+                            Lien copié !
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-4 w-4 shrink-0" aria-hidden />
+                            Copier le lien de vérification
+                          </>
+                        )}
                       </button>
                       <button
                         type="button"

@@ -61,11 +61,6 @@ export default function CertificateBadgeSection({
   style="border: none; background: transparent;">
 </iframe>`
 
-  const verifyPageUrl =
-    signature?.jti && signature?.contextHash
-      ? `${baseUrl}/verify/${signature.jti}?h=${signature.contextHash}`
-      : `${baseUrl}/verify/${badgeId}`
-
   const copyScript = () => {
     navigator.clipboard.writeText(scriptCode).then(() => {
       setScriptCopied(true)
@@ -322,13 +317,13 @@ export default function CertificateBadgeSection({
             </div>
             <div className="mt-1 w-full max-w-full shrink-0 px-4 sm:px-8">
               <div className="mx-auto w-full" style={{ maxWidth: dims.w }}>
-                <VerifyBadgeButton certId={badgeId} href={verifyPageUrl} />
+                <VerifyBadgeButton certId={badgeId} behavior="copy" />
               </div>
             </div>
           </div>
-          <p className="text-sm text-gray-400 mt-4 text-center">
-            Voici comment votre badge apparaîtra sur votre site web. Utilisez le bouton pour ouvrir la vérification
-            officielle (même lien que le QR).
+          <p className="mt-4 text-center text-sm text-gray-400">
+            Aperçu du badge tel qu’affiché sur votre site. Utilisez le bouton pour copier le lien public de
+            vérification (identique au flux sans compte).
           </p>
         </div>
       </div>

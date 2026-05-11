@@ -71,12 +71,13 @@ export default async function CertificateDetailPage({
       signature?.dynamicToken &&
       signature?.tokenExpiry &&
       signature.tokenExpiry > now;
-    const verifyUrl =
-      signature?.jti && signature?.contextHash
-        ? useDynamicQr
-          ? `${baseUrl}/verify/qr/${signature.dynamicToken}?h=${signature.contextHash}`
-          : `${baseUrl}/verify/${signature.jti}?h=${signature.contextHash}`
-        : `${baseUrl}/verify/${certificate.publicId || certificate.id}`;
+    const certKey = certificate.publicId || certificate.id;
+    const publicVerifyUrl = `${baseUrl}/verify?certId=${encodeURIComponent(certKey)}`;
+    const verifyUrl = useDynamicQr
+      ? signature?.contextHash
+        ? `${baseUrl}/verify/qr/${signature.dynamicToken}?h=${signature.contextHash}`
+        : `${baseUrl}/verify/qr/${signature.dynamicToken}`
+      : publicVerifyUrl;
     const badgeId = certificate.publicId || certificate.id;
     const badgeUrl = `${baseUrl}/api/badge/${badgeId}`;
 
@@ -310,7 +311,10 @@ export default async function CertificateDetailPage({
                     <QRCodeImage url={verifyUrl} size={200} />
                   </div>
                 </div>
-                <VerifyBadgeButton certId={certificate.publicId || certificate.id} />
+                <VerifyBadgeButton
+                  certId={certificate.publicId || certificate.id}
+                  behavior="copy"
+                />
               </div>
               <CertificateDetailClient verifyUrl={verifyUrl} />
             </div>
@@ -390,13 +394,14 @@ export default async function CertificateDetailPage({
         </div>
       </div>
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Erreur dans CertificateDetailPage:', error);
+    const message = error instanceof Error ? error.message : 'Une erreur inattendue s\'est produite';
     return (
       <div className="p-8">
         <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
           <p className="text-red-400 font-semibold mb-2">Erreur lors du chargement du certificat</p>
-          <p className="text-red-300 text-sm">{error?.message || 'Une erreur inattendue s\'est produite'}</p>
+          <p className="text-red-300 text-sm">{message}</p>
         </div>
       </div>
     );

@@ -9,6 +9,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
+import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
 import { Copy, Download, ExternalLink, Check, Link2, Clock } from 'lucide-react'
 
 interface BadgeData {
@@ -41,7 +42,6 @@ export default function DashboardBadgePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [embedCopied, setEmbedCopied] = useState(false)
-  const [verifyPublicLinkCopied, setVerifyPublicLinkCopied] = useState(false)
   const [verifyLink, setVerifyLink] = useState<{ url: string; expiresAt: string } | null>(null)
   const [generating, setGenerating] = useState(false)
 
@@ -180,7 +180,7 @@ export default function DashboardBadgePage() {
   }
 
   const badgeId = badgeData.publicId || badgeData.id
-  const verifyUrl = `${window.location.origin}/verify?certId=${encodeURIComponent(badgeId)}`
+  const publicVerifyHref = `https://blocktrust.tech/verify?certId=${encodeURIComponent(badgeId)}`
 
   return (
     <>
@@ -258,32 +258,7 @@ export default function DashboardBadgePage() {
           </div>
 
           <div className="w-full flex-1 space-y-3">
-            <button
-              type="button"
-              onClick={() => {
-                void navigator.clipboard.writeText(verifyUrl)
-                setVerifyPublicLinkCopied(true)
-                setTimeout(() => setVerifyPublicLinkCopied(false), 2000)
-              }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#00d4ff]/30 bg-[#00d4ff]/10 py-3 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/20"
-            >
-              {verifyPublicLinkCopied ? (
-                <>
-                  <Check className="h-4 w-4 shrink-0" aria-hidden />
-                  Lien copié !
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4 shrink-0" aria-hidden />
-                  Copier le lien de vérification
-                </>
-              )}
-            </button>
-
-            <p className="mt-2 text-center text-xs leading-relaxed text-white/30">
-              Partagez ce lien à vos interlocuteurs — ils vérifieront votre identité en 1 clic, sans compte
-              BLOCKTRUST.
-            </p>
+            <VerifyBadgeButton certId={badgeId} behavior="copy" />
 
             <button
               type="button"
@@ -375,7 +350,7 @@ export default function DashboardBadgePage() {
           <div>
             <p className="mb-2 text-base font-medium text-white/60">Lien de vérification</p>
             <a
-              href={verifyUrl}
+            href={publicVerifyHref}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-sm text-bt-cyan hover:text-bt-cyan/90"
