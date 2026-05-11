@@ -261,6 +261,25 @@ h5, h6 {
   100% { transform: translateX(90px); opacity: 0; }
 }
 
+/* Carte badge Lovable — taches de fond + bouclier */
+@keyframes bt-rotate-cw-anim {
+  from { transform: rotate(0deg) scale(1); }
+  50%  { transform: rotate(180deg) scale(1.1); }
+  to   { transform: rotate(360deg) scale(1); }
+}
+.bt-rotate-cw {
+  animation: bt-rotate-cw-anim 12s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes bt-float-anim {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+.bt-float {
+  animation: bt-float-anim 3s ease-in-out infinite;
+}
+
 .bt-font-mono {
   font-family: 'IBM Plex Mono', 'Courier New', monospace;
 }
@@ -365,6 +384,8 @@ h5, h6 {
   .bt-anim-shield-glow,
   .bt-anim-shimmer,
   .bt-anim-film,
+  .bt-rotate-cw,
+  .bt-float,
   .howto-typing,
   .howto-typing--done,
   .howto-cursor,
