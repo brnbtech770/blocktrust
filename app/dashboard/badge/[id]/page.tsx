@@ -10,7 +10,7 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
-import { Copy, Download, ExternalLink, Check, ScanLine } from 'lucide-react'
+import { Copy, Download, ExternalLink, Check, ScanLine, Link2, Clock } from 'lucide-react'
 
 interface BadgeData {
   id: string
@@ -42,6 +42,8 @@ export default function DashboardBadgePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [verifyLink, setVerifyLink] = useState<{ url: string; expiresAt: string } | null>(null)
+  const [generating, setGenerating] = useState(false)
 
   useEffect(() => {
     if (sessionStatus === 'loading') return
@@ -144,6 +146,39 @@ export default function DashboardBadgePage() {
     document.body.removeChild(link)
   }
 
+  const handleGenerateSecureLink = async () => {
+    if (!badgeData) return
+    setGenerating(true)
+    setVerifyLink(null)
+    try {
+      const res = await fetch(
+        `/api/certificates/${encodeURIComponent(badgeData.id)}/verify-link`,
+        { credentials: 'include' },
+      )
+      const data = (await res.json()) as {
+        verifyUrl?: string
+        expiresAt?: string
+        message?: string
+        error?: string
+      }
+      if (!res.ok) {
+        alert(
+          typeof data.message === 'string'
+            ? data.message
+            : 'Impossible de générer le lien sécurisé.',
+        )
+        return
+      }
+      if (data.verifyUrl && data.expiresAt) {
+        setVerifyLink({ url: data.verifyUrl, expiresAt: data.expiresAt })
+      }
+    } catch {
+      alert('Erreur réseau.')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   if (sessionStatus === 'loading' || loading) {
     return (
       <div className="flex justify-center py-20">
@@ -244,6 +279,46 @@ export default function DashboardBadgePage() {
               <ScanLine className="h-4 w-4 shrink-0" aria-hidden />
               Vérifier ce badge
             </Link>
+            <button
+              type="button"
+              onClick={handleGenerateSecureLink}
+              disabled={generating}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-[#BDA76B]/30 bg-[#BDA76B]/10 py-2.5 text-sm font-semibold text-[#BDA76B] transition hover:bg-[#BDA76B]/20 disabled:opacity-50"
+            >
+              <Link2 className="h-4 w-4 shrink-0" aria-hidden />
+              {generating ? 'Génération...' : 'Lien sécurisé 24h'}
+            </button>
+            {verifyLink ? (
+              <div className="mt-3 rounded-lg bg-black/20 p-3">
+                <p className="mb-2 flex items-center gap-1 text-xs text-white/40">
+                  <Clock className="h-3 w-3 shrink-0" aria-hidden />
+                  Expire le{' '}
+                  {new Date(verifyLink.expiresAt).toLocaleDateString('fr-FR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 break-all font-mono text-xs text-white/60">
+                    {verifyLink.url}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={() => void navigator.clipboard.writeText(verifyLink.url)}
+                    className="shrink-0 rounded p-1 text-[#00d4ff] transition hover:bg-white/5"
+                    aria-label="Copier le lien"
+                  >
+                    <Copy className="h-4 w-4" aria-hidden />
+                  </button>
+                </div>
+                <p className="mt-2 text-xs italic text-white/20">
+                  Lien unique — générez-en un nouveau pour chaque envoi
+                </p>
+              </div>
+            ) : null}
           </div>
           <div className="min-w-0 flex-1">
             <p className="mb-4 text-base text-white/60">

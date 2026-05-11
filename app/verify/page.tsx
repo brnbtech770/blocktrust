@@ -68,6 +68,11 @@ function VerifyContent() {
   const router = useRouter();
   const sp = useSearchParams();
   const certIdQuery = sp.get("certId")?.trim() ?? "";
+  const vtQuery = sp.get("vt")?.trim() ?? "";
+  const [resolvedVtCertId, setResolvedVtCertId] = useState<string | null>(null);
+  const [vtResolveStatus, setVtResolveStatus] = useState<
+    "idle" | "loading" | "ok" | "error"
+  >("idle");
   const [token, setToken] = useState("");
   const [tokenFixApplied, setTokenFixApplied] = useState(false);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
@@ -111,7 +116,7 @@ function VerifyContent() {
       return;
     }
 
-    if (certIdQuery) {
+    if (certIdQuery || vtQuery) {
       setToken("");
       return;
     }
@@ -126,7 +131,53 @@ function VerifyContent() {
         setTokenFixApplied(true);
       }
     }
-  }, [sp, certIdQuery]);
+  }, [sp, certIdQuery, vtQuery]);
+
+  useEffect(() => {
+    if (!vtQuery) {
+      setResolvedVtCertId(null);
+      setVtResolveStatus("idle");
+      return;
+    }
+
+    const ac = new AbortController();
+    let cancelled = false;
+
+    setVtResolveStatus("loading");
+    setResolvedVtCertId(null);
+
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/verify/resolve-token?vt=${encodeURIComponent(vtQuery)}`,
+          { signal: ac.signal },
+        );
+        const data = (await res.json()) as { certId?: string; error?: string };
+        if (cancelled) return;
+        if (typeof data.certId === "string" && data.certId.length > 0) {
+          setResolvedVtCertId(data.certId);
+          setVtResolveStatus("ok");
+        } else {
+          setVtResolveStatus("error");
+        }
+      } catch (e: unknown) {
+        if (cancelled) return;
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        setVtResolveStatus("error");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      ac.abort();
+    };
+  }, [vtQuery]);
+
+  const certIdForVerify = vtQuery
+    ? vtResolveStatus === "ok" && resolvedVtCertId
+      ? resolvedVtCertId
+      : ""
+    : certIdQuery;
 
   useEffect(() => {
     if (!token) return;
@@ -187,7 +238,7 @@ function VerifyContent() {
   }, [token, context]);
 
   useEffect(() => {
-    if (token || !certIdQuery) return;
+    if (token || !certIdForVerify) return;
 
     setVerdict(null);
     setEntityName(null);
@@ -203,7 +254,7 @@ function VerifyContent() {
 
     void (async () => {
       try {
-        const res = await fetch(`/api/public/certificate/${encodeURIComponent(certIdQuery)}`, {
+        const res = await fetch(`/api/public/certificate/${encodeURIComponent(certIdForVerify)}`, {
           signal: ac.signal,
         });
         const data = (await res.json()) as VerifyApiSuccess;
@@ -239,7 +290,7 @@ function VerifyContent() {
       cancelled = true;
       ac.abort();
     };
-  }, [token, certIdQuery]);
+  }, [token, certIdForVerify]);
 
   const dateLabel = formatCertifiedDate(certifiedAt);
   const displayName = entityName?.trim() || "Titulaire certifié";
@@ -254,8 +305,15 @@ function VerifyContent() {
     verdict === "FRAUD" ||
     verdict === "ERROR";
 
-  const activeQuery = Boolean(token || certIdQuery);
-  const showManualVerifier = !activeQuery;
+  const activeQuery = Boolean(
+    token ||
+      certIdForVerify ||
+      (vtQuery && (vtResolveStatus === "loading" || vtResolveStatus === "ok")),
+  );
+  const showManualVerifier =
+    !token &&
+    !certIdForVerify &&
+    !(vtQuery && vtResolveStatus === "loading");
 
   const resetVerification = () => {
     setVerdict(null);
@@ -316,7 +374,7 @@ function VerifyContent() {
           </div>
         ) : null}
 
-        {!token && !certIdQuery && (
+        {!token && !certIdQuery && !vtQuery && (
           <div className="mx-auto mt-10 max-w-md text-center">
             <ShieldAlert className="mx-auto mb-4 h-10 w-10 text-[#00d4ff]/50" aria-hidden />
             <p className="font-syne text-lg text-[#00d4ff]/90">
@@ -329,6 +387,19 @@ function VerifyContent() {
           </div>
         )}
 
+        {vtQuery && vtResolveStatus === "error" ? (
+          <div className="mx-auto mt-10 max-w-md text-center">
+            <Clock className="mx-auto mb-4 h-10 w-10 text-[#f59e0b]/70" aria-hidden />
+            <p className="font-syne text-lg text-[#f59e0b]">
+              Lien expiré ou invalide
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-white/45">
+              Ce lien sécurisé n&apos;est plus valide ou a déjà été utilisé. Demandez un nouveau lien à l&apos;émetteur du
+              badge.
+            </p>
+          </div>
+        ) : null}
+
         {tokenFixApplied ? (
           <div
             role="status"
@@ -338,7 +409,8 @@ function VerifyContent() {
           </div>
         ) : null}
 
-        {(token || certIdQuery) && !verdict ? (
+        {(token || certIdForVerify || (vtQuery && vtResolveStatus === "loading")) &&
+        !verdict ? (
           <div className="mt-12 flex flex-col items-center gap-4">
             <div
               className="h-16 w-16 animate-spin rounded-full border-2 border-[#00d4ff]/30 border-t-[#00d4ff]"
