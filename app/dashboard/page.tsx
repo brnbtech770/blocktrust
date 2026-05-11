@@ -360,14 +360,9 @@ export default async function Dashboard({
           </div>
         </div>
 
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <Suspense fallback={<CertificateTableSkeleton />}>
-              <CertificateTable certificates={certificateTableItems} />
-            </Suspense>
-          </div>
-          <div className="flex flex-col gap-4 sm:gap-6 lg:col-span-1">
-            <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
+        <div className="mb-6 space-y-4 sm:mb-8 sm:space-y-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+            <div className="min-w-0 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
                 <BlockTrustBadge
                   size={80}
@@ -405,8 +400,15 @@ export default async function Dashboard({
                 </div>
               </div>
             </div>
-            <Suspense fallback={<ActivityFeedSkeleton />}>
-              <ActivityFeed initialEvents={initialActivity} />
+            <div className="min-w-0">
+              <Suspense fallback={<ActivityFeedSkeleton />}>
+                <ActivityFeed initialEvents={initialActivity} />
+              </Suspense>
+            </div>
+          </div>
+          <div className="min-w-0 w-full">
+            <Suspense fallback={<CertificateTableSkeleton />}>
+              <CertificateTable certificates={certificateTableItems} />
             </Suspense>
           </div>
         </div>
