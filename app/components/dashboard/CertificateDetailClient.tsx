@@ -6,6 +6,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Copy, Download, Loader2, ClipboardCheck, OctagonAlert } from 'lucide-react'
 
 type CertificateDetailClientProps = {
   verifyUrl?: string
@@ -26,14 +27,12 @@ export default function CertificateDetailClient({
     if (!verifyUrl) return
 
     try {
-      // Générer le QR code en PNG
       const QRCode = (await import('qrcode')).default
       const dataUrl = await QRCode.toDataURL(verifyUrl, {
         width: 500,
         margin: 2,
       })
 
-      // Créer un lien de téléchargement
       const link = document.createElement('a')
       link.download = `blocktrust-qrcode-${Date.now()}.png`
       link.href = dataUrl
@@ -48,7 +47,6 @@ export default function CertificateDetailClient({
     if (!verifyUrl) return
 
     try {
-      // Générer le QR code en SVG
       const QRCode = (await import('qrcode')).default
       const svg = await QRCode.toString(verifyUrl, {
         type: 'svg',
@@ -56,7 +54,6 @@ export default function CertificateDetailClient({
         margin: 2,
       })
 
-      // Créer un blob et télécharger
       const blob = new Blob([svg], { type: 'image/svg+xml' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
@@ -103,10 +100,10 @@ export default function CertificateDetailClient({
         throw new Error(data.error || 'Erreur lors de la révocation')
       }
 
-      // Rafraîchir la page
       router.refresh()
-    } catch (error: any) {
-      alert(`Erreur : ${error.message}`)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Erreur'
+      alert(`Erreur : ${msg}`)
     } finally {
       setRevoking(false)
     }
@@ -117,36 +114,62 @@ export default function CertificateDetailClient({
       {verifyUrl && (
         <div className="flex gap-3">
           <button
+            type="button"
             onClick={handleDownloadQR}
-            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gray-700 py-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-gray-600"
           >
-            📥 Télécharger PNG
+            <Download className="h-4 w-4 shrink-0" aria-hidden />
+            Télécharger PNG
           </button>
           <button
+            type="button"
             onClick={handleDownloadSVG}
-            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gray-700 py-2 px-4 text-sm font-semibold text-white transition-colors hover:bg-gray-600"
           >
-            📥 Télécharger SVG
+            <Download className="h-4 w-4 shrink-0" aria-hidden />
+            Télécharger SVG
           </button>
         </div>
       )}
 
       {htmlCode && (
         <button
+          type="button"
           onClick={handleCopyHTML}
-          className="w-full rounded-lg bg-bt-cyan py-2.5 px-4 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-bt-cyan py-2.5 px-4 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
         >
-          {copied ? '✓ Code copié !' : '📋 Copier le code HTML'}
+          {copied ? (
+            <>
+              <ClipboardCheck className="h-4 w-4 shrink-0" aria-hidden />
+              Code copié !
+            </>
+          ) : (
+            <>
+              <Copy className="h-4 w-4 shrink-0" aria-hidden />
+              Copier le code HTML
+            </>
+          )}
         </button>
       )}
 
       {certificateId && (
         <button
+          type="button"
           onClick={handleRevoke}
           disabled={revoking}
-          className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 rounded-lg transition-colors font-semibold py-2.5 px-4 disabled:opacity-50"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/50 bg-red-500/20 py-2.5 px-4 font-semibold text-red-400 transition-colors hover:bg-red-500/30 disabled:opacity-50"
         >
-          {revoking ? '⏳ Révocation...' : '🚫 Révoquer ce certificat'}
+          {revoking ? (
+            <>
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
+              Révocation...
+            </>
+          ) : (
+            <>
+              <OctagonAlert className="h-4 w-4 shrink-0" aria-hidden />
+              Révoquer ce certificat
+            </>
+          )}
         </button>
       )}
     </div>

@@ -6,6 +6,12 @@ import { prisma } from "@/app/lib/db";
 import { auth } from "@/app/lib/auth-server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  XCircle,
+} from "lucide-react";
 import QRCodeImage from "@/app/components/QRCode";
 import VerifyBadgeButton from "@/app/components/VerifyBadgeButton";
 import CertificateDetailClient from "@/app/components/dashboard/CertificateDetailClient";
@@ -356,11 +362,28 @@ export default async function CertificateDetailPage({
                       className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3"
                     >
                       <div>
-                        <p className="text-white text-sm font-semibold">
-                          {verification.result === 'VALID' ? '✅ Vérification valide' : 
-                           verification.result === 'REVOKED' ? '❌ Certificat révoqué' : 
-                           verification.result === 'EXPIRED' ? '⏰ Certificat expiré' : 
-                           '⚠️ Vérification suspecte'}
+                        <p className="flex items-center gap-2 text-sm font-semibold text-white">
+                          {verification.result === "VALID" ? (
+                            <>
+                              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" aria-hidden />
+                              Vérification valide
+                            </>
+                          ) : verification.result === "REVOKED" ? (
+                            <>
+                              <XCircle className="h-4 w-4 shrink-0 text-red-400" aria-hidden />
+                              Certificat révoqué
+                            </>
+                          ) : verification.result === "EXPIRED" ? (
+                            <>
+                              <Clock className="h-4 w-4 shrink-0 text-amber-400" aria-hidden />
+                              Certificat expiré
+                            </>
+                          ) : (
+                            <>
+                              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-400" aria-hidden />
+                              Vérification suspecte
+                            </>
+                          )}
                         </p>
                         <p className="text-gray-400 text-xs mt-1">
                           {new Date(verification.verifiedAt).toLocaleDateString('fr-FR', {
