@@ -67,7 +67,7 @@ export default async function BadgePage({
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const certIdForVerify = certificate.publicId || certificate.id;
-  const verifyUrl = `${baseUrl}/verify/${certIdForVerify}`;
+  const verifyUrl = `${baseUrl}/verify?certId=${encodeURIComponent(certIdForVerify)}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-blue-950 flex items-center justify-center p-4">
