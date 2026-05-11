@@ -10,7 +10,7 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
-import { Copy, Download, ExternalLink, Check } from 'lucide-react'
+import { Copy, Download, ExternalLink, Check, ScanLine } from 'lucide-react'
 
 interface BadgeData {
   id: string
@@ -237,6 +237,13 @@ export default function DashboardBadgePage() {
               />
             </div>
             <VerifyBadgeButton certId={badgeId} />
+            <Link
+              href={`/verify?certId=${encodeURIComponent(badgeData.publicId || badgeData.id)}`}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#00d4ff]/30 bg-[#00d4ff]/10 py-2.5 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/20"
+            >
+              <ScanLine className="h-4 w-4 shrink-0" aria-hidden />
+              Vérifier ce badge
+            </Link>
           </div>
           <div className="min-w-0 flex-1">
             <p className="mb-4 text-base text-white/60">
