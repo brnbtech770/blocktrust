@@ -99,6 +99,8 @@ export async function POST(req: NextRequest) {
       process.env.STRIPE_PRICE_FAMILLE_YEARLY,
       process.env.STRIPE_PRICE_FAMILLE_PLUS_MONTHLY,
       process.env.STRIPE_PRICE_FAMILLE_PLUS_YEARLY,
+      process.env.STRIPE_PRICE_SOLO_PRO_MONTHLY,
+      process.env.STRIPE_PRICE_SOLO_PRO_YEARLY,
       process.env.STRIPE_PRICE_STARTER_MONTHLY,
       process.env.STRIPE_PRICE_STARTER_YEARLY,
       process.env.STRIPE_PRICE_TEAM_MONTHLY,
