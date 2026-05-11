@@ -10,7 +10,7 @@ import { auth } from "@/app/lib/auth-server";
 import { isAdmin } from "@/app/lib/admin";
 import { getVerifyQuotaDisplay } from "@/lib/verify-quotas";
 import Link from "next/link";
-import { Plus, Shield, ShieldAlert } from "lucide-react";
+import { Plus, Shield, ShieldAlert, Sparkles, Check } from "lucide-react";
 import VerifyBadgeCard from "@/app/components/dashboard/VerifyBadgeCard";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 import type { CertificateTableItem, VerificationEvent } from "@/types/dashboard";
@@ -178,7 +178,9 @@ export default async function Dashboard({
         {showSuccessMessage && (
           <div className="mb-4 sm:mb-6 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg transition-all hover:border-gold/30 sm:p-6">
             <div className="flex items-start gap-3 sm:gap-4">
-              <div className="text-3xl sm:text-4xl shrink-0">🎉</div>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#BDA76B]/30 bg-[#BDA76B]/10">
+                <Sparkles className="h-4 w-4 text-[#BDA76B]" aria-hidden />
+              </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-syne text-xl font-semibold text-white sm:text-2xl mb-2">
                   Certificat créé avec succès !
@@ -312,7 +314,10 @@ export default async function Dashboard({
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
               <div className="rounded-lg border border-bt-cyan/30 bg-bt-cyan/5 px-4 py-3">
-                <p className="text-xs uppercase tracking-wider text-white/50">Ancrés ✓</p>
+                <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-white/50">
+                  <Check className="h-3.5 w-3.5 text-bt-cyan" strokeWidth={2.5} aria-hidden />
+                  Ancrés
+                </p>
                 <p className="mt-1 font-mono text-2xl font-semibold text-bt-cyan">
                   {blockchainStats.anchored}
                 </p>

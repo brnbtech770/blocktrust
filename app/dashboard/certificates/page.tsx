@@ -8,6 +8,16 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import {
+  AlertCircle,
+  Building2,
+  Copy,
+  Inbox,
+  Plus,
+  Search,
+  Smartphone,
+  User,
+} from "lucide-react";
 import { UpgradePrompt } from "@/app/components/ui/UpgradePrompt";
 import { buildUpgradePromptProps } from "@/lib/upgradePromptProps";
 
@@ -130,17 +140,37 @@ export default function CertificatesPage() {
   const getStatusBadge = (status: CertificateStatus) => {
     switch (status) {
       case "PENDING":
-        return { emoji: "🟡", label: "Non vérifié", color: "bg-yellow-500/20 text-yellow-400" };
+        return {
+          label: "Non vérifié",
+          color: "bg-yellow-500/20 text-yellow-400",
+          dotClass: "bg-yellow-400",
+        };
       case "ACTIVE":
       case "ANCHORED":
-        return { emoji: "🟢", label: "Actif", color: "bg-bt-cyan/20 text-bt-cyan" };
+        return {
+          label: "Actif",
+          color: "bg-bt-cyan/20 text-bt-cyan",
+          dotClass: "bg-bt-cyan",
+        };
       case "SUSPENDED":
-        return { emoji: "🟠", label: "Suspendu", color: "bg-orange-500/20 text-orange-400" };
+        return {
+          label: "Suspendu",
+          color: "bg-orange-500/20 text-orange-400",
+          dotClass: "bg-orange-400",
+        };
       case "REVOKED":
       case "EXPIRED":
-        return { emoji: "🔴", label: "Révoqué", color: "bg-red-500/20 text-red-400" };
+        return {
+          label: "Révoqué",
+          color: "bg-red-500/20 text-red-400",
+          dotClass: "bg-red-400",
+        };
       default:
-        return { emoji: "⚪", label: status, color: "bg-white/10 text-white/60" };
+        return {
+          label: status,
+          color: "bg-white/10 text-white/60",
+          dotClass: "bg-white/50",
+        };
     }
   };
 
@@ -181,8 +211,9 @@ export default function CertificatesPage() {
 
   if (error) {
     return (
-      <div className="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-lg mb-6">
-        ❌ {error}
+      <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-500/40 bg-red-500/20 p-4 text-red-400">
+        <AlertCircle className="h-5 w-5 shrink-0" aria-hidden />
+        <span className="text-sm">{error}</span>
       </div>
     );
   }
@@ -213,9 +244,10 @@ export default function CertificatesPage() {
         </div>
         <Link
           href="/dashboard/create"
-          className="inline-flex w-full shrink-0 items-center justify-center rounded-lg bg-bt-cyan px-3 py-2 text-center text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:px-6 sm:py-3 sm:text-base"
+          className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-bt-cyan px-3 py-2 text-center text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:px-6 sm:py-3 sm:text-base"
         >
-          + Créer un certificat
+          <Plus className="h-5 w-5 shrink-0" aria-hidden />
+          Créer un certificat
         </Link>
       </div>
 
@@ -236,12 +268,28 @@ export default function CertificatesPage() {
                     <h3 className="font-syne text-xl font-semibold text-white sm:text-2xl mb-2">
                       {entityName}
                     </h3>
-                    <div className="flex items-center gap-4 mb-2">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusBadge.color}`}>
-                        {statusBadge.emoji} {statusBadge.label}
+                    <div className="mb-2 flex flex-wrap items-center gap-4">
+                      <span
+                        className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${statusBadge.color}`}
+                      >
+                        <span
+                          className={`h-2 w-2 shrink-0 rounded-full ${statusBadge.dotClass}`}
+                          aria-hidden
+                        />
+                        {statusBadge.label}
                       </span>
-                      <span className="text-gray-400 text-sm">
-                        {certificate.entity.entityType === "INDIVIDUAL" ? "👤 Particulier" : "🏢 Entreprise"}
+                      <span className="inline-flex items-center gap-1.5 text-sm text-white/50">
+                        {certificate.entity.entityType === "INDIVIDUAL" ? (
+                          <>
+                            <User className="h-4 w-4 shrink-0 text-bt-cyan/90" aria-hidden />
+                            Particulier
+                          </>
+                        ) : (
+                          <>
+                            <Building2 className="h-4 w-4 shrink-0 text-bt-gold/90" aria-hidden />
+                            Entreprise
+                          </>
+                        )}
                       </span>
                     </div>
                     {certificate.trustScore && (
@@ -276,23 +324,26 @@ export default function CertificatesPage() {
                       <button
                         type="button"
                         onClick={() => handleVerify(certificate)}
-                        className="rounded-lg bg-bt-cyan/20 px-4 py-2 text-sm font-medium text-bt-cyan transition hover:bg-bt-cyan/30"
+                        className="inline-flex items-center gap-2 rounded-lg bg-bt-cyan/20 px-4 py-2 text-sm font-medium text-bt-cyan transition hover:bg-bt-cyan/30"
                       >
-                        🔍 Vérifier
+                        <Search className="h-4 w-4 shrink-0" aria-hidden />
+                        Vérifier
                       </button>
                       <button
                         type="button"
                         onClick={() => handleCopyEmbed(certificate)}
-                        className="rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40"
+                        className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40"
                       >
-                        📋 Copier embed
+                        <Copy className="h-4 w-4 shrink-0" aria-hidden />
+                        Copier embed
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDownloadQR(certificate)}
-                        className="rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40"
+                        className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40"
                       >
-                        📱 QR Code
+                        <Smartphone className="h-4 w-4 shrink-0" aria-hidden />
+                        QR Code
                       </button>
                     </>
                   ) : certificate.status === "PENDING" ? (
@@ -318,7 +369,7 @@ export default function CertificatesPage() {
         </div>
       ) : (
         <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-lg transition-all hover:border-gold/30">
-          <div className="mb-4 text-6xl">📭</div>
+          <Inbox className="mx-auto mb-4 h-12 w-12 text-white/20" aria-hidden />
           <h3 className="font-syne mb-2 text-xl font-semibold text-white sm:text-2xl">Aucun certificat</h3>
           <p className="mb-6 font-sans text-base text-white/80">Créez votre premier certificat pour commencer</p>
           <Link

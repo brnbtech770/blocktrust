@@ -5,7 +5,66 @@
 import { prisma } from "@/app/lib/db";
 import { auth } from "@/app/lib/auth-server";
 import Link from "next/link";
+import {
+  AlertTriangle,
+  Building2,
+  CheckCircle,
+  Clock,
+  Inbox,
+  Plus,
+  RefreshCw,
+  User,
+  XCircle,
+} from "lucide-react";
 import { walletNetworkLabelFr } from "@/lib/wallet-validation";
+
+function KycStatusBadge({ status }: { status: string }) {
+  const base =
+    "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold";
+  if (status === "VERIFIED") {
+    return (
+      <span className={`${base} bg-green-500/20 text-green-400`}>
+        <CheckCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        Validé
+      </span>
+    );
+  }
+  if (status === "PENDING") {
+    return (
+      <span className={`${base} bg-yellow-500/20 text-yellow-400`}>
+        <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        En cours de vérification
+      </span>
+    );
+  }
+  if (status === "IN_PROGRESS") {
+    return (
+      <span className={`${base} bg-yellow-500/20 text-yellow-400`}>
+        <RefreshCw className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        En cours de vérification
+      </span>
+    );
+  }
+  if (status === "REJECTED") {
+    return (
+      <span className={`${base} bg-red-500/20 text-red-400`}>
+        <XCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        Rejeté
+      </span>
+    );
+  }
+  if (status === "EXPIRED") {
+    return (
+      <span className={`${base} bg-orange-500/20 text-orange-400`}>
+        <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        Expiré
+      </span>
+    );
+  }
+  return (
+    <span className={`${base} bg-gray-500/20 text-gray-400`}>{status}</span>
+  );
+}
 
 export default async function EntitiesPage() {
   const session = await auth();
@@ -43,9 +102,11 @@ export default async function EntitiesPage() {
   return (
     <>
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="mb-2 text-4xl font-bold tracking-tight text-white drop-shadow-none">Mes Contacts</h1>
+          <h1 className="font-syne mb-2 text-4xl font-bold tracking-tight text-white drop-shadow-none">
+            Mes Contacts
+          </h1>
           <p className="text-base text-gray-400 max-w-2xl mb-1">
             Personnes ou entreprises que vous certifiez dans votre réseau BlockTrust.
           </p>
@@ -55,14 +116,16 @@ export default async function EntitiesPage() {
         </div>
         <Link
           href="/dashboard/create"
-          className={`font-bold py-3 px-6 rounded-lg transition-all ${
+          className={`inline-flex items-center justify-center gap-2 rounded-lg py-3 px-6 font-bold transition-all ${
             limitReached
-              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+              ? "cursor-not-allowed bg-gray-700 text-gray-400"
               : "bg-bt-cyan text-navy hover:bg-bt-cyan/90"
           }`}
           aria-disabled={limitReached}
+          tabIndex={limitReached ? -1 : undefined}
         >
-          ➕ Nouveau contact
+          <Plus className="h-5 w-5 shrink-0" aria-hidden />
+          Nouveau contact
         </Link>
       </div>
 
@@ -84,12 +147,24 @@ export default async function EntitiesPage() {
                     <h3 className="text-2xl font-bold text-white mb-2">{entityName}</h3>
                     <p className="text-gray-400 text-base">{entity.email}</p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    entity.entityType === "BUSINESS"
-                      ? "bg-blue-500/20 text-blue-400"
-                      : "bg-purple-500/20 text-purple-400"
-                  }`}>
-                    {entity.entityType === "BUSINESS" ? "🏢 Entreprise" : "👤 Particulier"}
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+                      entity.entityType === "BUSINESS"
+                        ? "bg-bt-gold/15 text-bt-gold"
+                        : "bg-bt-cyan/15 text-bt-cyan"
+                    }`}
+                  >
+                    {entity.entityType === "BUSINESS" ? (
+                      <>
+                        <Building2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        Entreprise
+                      </>
+                    ) : (
+                      <>
+                        <User className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        Particulier
+                      </>
+                    )}
                   </span>
                 </div>
 
@@ -114,21 +189,7 @@ export default async function EntitiesPage() {
 
                 <div className="mb-4">
                   <p className="text-gray-400 text-base font-medium mb-1">Identité vérifiée</p>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold inline-block ${
-                    entity.kycStatus === "VERIFIED"
-                      ? "bg-green-500/20 text-green-400"
-                      : entity.kycStatus === "PENDING" || entity.kycStatus === "IN_PROGRESS"
-                      ? "bg-yellow-500/20 text-yellow-400"
-                      : entity.kycStatus === "REJECTED"
-                      ? "bg-red-500/20 text-red-400"
-                      : "bg-gray-500/20 text-gray-400"
-                  }`}>
-                    {entity.kycStatus === "VERIFIED" ? "✓ Validé" : 
-                     entity.kycStatus === "PENDING" ? "⏳ En cours de vérification" :
-                     entity.kycStatus === "IN_PROGRESS" ? "🔄 En cours de vérification" :
-                     entity.kycStatus === "REJECTED" ? "✗ Rejeté" :
-                     entity.kycStatus === "EXPIRED" ? "⏰ Expiré" : entity.kycStatus}
-                  </span>
+                  <KycStatusBadge status={entity.kycStatus} />
                 </div>
 
                 <div className="flex gap-2">
@@ -151,8 +212,8 @@ export default async function EntitiesPage() {
         </div>
       ) : (
         <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-lg transition-all hover:border-gold/30">
-          <div className="text-6xl mb-4">📭</div>
-          <h3 className="text-2xl font-bold text-white mb-2">Aucun contact</h3>
+          <Inbox className="mx-auto mb-4 h-12 w-12 text-white/20" aria-hidden />
+          <h3 className="font-syne mb-2 text-2xl font-bold text-white">Aucun contact</h3>
           <p className="text-gray-400 text-base mb-6">Créez votre premier contact pour commencer</p>
           <Link
             href="/dashboard/create"

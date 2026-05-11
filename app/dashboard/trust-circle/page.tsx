@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { UserPlus, Trash2 } from 'lucide-react'
+import { UserPlus, Trash2, Link2 } from 'lucide-react'
 import TrustCircleInviteModal from '@/app/components/TrustCircleInviteModal'
 import TrustCircleManualModal from '@/app/components/TrustCircleManualModal'
 import { QuotaBanner } from '@/app/components/trust-circle/QuotaBanner'
@@ -228,7 +228,7 @@ export default function TrustCirclePage() {
 
         {totalEntites === 0 && (
           <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-lg transition-all hover:border-gold/30">
-            <div className="mb-4 text-6xl">🔗</div>
+            <Link2 className="mx-auto mb-4 h-12 w-12 text-white/20" aria-hidden />
             <h3 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">Aucun contact</h3>
             <p className="mb-6 text-white/60">Ajoutez des contacts à votre cercle de confiance</p>
             <button
@@ -292,7 +292,7 @@ function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pendi
           {type === 'unilateral' && <span className="rounded bg-bt-cyan/10 px-2 py-0.5 text-[9px] text-bt-cyan/90">Unilatérale</span>}
           {type === 'pending' && <span className="text-[9px] text-gray-400 bg-white/10 px-2 py-0.5 rounded">Invitation envoyée</span>}
           {type === 'manual' && <span className="text-[9px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded">Vérifié admin</span>}
-          <h3 className="text-base sm:text-lg font-bold text-white mt-1 break-words">{name}</h3>
+          <h3 className="font-syne mt-1 break-words text-base font-bold text-white sm:text-lg">{name}</h3>
           {email && <p className="text-xs sm:text-sm text-gray-400 break-all">{email}</p>}
         </div>
         {onDelete && (
