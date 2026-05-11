@@ -8,7 +8,6 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
-import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 import { Copy, Download, ExternalLink, Check, ScanLine, Link2, Clock } from 'lucide-react'
 
@@ -96,22 +95,6 @@ export default function DashboardBadgePage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const getEntityName = () => {
-    if (!badgeData) return ''
-    if (badgeData.entity.entityType === 'INDIVIDUAL') {
-      return `${badgeData.entity.firstName || ''} ${badgeData.entity.lastName || ''}`.trim() || badgeData.entity.email
-    }
-    return badgeData.entity.legalName || badgeData.entity.tradeName || badgeData.entity.email
-  }
-
-  const getBadgeText = () => {
-    if (!badgeData) return ''
-    if (badgeData.entity.entityType === 'INDIVIDUAL') {
-      return 'Identité vérifiée par BLOCKTRUST'
-    }
-    return `Entreprise certifiée BLOCKTRUST${badgeData.entity.siret ? ` • SIRET ${badgeData.entity.siret}` : ''}`
   }
 
   const getEmbedCode = () => {
@@ -214,21 +197,17 @@ export default function DashboardBadgePage() {
       <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
           <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">Aperçu du badge</h2>
-          <div className="rounded-xl border border-white/10 bg-white/5 p-6 text-center">
-            <div className="mx-auto mb-4 h-[120px] w-[120px]">
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="mx-auto h-[160px] w-[160px]">
               <BlockTrustBadge
-                size={120}
-                instanceId={`dashboard-badge-preview-${badgeId}`}
+                size={160}
+                instanceId={`dashboard-badge-${badgeId}`}
                 showWatermark={false}
               />
             </div>
-            <p className="mb-2 text-base text-white/60">{getBadgeText()}</p>
-            <p className="text-lg font-bold text-white">{getEntityName()}</p>
-            {badgeData.trustScore ? (
-              <p className="mt-2 text-base font-semibold text-bt-cyan">
-                TrustScore: {badgeData.trustScore.score}/100 ({badgeData.trustScore.level})
-              </p>
-            ) : null}
+            <p className="mt-4 text-center font-mono text-xs text-white/40">
+              {badgeData.publicId || badgeData.id}
+            </p>
           </div>
         </div>
 
@@ -259,37 +238,45 @@ export default function DashboardBadgePage() {
         </div>
       </div>
 
-      <div className="mb-6 rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
-        <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">QR Code</h2>
+      <div className="mb-6 rounded-xl border border-white/10 bg-[#0d1f3c] p-6">
+        <h2 className="mb-6 font-syne text-lg font-semibold text-white">
+          QR Code & Vérification
+        </h2>
+
         <div className="flex flex-col items-start gap-6 sm:flex-row">
-          <div className="flex w-[200px] shrink-0 flex-col sm:w-auto sm:max-w-[232px]">
-            <div className="rounded-xl bg-white p-4">
+          <div className="mx-auto shrink-0 sm:mx-0">
+            <div className="h-[200px] w-[200px] rounded-xl bg-white p-4">
               <img
                 src={`/api/qr/${badgeId}?format=png`}
                 alt="QR Code"
-                width={200}
-                height={200}
+                width={168}
+                height={168}
+                className="h-full w-full"
               />
             </div>
-            <VerifyBadgeButton certId={badgeId} />
+          </div>
+
+          <div className="w-full flex-1 space-y-3">
             <Link
               href={`/verify?certId=${encodeURIComponent(badgeData.publicId || badgeData.id)}`}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#00d4ff]/30 bg-[#00d4ff]/10 py-2.5 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/20"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#00d4ff]/30 bg-[#00d4ff]/10 py-3 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/20"
             >
               <ScanLine className="h-4 w-4 shrink-0" aria-hidden />
               Vérifier ce badge
             </Link>
+
             <button
               type="button"
               onClick={handleGenerateSecureLink}
               disabled={generating}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-[#BDA76B]/30 bg-[#BDA76B]/10 py-2.5 text-sm font-semibold text-[#BDA76B] transition hover:bg-[#BDA76B]/20 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#BDA76B]/30 bg-[#BDA76B]/10 py-3 text-sm font-semibold text-[#BDA76B] transition hover:bg-[#BDA76B]/20 disabled:opacity-50"
             >
               <Link2 className="h-4 w-4 shrink-0" aria-hidden />
               {generating ? 'Génération...' : 'Lien sécurisé 24h'}
             </button>
+
             {verifyLink ? (
-              <div className="mt-3 rounded-lg bg-black/20 p-3">
+              <div className="rounded-xl border border-white/10 bg-black/20 p-4">
                 <p className="mb-2 flex items-center gap-1 text-xs text-white/40">
                   <Clock className="h-3 w-3 shrink-0" aria-hidden />
                   Expire le{' '}
@@ -308,7 +295,7 @@ export default function DashboardBadgePage() {
                   <button
                     type="button"
                     onClick={() => void navigator.clipboard.writeText(verifyLink.url)}
-                    className="shrink-0 rounded p-1 text-[#00d4ff] transition hover:bg-white/5"
+                    className="shrink-0 text-[#00d4ff] transition hover:text-white"
                     aria-label="Copier le lien"
                   >
                     <Copy className="h-4 w-4" aria-hidden />
@@ -319,12 +306,12 @@ export default function DashboardBadgePage() {
                 </p>
               </div>
             ) : null}
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="mb-4 text-base text-white/60">
-              Scannez ce QR code pour vérifier l&apos;authenticité du certificat
+
+            <p className="text-xs leading-relaxed text-white/30">
+              Le QR code change après chaque scan — impossible à copier. Le lien sécurisé expire après 24h.
             </p>
-            <div className="flex flex-wrap gap-3">
+
+            <div className="flex flex-wrap gap-3 pt-1">
               <button
                 type="button"
                 onClick={() => handleDownloadQR('png')}
