@@ -24,6 +24,18 @@ const C = {
   invalid: "#E05252",
 } as const;
 
+const VERIFY_FETCH_TIMEOUT_MS = 8000;
+
+const VERIFY_TIMEOUT_MESSAGE =
+  "La vérification a pris trop de temps. Réessayez.";
+
+function isAbortError(e: unknown): boolean {
+  return (
+    (e instanceof DOMException && e.name === "AbortError") ||
+    (e instanceof Error && e.name === "AbortError")
+  );
+}
+
 type Verdict =
   | "VALID"
   | "VALID_WITH_WARNING"
@@ -84,6 +96,9 @@ function VerifyContent() {
   const [certifiedEmails, setCertifiedEmails] = useState<string[]>([]);
   const [certifiedPhones, setCertifiedPhones] = useState<string[]>([]);
   const [manualIdInput, setManualIdInput] = useState("");
+  const [verifyErrorMessage, setVerifyErrorMessage] = useState<string | null>(null);
+
+  const hasValidToken = token.trim().length > 10;
 
   const handleManualVerify = () => {
     const raw = manualIdInput.trim();
@@ -110,9 +125,9 @@ function VerifyContent() {
   );
 
   useEffect(() => {
-    const direct = sp.get("token");
-    if (direct) {
-      setToken(direct);
+    const directRaw = sp.get("token")?.trim() ?? "";
+    if (directRaw.length > 10) {
+      setToken(directRaw);
       return;
     }
 
@@ -121,12 +136,17 @@ function VerifyContent() {
       return;
     }
 
+    const tokenParam = sp.get("token");
+    if (tokenParam !== null && tokenParam.trim().length <= 10) {
+      setToken("");
+    }
+
     const search = window.location.search;
     if (search.includes("token%3D")) {
       const fixedSearch = search.replace(/token%3D/g, "token=");
       const params = new URLSearchParams(fixedSearch);
-      const fixedToken = params.get("token");
-      if (fixedToken) {
+      const fixedToken = params.get("token")?.trim() ?? "";
+      if (fixedToken.length > 10) {
         setToken(fixedToken);
         setTokenFixApplied(true);
       }
@@ -142,6 +162,7 @@ function VerifyContent() {
 
     const ac = new AbortController();
     let cancelled = false;
+    const timeoutId = setTimeout(() => ac.abort(), VERIFY_FETCH_TIMEOUT_MS);
 
     setVtResolveStatus("loading");
     setResolvedVtCertId(null);
@@ -152,6 +173,7 @@ function VerifyContent() {
           `/api/verify/resolve-token?vt=${encodeURIComponent(vtQuery)}`,
           { signal: ac.signal },
         );
+        clearTimeout(timeoutId);
         const data = (await res.json()) as { certId?: string; error?: string };
         if (cancelled) return;
         if (typeof data.certId === "string" && data.certId.length > 0) {
@@ -161,14 +183,15 @@ function VerifyContent() {
           setVtResolveStatus("error");
         }
       } catch (e: unknown) {
+        clearTimeout(timeoutId);
         if (cancelled) return;
-        if (e instanceof DOMException && e.name === "AbortError") return;
         setVtResolveStatus("error");
       }
     })();
 
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
       ac.abort();
     };
   }, [vtQuery]);
@@ -180,9 +203,11 @@ function VerifyContent() {
     : certIdQuery;
 
   useEffect(() => {
-    if (!token) return;
+    const trimmed = token.trim();
+    if (trimmed.length <= 10) return;
 
     setVerdict(null);
+    setVerifyErrorMessage(null);
     setEntityName(null);
     setCertifiedAt(null);
     setWalletAddress(null);
@@ -193,15 +218,17 @@ function VerifyContent() {
 
     const ac = new AbortController();
     let cancelled = false;
+    const timeoutId = setTimeout(() => ac.abort(), VERIFY_FETCH_TIMEOUT_MS);
 
     void (async () => {
       try {
         const res = await fetch("/api/v2/verify", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ token, context }),
+          body: JSON.stringify({ token: trimmed, context }),
           signal: ac.signal,
         });
+        clearTimeout(timeoutId);
         const data = (await res.json()) as VerifyApiSuccess;
         if (cancelled) return;
         setVerdict((data.verdict as Verdict) ?? "ERROR");
@@ -225,22 +252,30 @@ function VerifyContent() {
           Array.isArray(data.certifiedPhones) ? data.certifiedPhones : [],
         );
       } catch (e: unknown) {
+        clearTimeout(timeoutId);
         if (cancelled) return;
-        if (e instanceof DOMException && e.name === "AbortError") return;
+        if (isAbortError(e)) {
+          setVerdict("ERROR");
+          setVerifyErrorMessage(VERIFY_TIMEOUT_MESSAGE);
+          return;
+        }
         setVerdict("ERROR");
+        setVerifyErrorMessage(null);
       }
     })();
 
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
       ac.abort();
     };
   }, [token, context]);
 
   useEffect(() => {
-    if (token || !certIdForVerify) return;
+    if (hasValidToken || !certIdForVerify) return;
 
     setVerdict(null);
+    setVerifyErrorMessage(null);
     setEntityName(null);
     setCertifiedAt(null);
     setWalletAddress(null);
@@ -251,12 +286,14 @@ function VerifyContent() {
 
     const ac = new AbortController();
     let cancelled = false;
+    const timeoutId = setTimeout(() => ac.abort(), VERIFY_FETCH_TIMEOUT_MS);
 
     void (async () => {
       try {
         const res = await fetch(`/api/public/certificate/${encodeURIComponent(certIdForVerify)}`, {
           signal: ac.signal,
         });
+        clearTimeout(timeoutId);
         const data = (await res.json()) as VerifyApiSuccess;
         if (cancelled) return;
         setVerdict((data.verdict as Verdict) ?? "ERROR");
@@ -280,17 +317,24 @@ function VerifyContent() {
           Array.isArray(data.certifiedPhones) ? data.certifiedPhones : [],
         );
       } catch (e: unknown) {
+        clearTimeout(timeoutId);
         if (cancelled) return;
-        if (e instanceof DOMException && e.name === "AbortError") return;
+        if (isAbortError(e)) {
+          setVerdict("ERROR");
+          setVerifyErrorMessage(VERIFY_TIMEOUT_MESSAGE);
+          return;
+        }
         setVerdict("ERROR");
+        setVerifyErrorMessage(null);
       }
     })();
 
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
       ac.abort();
     };
-  }, [token, certIdForVerify]);
+  }, [hasValidToken, certIdForVerify]);
 
   const dateLabel = formatCertifiedDate(certifiedAt);
   const displayName = entityName?.trim() || "Titulaire certifié";
@@ -306,12 +350,12 @@ function VerifyContent() {
     verdict === "ERROR";
 
   const activeQuery = Boolean(
-    token ||
+    hasValidToken ||
       certIdForVerify ||
       (vtQuery && (vtResolveStatus === "loading" || vtResolveStatus === "ok")),
   );
   const showManualVerifier =
-    !token &&
+    !hasValidToken &&
     !certIdForVerify &&
     !(vtQuery && vtResolveStatus === "loading");
 
@@ -327,6 +371,7 @@ function VerifyContent() {
     setCertifiedPhones([]);
     setToken("");
     setTokenFixApplied(false);
+    setVerifyErrorMessage(null);
     router.replace("/verify");
   };
 
@@ -374,7 +419,7 @@ function VerifyContent() {
           </div>
         ) : null}
 
-        {!token && !certIdQuery && !vtQuery && (
+        {!hasValidToken && !certIdQuery && !vtQuery && (
           <div className="mx-auto mt-10 max-w-md text-center">
             <ShieldAlert className="mx-auto mb-4 h-10 w-10 text-[#00d4ff]/50" aria-hidden />
             <p className="font-syne text-lg text-[#00d4ff]/90">
@@ -409,7 +454,9 @@ function VerifyContent() {
           </div>
         ) : null}
 
-        {(token || certIdForVerify || (vtQuery && vtResolveStatus === "loading")) &&
+        {(hasValidToken ||
+          certIdForVerify ||
+          (vtQuery && vtResolveStatus === "loading")) &&
         !verdict ? (
           <div className="mt-12 flex flex-col items-center gap-4">
             <div
@@ -568,6 +615,14 @@ function VerifyContent() {
 
         {verdict && failVerdict ? (
           <div className="mt-10 w-full">
+            {verifyErrorMessage && verdict === "ERROR" ? (
+              <p
+                className="mx-auto mb-4 max-w-md px-2 text-center text-sm text-amber-300/95"
+                role="alert"
+              >
+                {verifyErrorMessage}
+              </p>
+            ) : null}
             {verdict === "FRAUD" ? (
               <FraudCertificateCard />
             ) : (
