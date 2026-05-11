@@ -42,7 +42,7 @@ export function Logo({
           maxWidth: 380,
           maxHeight: 380,
         }
-      : { width: px, height: Math.round(px * 1.25) }
+      : { width: px, height: px }
 
   const image = (
     <div className={`relative shrink-0 ${className}`.trim()} style={wrapperStyle}>
