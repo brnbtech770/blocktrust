@@ -643,7 +643,29 @@ function GuideEntreprises() {
 /* ======================================================================
    Section 5 — FAQ
    ====================================================================== */
-const FAQ_ITEMS: { q: string; a: string }[] = [
+const FAQ_ITEMS: { q: string; a: ReactNode }[] = [
+  {
+    q: "Comment sécuriser un prospect ou un nouveau fournisseur ?",
+    a: (
+      <div className="space-y-3">
+        <p>Avant d&apos;entrer en relation avec un inconnu :</p>
+        <ol className="list-decimal space-y-2 pl-4 marker:text-white/50">
+          <li>Demandez-lui de partager son badge BLOCKTRUST</li>
+          <li>
+            Scannez ou collez son lien sur{" "}
+            <Link href="/verify" className="text-bt-cyan hover:underline">
+              /verify
+            </Link>
+          </li>
+          <li>Vérifiez gratuitement son identité certifiée</li>
+          <li>
+            S&apos;il n&apos;a pas de badge — vous pouvez tout de même enregistrer ses coordonnées
+            officielles dans vos contacts pour être alerté en cas d&apos;usurpation
+          </li>
+        </ol>
+      </div>
+    ),
+  },
   {
     q: "Combien de temps prend la vérification ?",
     a: "Instantanée — moins de 2 secondes. Le verdict s'affiche en temps réel sur la page de vérification.",
@@ -711,7 +733,9 @@ function FaqAccordion() {
                 />
               </button>
               {isOpen && (
-                <div className="px-5 pb-4 pt-0 text-sm leading-relaxed text-white/70">{item.a}</div>
+                <div className="px-5 pb-4 pt-0 text-sm leading-relaxed text-white/70 [&_a]:text-bt-cyan">
+                  {item.a}
+                </div>
               )}
             </Reveal>
           );

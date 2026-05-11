@@ -117,12 +117,38 @@ export default function RegisterPage() {
           <p className="text-white/70 text-xs text-center mb-3">
             Vous êtes à 3 étapes de votre badge certifié
           </p>
-          <div className="flex items-center justify-center gap-4 text-xs">
-            <span className="text-white/40">1. Créez votre compte</span>
-            <span className="text-white/20" aria-hidden>→</span>
-            <span className="text-white/40">2. Choisissez votre plan</span>
-            <span className="text-white/20" aria-hidden>→</span>
-            <span className="text-white/40">3. Vérifiez votre identité</span>
+          <div className="flex flex-col items-center gap-3 text-xs sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-3 sm:gap-y-1">
+            <span className="text-white/40 text-center sm:text-left shrink-0">
+              1. Créez votre compte
+            </span>
+            <span className="text-white/20 hidden sm:inline shrink-0" aria-hidden>
+              →
+            </span>
+            <span className="text-white/40 text-center sm:text-left shrink-0">
+              2. Choisissez votre plan
+            </span>
+            <span className="text-white/20 hidden sm:inline shrink-0" aria-hidden>
+              →
+            </span>
+            <span className="text-white/40 text-center max-w-[min(100%,280px)] sm:max-w-[260px] leading-snug">
+              <span className="text-white/50">3.</span> Intégrez votre badge partout
+              <br />
+              <span className="text-white/35">
+                — email, site web, documents, numéro de téléphone certifié
+              </span>
+            </span>
+          </div>
+          <div className="mt-4 p-3 bg-white/[0.02] border border-white/5 rounded-lg">
+            <p className="text-white/30 text-xs text-center leading-relaxed">
+              Vous recevez un email d&apos;un inconnu ? Vérifiez son badge gratuitement sur
+              <Link
+                href="/verify"
+                className="text-[#00d4ff]/60 hover:text-[#00d4ff] ml-1 transition"
+              >
+                blocktrust.tech/verify
+              </Link>
+              — sans compte requis.
+            </p>
           </div>
           <p className="text-white/30 text-xs text-center mt-1">
             Sans engagement · Résiliable à tout moment
