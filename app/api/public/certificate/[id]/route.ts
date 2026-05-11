@@ -8,6 +8,11 @@ import { prisma } from "@/app/lib/db";
 import { hashIp } from "@/app/lib/auth";
 import { checkRateLimitVerifyAsync } from "@/lib/rate-limit-verify";
 import { walletNetworkLabelFr } from "@/lib/wallet-validation";
+import {
+  createAdminFraudAlert,
+  notifyCertificateOwnerFraudAlertFireAndForget,
+} from "@/lib/verify-fraud";
+import { persistUserTrustScore } from "@/lib/trustscore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -108,10 +113,17 @@ export async function GET(
     const uniqueIds = [...new Set(matches.map((m) => m.id))];
     if (uniqueIds.length !== 1) return false;
 
-    await prisma.verification
-      .create({
+    const certId = uniqueIds[0];
+    const cert = await prisma.certificate.findUnique({
+      where: { id: certId },
+      include: { entity: true },
+    });
+    if (!cert?.entity) return false;
+
+    try {
+      await prisma.verification.create({
         data: {
-          certificateId: uniqueIds[0],
+          certificateId: certId,
           ipHash: hashIp(ip),
           userAgent: ua.slice(0, 500),
           referer: req.headers.get("referer"),
@@ -122,8 +134,39 @@ export async function GET(
             attemptedLookup: prefix.slice(0, 120),
           },
         },
-      })
-      .catch(() => {});
+      });
+    } catch {
+      return false;
+    }
+
+    notifyCertificateOwnerFraudAlertFireAndForget({
+      certificateId: cert.id,
+      alertType: "Requête publique avec identifiant partiel suspect",
+      detail: "bad_id_prefix_typo_or_fraud",
+    });
+
+    try {
+      await createAdminFraudAlert({
+        type: "FRAUD_ALERT",
+        entityId: cert.entity.id,
+        certificateId: cert.id,
+        userId: cert.entity.userId,
+        metadata: {
+          source: "public_certificate_api",
+          reason: "bad_id_prefix_typo_or_fraud",
+          attemptedLookup: prefix.slice(0, 120),
+        },
+      });
+    } catch (err) {
+      console.error("[public/certificate] createAdminFraudAlert", err);
+    }
+
+    try {
+      await persistUserTrustScore(cert.entity.userId);
+    } catch (err) {
+      console.error("[public/certificate] persistUserTrustScore", err);
+    }
+
     return true;
   }
 

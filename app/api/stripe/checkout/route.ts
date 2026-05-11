@@ -172,6 +172,13 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
+      billing_address_collection: "required",
+      automatic_tax: { enabled: true },
+      tax_id_collection: { enabled: true },
+      customer_update: {
+        address: "auto",
+        name: "auto",
+      },
       success_url: `${baseUrl}/dashboard?success=true`,
       cancel_url: `${baseUrl}/pricing?canceled=true`,
       metadata: {
