@@ -33,6 +33,7 @@ import { walletNetworkLabelFr } from '@/lib/wallet-validation'
 import {
   trustedCircleShouldWarnUncertifiedDomainContext,
 } from '@/lib/certified-contact'
+import { formatPriceFr, ESSENTIEL_MONTHLY_EUR } from '@/lib/pricing'
 
 export const dynamic = 'force-dynamic'
 
@@ -533,7 +534,8 @@ function SubscriptionRequiredVerifyView() {
           Vérification réservée aux abonnés
         </h1>
         <p className="mb-8 text-sm leading-relaxed text-white/70">
-          La vérification de badges BLOCKTRUST est disponible à partir de notre forfait Essentiel à 4,99€/mois.
+          La vérification de badges BLOCKTRUST est disponible à partir de notre forfait Essentiel à{' '}
+          {formatPriceFr(ESSENTIEL_MONTHLY_EUR)}€/mois.
         </p>
         <Link
           href="/pricing"

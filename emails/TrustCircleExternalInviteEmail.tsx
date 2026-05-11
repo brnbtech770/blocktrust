@@ -24,6 +24,7 @@ import {
   textStyle,
   titleStyle,
 } from './blocktrust-charte'
+import { JOIN_BLOCKTRUST_ESSENTIEL_LABEL } from '@/lib/pricing'
 
 export type TrustCircleExternalInviteEmailProps = {
   inviterName: string
@@ -70,7 +71,7 @@ export function TrustCircleExternalInviteEmail({
             ))}
             <Section style={{ textAlign: 'center', margin: '24px 0' }}>
               <Link href={inviteUrl} style={buttonCyan}>
-                Rejoindre BlockTrust — 4,99€/mois
+                {JOIN_BLOCKTRUST_ESSENTIEL_LABEL}
               </Link>
             </Section>
             <Text style={{ ...textStyle, fontSize: '13px', color: '#6b7280', textAlign: 'center' }}>

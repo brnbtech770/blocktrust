@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/app/lib/db'
 import { Logo } from '@/app/components/ui/Logo'
+import { JOIN_BLOCKTRUST_ESSENTIEL_LABEL } from '@/lib/pricing'
 
 export default async function InvitePage({
   params,
@@ -81,7 +82,7 @@ export default async function InvitePage({
           href={`/pricing?ref=${token}`}
           className="font-syne block w-full rounded-[10px] bg-bt-cyan py-4 px-8 text-center text-base font-bold text-navy transition hover:bg-bt-cyan/90"
         >
-          Rejoindre BLOCKTRUST — 4,99€/mois
+          {JOIN_BLOCKTRUST_ESSENTIEL_LABEL}
         </Link>
         <p className="text-[11px] mt-3" style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>
           Sans engagement · CB obligatoire · Annulation à tout moment

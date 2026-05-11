@@ -381,8 +381,8 @@ export const SOLO_PRO_MONTHLY_HT_EUR = PLANS_B2B[0].prices!.monthly.amount;
 /** Starter (2–5 postes) — prix dégressif affiché sur la landing. */
 export const STARTER_MONTHLY_PER_USER_HT_EUR = PLANS_B2B[1].prices!.monthly.amount;
 
-/** CTA landing section entreprises → /pricing?tab=entreprises */
-export const LANDING_CTA_B2B_LABEL = `Démarrer à partir de ${formatPriceFr(STARTER_MONTHLY_PER_USER_HT_EUR)}€ HT/user/mois`;
+/** CTA landing section entreprises → /pricing?tab=entreprises (Solo Pro = entrée 1 poste ; Starter 8,99 € = 2–5 postes). */
+export const LANDING_CTA_B2B_LABEL = `Démarrer à partir de ${formatPriceFr(SOLO_PRO_MONTHLY_HT_EUR)}€ HT/user/mois`;
 
 export type PlanB2C = (typeof PLANS_B2C)[number];
 export type PlanB2B = (typeof PLANS_B2B)[number];

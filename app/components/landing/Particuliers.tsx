@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Briefcase, ShoppingBag, User, ShieldAlert, type LucideIcon } from "lucide-react";
+import { LANDING_CTA_B2C_LABEL } from "@/lib/pricing";
 import Reveal from "./Reveal";
 
 type UseCase = { icon: LucideIcon; title: string; text: string; example: string };
@@ -83,7 +84,7 @@ export default function Particuliers() {
           href="/pricing"
           className="inline-flex items-center justify-center rounded-xl bg-bt-cyan px-8 py-3.5 text-sm font-bold text-navy transition-all hover:scale-[1.04] hover:bg-[#21dfff] sm:text-base"
         >
-          Démarrer à partir de 4,99€/mois
+          {LANDING_CTA_B2C_LABEL}
         </Link>
       </Reveal>
     </section>

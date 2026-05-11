@@ -4,6 +4,7 @@
 
 import type { Metadata } from 'next'
 import { Syne, IBM_Plex_Mono } from 'next/font/google'
+import { formatPriceFr, ESSENTIEL_MONTHLY_EUR } from '@/lib/pricing'
 
 const syne = Syne({
   subsets: ['latin'],
@@ -20,8 +21,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: 'Tarifs · BlockTrust',
-  description:
-    'Certifiez votre identité numérique dès 4,99€/mois. Badge vérifiable, anti-fraude, blockchain.',
+  description: `Certifiez votre identité numérique dès ${formatPriceFr(ESSENTIEL_MONTHLY_EUR)}€/mois. Badge vérifiable, anti-fraude, blockchain.`,
 }
 
 export default function PricingLayout({

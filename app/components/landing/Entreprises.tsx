@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Building2, Rocket, Banknote, ShoppingCart, Network, type LucideIcon } from "lucide-react";
+import { LANDING_CTA_B2B_LABEL } from "@/lib/pricing";
 import Reveal from "./Reveal";
 
 type UseCase = { icon: LucideIcon; title: string; text: string };
@@ -78,7 +79,7 @@ export default function Entreprises() {
           href="/pricing?tab=entreprises"
           className="inline-flex items-center justify-center rounded-xl border border-gold/60 bg-gold/10 px-8 py-3.5 text-sm font-bold text-gold transition-all hover:scale-[1.04] hover:bg-gold/20 sm:text-base"
         >
-          Démarrer à partir de 29€/mois
+          {LANDING_CTA_B2B_LABEL}
         </Link>
       </Reveal>
     </section>
