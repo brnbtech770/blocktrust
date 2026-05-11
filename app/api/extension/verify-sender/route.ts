@@ -11,7 +11,7 @@ import {
   normalizeSenderDomain,
   normalizeSenderEmail,
 } from "@/lib/extension-verify-sender";
-import { extensionCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
+import { getCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
 import { redis } from "@/lib/rate-limit-redis";
 
@@ -24,7 +24,7 @@ const BASE_URL =
   "https://blocktrust.tech";
 
 export async function OPTIONS(req: NextRequest) {
-  return new Response(null, { status: 204, headers: extensionCorsHeaders(req) });
+  return new Response(null, { status: 204, headers: getCorsHeaders(req) });
 }
 
 export async function GET(req: NextRequest) {

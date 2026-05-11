@@ -6,7 +6,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/db";
 import { hashApiKey } from "@/lib/api-key";
 import { findUserIdByExtensionApiKey, EXTENSION_UNAUTHORIZED_BODY } from "@/lib/extension-auth";
-import { extensionCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
+import { getCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
 import { checkEntityQuota } from "@/lib/checkQuota";
 import { z } from "zod";
@@ -22,7 +22,7 @@ const bodySchema = z.object({
 });
 
 export async function OPTIONS(req: NextRequest) {
-  return new Response(null, { status: 204, headers: extensionCorsHeaders(req) });
+  return new Response(null, { status: 204, headers: getCorsHeaders(req) });
 }
 
 function splitName(name: string): { firstName: string; lastName: string } {

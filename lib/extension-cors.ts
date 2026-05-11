@@ -1,31 +1,32 @@
 // lib/extension-cors.ts
-// CORS pour l’extension Chrome (origins chrome-extension://*).
+// CORS pour l’extension Chrome (toute origine chrome-extension://* + app BLOCKTRUST).
 // ============================================================
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-export function extensionCorsHeaders(req: NextRequest): Record<string, string> {
-  const origin = req.headers.get("origin") ?? "";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "";
-  const allow =
-    origin.startsWith("chrome-extension://") ||
-    (appUrl !== "" && origin === appUrl) ||
-    (process.env.NODE_ENV === "development" &&
-      (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1")));
+export function getCorsHeaders(request: NextRequest): Record<string, string> {
+  const origin = request.headers.get("origin") ?? "";
+  const isExtension = origin.startsWith("chrome-extension://");
+  const isAllowed =
+    isExtension ||
+    origin.includes("blocktrust.tech") ||
+    origin.includes("localhost");
 
   return {
-    "Access-Control-Allow-Origin": allow ? origin : "*",
+    "Access-Control-Allow-Origin": isAllowed ? origin : "",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
   };
 }
+
+export const extensionCorsHeaders = getCorsHeaders;
 
 export function extensionJsonResponse(
   req: NextRequest,
   body: unknown,
   status = 200,
 ): NextResponse {
-  return NextResponse.json(body, { status, headers: extensionCorsHeaders(req) });
+  return NextResponse.json(body, { status, headers: getCorsHeaders(req) });
 }
