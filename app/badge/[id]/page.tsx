@@ -4,8 +4,6 @@ import QRCodeImage from "@/app/components/QRCode";
 import VerifyBadgeButton from "@/app/components/VerifyBadgeButton";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 
-import { buildPublicVerifyUrl } from "@/lib/public-verify-url";
-
 export default async function BadgePage({
   params,
 }: {
@@ -67,8 +65,9 @@ export default async function BadgePage({
     where: { entityId: entity.id },
   });
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const certIdForVerify = certificate.publicId || certificate.id;
-  const verifyUrl = buildPublicVerifyUrl(certIdForVerify);
+  const verifyUrl = `${baseUrl}/verify?certId=${encodeURIComponent(certIdForVerify)}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-900 to-blue-950 flex items-center justify-center p-4">
@@ -76,17 +75,13 @@ export default async function BadgePage({
         <div className="text-center mb-6">
           <div className="mb-4 flex flex-col items-center gap-3">
             <BlockTrustBadge
-              size={240}
-              certId={certIdForVerify}
-              verifyUrl={verifyUrl}
-              showVerifyButton
+              size={56}
               instanceId={`badge-static-${certificate.id.slice(0, 8)}`}
-              showWatermark={false}
               className="mx-auto shrink-0 drop-shadow-[0_0_14px_rgba(0,212,255,0.45)]"
             />
-            <p className="font-syne text-xs font-semibold tracking-wider text-bt-cyan/80">
+            <h1 className="font-syne text-2xl font-bold leading-none tracking-wider neon-cyan">
               BLOCKTRUST<span className="text-[10px] align-super">™</span>
-            </p>
+            </h1>
           </div>
           <p className="text-gray-300 text-sm mt-2">Certificat de confiance vérifié</p>
         </div>
