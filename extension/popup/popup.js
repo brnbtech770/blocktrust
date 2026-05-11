@@ -45,7 +45,7 @@ function getStoredApiKey() {
 }
 
 /**
- * Valide le format minimal bt_ext_ + hex
+ * Valide le format bt_ext_ + 64 hex (aligné serveur BLOCKTRUST).
  * @param {string} key
  */
 function looksLikeExtensionKey(key) {
@@ -113,12 +113,17 @@ async function onConnect() {
   hideStatus();
   const raw = (el.apiKeyInput && el.apiKeyInput.value) || "";
   const key = raw.trim();
+  if (!key.startsWith("bt_ext_")) {
+    showStatus("La clé doit commencer par bt_ext_", true);
+    return;
+  }
   if (!looksLikeExtensionKey(key)) {
-    showStatus("Clé invalide : attendu format bt_ext_ suivi de 64 caractères hex.", true);
+    showStatus("Format invalide : bt_ext_ suivi de 64 caractères hexadécimaux.", true);
     return;
   }
   if (el.connectBtn) el.connectBtn.disabled = true;
   try {
+    // 1) Valider auprès du serveur avant stockage local
     const data = await fetchMe(key);
     await new Promise((resolve, reject) => {
       chrome.storage.local.set({ apiKey: key }, () => {
@@ -129,9 +134,9 @@ async function onConnect() {
     fillConnectedUI(data);
     if (el.apiKeyInput) el.apiKeyInput.value = "";
     showPanel("connected");
-    showStatus("Connexion réussie.", false);
+    hideStatus();
   } catch (e) {
-    showStatus(e.message || "Échec de la connexion.", true);
+    showStatus(e.message || "Échec de la connexion — clé refusée par BLOCKTRUST.", true);
   } finally {
     if (el.connectBtn) el.connectBtn.disabled = false;
   }

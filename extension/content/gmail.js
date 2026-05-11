@@ -1,6 +1,7 @@
 /**
  * Script injecté dans Gmail — détection des expéditeurs et appel API BLOCKTRUST.
  * API alignée avec GET /api/extension/verify-sender
+ * Sélecteurs Gmail (2026) + observer debouncé.
  */
 
 const API_BASE = "https://blocktrust.tech";
@@ -8,6 +9,17 @@ const CACHE_TTL_MS = 3600000;
 
 /** Cache mémoire (onglet) — même TTL que le cache serveur (~1 h). */
 const verifyCache = new Map();
+
+/** Sélecteurs expéditeur : message ouvert + liste */
+const SENDER_SELECTORS = [
+  ".gD[email]",
+  "[email].go",
+  '[data-hovercard-id*="@"]',
+  ".yP[email]",
+  ".zF[email]",
+];
+
+console.log("[BLOCKTRUST] Extension chargée sur Gmail");
 
 /**
  * Récupère la clé API utilisateur (format bt_ext_...) depuis chrome.storage.local
@@ -21,7 +33,7 @@ function getApiKey() {
 }
 
 /**
- * Appelle l’API de vérification d’expéditeur (session utilisateur côté BLOCKTRUST).
+ * Appelle l’API de vérification d’expéditeur.
  * @param {string} email
  * @param {string} domain
  * @returns {Promise<object|null>}
@@ -57,12 +69,12 @@ async function verifySender(email, domain) {
 }
 
 /**
- * Badge visuel à insérer à côté du nom / email expéditeur (libellés sans pictogrammes type emoji).
+ * Badge visuel à insérer à côté du nom / email expéditeur.
  * @param {{ status: string, message?: string }} result
  */
 function createVerifyBadge(result) {
   const badge = document.createElement("span");
-  badge.className = "bt-trust-badge";
+  badge.className = "bt-trust-badge bt-badge";
   badge.setAttribute("role", "status");
   badge.title = result.message || result.status || "";
   badge.style.cssText = [
@@ -106,24 +118,54 @@ function createVerifyBadge(result) {
 }
 
 /**
- * Extrait une adresse email depuis un nœud Gmail (attributs ou texte).
+ * Normalise une chaîne en email si possible.
+ * @param {string | null} raw
+ * @returns {string | null}
+ */
+function normalizeEmailString(raw) {
+  if (!raw || typeof raw !== "string") return null;
+  const t = raw.trim();
+  if (!t.includes("@")) return null;
+  const m = t.match(/([^\s<>]+@[^\s<>]+)/);
+  return m ? m[1].toLowerCase() : t.toLowerCase();
+}
+
+/**
+ * Email ouvert / premier expéditeur visible — priorité aux sélecteurs 2026.
+ * @returns {{ email: string, element: Element } | null}
+ */
+function extractSenderFromOpenEmail() {
+  for (const selector of SENDER_SELECTORS) {
+    const el = document.querySelector(selector);
+    if (!el) continue;
+    const raw =
+      el.getAttribute("email") ||
+      el.getAttribute("data-hovercard-id") ||
+      el.getAttribute("data-email");
+    const email = normalizeEmailString(raw || (el.textContent || "").trim());
+    if (email) return { email, element: el };
+  }
+  return null;
+}
+
+/**
+ * Extrait une adresse depuis un nœud Gmail (liste ou thread).
  * @param {Element} emailElement
  * @returns {string | null}
  */
 function extractSenderEmail(emailElement) {
-  const fromAttr =
+  const raw =
     emailElement.getAttribute("email") ||
     emailElement.getAttribute("data-hovercard-id") ||
     emailElement.getAttribute("data-email");
+  const fromAttr = normalizeEmailString(raw);
+  if (fromAttr) return fromAttr;
   const text = (emailElement.textContent || "").trim();
-  const candidate = fromAttr || text;
-  if (!candidate || !candidate.includes("@")) return null;
-  const match = candidate.match(/([^\s<>]+@[^\s<>]+)/);
-  return match ? match[1].toLowerCase() : candidate.trim().toLowerCase();
+  return normalizeEmailString(text);
 }
 
 /**
- * Trouve un conteneur pour insérer le badge (évite les doublons).
+ * Ancrage pour badge (évite doublons sur la même ligne).
  * @param {Element} el
  */
 function findBadgeAnchor(el) {
@@ -132,8 +174,16 @@ function findBadgeAnchor(el) {
   return row;
 }
 
+function hasTrustBadgeNear(el) {
+  const wrap = el.parentElement;
+  if (wrap && wrap.querySelector(".bt-trust-badge, .bt-badge")) return true;
+  const anchor = findBadgeAnchor(el);
+  if (anchor && anchor.querySelector(".bt-trust-badge, .bt-badge")) return true;
+  return false;
+}
+
 /**
- * Traite un élément candidat expéditeur (une fois par élément).
+ * Traite un élément candidat expéditeur (liste / sous-arbre).
  * @param {Element} el
  */
 async function processSenderElement(el) {
@@ -141,19 +191,22 @@ async function processSenderElement(el) {
   const email = extractSenderEmail(el);
   if (!email) return;
 
-  const wrap = el.parentElement;
-  if (wrap && wrap.querySelector(".bt-trust-badge")) return;
+  if (hasTrustBadgeNear(el)) return;
 
   el.dataset.btProcessed = "true";
   const parts = email.split("@");
   const domain = parts[1] || "";
 
+  console.log("[BLOCKTRUST] Sender détecté:", email);
+
   const result = await verifySender(email, domain);
+  console.log("[BLOCKTRUST] Résultat API:", result);
   if (!result) {
     delete el.dataset.btProcessed;
     return;
   }
 
+  const wrap = el.parentElement;
   const anchor = findBadgeAnchor(el);
   if (!anchor) {
     delete el.dataset.btProcessed;
@@ -161,19 +214,19 @@ async function processSenderElement(el) {
   }
 
   const badge = createVerifyBadge(result);
-  if (wrap) {
+  if (wrap && !wrap.querySelector(".bt-trust-badge, .bt-badge")) {
     wrap.appendChild(badge);
-  } else {
+  } else if (!anchor.querySelector(".bt-trust-badge, .bt-badge")) {
     anchor.appendChild(badge);
   }
 }
 
 /**
- * Parcourt le document pour les sélecteurs Gmail courants.
+ * Parcourt le document / racine pour tous les sélecteurs expéditeur.
+ * @param {ParentNode} root
  */
 function scanForSenders(root) {
-  const selectors = ['[email]', ".gD", ".go", 'span[email]', '[data-hovercard-id]'];
-  for (const sel of selectors) {
+  for (const sel of SENDER_SELECTORS) {
     root.querySelectorAll(sel).forEach((el) => {
       void processSenderElement(el);
     });
@@ -181,39 +234,54 @@ function scanForSenders(root) {
 }
 
 /**
- * MutationObserver — Gmail est une SPA, le contenu change souvent.
+ * Message ouvert : premier match + badge à côté du nœud expéditeur.
  */
+async function processOpenEmailSender() {
+  const sender = extractSenderFromOpenEmail();
+  if (!sender) return;
+
+  console.log("[BLOCKTRUST] Sender détecté:", sender.email);
+
+  const parent = sender.element.parentElement;
+  if (!parent) return;
+  if (parent.querySelector(".bt-trust-badge, .bt-badge")) return;
+
+  const apiKey = await getApiKey();
+  if (!apiKey) return;
+
+  const domain = sender.email.split("@")[1] || "";
+  const result = await verifySender(sender.email, domain);
+  console.log("[BLOCKTRUST] Résultat API:", result);
+  if (!result) return;
+
+  const badge = createVerifyBadge(result);
+  parent.appendChild(badge);
+}
+
+/** Debounce : Gmail émet énormément de mutations */
+let gmailDebounceId = null;
+
+function scheduleGmailScan() {
+  if (gmailDebounceId !== null) clearTimeout(gmailDebounceId);
+  gmailDebounceId = setTimeout(() => {
+    gmailDebounceId = null;
+    void processOpenEmailSender();
+    scanForSenders(document.body);
+  }, 200);
+}
+
 function observeGmail() {
-  const runScan = (node) => {
-    if (node.nodeType !== Node.ELEMENT_NODE) return;
-    const el = /** @type {Element} */ (node);
-    if (el.matches) {
-      selectorsCheck(el);
-    }
-    if (el.querySelectorAll) {
-      scanForSenders(el);
-    }
-  };
-
-  function selectorsCheck(el) {
-    const tags = ['[email]', ".gD", ".go", 'span[email]', '[data-hovercard-id]'];
-    for (const sel of tags) {
-      if (el.matches(sel)) {
-        void processSenderElement(el);
-      }
-    }
-  }
-
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        runScan(node);
-      }
-    }
+  const observer = new MutationObserver(() => {
+    scheduleGmailScan();
   });
 
-  observer.observe(document.body, { childList: true, subtree: true });
-  scanForSenders(document.body);
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: false,
+  });
+
+  scheduleGmailScan();
 }
 
 if (document.body) {
