@@ -13,7 +13,7 @@ import Link from 'next/link'
 import AdminPageHeader from '@/app/admin/AdminPageHeader'
 import { prisma } from '@/app/lib/db'
 import type { Metadata } from 'next'
-import { Users } from 'lucide-react'
+import { Users, Building2 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -87,9 +87,14 @@ function IconTeam() {
   return <Users className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
 }
 
+function IconOrgGlobal() {
+  return <Building2 className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
+}
+
 const navLinks = [
   { href: '/dashboard', label: 'Vue client', Icon: IconClients },
   { href: '/admin/dashboard', label: 'Tableau de bord', Icon: IconDashboard },
+  { href: '/admin/organizations', label: 'Organisations B2B', Icon: IconOrgGlobal },
   { href: '/admin/certificates', label: 'Certificats', Icon: IconDemandes },
   { href: '/admin/kyc', label: 'KYC', Icon: IconKyc },
   { href: '/admin/demandes', label: 'Demandes Trust', Icon: IconDemandes },

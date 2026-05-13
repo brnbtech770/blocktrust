@@ -51,6 +51,8 @@ function isProtectedApi(pathname: string): boolean {
   return (
     pathname.startsWith('/api/certificates') ||
     pathname.startsWith('/api/entities') ||
+    pathname.startsWith('/api/organization') ||
+    pathname.startsWith('/api/vault') ||
     pathname === '/api/stats' ||
     pathname === '/api/activity' ||
     isProtectedStripeApi
@@ -171,6 +173,8 @@ export async function proxy(request: NextRequest) {
     if (
       pathname.startsWith('/api/certificates') ||
       pathname.startsWith('/api/entities') ||
+      pathname.startsWith('/api/organization') ||
+      pathname.startsWith('/api/vault') ||
       pathname === '/api/stats' ||
       pathname === '/api/activity' ||
       isProtectedStripeApi
@@ -202,6 +206,8 @@ export const config = {
     '/api/debug-auth',
     '/api/certificates/:path*',
     '/api/entities/:path*',
+    '/api/organization/:path*',
+    '/api/vault/:path*',
     '/api/stripe/:path*',
     '/api/stats',
     '/api/activity',
