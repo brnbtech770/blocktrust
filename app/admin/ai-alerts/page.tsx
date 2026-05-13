@@ -4,12 +4,46 @@
 
 import { prisma } from '@/app/lib/db'
 import { requireAdminPage } from '@/app/lib/require-admin-page'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck, Search, Check, X, OctagonX } from 'lucide-react'
 
 type SearchParams = {
   status?: string
   severity?: string
   type?: string
+}
+
+function aiAlertTypeLabel(type: string): string {
+  const map: Record<string, string> = {
+    FRAUD_ALERT: 'Tentative de fraude détectée',
+    SUSPICIOUS_VOLUME: 'Volume suspect de vérifications',
+    REVOKED_SCAN: 'Certificat révoqué scanné',
+    ANOMALY: 'Anomalie détectée',
+    SYSTEM: 'Alerte système',
+    SUSPICIOUS_ACTIVITY: 'Activité suspecte',
+    IDENTITY_MISMATCH: 'Incohérence d’identité',
+    UNUSUAL_PATTERN: 'Schéma inhabituel',
+    PHISHING_ATTEMPT: 'Tentative d’hameçonnage',
+    CERTIFICATE_ABUSE: 'Abus de certificat',
+    TRUST_CIRCLE_ANOMALY: 'Anomalie Trust Circle',
+  }
+  return map[type] ?? type.replace(/_/g, ' ')
+}
+
+function aiAlertTypeColor(type: string): string {
+  const map: Record<string, string> = {
+    FRAUD_ALERT: '#E05252',
+    SUSPICIOUS_VOLUME: '#f59e0b',
+    REVOKED_SCAN: '#f59e0b',
+    ANOMALY: '#BDA76B',
+    SYSTEM: '#00d4ff',
+    PHISHING_ATTEMPT: '#E05252',
+    IDENTITY_MISMATCH: '#E05252',
+    CERTIFICATE_ABUSE: '#f59e0b',
+    SUSPICIOUS_ACTIVITY: '#BDA76B',
+    UNUSUAL_PATTERN: '#BDA76B',
+    TRUST_CIRCLE_ANOMALY: '#BDA76B',
+  }
+  return map[type] ?? '#BDA76B'
 }
 
 export default async function AdminAiAlertsPage({
@@ -210,47 +244,54 @@ export default async function AdminAiAlertsPage({
         <div className="flex gap-2 flex-wrap">
           <a
             href="/admin/ai-alerts?severity=CRITICAL"
-            className={filterCls(severityFilter === 'CRITICAL')}
+            className={`inline-flex items-center gap-2 ${filterCls(severityFilter === 'CRITICAL')}`}
             style={
               severityFilter === 'CRITICAL'
                 ? { background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' }
                 : { color: 'var(--bt-muted)' }
             }
           >
-            🔴 Critique ({severityCounts.CRITICAL})
+            <span
+              className="h-2 w-2 shrink-0 rounded-full bg-[#E05252]"
+              aria-hidden
+            />
+            Critique ({severityCounts.CRITICAL})
           </a>
           <a
             href="/admin/ai-alerts?severity=HIGH"
-            className={filterCls(severityFilter === 'HIGH')}
+            className={`inline-flex items-center gap-2 ${filterCls(severityFilter === 'HIGH')}`}
             style={
               severityFilter === 'HIGH'
                 ? { background: 'rgba(232,148,58,0.15)', color: 'var(--bt-warn)' }
                 : { color: 'var(--bt-muted)' }
             }
           >
-            🟠 Élevée ({severityCounts.HIGH})
+            <span className="h-2 w-2 shrink-0 rounded-full bg-[#f59e0b]" aria-hidden />
+            Élevée ({severityCounts.HIGH})
           </a>
           <a
             href="/admin/ai-alerts?severity=MEDIUM"
-            className={filterCls(severityFilter === 'MEDIUM')}
+            className={`inline-flex items-center gap-2 ${filterCls(severityFilter === 'MEDIUM')}`}
             style={
               severityFilter === 'MEDIUM'
                 ? { background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)' }
                 : { color: 'var(--bt-muted)' }
             }
           >
-            🟡 Moyenne ({severityCounts.MEDIUM})
+            <span className="h-2 w-2 shrink-0 rounded-full bg-[#BDA76B]" aria-hidden />
+            Moyenne ({severityCounts.MEDIUM})
           </a>
           <a
             href="/admin/ai-alerts?severity=LOW"
-            className={filterCls(severityFilter === 'LOW')}
+            className={`inline-flex items-center gap-2 ${filterCls(severityFilter === 'LOW')}`}
             style={
               severityFilter === 'LOW'
                 ? { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' }
                 : { color: 'var(--bt-muted)' }
             }
           >
-            🔵 Faible ({severityCounts.LOW})
+            <span className="h-2 w-2 shrink-0 rounded-full bg-[#00d4ff]" aria-hidden />
+            Faible ({severityCounts.LOW})
           </a>
         </div>
       </div>
@@ -277,8 +318,11 @@ export default async function AdminAiAlertsPage({
                     >
                       {alert.status}
                     </span>
-                    <span className="text-xs" style={{ color: 'var(--bt-muted)' }}>
-                      {alert.alertType.replace(/_/g, ' ')}
+                    <span
+                      className="text-xs font-medium"
+                      style={{ color: aiAlertTypeColor(alert.alertType) }}
+                    >
+                      {aiAlertTypeLabel(alert.alertType)}
                     </span>
                   </div>
                   <h3 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">
@@ -363,24 +407,27 @@ export default async function AdminAiAlertsPage({
                   <>
                     <button
                       type="button"
-                      className="px-4 py-2 rounded-lg text-sm transition"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition"
                       style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' }}
                     >
-                      🔍 Investiguer
+                      <Search className="h-4 w-4 shrink-0" aria-hidden />
+                      Investiguer
                     </button>
                     <button
                       type="button"
-                      className="px-4 py-2 rounded-lg text-sm transition"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition"
                       style={{ background: 'rgba(29,184,126,0.15)', color: '#1DB87E' }}
                     >
-                      ✅ Résoudre
+                      <Check className="h-4 w-4 shrink-0" aria-hidden />
+                      Résoudre
                     </button>
                     <button
                       type="button"
-                      className="px-4 py-2 rounded-lg text-sm transition"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition"
                       style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--bt-muted)' }}
                     >
-                      ❌ Ignorer
+                      <X className="h-4 w-4 shrink-0" aria-hidden />
+                      Ignorer
                     </button>
                   </>
                 )}
@@ -388,17 +435,19 @@ export default async function AdminAiAlertsPage({
                   <>
                     <button
                       type="button"
-                      className="px-4 py-2 rounded-lg text-sm transition"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition"
                       style={{ background: 'rgba(29,184,126,0.15)', color: '#1DB87E' }}
                     >
-                      ✅ Résoudre
+                      <Check className="h-4 w-4 shrink-0" aria-hidden />
+                      Résoudre
                     </button>
                     <button
                       type="button"
-                      className="px-4 py-2 rounded-lg text-sm transition"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition"
                       style={{ background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' }}
                     >
-                      🚨 Escalader
+                      <OctagonX className="h-4 w-4 shrink-0" aria-hidden />
+                      Escalader
                     </button>
                   </>
                 )}
