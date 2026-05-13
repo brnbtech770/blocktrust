@@ -49,6 +49,21 @@ function getIp(req: NextRequest) {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 }
 
+/** Fusionne listes entité + propriétaire (ordre : entité d’abord, sans doublons insensibles à la casse). */
+function mergeCertifiedLists(entityItems: string[], userItems: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of [...entityItems, ...userItems]) {
+    const t = item.trim();
+    if (!t) continue;
+    const k = t.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(t);
+  }
+  return out;
+}
+
 async function resolveCertificateWithEntity(rawId: string) {
   const lookupKey = tryJtiFromUnverifiedJwt(rawId) ?? rawId;
 
@@ -202,6 +217,16 @@ export async function GET(
 
   const entity = certificate.entity;
   const entityName = entityDisplayName(entity);
+
+  const owner = await prisma.user.findUnique({
+    where: { id: entity.userId },
+    select: {
+      certifiedEmails: true,
+      certifiedPhones: true,
+      certifiedDomains: true,
+    },
+  });
+
   const certifiedAt = certificate.issuedAt.toISOString();
   const certificatePublicId = certificate.publicId ?? certificate.id;
 
@@ -255,9 +280,18 @@ export async function GET(
     walletAddressTrim.length > 0 &&
     walletNetworkTrim.length > 0;
 
-  const certifiedDomains = entity.certifiedDomains ?? [];
-  const certifiedEmails = entity.certifiedEmails ?? [];
-  const certifiedPhones = entity.certifiedPhones ?? [];
+  const certifiedDomains = mergeCertifiedLists(
+    entity.certifiedDomains ?? [],
+    owner?.certifiedDomains ?? [],
+  );
+  const certifiedEmails = mergeCertifiedLists(
+    entity.certifiedEmails ?? [],
+    owner?.certifiedEmails ?? [],
+  );
+  const certifiedPhones = mergeCertifiedLists(
+    entity.certifiedPhones ?? [],
+    owner?.certifiedPhones ?? [],
+  );
   const showCertifiedContacts =
     verdict === "VALID" &&
     (certifiedDomains.length > 0 ||
