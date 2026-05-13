@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import {
+  Check,
   Clock,
   Globe,
   Mail,
@@ -13,6 +14,7 @@ import {
   ShieldOff,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Logo } from "@/app/components/ui/Logo";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 
@@ -128,6 +130,7 @@ function formatCertifiedDate(iso: string | undefined | null): string {
 }
 
 function VerifyContent() {
+  const { data: session } = useSession();
   const router = useRouter();
   const sp = useSearchParams();
   const certIdQuery = sp.get("certId")?.trim() ?? "";
@@ -148,6 +151,10 @@ function VerifyContent() {
   const [certifiedPhones, setCertifiedPhones] = useState<string[]>([]);
   const [manualIdInput, setManualIdInput] = useState("");
   const [verifyErrorMessage, setVerifyErrorMessage] = useState<string | null>(null);
+  const [vaultMatchBanner, setVaultMatchBanner] = useState<{
+    inOrganization: boolean;
+    match: boolean;
+  } | null>(null);
 
   const hasValidToken = token.trim().length > 10;
 
@@ -403,6 +410,34 @@ function VerifyContent() {
     verdict === "FRAUD" ||
     verdict === "ERROR";
 
+  useEffect(() => {
+    setVaultMatchBanner(null);
+    if (!showSuccess || !session?.user) return;
+    if (certifiedEmails.length === 0 && certifiedDomains.length === 0) return;
+
+    let cancelled = false;
+    void (async () => {
+      const res = await fetch("/api/vault/check-match", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          emails: certifiedEmails,
+          domains: certifiedDomains,
+        }),
+      });
+      const j = (await res.json()) as { inOrganization?: boolean; match?: boolean };
+      if (cancelled || !res.ok) return;
+      setVaultMatchBanner({
+        inOrganization: Boolean(j.inOrganization),
+        match: Boolean(j.match),
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showSuccess, session?.user, certifiedEmails, certifiedDomains]);
+
   const activeQuery = Boolean(
     hasValidToken ||
       certIdForVerify ||
@@ -426,6 +461,7 @@ function VerifyContent() {
     setToken("");
     setTokenFixApplied(false);
     setVerifyErrorMessage(null);
+    setVaultMatchBanner(null);
     router.replace("/verify");
   };
 
@@ -632,6 +668,32 @@ function VerifyContent() {
               </div>
             ) : null}
 
+            {showSuccess &&
+            session?.user &&
+            vaultMatchBanner?.inOrganization &&
+            vaultMatchBanner.match ? (
+              <div
+                role="status"
+                className="w-full rounded-xl border border-[#10b981]/35 bg-[#10b981]/10 px-4 py-3 text-left text-sm text-[#10b981]/95"
+              >
+                Ces coordonnées certifiées correspondent à une référence enregistrée dans le BlockTrust Vault de
+                votre organisation.
+              </div>
+            ) : null}
+
+            {showSuccess &&
+            session?.user &&
+            vaultMatchBanner?.inOrganization &&
+            !vaultMatchBanner.match ? (
+              <div
+                role="status"
+                className="w-full rounded-xl border border-[#f59e0b]/35 bg-[#f59e0b]/10 px-4 py-3 text-left text-sm text-[#f59e0b]/95"
+              >
+                Aucune entrée de votre coffre équipe ne correspond à ces coordonnées certifiées. Vérifiez
+                l&apos;identité avec attention.
+              </div>
+            ) : null}
+
             <div className="h-px w-full bg-white/10" aria-hidden />
 
             <div className="w-full rounded-xl border border-[#00d4ff]/20 bg-[#00d4ff]/5 p-4 text-left">
@@ -645,9 +707,11 @@ function VerifyContent() {
                   "Identité attestée et vérifiable en temps réel",
                 ].map((item) => (
                   <li key={item} className="flex gap-2 text-xs leading-relaxed text-white/60">
-                    <span className="text-xs" style={{ color: C.valid }} aria-hidden>
-                      ✓
-                    </span>
+                    <Check
+                      className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                      style={{ color: C.valid }}
+                      aria-hidden
+                    />
                     <span>{item}</span>
                   </li>
                 ))}

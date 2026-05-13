@@ -9,6 +9,7 @@ import SignOutButton from './SignOutButton'
 import DashboardSidebarNav, { type SidebarItem } from './DashboardSidebarNav'
 
 import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
+import { hasOrgAccess } from '@/lib/vault-utils'
 
 function shellClass() {
   return 'flex h-full min-h-0 flex-col p-4 md:p-6'
@@ -49,6 +50,11 @@ export default async function DashboardSidebar() {
         })
       : false
 
+    const showB2BOrgVault =
+      subscription?.status === 'active' &&
+      subscription.plan != null &&
+      hasOrgAccess(subscription.plan)
+
     const menuItems: SidebarItem[] = [
       { name: 'Tableau de bord', href: '/dashboard', icon: 'Home' },
       { name: 'Mes contacts', href: '/dashboard/entities', icon: 'Building' },
@@ -64,6 +70,20 @@ export default async function DashboardSidebar() {
               icon: 'Users' as const,
             },
           ]),
+      ...(showB2BOrgVault
+        ? [
+            {
+              name: 'Organisation',
+              href: '/dashboard/organization',
+              icon: 'Building2' as const,
+            },
+            {
+              name: 'BlockTrust Vault',
+              href: '/dashboard/vault',
+              icon: 'ShieldCheck' as const,
+            },
+          ]
+        : []),
       {
         name: 'API & Marque blanche',
         href: '/dashboard/white-label',

@@ -2,12 +2,26 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Home, Building, Shield, Users, CreditCard, Settings, Code2, Palette, Lock } from 'lucide-react'
+import {
+  Home,
+  Building,
+  Building2,
+  Shield,
+  ShieldCheck,
+  Users,
+  CreditCard,
+  Settings,
+  Code2,
+  Palette,
+  Lock,
+} from 'lucide-react'
 
 const iconMap = {
   Home,
   Building,
+  Building2,
   Shield,
+  ShieldCheck,
   Users,
   CreditCard,
   Settings,
@@ -32,7 +46,11 @@ export default function DashboardSidebarNav({ items }: { items: SidebarItem[] })
       {items.map((item) => {
         const Icon = iconMap[item.icon]
         const pathOnly = item.href.split('?')[0]
-        const isActive = pathname === pathOnly || pathname === item.href
+        const isDashboardRoot = pathOnly === '/dashboard'
+        const isActive =
+          pathname === pathOnly ||
+          pathname === item.href ||
+          (!isDashboardRoot && pathname.startsWith(`${pathOnly}/`))
         return (
           <Link
             key={`${item.href}-${item.name}`}
