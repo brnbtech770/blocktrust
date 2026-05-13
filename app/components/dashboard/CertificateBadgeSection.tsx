@@ -45,13 +45,15 @@ export default function CertificateBadgeSection({
 
   const dims = DIMS[size]
   const badgeId = publicId || certificateId
-
-  const scriptCode = `<!-- BlockTrust Badge Widget -->
+  const widgetCertKey = publicId?.trim() ?? ''
+  const scriptCode = widgetCertKey
+    ? `<!-- BlockTrust Badge Widget -->
 <div id="blocktrust-badge"
-  data-certificate="${certificateId}"
+  data-certificate="${widgetCertKey}"
   data-size="${size}">
 </div>
 <script src="${baseUrl}/api/widget.js" async defer><\/script>`
+    : `<!-- BlockTrust : ID de vérification indisponible — le snippet widget sera actif lorsque le publicId sera défini. -->`
 
   const iframeCode = `<iframe
   src="${baseUrl}/api/badge/${badgeId}?size=${size}"

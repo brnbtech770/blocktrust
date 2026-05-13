@@ -9,6 +9,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
+import { truncateVerificationPublicId } from '@/lib/truncate-public-id'
 import { Copy, Download, ExternalLink, Check, Link2, Clock } from 'lucide-react'
 
 interface BadgeData {
@@ -179,6 +180,7 @@ export default function DashboardBadgePage() {
   }
 
   const badgeId = badgeData.publicId || badgeData.id
+  const verifyIdLabel = truncateVerificationPublicId(badgeData.publicId)
   const publicVerifyHref = `https://blocktrust.tech/verify?certId=${encodeURIComponent(badgeId)}`
 
   return (
@@ -191,7 +193,9 @@ export default function DashboardBadgePage() {
           ← Retour aux certificats
         </Link>
         <h1 className="font-syne mb-2 text-4xl font-bold tracking-tight text-white">Mon Badge</h1>
-        <p className="font-mono text-base text-white/60">ID: {badgeId}</p>
+        <p className="text-white/40 text-xs uppercase tracking-widest mb-1">ID de vérification</p>
+        <p className="font-mono text-base text-white/60">{verifyIdLabel}</p>
+        <p className="mt-1 text-white/30 text-xs">Partagez cet ID pour permettre la vérification</p>
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -206,9 +210,7 @@ export default function DashboardBadgePage() {
                 style={{ maxWidth: '320px' }}
               />
             </div>
-            <p className="mt-4 text-center font-mono text-xs text-white/40">
-              {badgeData.publicId || badgeData.id}
-            </p>
+            <p className="mt-4 text-center font-mono text-xs text-white/40">{verifyIdLabel}</p>
           </div>
         </div>
 

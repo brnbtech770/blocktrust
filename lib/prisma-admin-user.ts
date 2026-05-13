@@ -49,6 +49,9 @@ export const adminUserDetailSelect = {
       certificates: {
         select: {
           id: true,
+          publicId: true,
+          status: true,
+          issuedAt: true,
           verificationCount: true,
         },
       },

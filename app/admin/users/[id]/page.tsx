@@ -154,6 +154,37 @@ export default async function AdminUserDetailPage({
                 <div className="mt-2">
                   <p className="text-xs" style={{ color: 'var(--bt-muted)' }}>Certificats: {entity.certificates.length}</p>
                 </div>
+                {entity.certificates.length > 0 ? (
+                  <div className="mt-3 space-y-3 border-t border-white/10 pt-3">
+                    {entity.certificates.map((certificate) => (
+                      <div
+                        key={certificate.id}
+                        className="rounded-lg border p-3"
+                        style={{ borderColor: 'var(--bt-border)', background: 'rgba(0,0,0,0.15)' }}
+                      >
+                        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-white/45">
+                          Certificat ·{' '}
+                          {new Date(certificate.issuedAt).toLocaleDateString('fr-FR', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })}{' '}
+                          · {certificate.status}
+                        </p>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="mb-1 text-white/40 text-xs uppercase tracking-widest">ID public</p>
+                            <p className="break-all font-mono text-white/60 text-xs">{certificate.publicId ?? '—'}</p>
+                          </div>
+                          <div>
+                            <p className="mb-1 text-white/40 text-xs uppercase tracking-widest">ID interne</p>
+                            <p className="break-all font-mono text-white/40 text-xs">{certificate.id}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>

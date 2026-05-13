@@ -83,7 +83,7 @@ export default function CertificateCard({ certificate, onRevoke }: CertificateCa
 
       <div className="flex gap-3">
         <Link
-          href={`/dashboard/certificate/${certificate.id}`}
+          href={`/dashboard/certificate/${certificate.publicId ?? certificate.id}`}
           className="flex-1 rounded-lg bg-bt-cyan py-2.5 px-4 text-center font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
         >
           Voir

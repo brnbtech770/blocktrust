@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { UpgradePrompt } from "@/app/components/ui/UpgradePrompt";
 import { buildUpgradePromptProps } from "@/lib/upgradePromptProps";
+import { truncateVerificationPublicId } from "@/lib/truncate-public-id";
 
 type CertificateStatus = "PENDING" | "ACTIVE" | "ANCHORED" | "SUSPENDED" | "REVOKED" | "EXPIRED";
 
@@ -242,7 +243,8 @@ export default function CertificatesPage() {
             Mes Certificats
           </h1>
           <p className="font-sans mb-4 max-w-xl text-xs leading-relaxed text-white/40">
-            ID public : à partager pour la vérification. ID technique : usage interne BlockTrust uniquement.
+            ID de vérification : affiché en partie pour le partage. L’identifiant technique interne n&apos;est pas
+            exposé ici.
           </p>
           <p className="font-sans text-base leading-relaxed text-white/80">
             Gérez vos badges de certification
@@ -305,12 +307,13 @@ export default function CertificatesPage() {
                     )}
                     <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
                       <div>
-                        <p className="font-mono text-xs text-gray-400">{certificate.publicId ?? "—"}</p>
-                        <span className="text-[10px] text-white/30">ID à partager pour vérification</span>
-                      </div>
-                      <div>
-                        <p className="break-all font-mono text-xs text-gray-500">{certificate.id}</p>
-                        <span className="text-[10px] text-white/30">ID technique interne</span>
+                        <p className="text-[10px] font-medium uppercase tracking-wider text-white/40">
+                          ID de vérification
+                        </p>
+                        <p className="mt-0.5 font-mono text-xs text-gray-300">
+                          {truncateVerificationPublicId(certificate.publicId)}
+                        </p>
+                        <span className="text-[10px] text-white/30">À partager pour la vérification</span>
                       </div>
                     </div>
                     <p className="mt-2 font-sans text-sm text-white/60">
@@ -371,7 +374,7 @@ export default function CertificatesPage() {
                     </p>
                   ) : (
                     <Link
-                      href={`/dashboard/badge/${certificate.id}`}
+                      href={`/dashboard/badge/${certificate.publicId ?? certificate.id}`}
                       className="inline-flex rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40"
                     >
                       Voir détails

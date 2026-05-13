@@ -178,7 +178,7 @@ export default function CertificateTable({ certificates }: CertificateTableProps
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <Link
-                            href={`/dashboard/certificate/${cert.id}`}
+                            href={`/dashboard/certificate/${cert.publicId ?? cert.id}`}
                             className="inline-flex items-center gap-1 rounded-lg bg-[var(--bt-gold)]/20 px-2 py-1.5 text-sm font-medium text-[var(--bt-gold)] hover:bg-[var(--bt-gold)]/30 transition-colors"
                           >
                             <Eye className="w-4 h-4" /> Voir
