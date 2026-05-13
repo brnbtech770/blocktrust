@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
+import { isAdmin } from '@/lib/admin-utils'
 import { validateCertifiedContactArraysWithLimits } from '@/lib/certified-contact'
 import { getPlanWording, resolvePlanKeyForWording } from '@/lib/plan-wording'
 
@@ -29,20 +30,26 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
 
   const payload = body as Record<string, unknown>
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { plan: { select: { type: true } } },
-  })
-  const subscription = await prisma.subscription.findUnique({
-    where: { userId: session.user.id },
-    select: { plan: true, status: true },
-  })
+  const userEmail = session.user.email ?? ''
+  let planKey: string
+  if (isAdmin(userEmail)) {
+    planKey = 'B2B_ENTERPRISE'
+  } else {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { plan: { select: { type: true } } },
+    })
+    const subscription = await prisma.subscription.findUnique({
+      where: { userId: session.user.id },
+      select: { plan: true, status: true },
+    })
+    planKey = resolvePlanKeyForWording({
+      planType: dbUser?.plan?.type,
+      subscriptionPlan: subscription?.plan,
+      subscriptionStatus: subscription?.status,
+    })
+  }
 
-  const planKey = resolvePlanKeyForWording({
-    planType: dbUser?.plan?.type,
-    subscriptionPlan: subscription?.plan,
-    subscriptionStatus: subscription?.status,
-  })
   const wording = getPlanWording(planKey)
 
   const v = validateCertifiedContactArraysWithLimits(
