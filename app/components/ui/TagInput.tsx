@@ -23,6 +23,8 @@ interface TagInputProps {
   Icon?: LucideIcon;
   /** Applied to trimmed draft before validate + store */
   normalizeForChip?: (trimmedRaw: string) => string;
+  /** Plafond jetons (défaut : constante globale certifiée) */
+  maxItems?: number;
 }
 
 export function TagInput({
@@ -32,18 +34,20 @@ export function TagInput({
   validate,
   Icon,
   normalizeForChip,
+  maxItems: maxItemsProp,
 }: TagInputProps): JSX.Element {
+  const maxItems = maxItemsProp ?? CERTIFIED_CONTACT_MAX_ITEMS;
   const [draft, setDraft] = useState("");
 
   const add = useCallback(() => {
     let t = draft.trim();
     if (!t) return;
     if (normalizeForChip) t = normalizeForChip(t);
-    if (!t || values.length >= CERTIFIED_CONTACT_MAX_ITEMS) return;
+    if (!t || values.length >= maxItems) return;
     if (!validate(t)) return;
     if (!values.includes(t)) onChange([...values, t]);
     setDraft("");
-  }, [draft, normalizeForChip, validate, values, onChange]);
+  }, [draft, normalizeForChip, validate, values, onChange, maxItems]);
 
   function remove(at: number): void {
     onChange(values.filter((_, i) => i !== at));
@@ -56,7 +60,7 @@ export function TagInput({
     }
   }
 
-  const atCap = values.length >= CERTIFIED_CONTACT_MAX_ITEMS;
+  const atCap = values.length >= maxItems;
 
   return (
     <div className="space-y-2">
@@ -101,7 +105,7 @@ export function TagInput({
         </div>
       ) : null}
       <p className="text-[10px] uppercase tracking-wider text-white/25">
-        Maximum {CERTIFIED_CONTACT_MAX_ITEMS} entrées par champ.
+        Maximum {maxItems} entrée{maxItems > 1 ? "s" : ""} pour ce champ.
       </p>
     </div>
   );
@@ -111,12 +115,14 @@ interface DomainTagInputProps {
   values: string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
+  maxItems?: number;
 }
 
 export function DomainTagInput({
   values,
   onChange,
   placeholder = "mondomaine.fr",
+  maxItems,
 }: DomainTagInputProps): JSX.Element {
   return (
     <TagInput
@@ -126,6 +132,7 @@ export function DomainTagInput({
       Icon={Globe}
       normalizeForChip={normalizeCertifiedDomainInput}
       validate={(n) => n.length > 0 && isValidCertifiedDomain(n)}
+      maxItems={maxItems}
     />
   );
 }
@@ -134,12 +141,14 @@ interface CertifiedEmailsTagInputProps {
   values: string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
+  maxItems?: number;
 }
 
 export function CertifiedEmailsTagInput({
   values,
   onChange,
   placeholder = "contact@mondomaine.fr",
+  maxItems,
 }: CertifiedEmailsTagInputProps): JSX.Element {
   return (
     <TagInput
@@ -149,6 +158,7 @@ export function CertifiedEmailsTagInput({
       Icon={Mail}
       normalizeForChip={normalizeCertifiedEmailInput}
       validate={(n) => n.length > 0 && isValidCertifiedEmail(n)}
+      maxItems={maxItems}
     />
   );
 }
@@ -157,12 +167,14 @@ interface CertifiedPhonesTagInputProps {
   values: string[];
   onChange: (next: string[]) => void;
   placeholder?: string;
+  maxItems?: number;
 }
 
 export function CertifiedPhonesTagInput({
   values,
   onChange,
   placeholder = "+33612345678",
+  maxItems,
 }: CertifiedPhonesTagInputProps): JSX.Element {
   return (
     <TagInput
@@ -172,6 +184,7 @@ export function CertifiedPhonesTagInput({
       Icon={Phone}
       normalizeForChip={normalizeCertifiedPhoneInput}
       validate={(n) => n.length > 0 && isValidCertifiedPhone(n)}
+      maxItems={maxItems}
     />
   );
 }

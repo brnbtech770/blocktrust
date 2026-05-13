@@ -54,10 +54,17 @@ export interface CertifiedArraysResult {
 function parseArrayField(
   raw: unknown,
 ): { ok: true; items: string[] } | { ok: false; reason: string } {
+  return parseArrayFieldWithMax(raw, CERTIFIED_CONTACT_MAX_ITEMS);
+}
+
+function parseArrayFieldWithMax(
+  raw: unknown,
+  maxItems: number,
+): { ok: true; items: string[] } | { ok: false; reason: string } {
   if (raw === undefined) return { ok: true, items: [] };
   if (!Array.isArray(raw)) return { ok: false, reason: "doit être un tableau" };
-  if (raw.length > CERTIFIED_CONTACT_MAX_ITEMS)
-    return { ok: false, reason: `maximum ${CERTIFIED_CONTACT_MAX_ITEMS} entrées` };
+  if (raw.length > maxItems)
+    return { ok: false, reason: `maximum ${maxItems} entrées` };
   return { ok: true, items: raw.map(String) };
 }
 
@@ -75,7 +82,8 @@ function dedupePreserveOrder(xs: string[]): string[] {
 
 function assertCertifiedArrayPresent(
   raw: unknown,
-  field: "certifiedDomains" | "certifiedEmails" | "certifiedPhones",
+  field: CertifiedArraysValidationError["field"],
+  maxItems: number,
 ): { ok: true; items: string[] } | { ok: false; error: CertifiedArraysValidationError } {
   if (raw === undefined || raw === null) {
     return { ok: false, error: { field, reason: "tableau requis" } };
@@ -83,10 +91,10 @@ function assertCertifiedArrayPresent(
   if (!Array.isArray(raw)) {
     return { ok: false, error: { field, reason: "doit être un tableau" } };
   }
-  if (raw.length > CERTIFIED_CONTACT_MAX_ITEMS) {
+  if (raw.length > maxItems) {
     return {
       ok: false,
-      error: { field, reason: `maximum ${CERTIFIED_CONTACT_MAX_ITEMS} entrées` },
+      error: { field, reason: `maximum ${maxItems} entrées` },
     };
   }
   return { ok: true, items: raw.map(String) };
@@ -171,8 +179,9 @@ export function trustedCircleShouldWarnUncertifiedDomainContext(params: {
 
 function validateDomainsArray(
   raw: unknown,
+  maxDomains: number = CERTIFIED_CONTACT_MAX_ITEMS,
 ): { ok: true; value: string[] } | { ok: false; error: CertifiedArraysValidationError } {
-  const d = assertCertifiedArrayPresent(raw, "certifiedDomains");
+  const d = assertCertifiedArrayPresent(raw, "certifiedDomains", maxDomains);
   if (!d.ok) return d;
 
   const domains: string[] = [];
@@ -187,12 +196,12 @@ function validateDomainsArray(
     domains.push(n);
   }
   const uniqDomains = dedupePreserveOrder(domains);
-  if (uniqDomains.length > CERTIFIED_CONTACT_MAX_ITEMS)
+  if (uniqDomains.length > maxDomains)
     return {
       ok: false,
       error: {
         field: "certifiedDomains",
-        reason: `maximum ${CERTIFIED_CONTACT_MAX_ITEMS} domaines après normalisation`,
+        reason: `maximum ${maxDomains} domaines après normalisation`,
       },
     };
   return { ok: true, value: uniqDomains };
@@ -200,8 +209,9 @@ function validateDomainsArray(
 
 function validateEmailsArray(
   raw: unknown,
+  maxEmails: number = CERTIFIED_CONTACT_MAX_ITEMS,
 ): { ok: true; value: string[] } | { ok: false; error: CertifiedArraysValidationError } {
-  const e = assertCertifiedArrayPresent(raw, "certifiedEmails");
+  const e = assertCertifiedArrayPresent(raw, "certifiedEmails", maxEmails);
   if (!e.ok) return e;
 
   const emails: string[] = [];
@@ -215,13 +225,23 @@ function validateEmailsArray(
       };
     emails.push(n);
   }
-  return { ok: true, value: dedupePreserveOrder(emails) };
+  const uniq = dedupePreserveOrder(emails);
+  if (uniq.length > maxEmails)
+    return {
+      ok: false,
+      error: {
+        field: "certifiedEmails",
+        reason: `maximum ${maxEmails} emails après normalisation`,
+      },
+    };
+  return { ok: true, value: uniq };
 }
 
 function validatePhonesArray(
   raw: unknown,
+  maxPhones: number = CERTIFIED_CONTACT_MAX_ITEMS,
 ): { ok: true; value: string[] } | { ok: false; error: CertifiedArraysValidationError } {
-  const p = assertCertifiedArrayPresent(raw, "certifiedPhones");
+  const p = assertCertifiedArrayPresent(raw, "certifiedPhones", maxPhones);
   if (!p.ok) return p;
 
   const phones: string[] = [];
@@ -235,7 +255,16 @@ function validatePhonesArray(
       };
     phones.push(n);
   }
-  return { ok: true, value: dedupePreserveOrder(phones) };
+  const uniq = dedupePreserveOrder(phones);
+  if (uniq.length > maxPhones)
+    return {
+      ok: false,
+      error: {
+        field: "certifiedPhones",
+        reason: `maximum ${maxPhones} téléphones après normalisation`,
+      },
+    };
+  return { ok: true, value: uniq };
 }
 
 /** PATCH : ne valide que les clés présentes dans l’objet (remplacement complet du tableau). */
@@ -326,5 +355,32 @@ export function validateCertifiedContactArrays(payload: {
   return {
     ok: true,
     value: { domains: uniqDomains, emails: uniqEmails, phones: uniqPhones },
+  };
+}
+
+export type CertifiedContactFieldLimits = {
+  maxEmails: number;
+  maxPhones: number;
+  maxDomains: number;
+};
+
+/** Validation PATCH user avec plafonds par plan (emails / téléphones / domaines). */
+export function validateCertifiedContactArraysWithLimits(
+  payload: {
+    certifiedDomains?: unknown;
+    certifiedEmails?: unknown;
+    certifiedPhones?: unknown;
+  },
+  limits: CertifiedContactFieldLimits,
+): { ok: true; value: CertifiedArraysResult } | { ok: false; error: CertifiedArraysValidationError } {
+  const vd = validateDomainsArray(payload.certifiedDomains ?? [], limits.maxDomains);
+  if (!vd.ok) return vd;
+  const ve = validateEmailsArray(payload.certifiedEmails ?? [], limits.maxEmails);
+  if (!ve.ok) return ve;
+  const vp = validatePhonesArray(payload.certifiedPhones ?? [], limits.maxPhones);
+  if (!vp.ok) return vp;
+  return {
+    ok: true,
+    value: { domains: vd.value, emails: ve.value, phones: vp.value },
   };
 }

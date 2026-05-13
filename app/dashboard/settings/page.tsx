@@ -5,9 +5,15 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
+import { getPlanWording, resolvePlanKeyForWording } from '@/lib/plan-wording'
 import SettingsClient from './SettingsClient'
 
 export const dynamic = 'force-dynamic'
+
+function clampCertified(arr: string[], max: number): string[] {
+  if (max <= 0) return []
+  return arr.slice(0, max)
+}
 
 export default async function SettingsPage() {
   const session = await auth()
@@ -26,12 +32,51 @@ export default async function SettingsPage() {
       certifiedEmails: true,
       certifiedPhones: true,
       certifiedDomains: true,
+      plan: { select: { type: true } },
     },
   })
 
   if (!user?.email) {
     redirect(`/auth/signin?callbackUrl=${encodeURIComponent('/dashboard/settings')}`)
   }
+
+  const subscription = await prisma.subscription.findUnique({
+    where: { userId: session.user.id },
+    select: { plan: true },
+  })
+
+  const planKey = resolvePlanKeyForWording({
+    planType: user.plan?.type,
+    subscriptionPlan: subscription?.plan,
+  })
+
+  const entityCount = await prisma.entity.count({
+    where: { userId: session.user.id },
+  })
+
+  const org = await prisma.organization.findFirst({
+    where: {
+      OR: [{ ownerId: session.user.id }, { members: { some: { userId: session.user.id } } }],
+    },
+    select: { maxSeats: true, _count: { select: { members: true } } },
+  })
+
+  let wordingUserCount: number | undefined
+  let wordingMaxUsers: number | undefined
+  if (planKey === 'B2C_FAMILLE' || planKey === 'B2C_FAMILLE_PLUS') {
+    wordingUserCount = entityCount
+  } else if (
+    planKey === 'B2B_STARTER' ||
+    planKey === 'B2B_TEAM' ||
+    planKey === 'B2B_BUSINESS'
+  ) {
+    if (org) {
+      wordingUserCount = org._count.members
+      wordingMaxUsers = org.maxSeats
+    }
+  }
+
+  const planWording = getPlanWording(planKey, wordingUserCount, wordingMaxUsers)
 
   return (
     <SettingsClient
@@ -41,10 +86,11 @@ export default async function SettingsPage() {
         masked: user.extensionApiKey ?? null,
       }}
       certifiedContacts={{
-        certifiedEmails: user.certifiedEmails ?? [],
-        certifiedPhones: user.certifiedPhones ?? [],
-        certifiedDomains: user.certifiedDomains ?? [],
+        certifiedEmails: clampCertified(user.certifiedEmails ?? [], planWording.maxCertifiedEmails),
+        certifiedPhones: clampCertified(user.certifiedPhones ?? [], planWording.maxCertifiedPhones),
+        certifiedDomains: clampCertified(user.certifiedDomains ?? [], planWording.maxCertifiedDomains),
       }}
+      planWording={planWording}
     />
   )
 }

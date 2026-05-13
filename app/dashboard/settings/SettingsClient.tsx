@@ -19,6 +19,13 @@ import {
   CertifiedPhonesTagInput,
   DomainTagInput,
 } from '@/app/components/ui/TagInput'
+import type { PlanWording } from '@/lib/plan-wording'
+import {
+  isValidCertifiedEmail,
+  isValidCertifiedPhone,
+  normalizeCertifiedEmailInput,
+  normalizeCertifiedPhoneInput,
+} from '@/lib/certified-contact'
 
 export type SettingsClientUser = {
   email: string
@@ -45,14 +52,136 @@ type ApiKeyResponse = {
   error?: string
 }
 
+function SimpleCertifiedSection({
+  email,
+  phone,
+  onChangeEmail,
+  onChangePhone,
+}: {
+  email: string
+  phone: string
+  onChangeEmail: (v: string) => void
+  onChangePhone: (v: string) => void
+}) {
+  return (
+    <>
+      <div className="mb-6 space-y-3">
+        <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/60">
+          <Mail className="h-3 w-3 shrink-0" aria-hidden />
+          Email officiel
+        </label>
+        <p className="text-xs text-white/30">
+          Une seule adresse certifiée avec votre forfait. Vos contacts seront alertés si un email provient
+          d&apos;une autre adresse.
+        </p>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => onChangeEmail(e.target.value)}
+          autoComplete="email"
+          placeholder="votre@email.com"
+          className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-[#00d4ff]/50 focus:outline-none"
+        />
+      </div>
+
+      <div className="mb-6 space-y-3">
+        <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/60">
+          <Phone className="h-3 w-3 shrink-0" aria-hidden />
+          Téléphone officiel
+        </label>
+        <input
+          type="tel"
+          value={phone}
+          onChange={(e) => onChangePhone(e.target.value)}
+          autoComplete="tel"
+          placeholder="+33612345678"
+          className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-[#00d4ff]/50 focus:outline-none"
+        />
+      </div>
+    </>
+  )
+}
+
+function ProCertifiedSection({
+  wording,
+  certifiedEmails,
+  certifiedPhones,
+  certifiedDomains,
+  setCertifiedEmails,
+  setCertifiedPhones,
+  setCertifiedDomains,
+}: {
+  wording: PlanWording
+  certifiedEmails: string[]
+  certifiedPhones: string[]
+  certifiedDomains: string[]
+  setCertifiedEmails: (v: string[]) => void
+  setCertifiedPhones: (v: string[]) => void
+  setCertifiedDomains: (v: string[]) => void
+}) {
+  return (
+    <>
+      <div className="mb-6 space-y-3">
+        <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/60">
+          <Mail className="h-3 w-3 shrink-0" aria-hidden />
+          Emails officiels
+        </label>
+        <p className="text-xs text-white/30">
+          Ajoutez vos adresses email officielles. Vos contacts seront alertés si un email provient
+          d&apos;une autre adresse.
+        </p>
+        <CertifiedEmailsTagInput
+          values={certifiedEmails}
+          onChange={setCertifiedEmails}
+          placeholder="votre@email.com"
+          maxItems={wording.maxCertifiedEmails}
+        />
+      </div>
+
+      <div className="mb-6 space-y-3">
+        <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/60">
+          <Phone className="h-3 w-3 shrink-0" aria-hidden />
+          Téléphones officiels
+        </label>
+        <CertifiedPhonesTagInput
+          values={certifiedPhones}
+          onChange={setCertifiedPhones}
+          placeholder="+33612345678"
+          maxItems={wording.maxCertifiedPhones}
+        />
+      </div>
+
+      {wording.canCertifyDomains ? (
+        <div className="mb-6 space-y-3">
+          <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/60">
+            <Globe className="h-3 w-3 shrink-0" aria-hidden />
+            Domaines officiels
+          </label>
+          <p className="text-xs text-white/30">
+            Ex. monentreprise.fr — protège contre les sites miroirs
+          </p>
+          <DomainTagInput
+            values={certifiedDomains}
+            onChange={setCertifiedDomains}
+            placeholder="mondomaine.fr"
+            maxItems={wording.maxCertifiedDomains}
+          />
+        </div>
+      ) : null}
+    </>
+  )
+}
+
 export default function SettingsClient({
   user,
   extensionKeyInitial,
   certifiedContacts,
+  planWording,
 }: {
   user: SettingsClientUser
   extensionKeyInitial: ExtensionKeyInitial
   certifiedContacts: CertifiedContactsInitial
+  planWording: PlanWording
 }) {
   const [hasExtensionKey, setHasExtensionKey] = useState(extensionKeyInitial.hasKey)
   const [maskedKey, setMaskedKey] = useState<string | null>(extensionKeyInitial.masked)
@@ -78,20 +207,42 @@ export default function SettingsClient({
     setSavingCertified(true)
     setCertifiedError(null)
     try {
+      let emailsPayload = certifiedEmails
+      let phonesPayload = certifiedPhones
+      if (!planWording.canCertifyMultipleEmails) {
+        const ne = normalizeCertifiedEmailInput(certifiedEmails[0] ?? '')
+        const np = normalizeCertifiedPhoneInput(certifiedPhones[0] ?? '')
+        if (ne && !isValidCertifiedEmail(ne)) {
+          setCertifiedError('Email invalide')
+          return
+        }
+        if (np && !isValidCertifiedPhone(np)) {
+          setCertifiedError('Numéro de téléphone invalide')
+          return
+        }
+        emailsPayload = ne ? [ne] : []
+        phonesPayload = np ? [np] : []
+      }
+
       const res = await fetch('/api/user/certified-contacts', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          certifiedEmails,
-          certifiedPhones,
-          certifiedDomains,
+          certifiedEmails: emailsPayload,
+          certifiedPhones: phonesPayload,
+          certifiedDomains: planWording.canCertifyDomains ? certifiedDomains : [],
         }),
       })
       const data = (await res.json().catch(() => ({}))) as { error?: string }
       if (!res.ok) {
         setCertifiedError(data.error ?? 'Sauvegarde impossible')
         return
+      }
+      if (!planWording.canCertifyMultipleEmails) {
+        setCertifiedEmails(emailsPayload)
+        setCertifiedPhones(phonesPayload)
+        setCertifiedDomains([])
       }
       setSavedCertified(true)
       window.setTimeout(() => setSavedCertified(false), 3000)
@@ -249,44 +400,24 @@ export default function SettingsClient({
             </p>
           ) : null}
 
-          <div className="mb-6 space-y-3">
-            <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/60">
-              <Mail className="h-3 w-3 shrink-0" aria-hidden />
-              Emails officiels
-            </label>
-            <p className="text-xs text-white/30">
-              Ajoutez vos adresses email officielles. Vos contacts seront alertés si un email provient
-              d&apos;une autre adresse.
-            </p>
-            <CertifiedEmailsTagInput
-              values={certifiedEmails}
-              onChange={setCertifiedEmails}
-              placeholder="votre@email.com"
+          {planWording.canCertifyMultipleEmails ? (
+            <ProCertifiedSection
+              wording={planWording}
+              certifiedEmails={certifiedEmails}
+              certifiedPhones={certifiedPhones}
+              certifiedDomains={certifiedDomains}
+              setCertifiedEmails={setCertifiedEmails}
+              setCertifiedPhones={setCertifiedPhones}
+              setCertifiedDomains={setCertifiedDomains}
             />
-          </div>
-
-          <div className="mb-6 space-y-3">
-            <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/60">
-              <Phone className="h-3 w-3 shrink-0" aria-hidden />
-              Téléphones officiels
-            </label>
-            <CertifiedPhonesTagInput
-              values={certifiedPhones}
-              onChange={setCertifiedPhones}
-              placeholder="+33612345678"
+          ) : (
+            <SimpleCertifiedSection
+              email={certifiedEmails[0] ?? ''}
+              phone={certifiedPhones[0] ?? ''}
+              onChangeEmail={(v) => setCertifiedEmails(v.trim() ? [v] : [])}
+              onChangePhone={(v) => setCertifiedPhones(v.trim() ? [v] : [])}
             />
-          </div>
-
-          <div className="mb-6 space-y-3">
-            <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/60">
-              <Globe className="h-3 w-3 shrink-0" aria-hidden />
-              Domaines officiels
-            </label>
-            <p className="text-xs text-white/30">
-              Ex. monentreprise.fr — protège contre les sites miroirs
-            </p>
-            <DomainTagInput values={certifiedDomains} onChange={setCertifiedDomains} placeholder="mondomaine.fr" />
-          </div>
+          )}
 
           <button
             type="button"

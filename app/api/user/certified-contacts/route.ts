@@ -1,11 +1,12 @@
 // app/api/user/certified-contacts/route.ts
-// PATCH — coordonnées certifiées au niveau compte User (max 10 / champ, validation partagée avec Entity)
+// PATCH — coordonnées certifiées au niveau compte User (limites selon plan)
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
-import { validateCertifiedContactArrays } from '@/lib/certified-contact'
+import { validateCertifiedContactArraysWithLimits } from '@/lib/certified-contact'
+import { getPlanWording, resolvePlanKeyForWording } from '@/lib/plan-wording'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,11 +28,34 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
   }
 
   const payload = body as Record<string, unknown>
-  const v = validateCertifiedContactArrays({
-    certifiedEmails: payload.certifiedEmails,
-    certifiedPhones: payload.certifiedPhones,
-    certifiedDomains: payload.certifiedDomains,
+
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { plan: { select: { type: true } } },
   })
+  const subscription = await prisma.subscription.findUnique({
+    where: { userId: session.user.id },
+    select: { plan: true },
+  })
+
+  const planKey = resolvePlanKeyForWording({
+    planType: dbUser?.plan?.type,
+    subscriptionPlan: subscription?.plan,
+  })
+  const wording = getPlanWording(planKey)
+
+  const v = validateCertifiedContactArraysWithLimits(
+    {
+      certifiedEmails: payload.certifiedEmails,
+      certifiedPhones: payload.certifiedPhones,
+      certifiedDomains: payload.certifiedDomains,
+    },
+    {
+      maxEmails: wording.maxCertifiedEmails,
+      maxPhones: wording.maxCertifiedPhones,
+      maxDomains: wording.maxCertifiedDomains,
+    },
+  )
 
   if (!v.ok) {
     return NextResponse.json(
