@@ -79,6 +79,31 @@ export default async function SettingsPage() {
 
   const planWording = getPlanWording(planKey, wordingUserCount, wordingMaxUsers)
 
+  const debugUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      email: true,
+      planId: true,
+      plan: { select: { type: true } },
+      subscription: {
+        select: {
+          plan: true,
+          status: true,
+        },
+      },
+    },
+  })
+  console.log(
+    '=== DEBUG PLAN ===',
+    JSON.stringify({
+      email: debugUser?.email,
+      planId: debugUser?.planId,
+      planType: debugUser?.plan?.type,
+      subPlan: debugUser?.subscription?.plan,
+      subStatus: debugUser?.subscription?.status,
+    }),
+  )
+
   return (
     <SettingsClient
       user={{ email: user.email, name: user.name, image: user.image }}
