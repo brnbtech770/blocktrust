@@ -1,13 +1,35 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertTriangle, Check, Chrome, Copy } from 'lucide-react'
+import {
+  AlertTriangle,
+  Check,
+  Chrome,
+  Copy,
+  Globe,
+  Loader2,
+  Mail,
+  Phone,
+  Save,
+  ShieldCheck,
+} from 'lucide-react'
 import SignOutButton from '@/app/components/SignOutButton'
+import {
+  CertifiedEmailsTagInput,
+  CertifiedPhonesTagInput,
+  DomainTagInput,
+} from '@/app/components/ui/TagInput'
 
 export type SettingsClientUser = {
   email: string
   name: string | null
   image: string | null
+}
+
+export type CertifiedContactsInitial = {
+  certifiedEmails: string[]
+  certifiedPhones: string[]
+  certifiedDomains: string[]
 }
 
 export type ExtensionKeyInitial = {
@@ -26,9 +48,11 @@ type ApiKeyResponse = {
 export default function SettingsClient({
   user,
   extensionKeyInitial,
+  certifiedContacts,
 }: {
   user: SettingsClientUser
   extensionKeyInitial: ExtensionKeyInitial
+  certifiedContacts: CertifiedContactsInitial
 }) {
   const [hasExtensionKey, setHasExtensionKey] = useState(extensionKeyInitial.hasKey)
   const [maskedKey, setMaskedKey] = useState<string | null>(extensionKeyInitial.masked)
@@ -36,6 +60,45 @@ export default function SettingsClient({
   const [keyLoading, setKeyLoading] = useState(false)
   const [keyError, setKeyError] = useState<string | null>(null)
   const [copyDone, setCopyDone] = useState(false)
+
+  const [certifiedEmails, setCertifiedEmails] = useState<string[]>(
+    certifiedContacts.certifiedEmails ?? []
+  )
+  const [certifiedPhones, setCertifiedPhones] = useState<string[]>(
+    certifiedContacts.certifiedPhones ?? []
+  )
+  const [certifiedDomains, setCertifiedDomains] = useState<string[]>(
+    certifiedContacts.certifiedDomains ?? []
+  )
+  const [savingCertified, setSavingCertified] = useState(false)
+  const [savedCertified, setSavedCertified] = useState(false)
+  const [certifiedError, setCertifiedError] = useState<string | null>(null)
+
+  async function handleSaveCertifiedContacts() {
+    setSavingCertified(true)
+    setCertifiedError(null)
+    try {
+      const res = await fetch('/api/user/certified-contacts', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          certifiedEmails,
+          certifiedPhones,
+          certifiedDomains,
+        }),
+      })
+      const data = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        setCertifiedError(data.error ?? 'Sauvegarde impossible')
+        return
+      }
+      setSavedCertified(true)
+      window.setTimeout(() => setSavedCertified(false), 3000)
+    } finally {
+      setSavingCertified(false)
+    }
+  }
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -166,6 +229,91 @@ export default function SettingsClient({
             </div>
           </div>
         </div>
+
+        <section className="mb-6 rounded-xl border border-white/10 bg-[#0d1f3c] p-6">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#00d4ff]/20 bg-[#00d4ff]/10">
+              <ShieldCheck className="h-4 w-4 text-[#00d4ff]" aria-hidden />
+            </div>
+            <div>
+              <h3 className="font-syne text-sm font-semibold text-white">Mes coordonnées certifiées</h3>
+              <p className="mt-0.5 text-xs text-white/40">
+                Ces informations apparaissent sur votre badge et sont vérifiables par tous
+              </p>
+            </div>
+          </div>
+
+          {certifiedError ? (
+            <p className="mb-4 text-sm text-[#E05252]" role="alert">
+              {certifiedError}
+            </p>
+          ) : null}
+
+          <div className="mb-6 space-y-3">
+            <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/60">
+              <Mail className="h-3 w-3 shrink-0" aria-hidden />
+              Emails officiels
+            </label>
+            <p className="text-xs text-white/30">
+              Ajoutez vos adresses email officielles. Vos contacts seront alertés si un email provient
+              d&apos;une autre adresse.
+            </p>
+            <CertifiedEmailsTagInput
+              values={certifiedEmails}
+              onChange={setCertifiedEmails}
+              placeholder="votre@email.com"
+            />
+          </div>
+
+          <div className="mb-6 space-y-3">
+            <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/60">
+              <Phone className="h-3 w-3 shrink-0" aria-hidden />
+              Téléphones officiels
+            </label>
+            <CertifiedPhonesTagInput
+              values={certifiedPhones}
+              onChange={setCertifiedPhones}
+              placeholder="+33612345678"
+            />
+          </div>
+
+          <div className="mb-6 space-y-3">
+            <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/60">
+              <Globe className="h-3 w-3 shrink-0" aria-hidden />
+              Domaines officiels
+            </label>
+            <p className="text-xs text-white/30">
+              Ex. monentreprise.fr — protège contre les sites miroirs
+            </p>
+            <DomainTagInput values={certifiedDomains} onChange={setCertifiedDomains} placeholder="mondomaine.fr" />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => void handleSaveCertifiedContacts()}
+            disabled={savingCertified}
+            className="inline-flex items-center gap-2 rounded-xl border border-[#00d4ff]/40 bg-[#00d4ff]/20 px-5 py-2.5 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/30 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {savingCertified ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                Sauvegarde...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" aria-hidden />
+                Sauvegarder
+              </>
+            )}
+          </button>
+
+          {savedCertified ? (
+            <p className="mt-2 flex items-center gap-1 text-xs text-emerald-400">
+              <Check className="h-3 w-3 shrink-0" aria-hidden />
+              Coordonnées certifiées mises à jour
+            </p>
+          ) : null}
+        </section>
 
         <section className="mb-6 rounded-xl border border-white/10 bg-[#0d1f3c] p-6">
           <div className="mb-4 flex items-center gap-3">

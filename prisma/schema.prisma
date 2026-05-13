@@ -134,6 +134,11 @@ model User {
   extensionApiKeyHash String? @unique
   /// Indice affichage tableau de bord (ex. suffixe non secret), optionnel.
   extensionApiKey     String? @unique
+
+  /// Coordonnées certifiées au niveau compte (fusionnées avec celles de l’entité sur /verify public).
+  certifiedEmails  String[] @default([])
+  certifiedPhones  String[] @default([])
+  certifiedDomains String[] @default([])
 }
 
 enum AccountType {

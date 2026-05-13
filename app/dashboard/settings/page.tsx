@@ -23,6 +23,9 @@ export default async function SettingsPage() {
       image: true,
       extensionApiKeyHash: true,
       extensionApiKey: true,
+      certifiedEmails: true,
+      certifiedPhones: true,
+      certifiedDomains: true,
     },
   })
 
@@ -36,6 +39,11 @@ export default async function SettingsPage() {
       extensionKeyInitial={{
         hasKey: Boolean(user.extensionApiKeyHash),
         masked: user.extensionApiKey ?? null,
+      }}
+      certifiedContacts={{
+        certifiedEmails: user.certifiedEmails ?? [],
+        certifiedPhones: user.certifiedPhones ?? [],
+        certifiedDomains: user.certifiedDomains ?? [],
       }}
     />
   )
