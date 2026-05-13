@@ -9,6 +9,8 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import authEdgeConfig from "./auth.edge.config";
 import { isSafeCallbackUrl } from "./auth-callback-url";
+import { isAdmin } from "@/lib/admin-utils";
+import { ensureAdminBootstrapForSession } from "@/lib/admin-bootstrap";
 
 /**
  * Configuration NextAuth avec Google OAuth
@@ -247,6 +249,16 @@ export const authOptions: NextAuthConfig = {
           (token as any).accountType = (token as any).accountType ?? 'PERSONAL';
         }
       }
+
+      if (token.sub && typeof token.email === "string" && isAdmin(token.email)) {
+        try {
+          await ensureAdminBootstrapForSession(token.sub, token.email);
+          (token as { plan?: string | null }).plan = "ENTERPRISE";
+        } catch (err) {
+          console.error("[admin bootstrap jwt]", err);
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

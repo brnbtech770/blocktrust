@@ -6,6 +6,7 @@ import { auth } from '@/app/lib/auth-server'
 import { redirect } from 'next/navigation'
 import { isAdmin } from '@/lib/admin-utils'
 import { Crown, Shield } from 'lucide-react'
+import AdminBootstrapSyncButton from './AdminBootstrapSyncButton'
 
 const ADMIN_TEAM = [
   {
@@ -101,6 +102,10 @@ export default async function AdminTeamPage() {
         <p className="mt-2 text-xs text-white/30">
           Pour ajouter un admin : mettre à jour ADMIN_EMAILS dans Vercel → Redéployer.
         </p>
+      </div>
+
+      <div className="mt-6">
+        <AdminBootstrapSyncButton />
       </div>
     </div>
   )
