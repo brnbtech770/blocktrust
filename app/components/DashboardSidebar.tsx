@@ -59,6 +59,7 @@ export default async function DashboardSidebar() {
     const planKey = resolvePlanKeyForWording({
       planType: plan?.type,
       subscriptionPlan: subscription?.plan,
+      subscriptionStatus: subscription?.status,
     })
 
     let wordingUserCount: number | undefined

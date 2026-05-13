@@ -32,18 +32,34 @@ const SHORT_B2B: Record<string, string> = {
   ENTERPRISE: 'B2B_ENTERPRISE',
 }
 
+function isBillingLiveStatus(status: string | null | undefined): boolean {
+  if (!status) return false
+  const s = status.trim().toLowerCase()
+  return s === 'active' || s === 'trialing'
+}
+
 export function normalizePlanKey(raw: string): string {
-  const p = raw.trim().toUpperCase()
+  const p = raw.trim().toUpperCase().replace(/\s+/g, '_')
   if (p.startsWith('B2C_') || p.startsWith('B2B_')) return p
   return SHORT_B2C[p] ?? SHORT_B2B[p] ?? p
 }
 
+/**
+ * Résolution du plan pour libellés et quotas UI.
+ * Si l’abonnement Stripe est actif / en essai, on fait confiance à `subscription.plan`
+ * (source facturation) — évite un `User.planId` désynchronisé qui masquerait ex. Enterprise.
+ */
 export function resolvePlanKeyForWording(params: {
   planType?: string | null
   subscriptionPlan?: string | null
+  subscriptionStatus?: string | null
 }): string {
+  const subPlan = params.subscriptionPlan?.trim()
+  if (isBillingLiveStatus(params.subscriptionStatus) && subPlan) {
+    return normalizePlanKey(subPlan)
+  }
   if (params.planType) return normalizePlanKey(params.planType)
-  if (params.subscriptionPlan) return normalizePlanKey(params.subscriptionPlan)
+  if (subPlan) return normalizePlanKey(subPlan)
   return 'TRIAL'
 }
 

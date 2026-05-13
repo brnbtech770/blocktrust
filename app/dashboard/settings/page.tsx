@@ -42,12 +42,13 @@ export default async function SettingsPage() {
 
   const subscription = await prisma.subscription.findUnique({
     where: { userId: session.user.id },
-    select: { plan: true },
+    select: { plan: true, status: true },
   })
 
   const planKey = resolvePlanKeyForWording({
     planType: user.plan?.type,
     subscriptionPlan: subscription?.plan,
+    subscriptionStatus: subscription?.status,
   })
 
   const entityCount = await prisma.entity.count({

@@ -84,6 +84,7 @@ export default async function Dashboard({
     const planKey = resolvePlanKeyForWording({
       planType: user.plan?.type ?? null,
       subscriptionPlan: subscription?.plan ?? null,
+      subscriptionStatus: subscription?.status ?? null,
     });
     const dashboardWording = getPlanWording(planKey);
     let quotaLabel: string | null = null;

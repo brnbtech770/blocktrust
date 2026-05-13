@@ -35,12 +35,13 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
   })
   const subscription = await prisma.subscription.findUnique({
     where: { userId: session.user.id },
-    select: { plan: true },
+    select: { plan: true, status: true },
   })
 
   const planKey = resolvePlanKeyForWording({
     planType: dbUser?.plan?.type,
     subscriptionPlan: subscription?.plan,
+    subscriptionStatus: subscription?.status,
   })
   const wording = getPlanWording(planKey)
 
