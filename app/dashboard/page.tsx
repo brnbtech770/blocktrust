@@ -21,6 +21,7 @@ import KpiGridSkeleton from "@/app/components/dashboard/KpiGridSkeleton";
 import CertificateTableSkeleton from "@/app/components/dashboard/CertificateTableSkeleton";
 import ActivityFeedSkeleton from "@/app/components/dashboard/ActivityFeedSkeleton";
 import { getTrustScoreColor, getTrustScoreLabel } from "@/lib/trustscore";
+import { getPlanWording, resolvePlanKeyForWording } from "@/lib/plan-wording";
 
 export default async function Dashboard({
   searchParams,
@@ -80,6 +81,11 @@ export default async function Dashboard({
       where: { userId: user.id },
     });
     const hasActiveSub = subscription?.status === "active";
+    const planKey = resolvePlanKeyForWording({
+      planType: user.plan?.type ?? null,
+      subscriptionPlan: subscription?.plan ?? null,
+    });
+    const dashboardWording = getPlanWording(planKey);
     let quotaLabel: string | null = null;
     if (!userIsAdmin && hasActiveSub && subscription) {
       const d = await getVerifyQuotaDisplay(user.id, subscription.plan);
@@ -194,8 +200,8 @@ export default async function Dashboard({
         )}
 
         <div className="mb-6 sm:mb-8">
-          <h1 className="font-syne text-2xl font-bold text-gold sm:text-3xl lg:text-4xl">
-            Tableau de bord
+          <h1 className="font-syne text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
+            {dashboardWording.dashboardTitle}
           </h1>
           <p className="neon-white mt-2 text-sm font-medium">
             Bienvenue, {firstName}

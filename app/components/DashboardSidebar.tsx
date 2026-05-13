@@ -10,6 +10,7 @@ import DashboardSidebarNav, { type SidebarItem } from './DashboardSidebarNav'
 
 import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
 import { hasOrgAccess } from '@/lib/vault-utils'
+import { getPlanWording, resolvePlanKeyForWording } from '@/lib/plan-wording'
 
 function shellClass() {
   return 'flex h-full min-h-0 flex-col p-4 md:p-6'
@@ -42,6 +43,40 @@ export default async function DashboardSidebar() {
         })
       : null
 
+    const entityCount = user
+      ? await prisma.entity.count({ where: { userId: user.id } })
+      : 0
+
+    const org = user
+      ? await prisma.organization.findFirst({
+          where: {
+            OR: [{ ownerId: user.id }, { members: { some: { userId: user.id } } }],
+          },
+          select: { maxSeats: true, _count: { select: { members: true } } },
+        })
+      : null
+
+    const planKey = resolvePlanKeyForWording({
+      planType: plan?.type,
+      subscriptionPlan: subscription?.plan,
+    })
+
+    let wordingUserCount: number | undefined
+    let wordingMaxUsers: number | undefined
+    if (planKey === 'B2C_FAMILLE' || planKey === 'B2C_FAMILLE_PLUS') {
+      wordingUserCount = entityCount
+    } else if (
+      planKey === 'B2B_STARTER' ||
+      planKey === 'B2B_TEAM' ||
+      planKey === 'B2B_BUSINESS'
+    ) {
+      if (org) {
+        wordingUserCount = org._count.members
+        wordingMaxUsers = org.maxSeats
+      }
+    }
+
+    const wording = getPlanWording(planKey, wordingUserCount, wordingMaxUsers)
     const showWhiteLabel = user
       ? userHasWhiteLabelAccess({
           subscriptionPlan: subscription?.plan,
@@ -57,8 +92,8 @@ export default async function DashboardSidebar() {
 
     const menuItems: SidebarItem[] = [
       { name: 'Tableau de bord', href: '/dashboard', icon: 'Home' },
-      { name: 'Mes contacts', href: '/dashboard/entities', icon: 'Building' },
-      { name: 'Mes certificats', href: '/dashboard/certificates', icon: 'Shield' },
+      { name: wording.contactsLabel, href: '/dashboard/entities', icon: 'Building' },
+      { name: wording.badgeLabel, href: '/dashboard/certificates', icon: 'Shield' },
       ...(plan?.trustCircleEnabled
         ? [{ name: 'Trust Circle', href: '/dashboard/trust-circle', icon: 'Users' as const }]
         : [
@@ -104,8 +139,8 @@ export default async function DashboardSidebar() {
           <DashboardSidebarNav items={menuItems} />
           <div className="mt-5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-[11px] leading-relaxed text-white/45">
             <p>
-              <span className="font-semibold text-white/65">Contacts</span> — personnes ou entreprises que vous
-              certifiez dans votre réseau.
+              <span className="font-semibold text-white/65">{wording.contactsLabel}</span> — personnes ou
+              entreprises que vous certifiez dans votre réseau.
             </p>
             <p className="mt-1.5">
               <span className="font-semibold text-white/65">Trust Circle</span> — contacts avec une relation de
@@ -121,7 +156,7 @@ export default async function DashboardSidebar() {
         </div>
       </div>
     )
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Erreur dans DashboardSidebar:', error)
     return (
       <div className={shellClass()}>
