@@ -126,6 +126,10 @@ model User {
   // White Label / API
   whiteLabelConfig WhiteLabelConfig?
 
+  // BlockTrust Vault (B2B) — entrées rédigées par l’utilisateur
+  vaultEntriesAuthored TrustVaultEntry[] @relation("VaultEntryAuthor")
+  vaultPermissions     TrustVaultPermission[]
+
   /// Clé API extension Chrome (TrustScan) — jamais la valeur secrète complète : hash SHA-256 uniquement.
   extensionApiKeyHash String? @unique
   /// Indice affichage tableau de bord (ex. suffixe non secret), optionnel.
@@ -157,6 +161,10 @@ model UserDevice {
 model Organization {
   id         String  @id @default(cuid())
   name       String
+  /// Identifiant URL unique (équipe / vault)
+  slug       String  @unique @default(cuid())
+  /// Code plan B2B pour quotas Vault (STARTER, TEAM, BUSINESS, …)
+  tier       String  @default("STARTER")
   siret      String? @unique
   vatNumber  String?
   address    String?
@@ -178,6 +186,7 @@ model Organization {
 
   members  OrganizationMember[]
   entities Entity[]
+  vaults   TrustVault[]
 
   @@index([ownerId])
 }
@@ -198,8 +207,69 @@ model OrganizationMember {
 enum OrgRole {
   OWNER
   ADMIN
+  MANAGER
   MEMBER
   VIEWER
+}
+
+model TrustVault {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  entries      TrustVaultEntry[]
+  permissions  TrustVaultPermission[]
+
+  @@index([organizationId])
+}
+
+model TrustVaultEntry {
+  id          String         @id @default(cuid())
+  vaultId     String
+  name        String
+  type        VaultEntryType
+  value       String
+  description String?
+  addedById   String
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  vault   TrustVault @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  addedBy User       @relation("VaultEntryAuthor", fields: [addedById], references: [id], onDelete: Restrict)
+
+  @@index([vaultId])
+}
+
+model TrustVaultPermission {
+  id      String    @id @default(cuid())
+  vaultId String
+  userId  String?
+  role    VaultRole @default(MEMBER)
+
+  vault TrustVault @relation(fields: [vaultId], references: [id], onDelete: Cascade)
+  user  User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([vaultId])
+  @@index([userId])
+}
+
+enum VaultRole {
+  ADMIN
+  MANAGER
+  MEMBER
+}
+
+enum VaultEntryType {
+  CONTACT
+  DOMAIN
+  EMAIL
+  PHONE
+  URL
+  WALLET
 }
 
 // ============================================================
