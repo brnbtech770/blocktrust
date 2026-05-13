@@ -156,11 +156,8 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
         </div>
       )}
 
-      <div
-        className="overflow-hidden rounded-xl border"
-        style={{ background: 'rgba(13,31,60,0.5)', borderColor: 'var(--bt-border)' }}
-      >
-        <table className="w-full">
+      <div className="w-full overflow-x-auto rounded-xl border border-white/10">
+        <table className="w-full min-w-[800px]">
           <thead>
             <tr>
               <th className="w-10 border-b border-white/5 px-4 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">

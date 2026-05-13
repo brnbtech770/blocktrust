@@ -200,6 +200,12 @@ export default async function Dashboard({
           <p className="neon-white mt-2 text-sm font-medium">
             Bienvenue, {firstName}
           </p>
+          {user.name ? (
+            <p className="mt-2 text-sm font-medium text-white/90">{user.name}</p>
+          ) : null}
+          {user.email ? (
+            <p className="mt-1 max-w-xl truncate text-xs text-white/55 sm:text-sm">{user.email}</p>
+          ) : null}
         </div>
 
         {showOnboardingGuide && (

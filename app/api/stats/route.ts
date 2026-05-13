@@ -1,5 +1,5 @@
 // app/api/stats/route.ts
-// GET /api/stats — KPIs dashboard (certificats actifs, vérifs 7j, blockchain, alertes fraude)
+// GET /api/stats — KPIs dashboard (certificats, contacts, vérifs 7j, blockchain, alertes fraude)
 // ============================================================
 
 import { NextResponse } from 'next/server'
@@ -21,12 +21,16 @@ export async function GET(): Promise<NextResponse<DashboardStats | { error: stri
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-    const [activeCerts, verifications7d, fraudAlertsCount, userChainCerts] = await Promise.all([
+    const [activeCerts, contacts, verifications7d, fraudAlertsCount, userChainCerts] =
+      await Promise.all([
       prisma.certificate.count({
         where: {
           entity: { userId },
           status: { in: ['ACTIVE', 'ANCHORED'] },
         },
+      }),
+      prisma.entity.count({
+        where: { userId },
       }),
       prisma.verification.count({
         where: {
@@ -90,6 +94,7 @@ export async function GET(): Promise<NextResponse<DashboardStats | { error: stri
 
     return NextResponse.json({
       activeCerts,
+      contacts,
       verifications7d,
       blockchainStatus,
       fraudAlerts: fraudAlertsCount,

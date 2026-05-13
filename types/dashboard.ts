@@ -50,6 +50,8 @@ export interface VerificationEvent {
 
 export interface DashboardStats {
   activeCerts: number
+  /** Nombre de contacts (entités). */
+  contacts: number
   verifications7d: number
   blockchainStatus: 'connected' | 'pending' | 'unavailable'
   fraudAlerts: number

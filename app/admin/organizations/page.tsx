@@ -34,39 +34,50 @@ export default async function AdminOrganizationsPage() {
         <h1 className="font-syne text-2xl font-bold text-white">Vue globale — organisations</h1>
       </div>
       <p className="mb-6 text-sm text-white/55">
-        Synthèse des équipes, membres et coffres BlockTrust Vault ({rows.length} organisations).
+        Synthèse des équipes, membres et coffres BlockTrust Vault ({rows.length} organisation
+        {rows.length > 1 ? 's' : ''}).
       </p>
 
-      <div className="overflow-x-auto rounded-xl border border-white/10">
-        <table className="w-full min-w-[720px] text-left text-sm">
-          <thead className="border-b border-white/10 bg-white/[0.04] text-xs uppercase tracking-wide text-white/45">
-            <tr>
-              <th className="px-3 py-2">Organisation</th>
-              <th className="px-3 py-2">Slug</th>
-              <th className="px-3 py-2">Tier</th>
-              <th className="px-3 py-2">Propriétaire</th>
-              <th className="px-3 py-2 text-right">Membres</th>
-              <th className="px-3 py-2 text-right">Coffres</th>
-              <th className="px-3 py-2 text-right">Entrées</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((o) => (
-              <tr key={o.id} className="border-b border-white/5">
-                <td className="px-3 py-2 font-medium text-white">{o.name}</td>
-                <td className="px-3 py-2 font-mono text-xs text-white/60">{o.slug}</td>
-                <td className="px-3 py-2 font-mono text-xs text-bt-cyan/90">{o.tier}</td>
-                <td className="max-w-[200px] truncate px-3 py-2 text-xs text-white/55">
-                  {o.owner.email ?? '—'}
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums text-white/70">{o._count.members}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-white/70">{o._count.vaults}</td>
-                <td className="px-3 py-2 text-right tabular-nums text-white/70">{o.entryCount}</td>
+      {rows.length === 0 ? (
+        <div className="text-center py-12 rounded-xl border border-white/10">
+          <Building2 className="w-10 h-10 text-white/20 mx-auto mb-3" aria-hidden />
+          <p className="text-white/40 text-sm">Aucune organisation créée</p>
+          <p className="text-white/20 text-xs mt-1 max-w-md mx-auto px-4">
+            Les organisations apparaissent quand des clients B2B créent leur équipe
+          </p>
+        </div>
+      ) : (
+        <div className="w-full overflow-x-auto rounded-xl border border-white/10">
+          <table className="w-full min-w-[900px] text-left text-sm">
+            <thead className="border-b border-white/10 bg-white/[0.04] text-xs uppercase tracking-wide text-white/45">
+              <tr>
+                <th className="px-3 py-2">Organisation</th>
+                <th className="px-3 py-2">Slug</th>
+                <th className="px-3 py-2">Tier</th>
+                <th className="px-3 py-2">Propriétaire</th>
+                <th className="px-3 py-2 text-right">Membres</th>
+                <th className="px-3 py-2 text-right">Coffres</th>
+                <th className="px-3 py-2 text-right">Entrées</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {rows.map((o) => (
+                <tr key={o.id} className="border-b border-white/5">
+                  <td className="px-3 py-2 font-medium text-white">{o.name}</td>
+                  <td className="px-3 py-2 font-mono text-xs text-white/60">{o.slug}</td>
+                  <td className="px-3 py-2 font-mono text-xs text-bt-cyan/90">{o.tier}</td>
+                  <td className="max-w-[200px] truncate px-3 py-2 text-xs text-white/55">
+                    {o.owner.email ?? '—'}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-white/70">{o._count.members}</td>
+                  <td className="px-3 py-2 text-right tabular-nums text-white/70">{o._count.vaults}</td>
+                  <td className="px-3 py-2 text-right tabular-nums text-white/70">{o.entryCount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <p className="mt-6 text-xs text-white/40">
         Rappel : les actions métier restent côté client (

@@ -1,13 +1,14 @@
 // app/components/dashboard/KpiGrid.tsx
-// Grille KPI : certificats actifs, vérifications 7j, blockchain, alertes fraude
+// Grille KPI : certificats, contacts, vérifications 7j, blockchain, alertes fraude
 // ============================================================
 
 import type { ReactNode } from 'react'
 import type { DashboardStats } from '@/types/dashboard'
-import { Shield, CheckCircle, Link2, AlertTriangle } from 'lucide-react'
+import { Shield, CheckCircle, Link2, AlertTriangle, Users } from 'lucide-react'
 
 export interface KpiGridProps {
   certs: number
+  contacts: number
   verifications: number
   blockchainStatus: DashboardStats['blockchainStatus']
   fraudAlerts: number
@@ -22,6 +23,7 @@ const statusLabel: Record<DashboardStats['blockchainStatus'], string> = {
 
 export default function KpiGrid({
   certs,
+  contacts,
   verifications,
   blockchainStatus,
   fraudAlerts,
@@ -35,12 +37,19 @@ export default function KpiGrid({
     )
 
   return (
-    <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 md:mb-8">
+    <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:mb-8 lg:grid-cols-3 xl:grid-cols-5">
       <KpiCard
         label="Certificats actifs"
         value={String(certs)}
         sub="actifs / total"
         icon={<Shield className="h-5 w-5 shrink-0 text-bt-cyan" />}
+        accent="brand"
+      />
+      <KpiCard
+        label="Contacts"
+        value={String(contacts)}
+        sub="dans votre espace"
+        icon={<Users className="h-5 w-5 shrink-0 text-bt-cyan" />}
         accent="brand"
       />
       <KpiCard

@@ -142,8 +142,8 @@ export default async function AdminCertificatesPage({
         </div>
       </div>
 
-      <div className="rounded-xl border overflow-hidden" style={{ background: 'rgba(13,31,60,0.5)', borderColor: 'var(--bt-border)' }}>
-        <table className="w-full">
+      <div className="w-full overflow-x-auto rounded-xl border border-white/10">
+        <table className="w-full min-w-[800px]">
           <thead>
             <tr>
               <TH>ID</TH>

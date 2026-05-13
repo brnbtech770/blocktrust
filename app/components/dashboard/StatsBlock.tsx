@@ -42,6 +42,7 @@ export default function StatsBlock() {
   return (
     <KpiGrid
       certs={stats.activeCerts}
+      contacts={stats.contacts}
       verifications={stats.verifications7d}
       blockchainStatus={stats.blockchainStatus}
       fraudAlerts={stats.fraudAlerts}
