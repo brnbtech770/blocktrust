@@ -9,11 +9,38 @@ import { signOut } from 'next-auth/react'
 import { useSession } from 'next-auth/react'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 
+const B2B_PLAN_IDS = new Set([
+  'SOLO_PRO',
+  'B2B_SOLO_PRO',
+  'STARTER',
+  'B2B_STARTER',
+  'TEAM',
+  'B2B_TEAM',
+  'BUSINESS',
+  'B2B_BUSINESS',
+  'ENTERPRISE',
+  'B2B_ENTERPRISE',
+])
+
+function ProBadge({ className }: { className?: string }) {
+  return (
+    <span
+      className={`shrink-0 rounded-full border border-[#BDA76B]/20 bg-[#BDA76B]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-[#BDA76B] ${className ?? ''}`}
+      title="Forfait professionnel"
+    >
+      Pro
+    </span>
+  )
+}
+
 export default function DashboardHeader() {
   const { data: session } = useSession()
 
   const firstName =
     session?.user?.name?.split(' ')[0] || session?.user?.email?.split('@')[0] || 'Utilisateur'
+
+  const plan = session?.user?.plan ?? ''
+  const showProBadge = B2B_PLAN_IDS.has(plan)
 
   return (
     <header
@@ -29,7 +56,7 @@ export default function DashboardHeader() {
             href="/dashboard"
             className="inline-flex items-center gap-2.5 sm:gap-3"
             style={{ textDecoration: 'none' }}
-            aria-label="Retour au tableau de bord BlockTrust"
+            aria-label="Retour au tableau de bord BLOCKTRUST"
           >
             <BlockTrustBadge size={36} instanceId="dashboard-header" showWatermark={false} className="shrink-0" />
             <span className="font-syne text-base font-bold leading-none tracking-wider text-bt-cyan sm:text-lg">
@@ -40,11 +67,15 @@ export default function DashboardHeader() {
         <div className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-4">
           <div className="hidden text-right sm:block">
             <p className="text-xs text-gold/90">Connecté</p>
-            <p className="truncate text-sm font-medium text-gold">{firstName}</p>
+            <div className="flex items-center justify-end gap-2">
+              <p className="truncate text-sm font-medium text-gold">{firstName}</p>
+              {showProBadge ? <ProBadge /> : null}
+            </div>
             {session?.user?.email ? (
               <p className="truncate text-xs text-gold/80">{session.user.email}</p>
             ) : null}
           </div>
+          {showProBadge ? <ProBadge className="sm:hidden" /> : null}
           <button
             type="button"
             onClick={() => signOut({ callbackUrl: '/' })}
