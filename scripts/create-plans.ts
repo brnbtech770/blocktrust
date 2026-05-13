@@ -285,6 +285,24 @@ async function main() {
       prioritySupport: true,
       stripePriceId: priceIds.BUSINESS_YEARLY!,
     },
+    // B2B ENTERPRISE — sur devis (pas de price Stripe)
+    {
+      name: 'Enterprise',
+      type: PlanType.B2B_ENTERPRISE,
+      price: 0,
+      interval: BillingInterval.MONTHLY,
+      maxProfiles: 1,
+      maxEntities: 999999,
+      maxSeats: 999,
+      maxCertificates: 999999,
+      apiRequestsPerMonth: 999999,
+      trustCircleEnabled: true,
+      blockchainAnchor: true,
+      whitelabelEnabled: true,
+      aiAlertsEnabled: true,
+      prioritySupport: true,
+      stripePriceId: null,
+    },
   ]
 
   console.log(`📦 Création de ${plans.length} plans...\n`)
