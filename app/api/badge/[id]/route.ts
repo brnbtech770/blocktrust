@@ -1,5 +1,6 @@
 // app/api/badge/[id]/route.ts
-// Badge SVG vertical — tailles sm / md / lg (coordonnées calibrées, sans chevauchements)
+// Badge SVG vertical — tailles sm / md / lg (viewBox 320×400, scaling exact des dimensions)
+// Refonte visuelle : blobs gold/cyan animés, bouclier, pilule blockchain, QR, ID discret, Polygon
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -16,115 +17,9 @@ const DIMS = {
 
 type SizeKey = keyof typeof DIMS
 
-/** Grille typo + positions (px). Les `y` des <text> sont des baselines SVG : garder des marges réelles sous le QR et entre ID / pied. */
-const BADGE_LAYOUT: Record<
-  SizeKey,
-  {
-    qrPx: number
-    shieldCy: number
-    shieldRFrac: number
-    blocktrustY: number
-    subtitleY: number
-    pillRectY: number
-    pillH: number
-    pillTextY: number
-    nameY: number
-    qrY: number
-    certIdY: number
-    footerY: number
-    fsTrust: number
-    fsSub: number
-    fsPill: number
-    fsName: number
-    fsCertId: number
-    fsFoot: number
-    pillHalfWFrac: number
-    letterTrust: number
-    shortPillLabel: boolean
-    certIdChars: number
-    qrPad: number
-    qrCornerRx: number
-  }
-> = {
-  sm: {
-    qrPx: 54,
-    shieldCy: 32,
-    shieldRFrac: 0.14,
-    blocktrustY: 56,
-    subtitleY: 74,
-    pillRectY: 86,
-    pillH: 14,
-    pillTextY: 96,
-    nameY: 112,
-    qrY: 132,
-    certIdY: 212,
-    footerY: 268,
-    fsTrust: 11,
-    fsSub: 8,
-    fsPill: 8,
-    fsName: 10,
-    fsCertId: 7,
-    fsFoot: 7,
-    pillHalfWFrac: 0.42,
-    letterTrust: 1.6,
-    shortPillLabel: true,
-    certIdChars: 12,
-    qrPad: 6,
-    qrCornerRx: 8,
-  },
-  md: {
-    qrPx: 92,
-    shieldCy: 50,
-    shieldRFrac: 0.165,
-    blocktrustY: 90,
-    subtitleY: 112,
-    pillRectY: 126,
-    pillH: 18,
-    pillTextY: 140,
-    nameY: 160,
-    qrY: 188,
-    certIdY: 304,
-    footerY: 376,
-    fsTrust: 14,
-    fsSub: 10,
-    fsPill: 10,
-    fsName: 13,
-    fsCertId: 8,
-    fsFoot: 9,
-    pillHalfWFrac: 0.39,
-    letterTrust: 2.2,
-    shortPillLabel: false,
-    certIdChars: 18,
-    qrPad: 7,
-    qrCornerRx: 10,
-  },
-  lg: {
-    qrPx: 112,
-    shieldCy: 60,
-    shieldRFrac: 0.165,
-    blocktrustY: 108,
-    subtitleY: 132,
-    pillRectY: 150,
-    pillH: 20,
-    pillTextY: 166,
-    nameY: 188,
-    qrY: 218,
-    certIdY: 368,
-    footerY: 442,
-    fsTrust: 17,
-    fsSub: 11,
-    fsPill: 11,
-    fsName: 15,
-    fsCertId: 9,
-    fsFoot: 10,
-    pillHalfWFrac: 0.37,
-    letterTrust: 2.8,
-    shortPillLabel: false,
-    certIdChars: 22,
-    qrPad: 8,
-    qrCornerRx: 12,
-  },
-}
+/** viewBox logique (réf. md). Les sorties sm/lg redimensionnent via width/height + preserveAspectRatio="none". */
+const VIEW_W = 320
+const VIEW_H = 400
 
 function escapeXml(s: string): string {
   return s
@@ -133,6 +28,12 @@ function escapeXml(s: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&apos;')
+}
+
+/** Nom affiché : limite selon largeur cible (évite débordement après scale). */
+function maxNameChars(w: number): number {
+  const ratio = w / VIEW_W
+  return Math.max(12, Math.floor(26 * ratio))
 }
 
 export async function GET(
@@ -144,7 +45,6 @@ export async function GET(
     const rawSize = req.nextUrl.searchParams.get('size') ?? 'md'
     const size = (rawSize in DIMS ? rawSize : 'md') as SizeKey
     const dims = DIMS[size] ?? DIMS.md
-    const L = BADGE_LAYOUT[size] ?? BADGE_LAYOUT.md
 
     const certificate = await prisma.certificate.findFirst({
       where: { OR: [{ publicId: id }, { id }] },
@@ -181,7 +81,7 @@ export async function GET(
         ? `${entity.firstName || ''} ${entity.lastName || ''}`.trim() || entity.email
         : entity.legalName || entity.tradeName || entity.email
     const fullName = entityName || 'Contact certifié'
-    const maxChars = size === 'sm' ? 20 : size === 'md' ? 26 : 30
+    const maxChars = maxNameChars(dims.w)
     const displayName = fullName.length > maxChars ? fullName.substring(0, maxChars) + '…' : fullName
 
     const signature = certificate.signatures[0]
@@ -196,12 +96,13 @@ export async function GET(
         : `${baseUrl}/verify/qr/${signature.dynamicToken}`
       : publicCertVerify
 
-    const qrPx = L.qrPx
+    /** QR net à l’écran : taille pixels ≈ 130×(largeur/badge) dans l’espace viewBox. */
+    const qrTargetPx = Math.max(48, Math.round(130 * (dims.w / VIEW_W)))
 
     let qrBase64 = ''
     try {
       const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
-        width: qrPx,
+        width: qrTargetPx,
         margin: 1,
         color: { dark: '#000000', light: '#ffffff' },
       })
@@ -210,86 +111,119 @@ export async function GET(
       // continue without QR
     }
 
-    const w = dims.w
-    const h = dims.h
-    const cx = w / 2
-    /** Ellipse décorative centrée : rx ≤ cx pour ne pas dépasser le viewBox (évite coupure latérale). */
-    const glowBlueRx = Math.min(w * 0.55, cx - 1)
-    const shieldROut = w * L.shieldRFrac
-    const shieldRIn = shieldROut * 0.72
-    const pillHalfW = w * L.pillHalfWFrac
-    const pillRx = Math.round(L.pillH / 2)
+    const publicOrId = certificate.publicId || certificate.id
+    const publicIdDiscrete = `${publicOrId.slice(0, 8)}…`
 
-    const qrPad = L.qrPad
-    const qrOuterTop = L.qrY - qrPad
-    const qrOuterH = L.qrPx + 2 * qrPad
-    const qrOuterBottom = qrOuterTop + qrOuterH
-    const dividerY = qrOuterBottom + Math.round(Math.min(10, Math.max(5, L.fsCertId * 0.7)))
-
-    const certIdSnippet = `${certificate.id.slice(0, L.certIdChars)}…`
-    const pillLabel = L.shortPillLabel ? '✓ Blockchain' : '✓ Certifié Blockchain'
+    const svgStyles = `@keyframes rotateCw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes floatUpDown {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes pulseCyan {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rotate-cw, .rotate-cw-delayed, .float-shield, .pulse-cyan {
+    animation: none !important;
+  }
+}
+.rotate-cw {
+  animation: rotateCw 12s linear infinite;
+  transform-origin: 200px 180px;
+}
+.rotate-cw-delayed {
+  animation: rotateCw 16s linear infinite reverse;
+  transform-origin: 120px 150px;
+}
+.float-shield {
+  animation: floatUpDown 3s ease-in-out infinite;
+  transform-origin: 160px 110px;
+}
+.pulse-cyan {
+  animation: pulseCyan 2s ease-in-out infinite;
+}`
 
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"
+<svg width="${dims.w}" height="${dims.h}" viewBox="0 0 ${VIEW_W} ${VIEW_H}"
+  preserveAspectRatio="none"
   xmlns="http://www.w3.org/2000/svg"
   xmlns:xlink="http://www.w3.org/1999/xlink">
 
   <defs>
-    <radialGradient id="bgGrad" cx="50%" cy="28%" r="72%">
-      <stop offset="0%" stop-color="#0d2044"/>
-      <stop offset="100%" stop-color="#060e1a"/>
-    </radialGradient>
-    <radialGradient id="glowBlue" cx="50%" cy="42%" r="55%">
-      <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.14"/>
-      <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="glowGold" cx="50%" cy="72%" r="45%">
-      <stop offset="0%" stop-color="#BDA76B" stop-opacity="0.08"/>
+    <style type="text/css"><![CDATA[${svgStyles}]]></style>
+    <clipPath id="card-clip">
+      <rect width="${VIEW_W}" height="${VIEW_H}" rx="20"/>
+    </clipPath>
+    <radialGradient id="gold-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#BDA76B" stop-opacity="0.4"/>
       <stop offset="100%" stop-color="#BDA76B" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cyan-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
-  <rect width="${w}" height="${h}" rx="16" fill="url(#bgGrad)"/>
-  <ellipse cx="${cx}" cy="${h * 0.28}" rx="${glowBlueRx}" ry="${h * 0.22}" fill="url(#glowBlue)"/>
-  <ellipse cx="${cx}" cy="${h * 0.72}" rx="${w * 0.38}" ry="${h * 0.18}" fill="url(#glowGold)"/>
+  <g clip-path="url(#card-clip)">
 
-  <rect width="${w}" height="${h}" rx="16" fill="none" stroke="#00d4ff" stroke-width="1" opacity="0.28"/>
+  <rect width="${VIEW_W}" height="${VIEW_H}" rx="20" fill="#0a1628"/>
 
-  <circle cx="${cx}" cy="${L.shieldCy}" r="${shieldROut}" fill="rgba(0,212,255,0.07)" stroke="#00d4ff" stroke-width="1" opacity="0.45"/>
-  <circle cx="${cx}" cy="${L.shieldCy}" r="${shieldRIn}" fill="rgba(0,212,255,0.1)" stroke="#00d4ff" stroke-width="1.4" opacity="0.55"/>
-
-  <g transform="translate(${cx - w * 0.07}, ${L.shieldCy - w * 0.09})">
-    <path d="M${w * 0.07} 0 L${w * 0.14} ${w * 0.03} L${w * 0.14} ${w * 0.09} C${w * 0.14} ${w * 0.13} ${w * 0.07} ${w * 0.16} ${w * 0.07} ${w * 0.16} C${w * 0.07} ${w * 0.16} 0 ${w * 0.13} 0 ${w * 0.09} L0 ${w * 0.03} Z" fill="none" stroke="#00d4ff" stroke-width="1.8" stroke-linejoin="round"/>
-    <path d="M${w * 0.03} ${w * 0.08} L${w * 0.06} ${w * 0.11} L${w * 0.11} ${w * 0.05}" fill="none" stroke="#00d4ff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <g class="rotate-cw">
+    <ellipse cx="200" cy="180" rx="140" ry="100" fill="url(#gold-glow)"/>
   </g>
 
-  <text x="${cx}" y="${L.blocktrustY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${L.fsTrust}" font-weight="700" letter-spacing="${L.letterTrust}" fill="#ffffff">BLOCKTRUST</text>
+  <g class="rotate-cw-delayed pulse-cyan">
+    <ellipse cx="120" cy="150" rx="120" ry="90" fill="url(#cyan-glow)"/>
+  </g>
 
-  <text x="${cx}" y="${L.subtitleY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${L.fsSub}" fill="rgba(232,234,240,0.52)" letter-spacing="0.5">Identité Vérifiée</text>
+  <g class="float-shield">
+    <rect x="130" y="80" width="60" height="60" rx="14" fill="rgba(0,212,255,0.12)"
+      stroke="#00d4ff" stroke-width="1.5" stroke-opacity="0.4"/>
+    <path d="M160 88 L144 95 L144 108 C144 116 151 123 160 126 C169 123 176 116 176 108 L176 95 Z"
+      fill="rgba(0,212,255,0.2)" stroke="#00d4ff" stroke-width="1.5"/>
+    <path d="M153 108 L158 113 L168 103"
+      stroke="#BDA76B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </g>
 
-  <rect x="${cx - pillHalfW}" y="${L.pillRectY}" width="${pillHalfW * 2}" height="${L.pillH}" rx="${pillRx}" fill="rgba(0,212,255,0.08)" stroke="#00d4ff" stroke-width="0.75"/>
-  <text x="${cx}" y="${L.pillTextY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${L.fsPill}" fill="#00d4ff">${pillLabel}</text>
+  <text x="160" y="168" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700"
+    fill="#ffffff" text-anchor="middle" letter-spacing="2">BLOCKTRUST</text>
 
-  <text x="${cx}" y="${L.nameY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${L.fsName}" font-weight="600" fill="#ffffff">${escapeXml(displayName)}</text>
+  <text x="160" y="186" font-family="Inter, Arial, sans-serif" font-size="10"
+    fill="rgba(255,255,255,0.5)" text-anchor="middle">Identité Vérifiée</text>
 
-  <rect x="${cx - qrPx / 2 - qrPad}" y="${qrOuterTop}" width="${qrPx + 2 * qrPad}" height="${qrOuterH}" rx="${L.qrCornerRx}" fill="#ffffff"/>
+  <rect x="90" y="196" width="140" height="22" rx="11" class="pulse-cyan"
+    fill="rgba(0,212,255,0.1)" stroke="rgba(0,212,255,0.3)" stroke-width="1"/>
+  <path d="M104 207 L107 210 L113 204"
+    stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <text x="160" y="211" font-family="Inter, Arial, sans-serif" font-size="9" fill="#00d4ff"
+    text-anchor="middle" font-weight="600">Certifié Blockchain</text>
 
-  <image x="${cx - qrPx / 2}" y="${L.qrY}" width="${qrPx}" height="${qrPx}" xlink:href="data:image/png;base64,${qrBase64}"/>
+  <text x="160" y="234" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600"
+    fill="rgba(255,255,255,0.9)" text-anchor="middle">${escapeXml(displayName)}</text>
 
-  <line x1="${Math.round(cx - w * 0.38)}" x2="${Math.round(cx + w * 0.38)}" y1="${dividerY}" y2="${dividerY}" stroke="rgba(232,234,240,0.12)" stroke-width="1"/>
+  <rect x="90" y="243" width="140" height="140" rx="10" fill="#ffffff" fill-opacity="0.95"/>
+  <image x="95" y="248" width="130" height="130"
+    xlink:href="data:image/png;base64,${qrBase64}" href="data:image/png;base64,${qrBase64}"/>
 
-  <text x="${cx}" y="${L.certIdY}" text-anchor="middle" font-family="monospace" font-size="${L.fsCertId}" fill="rgba(232,234,240,0.42)">${escapeXml(certIdSnippet)}</text>
+  <text x="160" y="380" font-family="IBM Plex Mono, ui-monospace, monospace" font-size="7"
+    fill="rgba(255,255,255,0.2)" text-anchor="middle">${escapeXml(publicIdDiscrete)}</text>
 
-  <text x="${cx}" y="${L.footerY}" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="${L.fsFoot}" fill="rgba(232,234,240,0.38)">
-    <tspan>Powered by </tspan><tspan fill="#7B3FE4" font-weight="700">Polygon</tspan>
+  <text x="160" y="394" font-family="Inter, Arial, sans-serif" font-size="8"
+    fill="rgba(255,255,255,0.2)" text-anchor="middle">
+    <tspan>Powered by </tspan><tspan fill="#8247E5">Polygon</tspan>
   </text>
+
+  </g>
 
 </svg>`
 
     return new NextResponse(svg, {
       headers: {
         'Content-Type': 'image/svg+xml',
-        // SVG calibré côté serveur : TTL court pour voir les retouches après déploiissement sans attendre trop longtemps
         'Cache-Control': 'public, max-age=120, stale-while-revalidate=300',
       },
     })
