@@ -8,6 +8,8 @@ import { isAdmin } from '@/app/lib/admin'
 import SignOutButton from './SignOutButton'
 import DashboardSidebarNav, { type SidebarItem } from './DashboardSidebarNav'
 
+import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
+
 function shellClass() {
   return 'flex h-full min-h-0 flex-col p-4 md:p-6'
 }
@@ -32,6 +34,21 @@ export default async function DashboardSidebar() {
     const plan = user?.plan || null
     const userIsAdmin = isAdmin(session.user.email)
 
+    const subscription = user
+      ? await prisma.subscription.findUnique({
+          where: { userId: user.id },
+          select: { plan: true, status: true },
+        })
+      : null
+
+    const showWhiteLabel = user
+      ? userHasWhiteLabelAccess({
+          subscriptionPlan: subscription?.plan,
+          subscriptionStatus: subscription?.status,
+          userPlanType: plan?.type,
+        })
+      : false
+
     const menuItems: SidebarItem[] = [
       { name: 'Tableau de bord', href: '/dashboard', icon: 'Home' },
       { name: 'Mes contacts', href: '/dashboard/entities', icon: 'Building' },
@@ -47,15 +64,13 @@ export default async function DashboardSidebar() {
               icon: 'Users' as const,
             },
           ]),
-      ...(plan?.whitelabelEnabled
-        ? [
-            {
-              name: 'API & Marque blanche',
-              href: '/dashboard/white-label',
-              icon: 'Code2' as const,
-            },
-          ]
-        : []),
+      {
+        name: 'API & Marque blanche',
+        href: '/dashboard/white-label',
+        icon: showWhiteLabel ? 'Palette' : 'Lock',
+        locked: !showWhiteLabel,
+        lockTooltip: 'Plan Business requis',
+      },
       { name: 'Facturation', href: '/dashboard/billing', icon: 'CreditCard' },
       { name: 'Paramètres', href: '/dashboard/settings', icon: 'Settings' },
       ...(userIsAdmin

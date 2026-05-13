@@ -7,6 +7,7 @@ import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { sendWebhook } from '@/lib/webhooks'
 import { ensureStrictEmptyBody } from '@/lib/api-json-body'
+import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -24,8 +25,22 @@ export async function POST(req: NextRequest) {
     where: { email: session.user.email },
     include: { plan: true },
   })
-  if (!user || !user.plan?.whitelabelEnabled) {
-    return NextResponse.json({ error: 'plan_required' }, { status: 403 })
+  if (!user) {
+    return NextResponse.json({ error: 'user_not_found' }, { status: 404 })
+  }
+
+  const subscription = await prisma.subscription.findUnique({
+    where: { userId: user.id },
+    select: { plan: true, status: true },
+  })
+  if (
+    !userHasWhiteLabelAccess({
+      subscriptionPlan: subscription?.plan,
+      subscriptionStatus: subscription?.status,
+      userPlanType: user.plan?.type,
+    })
+  ) {
+    return NextResponse.json({ error: 'Plan Business requis' }, { status: 403 })
   }
 
   const config = await prisma.whiteLabelConfig.findUnique({

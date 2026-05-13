@@ -8,6 +8,7 @@ import type { Prisma } from '@prisma/client'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { generateUniqueApiKeyPair, maskApiKey } from '@/lib/api-key'
+import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
 import { randomBytes } from 'node:crypto'
 
 export const runtime = 'nodejs'
@@ -26,10 +27,35 @@ async function getUserAndPlan(email: string) {
         select: {
           whitelabelEnabled: true,
           apiRequestsPerMonth: true,
+          type: true,
         },
       },
     },
   })
+}
+
+async function assertWhiteLabelAccess(email: string) {
+  const user = await getUserAndPlan(email)
+  if (!user) {
+    return { kind: 'error' as const, response: NextResponse.json({ error: 'user_not_found' }, { status: 404 }) }
+  }
+  const subscription = await prisma.subscription.findUnique({
+    where: { userId: user.id },
+    select: { plan: true, status: true },
+  })
+  if (
+    !userHasWhiteLabelAccess({
+      subscriptionPlan: subscription?.plan,
+      subscriptionStatus: subscription?.status,
+      userPlanType: user.plan?.type,
+    })
+  ) {
+    return {
+      kind: 'error' as const,
+      response: NextResponse.json({ error: 'Plan Business requis' }, { status: 403 }),
+    }
+  }
+  return { kind: 'ok' as const, user, subscription }
 }
 
 function serializeConfig(c: {
@@ -75,14 +101,9 @@ export async function GET() {
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
   }
-  const user = await getUserAndPlan(session.user.email)
-  if (!user) return NextResponse.json({ error: 'user_not_found' }, { status: 404 })
-  if (!user.plan?.whitelabelEnabled) {
-    return NextResponse.json(
-      { error: 'plan_required', message: 'White Label requires a B2B plan' },
-      { status: 403 }
-    )
-  }
+  const gate = await assertWhiteLabelAccess(session.user.email)
+  if (gate.kind === 'error') return gate.response
+  const { user } = gate
 
   let config = await prisma.whiteLabelConfig.findUnique({ where: { userId: user.id } })
 
@@ -110,11 +131,9 @@ export async function PATCH(req: NextRequest) {
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
   }
-  const user = await getUserAndPlan(session.user.email)
-  if (!user) return NextResponse.json({ error: 'user_not_found' }, { status: 404 })
-  if (!user.plan?.whitelabelEnabled) {
-    return NextResponse.json({ error: 'plan_required' }, { status: 403 })
-  }
+  const gate = await assertWhiteLabelAccess(session.user.email)
+  if (gate.kind === 'error') return gate.response
+  const { user } = gate
 
   const raw = await req.json().catch(() => null)
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
