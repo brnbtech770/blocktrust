@@ -13,6 +13,7 @@ import Link from 'next/link'
 import AdminPageHeader from '@/app/admin/AdminPageHeader'
 import { prisma } from '@/app/lib/db'
 import type { Metadata } from 'next'
+import { Users } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -82,6 +83,10 @@ function IconSurveillance() {
   )
 }
 
+function IconTeam() {
+  return <Users className="h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
+}
+
 const navLinks = [
   { href: '/dashboard', label: 'Vue client', Icon: IconClients },
   { href: '/admin/dashboard', label: 'Tableau de bord', Icon: IconDashboard },
@@ -92,6 +97,7 @@ const navLinks = [
   { href: '/admin/alerts', label: 'Alertes', Icon: IconAlertes },
   { href: '/admin/ai-alerts', label: 'Alertes IA', Icon: IconAlertes },
   { href: '/admin/surveillance', label: 'Surveillance IA', Icon: IconSurveillance },
+  { href: '/admin/team', label: 'Équipe', Icon: IconTeam },
 ]
 
 export default async function AdminLayout({
