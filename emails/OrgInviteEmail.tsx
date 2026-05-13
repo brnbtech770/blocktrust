@@ -4,6 +4,7 @@
 
 import { Body, Container, Head, Html, Link, Preview, Section, Text } from '@react-email/components'
 import * as React from 'react'
+import { EmailSignatureBadge } from './components/EmailSignatureBadge'
 
 export const subject = 'Invitation équipe — BLOCKTRUST™'
 
@@ -11,9 +12,17 @@ export type OrgInviteEmailProps = {
   orgName: string
   inviterName: string | null
   signInUrl: string
+  senderCertId?: string | null
+  senderVerifyUrl?: string | null
 }
 
-export function OrgInviteEmail({ orgName, inviterName, signInUrl }: OrgInviteEmailProps) {
+export function OrgInviteEmail({
+  orgName,
+  inviterName,
+  signInUrl,
+  senderCertId,
+  senderVerifyUrl,
+}: OrgInviteEmailProps) {
   const who = inviterName?.trim() || 'Un administrateur'
   return (
     <Html>
@@ -51,6 +60,14 @@ export function OrgInviteEmail({ orgName, inviterName, signInUrl }: OrgInviteEma
             Si vous n&apos;avez pas encore de compte, créez-en un avec cette adresse e-mail puis ouvrez à nouveau
             l&apos;espace équipe depuis votre tableau de bord.
           </Text>
+
+          <Section style={{ marginTop: '24px' }}>
+            <EmailSignatureBadge
+              senderName={who}
+              certId={senderCertId ?? null}
+              verifyUrl={senderVerifyUrl ?? null}
+            />
+          </Section>
         </Container>
       </Body>
     </Html>

@@ -170,14 +170,18 @@ export async function notifyAnchorSuccess(
       [cert.entity.firstName, cert.entity.lastName].filter(Boolean).join(' ').trim() ||
       'Votre contact'
 
+    const ownerCertKey = cert.publicId ?? certificateId
+    const ownerVerifyUrl = buildPublicVerifyUrl(ownerCertKey)
     sendCertificateAnchoredEmail(email, {
       userName,
       entityName,
-      verifyUrl: buildPublicVerifyUrl(cert.publicId ?? certificateId),
+      verifyUrl: ownerVerifyUrl,
       polygonTxHash: anchor.txHash,
       polygonBlock: anchor.blockNumber,
       polygonExplorerUrl: anchor.explorerUrl,
       anchoredAt: cert.polygonAnchoredAt ?? new Date(),
+      ownerCertId: ownerCertKey,
+      ownerVerifyUrl,
     })
   } catch (err) {
     console.error('[Polygon] notifyAnchorSuccess error:', (err as Error).message)

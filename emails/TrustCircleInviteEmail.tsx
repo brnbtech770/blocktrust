@@ -24,11 +24,14 @@ import {
   textStyle,
   titleStyle,
 } from './blocktrust-charte'
+import { EmailSignatureBadge } from './components/EmailSignatureBadge'
 
 export type TrustCircleInviteEmailProps = {
   inviterName: string
   inviterEmail: string
   confirmUrl: string
+  senderCertId?: string | null
+  senderVerifyUrl?: string | null
 }
 
 export function getTrustCircleInviteSubject(inviterName: string) {
@@ -39,6 +42,8 @@ export function TrustCircleInviteEmail({
   inviterName,
   inviterEmail,
   confirmUrl,
+  senderCertId,
+  senderVerifyUrl,
 }: TrustCircleInviteEmailProps) {
   return (
     <Html>
@@ -66,6 +71,21 @@ export function TrustCircleInviteEmail({
           </Section>
           <Section style={footerSection}>
             <Text style={footerText}>© 2026 BRNB TECH SASU · blocktrust.tech</Text>
+          </Section>
+
+          <Section
+            style={{
+              backgroundColor: '#0a1628',
+              borderRadius: '8px',
+              marginTop: '16px',
+              padding: '16px 20px 8px',
+            }}
+          >
+            <EmailSignatureBadge
+              senderName={inviterName}
+              certId={senderCertId ?? null}
+              verifyUrl={senderVerifyUrl ?? null}
+            />
           </Section>
         </Container>
       </Body>

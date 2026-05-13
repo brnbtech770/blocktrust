@@ -15,6 +15,7 @@ import {
   Text,
 } from '@react-email/components'
 import * as React from 'react'
+import { EmailSignatureBadge } from './components/EmailSignatureBadge'
 
 export const subject = '⛓️ Votre certificat BLOCKTRUST est ancré sur Polygon'
 
@@ -27,6 +28,8 @@ export type CertificateAnchoredEmailProps = {
   polygonBlock: number
   polygonExplorerUrl: string
   anchoredAt: Date
+  ownerCertId?: string | null
+  ownerVerifyUrl?: string | null
 }
 
 export function CertificateAnchoredEmail({
@@ -37,6 +40,8 @@ export function CertificateAnchoredEmail({
   polygonBlock,
   polygonExplorerUrl,
   anchoredAt,
+  ownerCertId,
+  ownerVerifyUrl,
 }: CertificateAnchoredEmailProps) {
   const dateLabel = anchoredAt.toLocaleDateString('fr-FR', {
     day: '2-digit',
@@ -133,6 +138,12 @@ export function CertificateAnchoredEmail({
               Ancré de façon immuable sur Polygon Mainnet · blocktrust.tech
             </Text>
           </Section>
+
+          <EmailSignatureBadge
+            senderName={userName}
+            certId={ownerCertId ?? null}
+            verifyUrl={ownerVerifyUrl ?? verifyUrl}
+          />
         </Container>
       </Body>
     </Html>

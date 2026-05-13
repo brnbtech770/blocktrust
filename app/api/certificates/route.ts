@@ -14,6 +14,7 @@ import { CertificateCreatedEmail, subject as certificateCreatedSubject } from '@
 import { createAdminAlert } from '@/lib/admin-alerts'
 import { redis } from '@/lib/rate-limit-redis'
 import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
+import { getUserEmailSignature } from '@/lib/email-signature'
 
 // ─────────────────────────────────────────────
 // GET — Liste des certificats de l'utilisateur
@@ -349,6 +350,14 @@ export async function POST(req: NextRequest) {
       ? `${certificate.entity.firstName || ''} ${certificate.entity.lastName || ''}`.trim() || certificate.entity.email
       : certificate.entity.legalName || certificate.entity.email
 
+    const sig = await getUserEmailSignature(user.id).catch(() => ({
+      senderName: user.name?.trim() || 'Utilisateur BLOCKTRUST',
+      certId: null as string | null,
+      verifyUrl: null as string | null,
+    }))
+    const ownerCertId = certificate.publicId ?? certificate.id
+    const ownerDisplayName = user.name?.trim() || sig.senderName
+
     // Email transactionnel : certificat créé (fire-and-forget)
     const recipientEmail = session.user.email
     if (recipientEmail) {
@@ -360,6 +369,9 @@ export async function POST(req: NextRequest) {
           verifyUrl,
           qrCodeDataUrl: qrCodeDataUrl || undefined,
           embedSnippet: `<a href="${verifyUrl}" target="_blank" rel="noopener">Vérifier ce certificat BlockTrust</a>`,
+          ownerCertId,
+          ownerVerifyUrl: verifyUrl,
+          ownerDisplayName,
         }),
       }).then(({ error }) => {
         if (error)

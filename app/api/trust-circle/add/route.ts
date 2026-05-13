@@ -122,6 +122,7 @@ export async function POST(req: NextRequest) {
     const { sendTrustCircleInviteEmail } = await import('@/lib/trust-circle-email')
     await sendTrustCircleInviteEmail(
       targetUser.id,
+      session.user.id,
       session.user.name ?? 'Un utilisateur BlockTrust',
       session.user.email ?? '',
       inviteToken

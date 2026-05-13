@@ -16,6 +16,7 @@ import {
   Text,
 } from '@react-email/components'
 import * as React from 'react'
+import { EmailSignatureBadge } from './components/EmailSignatureBadge'
 
 export const subject = 'Votre certificat BlockTrust est généré ✅'
 
@@ -24,6 +25,9 @@ type CertificateCreatedEmailProps = {
   verifyUrl: string
   qrCodeDataUrl?: string
   embedSnippet?: string
+  ownerCertId?: string | null
+  ownerVerifyUrl?: string | null
+  ownerDisplayName?: string | null
 }
 
 export function CertificateCreatedEmail({
@@ -31,6 +35,9 @@ export function CertificateCreatedEmail({
   verifyUrl,
   qrCodeDataUrl,
   embedSnippet,
+  ownerCertId,
+  ownerVerifyUrl,
+  ownerDisplayName,
 }: CertificateCreatedEmailProps) {
   return (
     <Html>
@@ -78,6 +85,22 @@ export function CertificateCreatedEmail({
           </Section>
 
           <Hr style={hr} />
+
+          <Section
+            style={{
+              backgroundColor: '#0a1628',
+              borderRadius: '8px',
+              padding: '16px 20px 8px',
+              marginTop: '8px',
+            }}
+          >
+            <EmailSignatureBadge
+              senderName={ownerDisplayName?.trim() || 'BLOCKTRUST'}
+              certId={ownerCertId ?? null}
+              verifyUrl={ownerVerifyUrl ?? null}
+            />
+          </Section>
+
           <Text style={footer}>BlockTrust — Certification numérique fiable</Text>
         </Container>
       </Body>

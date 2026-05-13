@@ -19,11 +19,13 @@ import {
   getAdminManualRequestSubject,
 } from '@/emails/AdminManualRequestEmail'
 import { ManualEntryApprovedEmail, subject as subjectManualApproved } from '@/emails/ManualEntryApprovedEmail'
+import { getUserEmailSignature } from '@/lib/email-signature'
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
 
 export async function sendTrustCircleInviteEmail(
   toUserId: string,
+  fromUserId: string,
   fromName: string,
   fromEmail: string,
   inviteToken: string
@@ -38,6 +40,11 @@ export async function sendTrustCircleInviteEmail(
   }
 
   const confirmUrl = `${baseUrl}/trust/confirm/${inviteToken}`
+  const sig = await getUserEmailSignature(fromUserId).catch(() => ({
+    senderName: fromName,
+    certId: null as string | null,
+    verifyUrl: null as string | null,
+  }))
   const { error } = await sendEmail({
     to: user.email,
     subject: getTrustCircleInviteSubject(fromName),
@@ -45,6 +52,8 @@ export async function sendTrustCircleInviteEmail(
       inviterName: fromName,
       inviterEmail: fromEmail,
       confirmUrl,
+      senderCertId: sig.certId,
+      senderVerifyUrl: sig.verifyUrl,
     }),
   })
   if (error) {

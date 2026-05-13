@@ -118,6 +118,12 @@ export async function POST(
   const signInUrl = `${origin}/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`
 
   const { OrgInviteEmail, subject } = await import('@/emails/OrgInviteEmail')
+  const { getUserEmailSignature } = await import('@/lib/email-signature')
+  const sig = await getUserEmailSignature(session.user.id).catch(() => ({
+    senderName: inviter?.name?.trim() || inviter?.email || 'Utilisateur BLOCKTRUST',
+    certId: null as string | null,
+    verifyUrl: null as string | null,
+  }))
   sendEmailFireAndForget({
     to: invitee.email ?? emailNorm,
     subject,
@@ -125,6 +131,8 @@ export async function POST(
       orgName: org.name,
       inviterName: inviter?.name ?? inviter?.email ?? null,
       signInUrl,
+      senderCertId: sig.certId,
+      senderVerifyUrl: sig.verifyUrl,
     }),
   })
 
