@@ -253,10 +253,12 @@ export const authOptions: NextAuthConfig = {
       if (token.sub && typeof token.email === "string" && isAdmin(token.email)) {
         try {
           await ensureAdminBootstrapForSession(token.sub, token.email);
-          (token as { plan?: string | null }).plan = "ENTERPRISE";
         } catch (err) {
           console.error("[admin bootstrap jwt]", err);
         }
+        // Forcer le plan Enterprise en session pour les admins
+        token.plan = "B2B_ENTERPRISE";
+        token.planType = "B2B_ENTERPRISE";
       }
 
       return token;

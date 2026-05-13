@@ -26,6 +26,8 @@ declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
     plan?: string;
+    /** Plan métier normalisé (ex. B2B_ENTERPRISE pour admins) */
+    planType?: string;
     kycStatus?: string;
     accountType?: string;
     cookieConsent?: boolean;
