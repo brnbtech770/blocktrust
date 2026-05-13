@@ -14,6 +14,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { Activity, Clock, ShieldAlert } from 'lucide-react'
+import { formatDistanceToNow } from '@/lib/format-relative-fr'
 
 type SurveillancePayload = {
   verifications24h: number
@@ -68,22 +70,29 @@ export default function SurveillanceDashboard() {
 
   async function runNow() {
     setRunLoading(true)
+    setError(null)
     try {
-      const r = await fetch('/api/cron/anomaly-detection', { method: 'POST' })
+      const r = await fetch('/api/admin/run-surveillance', { method: 'POST' })
       if (!r.ok) {
-        setError("L'analyse n'a pas pu s'exécuter")
+        const j = await r.json().catch(() => ({}))
+        setError(typeof j.error === 'string' ? j.error : "L'analyse n'a pas pu s'exécuter")
         return
       }
       await load()
+    } catch {
+      setError('Erreur réseau')
     } finally {
       setRunLoading(false)
     }
   }
 
+  const lastRunLabel =
+    data?.lastRunAt != null ? formatDistanceToNow(data.lastRunAt) : 'Jamais lancée'
+
   return (
     <div className="font-sans">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="font-syne text-2xl font-bold tracking-tight text-white">
             Surveillance IA — Détection d&apos;anomalies
           </h1>
@@ -91,6 +100,10 @@ export default function SurveillanceDashboard() {
             Surveillance temps réel à chaque scan · Analyse globale via QStash toutes les 5 min ·
             Analyse manuelle disponible ci-dessous.
           </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-white/40 text-xs">
+            <Clock className="w-3 h-3 shrink-0" aria-hidden />
+            <span>Dernière analyse : {lastRunLabel}</span>
+          </div>
         </div>
         <button
           type="button"
@@ -99,7 +112,7 @@ export default function SurveillanceDashboard() {
           className="shrink-0 whitespace-nowrap rounded-lg px-5 py-2.5 text-sm font-semibold text-navy transition hover:brightness-110 disabled:opacity-50"
           style={{ background: 'var(--bt-cyan)', color: '#0a1628' }}
         >
-          {runLoading ? 'Analyse en cours…' : "Lancer l'analyse"}
+          {runLoading ? 'Analyse en cours…' : 'Lancer maintenant'}
         </button>
       </div>
 
@@ -109,36 +122,60 @@ export default function SurveillanceDashboard() {
         </p>
       )}
 
+      <div
+        className="mb-8 rounded-xl border border-white/10 p-5"
+        style={{ background: 'rgba(13,31,60,0.5)' }}
+      >
+        <h2 className="mb-4 font-syne text-sm font-semibold uppercase tracking-wider text-white/60">
+          Règles de détection
+        </h2>
+        <ul className="space-y-4">
+          <li className="flex gap-3">
+            <Activity className="mt-0.5 h-5 w-5 shrink-0 text-bt-cyan" aria-hidden />
+            <div>
+              <p className="font-medium text-white">Volume anormal de vérifications</p>
+              <p className="mt-1 text-sm text-white/45">
+                Détecte &gt; 50 scans/heure sur un même certificat
+              </p>
+            </div>
+          </li>
+          <li className="flex gap-3">
+            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-[#f59e0b]" aria-hidden />
+            <div>
+              <p className="font-medium text-white">Taux de fraude élevé</p>
+              <p className="mt-1 text-sm text-white/45">
+                Détecte &gt; 10 % de FRAUD_ALERT sur 24 h
+              </p>
+            </div>
+          </li>
+          <li className="flex gap-3">
+            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-[#BDA76B]" aria-hidden />
+            <div>
+              <p className="font-medium text-white">Certificat révoqué scanné</p>
+              <p className="mt-1 text-sm text-white/45">
+                Détecte les scans sur des certificats révoqués
+              </p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          label="Vérifications (24h)"
-          value={data ? String(data.verifications24h) : '—'}
-        />
+        <KpiCard label="Vérifications (24h)" value={data ? String(data.verifications24h) : '—'} />
         <KpiCard label="Taux de fraude" value={data ? pct(data.fraudRate) : '—'} />
+        <KpiCard label="Alertes admin non lues" value={data ? String(data.unreadAlerts) : '—'} />
         <KpiCard
-          label="Alertes admin non lues"
-          value={data ? String(data.unreadAlerts) : '—'}
-        />
-        <KpiCard
-          label="Dernière exécution agent"
-          value={
-            data?.lastRunAt
-              ? new Date(data.lastRunAt).toLocaleString('fr-FR', {
-                  dateStyle: 'short',
-                  timeStyle: 'medium',
-                })
-              : '—'
-          }
+          label="Incidents fraude (24h)"
+          value={data ? String(data.fraudCount) : '—'}
+          tone="red"
         />
       </div>
 
       <div className="mb-8">
-        <h2 className="mb-3 font-syne text-base font-semibold text-white">
-          Ancrages Polygon
-        </h2>
+        <h2 className="mb-3 font-syne text-base font-semibold text-white">Ancrages Polygon</h2>
         <div className="grid gap-4 sm:grid-cols-3">
           <KpiCard
-            label="Ancrés on-chain ✓"
+            label="Ancrés on-chain"
             value={data?.polygon ? String(data.polygon.anchored) : '—'}
             tone="cyan"
           />
