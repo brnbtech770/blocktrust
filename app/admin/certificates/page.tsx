@@ -210,7 +210,11 @@ export default async function AdminCertificatesPage({
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-col gap-1">
-                    <QuickActions certificateId={cert.id} currentStatus={cert.status} />
+                    <QuickActions
+                      certificateId={cert.id}
+                      currentStatus={cert.status}
+                      blockchainStatus={cert.blockchainStatus}
+                    />
                     <DetailsLink href={`/admin/certificates/${cert.id}`} />
                   </div>
                 </td>

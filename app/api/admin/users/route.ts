@@ -7,6 +7,7 @@ import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
 import { adminUserListSelect } from '@/lib/prisma-admin-user'
+import { randomBytes } from 'crypto'
 
 export async function GET(req: NextRequest) {
   try {
@@ -55,5 +56,39 @@ export async function GET(req: NextRequest) {
       },
       { status: 500 }
     )
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await auth()
+    if (!session?.user?.email || !isAdmin(session.user.email)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    const body = await req.json().catch(() => ({}))
+    if (body?.test !== true) {
+      return NextResponse.json({ error: 'Requête invalide' }, { status: 400 })
+    }
+
+    const suffix = randomBytes(4).toString('hex')
+    const email = `test+${suffix}@blocktrust.test`
+    const name = `Utilisateur test ${suffix}`
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        name,
+        emailVerified: new Date(),
+        accountType: 'PERSONAL',
+      },
+      select: { id: true, email: true, name: true },
+    })
+
+    return NextResponse.json({ user }, { status: 201 })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Erreur serveur'
+    console.error('[admin/users POST]', message)
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

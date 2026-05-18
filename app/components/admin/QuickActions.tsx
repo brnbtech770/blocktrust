@@ -7,9 +7,10 @@ import ActionButton, { NoActionText } from './ActionButton'
 interface QuickActionsProps {
   certificateId: string
   currentStatus: string
+  blockchainStatus?: string | null
 }
 
-export default function QuickActions({ certificateId, currentStatus }: QuickActionsProps) {
+export default function QuickActions({ certificateId, currentStatus, blockchainStatus }: QuickActionsProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -17,6 +18,32 @@ export default function QuickActions({ certificateId, currentStatus }: QuickActi
   const [showRevokeModal, setShowRevokeModal] = useState(false)
   const [revokeReason, setRevokeReason] = useState('')
   const [pendingAction, setPendingAction] = useState<string | null>(null)
+  const [anchorLoading, setAnchorLoading] = useState(false)
+
+  async function manualAnchor() {
+    setAnchorLoading(true)
+    setError('')
+    try {
+      const response = await fetch(`/api/admin/certificates/${certificateId}/anchor-retry`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Ancrage échoué')
+      }
+      router.refresh()
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erreur ancrage'
+      setError(message)
+    } finally {
+      setAnchorLoading(false)
+    }
+  }
+
+  const canManualAnchor =
+    (currentStatus === 'ACTIVE' || currentStatus === 'ANCHORED') &&
+    blockchainStatus !== 'ANCHORED'
 
   const handleAction = async (action: string) => {
     if (action === 'revoke' || action === 'reject') {
@@ -87,6 +114,16 @@ export default function QuickActions({ certificateId, currentStatus }: QuickActi
 
       {(currentStatus === 'ACTIVE' || currentStatus === 'ANCHORED') && (
         <>
+          {canManualAnchor && (
+            <button
+              type="button"
+              onClick={manualAnchor}
+              disabled={anchorLoading || loading}
+              className="inline-flex items-center rounded border border-bt-cyan/30 bg-bt-cyan/10 px-2 py-1 text-xs text-bt-cyan transition hover:bg-bt-cyan/20 disabled:opacity-50"
+            >
+              {anchorLoading ? '…' : 'Ancrer manuellement'}
+            </button>
+          )}
           <ActionButton variant="suspend" onClick={() => handleAction('suspend')} loading={loading} />
           <ActionButton variant="revoke" onClick={() => handleAction('revoke')} loading={loading} />
         </>

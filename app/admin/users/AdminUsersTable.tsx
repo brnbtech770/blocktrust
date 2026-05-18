@@ -7,7 +7,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition, useRef, useEffect } from 'react'
-import { Trash2, ArrowRight } from 'lucide-react'
+import { Trash2, ArrowRight, UserPlus, Download } from 'lucide-react'
 import StatusBadge from '@/app/components/admin/StatusBadge'
 
 export type AdminUserRow = {
@@ -34,6 +34,7 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
   const [pending, startTransition] = useTransition()
   const [bulkPending, setBulkPending] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [creatingTest, setCreatingTest] = useState(false)
 
   const selectableUsers = users.filter((u) => !u.isAdminUser)
   const selectedBulkTargets = selectableUsers.filter((u) => selectedIds.has(u.id))
@@ -120,6 +121,55 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
     window.setTimeout(() => setToast(null), 5000)
   }
 
+  async function createTestUser() {
+    setCreatingTest(true)
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test: true }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setToast(typeof data.error === 'string' ? data.error : 'Création impossible')
+        return
+      }
+      setToast(`Utilisateur test créé : ${data.user?.email ?? 'OK'}`)
+      startTransition(() => router.refresh())
+    } catch {
+      setToast('Erreur réseau')
+    } finally {
+      setCreatingTest(false)
+      window.setTimeout(() => setToast(null), 6000)
+    }
+  }
+
+  function exportCsv() {
+    const header = ['id', 'email', 'name', 'plan', 'entities', 'certificates', 'createdAt', 'status']
+    const lines = users.map((u) =>
+      [
+        u.id,
+        u.email ?? '',
+        u.name ?? '',
+        u.planName ?? '',
+        String(u.entitiesCount),
+        String(u.certificatesCount),
+        u.createdAtLabel,
+        u.hasActivePlan ? 'ACTIVE' : 'INACTIVE',
+      ]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(',')
+    )
+    const csv = [header.join(','), ...lines].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `blocktrust-users-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="font-sans">
       {toast && (
@@ -136,9 +186,30 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
         </div>
       )}
 
-      <p className="mb-6 text-sm" style={{ color: 'var(--bt-muted)' }}>
-        Liste de tous les clients
-      </p>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm" style={{ color: 'var(--bt-muted)' }}>
+          Liste de tous les utilisateurs
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={createTestUser}
+            disabled={creatingTest}
+            className="inline-flex items-center gap-2 rounded-lg border border-bt-cyan/40 bg-bt-cyan/10 px-3 py-2 text-xs font-semibold text-bt-cyan transition hover:bg-bt-cyan/20 disabled:opacity-50"
+          >
+            <UserPlus className="h-3.5 w-3.5" aria-hidden />
+            {creatingTest ? 'Création…' : 'Nouveau utilisateur test'}
+          </button>
+          <button
+            type="button"
+            onClick={exportCsv}
+            className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-white/70 transition hover:bg-white/5"
+          >
+            <Download className="h-3.5 w-3.5" aria-hidden />
+            Exporter CSV
+          </button>
+        </div>
+      </div>
 
       {selectedBulkTargets.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-3">

@@ -36,10 +36,7 @@ export default async function AdminKycPage() {
   }))
 
   return (
-    <div className="p-6">
-      <h1 className="font-syne mb-6 text-2xl font-bold tracking-tight text-white">
-        Vérifications KYC
-      </h1>
+    <div>
       <AdminKycClient users={usersWithInsee} />
     </div>
   )

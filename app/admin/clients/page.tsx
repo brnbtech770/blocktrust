@@ -12,7 +12,8 @@ import {
   getBillingPeriodFromStripePriceId,
   getYearlyStripePriceIdSet,
 } from '@/lib/admin-revenue'
-import { Users, CheckCircle2, Clock, XCircle } from 'lucide-react'
+import { Users } from 'lucide-react'
+import AdminClientsTable, { type AdminClientRow } from '@/app/admin/clients/AdminClientsTable'
 
 export const dynamic = 'force-dynamic'
 
@@ -80,10 +81,7 @@ function pickLatestCert(entities: Parameters<typeof flattenCerts>[0]): FlatCert 
   return [...all].sort((a, b) => b.issuedAt.getTime() - a.issuedAt.getTime())[0] ?? null
 }
 
-function badgeUi(cert: FlatCert | null): {
-  label: string
-  className: string
-} {
+function badgeUi(cert: FlatCert | null): { label: string; className: string } {
   if (!cert) {
     return { label: 'AUCUN', className: 'bg-white/10 text-white/55 border-white/15' }
   }
@@ -105,21 +103,23 @@ function hasActiveBadge(cert: FlatCert | null): boolean {
   return cert.status === 'ACTIVE' || cert.status === 'ANCHORED'
 }
 
-function anchorUi(
-  cert: FlatCert | null,
-): { label: string; Icon: typeof CheckCircle2; className: string } {
+function anchorUi(cert: FlatCert | null): {
+  label: string
+  className: string
+  icon: AdminClientRow['anchorIcon']
+} {
   if (!cert) {
-    return { label: 'Non', Icon: XCircle, className: 'text-white/40' }
+    return { label: 'Non', className: 'text-white/40', icon: 'x' }
   }
   const bs = cert.blockchainStatus
   const anchored = bs === 'ANCHORED' || Boolean(cert.polygonTxHash || cert.txHash)
   if (anchored) {
-    return { label: 'Ancré', Icon: CheckCircle2, className: 'text-emerald-400' }
+    return { label: 'Ancré', className: 'text-emerald-400', icon: 'check' }
   }
   if (bs === 'FAILED') {
-    return { label: 'Échec', Icon: XCircle, className: 'text-[#E05252]' }
+    return { label: 'Échec', className: 'text-[#E05252]', icon: 'x' }
   }
-  return { label: 'En attente', Icon: Clock, className: 'text-amber-400' }
+  return { label: 'En attente', className: 'text-amber-400', icon: 'clock' }
 }
 
 function kycLabel(status: string): { text: string; className: string } {
@@ -158,7 +158,6 @@ export default async function AdminClientsPage({
           plan: true,
           status: true,
           stripePriceId: true,
-          currentPeriodEnd: true,
         },
       },
       entities: {
@@ -167,8 +166,6 @@ export default async function AdminClientsPage({
             orderBy: { issuedAt: 'desc' },
             take: 8,
             select: {
-              id: true,
-              publicId: true,
               status: true,
               blockchainStatus: true,
               polygonTxHash: true,
@@ -181,7 +178,7 @@ export default async function AdminClientsPage({
     },
   })
 
-  const rows = clientsRaw
+  const rows: AdminClientRow[] = clientsRaw
     .map((u) => {
       const cert = pickLatestCert(u.entities)
       const subActive = u.subscription?.status === 'active'
@@ -189,25 +186,54 @@ export default async function AdminClientsPage({
       const isYearly = period === 'YEARLY'
       const planCode = u.subscription?.plan ?? '—'
       const billingLabel =
-        planCode !== '—' && u.subscription
-          ? formatPlanBillingLabel(planCode, isYearly)
-          : '—'
+        planCode !== '—' && u.subscription ? formatPlanBillingLabel(planCode, isYearly) : '—'
+      const b = badgeUi(cert)
+      const a = anchorUi(cert)
+      const k = kycLabel(u.kycStatus)
+      const displayName = u.name?.trim() || u.email?.split('@')[0] || '—'
+      const initials = (() => {
+        if (u.name?.trim()) {
+          const parts = u.name.trim().split(/\s+/)
+          const fi = parts[0]?.[0] ?? ''
+          const li = parts[1]?.[0] ?? ''
+          return (fi + li).toUpperCase() || fi.toUpperCase()
+        }
+        return (u.email?.[0] ?? '?').toUpperCase()
+      })()
 
       return {
-        user: u,
-        cert,
-        subActive,
-        billingLabel,
+        id: u.id,
+        name: displayName,
+        email: u.email ?? '—',
+        image: u.image,
+        initials,
+        badgeLabel: b.label,
+        badgeClassName: b.className,
+        anchorLabel: a.label,
+        anchorClassName: a.className,
+        anchorIcon: a.icon,
         planCode,
+        billingLabel,
         periodLabel: period === 'YEARLY' ? 'Annuel' : period === 'MONTHLY' ? 'Mensuel' : '—',
+        kycText: k.text,
+        kycClassName: k.className,
+        trustScore: u.trustScore ?? 0,
+        createdAtLabel: u.createdAt.toLocaleDateString('fr-FR', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        }),
+        subActive,
+        hasActiveBadge: hasActiveBadge(cert),
       }
     })
     .filter((r) => {
       if (filter === 'active') return r.subActive
       if (filter === 'no-sub') return !r.subActive
-      if (filter === 'no-badge') return !hasActiveBadge(r.cert)
+      if (filter === 'no-badge') return !r.hasActiveBadge
       return true
     })
+    .map(({ subActive: _s, hasActiveBadge: _h, ...row }) => row)
 
   const filterLinkClass = (f: ClientFilter) =>
     [
@@ -225,7 +251,6 @@ export default async function AdminClientsPage({
             <Users className="h-5 w-5 text-[#00d4ff]" aria-hidden />
           </div>
           <div>
-            <h1 className="font-syne text-xl font-bold text-white sm:text-2xl">Vue clients</h1>
             <p className="text-sm text-white/50">
               {rows.length} client{rows.length > 1 ? 's' : ''}
               {filter !== 'all' ? ' (filtre affiché)' : ''} · total base : {clientsRaw.length}
@@ -249,112 +274,7 @@ export default async function AdminClientsPage({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#0d1f3c]/80">
-        <table className="min-w-[1180px] w-full border-collapse text-left text-sm">
-          <thead>
-            <tr className="border-b border-white/10 text-[10px] uppercase tracking-widest text-white/45">
-              <th className="sticky left-0 z-10 bg-[#0d1f3c] px-4 py-3 font-semibold">User</th>
-              <th className="px-4 py-3 font-semibold">Badge</th>
-              <th className="px-4 py-3 font-semibold">Ancrage</th>
-              <th className="px-4 py-3 font-semibold">Plan</th>
-              <th className="px-4 py-3 font-semibold">Facturation</th>
-              <th className="px-4 py-3 font-semibold">KYC</th>
-              <th className="px-4 py-3 font-semibold">Score</th>
-              <th className="px-4 py-3 font-semibold">Inscrit</th>
-              <th className="sticky right-0 z-10 bg-[#0d1f3c] px-4 py-3 font-semibold text-right">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(({ user: u, cert, billingLabel, planCode, periodLabel }) => {
-              const b = badgeUi(cert)
-              const a = anchorUi(cert)
-              const k = kycLabel(u.kycStatus)
-              const displayName = u.name?.trim() || u.email?.split('@')[0] || '—'
-              const initials = (() => {
-                if (u.name?.trim()) {
-                  const parts = u.name.trim().split(/\s+/)
-                  const fi = parts[0]?.[0] ?? ''
-                  const li = parts[1]?.[0] ?? ''
-                  return (fi + li).toUpperCase() || fi.toUpperCase()
-                }
-                return (u.email?.[0] ?? '?').toUpperCase()
-              })()
-
-              const AIcon = a.Icon
-
-              return (
-                <tr key={u.id} className="border-b border-white/5 hover:bg-white/[0.03]">
-                  <td className="sticky left-0 z-[1] bg-[#0d1f3c] px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {u.image ? (
-                        <img
-                          src={u.image}
-                          alt=""
-                          className="h-9 w-9 shrink-0 rounded-full border border-white/10 object-cover"
-                        />
-                      ) : (
-                        <div
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#00d4ff]/25 text-xs font-bold text-[#00d4ff]"
-                          aria-hidden
-                        >
-                          {initials}
-                        </div>
-                      )}
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-white">{displayName}</p>
-                        <p className="truncate font-mono text-xs text-white/45">{u.email ?? '—'}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${b.className}`}
-                    >
-                      {b.label}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${a.className}`}>
-                      <AIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                      {a.label}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-white/90">{planCode}</td>
-                  <td className="px-4 py-3">
-                    <p className="text-xs text-white/90">{billingLabel}</p>
-                    <p className="text-[10px] uppercase tracking-wider text-white/35">{periodLabel}</p>
-                  </td>
-                  <td className={`px-4 py-3 text-xs font-medium ${k.className}`}>{k.text}</td>
-                  <td className="px-4 py-3 font-mono text-xs tabular-nums text-white/80">
-                    {u.trustScore ?? 0}
-                    <span className="text-white/35">/100</span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-white/55">
-                    {u.createdAt.toLocaleDateString('fr-FR', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </td>
-                  <td className="sticky right-0 z-[1] bg-[#0d1f3c] px-4 py-3 text-right">
-                    <Link
-                      href={`/admin/users/${u.id}`}
-                      className="inline-flex rounded-lg border border-[#00d4ff]/35 bg-[#00d4ff]/10 px-3 py-1.5 text-xs font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/20"
-                    >
-                      Gérer
-                    </Link>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-        {rows.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-white/45">Aucun client pour ce filtre.</p>
-        ) : null}
-      </div>
+      <AdminClientsTable rows={rows} />
     </div>
   )
 }

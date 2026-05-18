@@ -320,7 +320,7 @@ export default async function AdminDashboard() {
             Gérer les utilisateurs
           </a>
           <a
-            href="/admin/alerts"
+            href="/admin/ai-alerts"
             className="rounded-lg border border-red-400/40 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:border-red-400/60 hover:bg-red-500/10"
           >
             Voir les alertes

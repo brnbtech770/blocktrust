@@ -140,7 +140,7 @@ export default function AdminKycClient({ users }: { users: User[] }) {
                 </td>
                 <td className="px-4 py-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    {(u.kycStatus ?? 'PENDING') === 'PENDING' ? (
+                    {['PENDING', 'REQUIRES_INPUT'].includes(u.kycStatus ?? 'PENDING') ? (
                       <>
                         <ActionButton variant="validate" onClick={() => handleApprove(u.id)} />
                         <ActionButton
