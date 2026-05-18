@@ -6,7 +6,7 @@ import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import SignOutButton from './SignOutButton'
-import DashboardSidebarNav, { type SidebarItem } from './DashboardSidebarNav'
+import DashboardSidebarNav, { type SidebarSection } from './DashboardSidebarNav'
 
 import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
 import { hasOrgAccess } from '@/lib/vault-utils'
@@ -91,53 +91,84 @@ export default async function DashboardSidebar() {
       subscription.plan != null &&
       hasOrgAccess(subscription.plan)
 
-    const menuItems: SidebarItem[] = [
-      { name: 'Tableau de bord', href: '/dashboard', icon: 'Home' },
-      { name: wording.contactsLabel, href: '/dashboard/entities', icon: 'Building' },
-      { name: wording.badgeLabel, href: '/dashboard/certificates', icon: 'Shield' },
-      ...(plan?.trustCircleEnabled
-        ? [{ name: 'Trust Circle', href: '/dashboard/trust-circle', icon: 'Users' as const }]
-        : [
-            {
-              name: 'Trust Circle',
-              href: `/pricing?feature=trustCircle&message=${encodeURIComponent(
-                'Abonnez-vous pour accéder au Trust Circle — disponible à partir des offres Famille et équivalents B2B.'
-              )}`,
-              icon: 'Users' as const,
-            },
-          ]),
-      ...(showB2BOrgVault
+    const trustCircleItem = plan?.trustCircleEnabled
+      ? { name: 'Trust Circle', href: '/dashboard/trust-circle', icon: 'Users' as const }
+      : {
+          name: 'Trust Circle',
+          href: `/pricing?feature=trustCircle&message=${encodeURIComponent(
+            'Abonnez-vous pour accéder au Trust Circle — disponible à partir des offres Famille et équivalents B2B.'
+          )}`,
+          icon: 'Users' as const,
+        }
+
+    const sections: SidebarSection[] = [
+      {
+        items: [
+          { name: 'Tableau de bord', href: '/dashboard', icon: 'LayoutDashboard' },
+          { name: wording.badgeLabel, href: '/dashboard/certificates', icon: 'Shield' },
+        ],
+      },
+      {
+        label: 'Mon réseau',
+        items: [
+          { name: wording.contactsLabel, href: '/dashboard/entities', icon: 'Building' },
+          trustCircleItem,
+          ...(showB2BOrgVault
+            ? [
+                {
+                  name: 'BlockTrust Vault',
+                  href: '/dashboard/vault',
+                  icon: 'ShieldCheck' as const,
+                },
+                {
+                  name: 'Mon équipe',
+                  href: '/dashboard/organization',
+                  icon: 'Building2' as const,
+                },
+              ]
+            : []),
+        ],
+      },
+      {
+        label: 'Paramètres',
+        items: [
+          { name: 'Facturation', href: '/dashboard/billing', icon: 'CreditCard' },
+          { name: 'Paramètres', href: '/dashboard/settings', icon: 'Settings' },
+          ...(showWhiteLabel
+            ? [
+                {
+                  name: 'API & Marque blanche',
+                  href: '/dashboard/white-label',
+                  icon: 'Palette' as const,
+                },
+              ]
+            : [
+                {
+                  name: 'API & Marque blanche',
+                  href: '/dashboard/white-label',
+                  icon: 'Lock' as const,
+                  locked: true,
+                  lockTooltip: 'Plan Business requis',
+                },
+              ]),
+        ],
+      },
+      ...(userIsAdmin
         ? [
             {
-              name: 'Organisation',
-              href: '/dashboard/organization',
-              icon: 'Building2' as const,
-            },
-            {
-              name: 'BlockTrust Vault',
-              href: '/dashboard/vault',
-              icon: 'ShieldCheck' as const,
+              label: 'Administration',
+              items: [
+                { name: 'Administration', href: '/admin/dashboard', icon: 'Shield' as const },
+              ],
             },
           ]
-        : []),
-      {
-        name: 'API & Marque blanche',
-        href: '/dashboard/white-label',
-        icon: showWhiteLabel ? 'Palette' : 'Lock',
-        locked: !showWhiteLabel,
-        lockTooltip: 'Plan Business requis',
-      },
-      { name: 'Facturation', href: '/dashboard/billing', icon: 'CreditCard' },
-      { name: 'Paramètres', href: '/dashboard/settings', icon: 'Settings' },
-      ...(userIsAdmin
-        ? [{ name: 'Administration', href: '/admin/dashboard', icon: 'Shield' as const }]
         : []),
     ]
 
     return (
       <div className={shellClass()}>
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-          <DashboardSidebarNav items={menuItems} />
+          <DashboardSidebarNav sections={sections} />
           <div className="mt-5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-[11px] leading-relaxed text-white/45">
             <p>
               <span className="font-semibold text-white/65">{wording.contactsLabel}</span> — personnes ou
