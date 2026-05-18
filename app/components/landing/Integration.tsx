@@ -68,7 +68,7 @@ export default function Integration() {
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
           Intégration
         </p>
-        <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-4xl">
+        <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-snug text-white sm:text-3xl">
           Intégrez votre badge <span className="text-bt-cyan">partout</span>
         </h2>
       </Reveal>
@@ -115,10 +115,10 @@ export default function Integration() {
               className="grid grid-cols-1 gap-6 animate-fade-in lg:grid-cols-2"
             >
               <div>
-                <h3 className="font-syne mb-2 text-base sm:text-lg font-semibold text-white">
+                <h3 className="font-syne mb-2 text-lg font-semibold text-white sm:text-xl">
                   Iframe à coller sur votre site
                 </h3>
-                <p className="mb-4 text-sm text-white/70">
+                <p className="mb-4 text-sm leading-relaxed text-white/70">
                   Intégrez votre badge en moins de 30 secondes — aucune dépendance.
                 </p>
                 <div className="relative">
@@ -167,10 +167,10 @@ export default function Integration() {
               aria-labelledby="tab-email"
               className="animate-fade-in"
             >
-              <h3 className="font-syne mb-2 text-base sm:text-lg font-semibold text-white">
+              <h3 className="font-syne mb-2 text-lg font-semibold text-white sm:text-xl">
                 Ajoutez votre badge à votre signature email
               </h3>
-              <p className="mb-6 text-sm text-white/70">
+              <p className="mb-6 text-sm leading-relaxed text-white/70">
                 Compatible Gmail, Outlook, Apple Mail. Aucun script requis.
               </p>
               <ol className="space-y-3">
@@ -201,10 +201,10 @@ export default function Integration() {
               aria-labelledby="tab-visio"
               className="animate-fade-in"
             >
-              <h3 className="font-syne mb-2 text-base sm:text-lg font-semibold text-white">
+              <h3 className="font-syne mb-2 text-lg font-semibold text-white sm:text-xl">
                 Partagez votre lien avant chaque appel
               </h3>
-              <p className="mb-6 text-sm text-white/70">
+              <p className="mb-6 text-sm leading-relaxed text-white/70">
                 Compatible Microsoft Teams, Zoom, Google Meet — partagez simplement votre URL de
                 vérification.
               </p>
@@ -252,10 +252,10 @@ export default function Integration() {
               aria-labelledby="tab-api"
               className="animate-fade-in"
             >
-              <h3 className="font-syne mb-2 text-base sm:text-lg font-semibold text-white">
+              <h3 className="font-syne mb-2 text-lg font-semibold text-white sm:text-xl">
                 API REST pour vos systèmes B2B
               </h3>
-              <p className="mb-4 text-sm text-white/70">
+              <p className="mb-4 text-sm leading-relaxed text-white/70">
                 Vérifiez l&apos;identité d&apos;un partenaire en un appel HTTP. Réponse
                 JSON structurée et signée.
               </p>

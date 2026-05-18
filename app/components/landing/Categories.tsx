@@ -81,14 +81,14 @@ export default function Categories() {
         </p>
         <h2
           id="categories-heading"
-          className="font-syne mx-auto max-w-3xl text-3xl font-bold leading-tight text-balance text-white md:text-5xl"
+          className="font-syne mx-auto max-w-2xl text-2xl font-bold leading-snug text-balance text-white sm:text-3xl"
         >
           Vous êtes déjà protégé contre certaines menaces.{" "}
           <span className="text-bt-cyan">
             Mais pas contre l&apos;usurpation d&apos;identité.
           </span>
         </h2>
-        <p className="mx-auto mt-5 max-w-3xl text-base leading-relaxed text-white/70 md:text-lg">
+        <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
           L&apos;usurpation d&apos;identité ne se traite pas avec un antivirus,
           ni avec une appli d&apos;État, ni avec un code SMS. C&apos;est une
           4ᵉ couche de protection — celle que{" "}
@@ -153,10 +153,10 @@ function CategoryCard({
           </span>
         </div>
 
-        <h3 className="font-syne text-xl font-bold tracking-wider text-bt-cyan sm:text-2xl">
+        <h3 className="font-syne text-lg font-bold tracking-wider text-bt-cyan sm:text-xl">
           {category.title}
         </h3>
-        <p className="mt-1.5 text-sm font-medium text-white/85 sm:text-base">
+        <p className="mt-1.5 text-sm font-medium leading-relaxed text-white/85">
           {category.tagline}
         </p>
 
@@ -212,10 +212,10 @@ function CategoryCard({
         </span>
       </div>
 
-      <h3 className="font-syne text-xl font-semibold text-white/60 sm:text-2xl">
+      <h3 className="font-syne text-lg font-semibold text-white/60 sm:text-xl">
         {category.title}
       </h3>
-      <p className="mt-1.5 text-sm font-medium text-white/45 sm:text-base">
+      <p className="mt-1.5 text-sm font-medium leading-relaxed text-white/45">
         {category.tagline}
       </p>
 

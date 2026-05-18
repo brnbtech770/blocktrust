@@ -37,11 +37,11 @@ export default function ThreatAlert() {
           <p className="neon-red mb-2 text-xs font-semibold uppercase tracking-widest">
             Menaces permanentes
           </p>
-          <h2 className="font-syne mb-4 text-2xl font-bold text-white sm:text-3xl">
-            Aujourd&apos;hui, n&apos;importe qui peut
-            <span className="text-[#E05252]"> se faire passer pour vous</span>
+          <h2 className="font-syne mb-4 max-w-2xl text-2xl font-bold leading-snug text-white sm:text-3xl">
+            Aujourd&apos;hui, n&apos;importe qui peut{" "}
+            <span className="text-[#E05252]">se faire passer pour vous</span>
           </h2>
-          <p className="max-w-xl text-sm leading-relaxed text-white/50">
+          <p className="max-w-2xl text-sm leading-relaxed text-white/50 sm:text-base">
             Des outils accessibles à tous permettent de cloner une identité, usurper un email ou
             falsifier un document — en quelques minutes, sans compétences techniques.
           </p>
@@ -60,8 +60,8 @@ export default function ThreatAlert() {
                     <Icon className="h-5 w-5 text-[#E05252]" aria-hidden strokeWidth={2} />
                   </div>
                 </div>
-                <p className="font-syne mb-2 text-4xl font-bold text-[#E05252]">{stat.value}</p>
-                <p className="text-xs leading-relaxed text-white/50">{stat.label}</p>
+                <p className="font-syne mb-2 text-2xl font-bold text-[#E05252] sm:text-3xl">{stat.value}</p>
+                <p className="text-sm leading-relaxed text-white/50">{stat.label}</p>
               </div>
             );
           })}
@@ -84,7 +84,7 @@ export default function ThreatAlert() {
                 <span className="mt-0.5 shrink-0 text-xs text-[#E05252]" aria-hidden>
                   →
                 </span>
-                <p className="text-xs leading-relaxed text-white/60">{item}</p>
+                <p className="text-sm leading-relaxed text-white/60">{item}</p>
               </div>
             ))}
           </div>
@@ -97,7 +97,7 @@ export default function ThreatAlert() {
               La réponse BLOCKTRUST
             </p>
           </div>
-          <p className="mx-auto max-w-lg text-sm leading-relaxed text-white/70">
+          <p className="mx-auto max-w-lg text-sm leading-relaxed text-white/70 sm:text-base">
             BLOCKTRUST certifie votre identité et celle de vos interlocuteurs — toute tentative
             d&apos;usurpation est détectée immédiatement, avant que le mal soit fait.
           </p>

@@ -49,9 +49,9 @@ export default function Footer() {
             <p className="font-syne mb-4 text-sm font-bold uppercase tracking-wider text-white">
               Liens
             </p>
-            <ul className="grid grid-cols-2 gap-2 sm:gap-3">
+            <ul className="flex flex-wrap gap-x-4 gap-y-2">
               {links.map((l) => (
-                <li key={l.href}>
+                <li key={l.href} className="whitespace-nowrap">
                   <Link
                     href={l.href}
                     className="text-sm text-white/65 transition-colors hover:text-bt-cyan"

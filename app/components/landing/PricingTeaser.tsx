@@ -20,10 +20,10 @@ export default function PricingTeaser() {
           <Sparkles className="h-4 w-4" />
           Tarifs
         </p>
-        <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-tight text-white sm:text-3xl lg:text-4xl">
+        <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-snug text-white sm:text-3xl">
           Un plan adapté à <span className="text-bt-cyan">chaque besoin</span>
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-sm sm:text-base leading-relaxed text-white/70">
+        <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
           Particuliers ou entreprises — démarrez sans engagement, annulez à tout moment.
         </p>
       </Reveal>
@@ -36,15 +36,15 @@ export default function PricingTeaser() {
           <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg border border-bt-cyan/30 bg-bt-cyan/10">
             <User className="h-5 w-5 text-bt-cyan" />
           </div>
-          <h3 className="font-syne text-base sm:text-lg font-semibold text-white">Particulier</h3>
-          <div className="mt-2 flex flex-wrap items-baseline gap-2">
+          <h3 className="font-syne text-base font-semibold text-white sm:text-lg">Particulier</h3>
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-2 whitespace-nowrap">
             <span className="text-sm font-medium text-white/50">À partir de</span>
-            <span className="font-syne text-4xl font-bold text-white">
+            <span className="font-syne text-2xl font-bold text-white sm:text-3xl">
               {formatPriceFr(ESSENTIEL_MONTHLY_EUR)}€
             </span>
-            <span className="text-sm text-white/60">TTC/mois</span>
+            <span className="text-xs text-white/60 sm:text-sm">TTC/mois</span>
           </div>
-          <p className="mt-3 text-sm sm:text-base leading-relaxed text-white/70">
+          <p className="mt-3 text-xs leading-relaxed text-white/70 sm:text-sm">
             Vérifications illimitées* pendant la période de lancement. Badge certifié, QR code, signature email, page
             de vérification publique.
           </p>
@@ -57,18 +57,18 @@ export default function PricingTeaser() {
           <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gold/30 bg-gold/10">
             <Building2 className="h-5 w-5 text-gold" />
           </div>
-          <h3 className="font-syne text-base sm:text-lg font-semibold text-white">Entreprise</h3>
-          <div className="mt-2 flex flex-wrap items-baseline gap-2">
+          <h3 className="font-syne text-base font-semibold text-white sm:text-lg">Entreprise</h3>
+          <div className="mt-2 flex flex-wrap items-baseline gap-x-2 whitespace-nowrap">
             <span className="text-sm font-medium text-white/60">À partir de</span>
-            <span className="font-syne text-3xl font-bold text-white">
+            <span className="font-syne text-2xl font-bold text-white sm:text-3xl">
               {formatPriceFr(STARTER_MONTHLY_PER_USER_HT_EUR)}€
             </span>
-            <span className="text-sm text-white/60">HT/user/mois</span>
+            <span className="text-xs text-white/60 sm:text-sm">HT/user/mois</span>
           </div>
-          <p className="mt-1 text-xs text-white/50">
+          <p className="mt-1 text-xs leading-relaxed text-white/50 sm:text-sm">
             Solo Pro · Starter · Team · Business · Enterprise sur devis
           </p>
-          <p className="mt-3 text-sm sm:text-base leading-relaxed text-white/70">
+          <p className="mt-3 text-xs leading-relaxed text-white/70 sm:text-sm">
             API B2B, multi-comptes, vérification d&apos;identité avancée, intégrations dédiées.
           </p>
         </Reveal>

@@ -44,10 +44,10 @@ export default function Particuliers() {
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
           Pour les particuliers &amp; professionnels
         </p>
-        <h2 className="font-syne mx-auto max-w-2xl pb-2 text-2xl font-semibold leading-normal text-white overflow-visible sm:text-3xl lg:text-4xl">
+        <h2 className="font-syne mx-auto max-w-2xl pb-2 text-2xl font-semibold leading-snug text-white sm:text-3xl">
           Protégez votre <span className="text-bt-cyan">réputation personnelle</span> en ligne
         </h2>
-        <p className="text-white/40 text-sm text-center mb-8 mt-4 max-w-xl mx-auto">
+        <p className="mx-auto mb-8 mt-4 max-w-2xl text-center text-sm leading-relaxed text-white/40">
           Particuliers, indépendants, freelances — BLOCKTRUST s&apos;adapte à votre usage
         </p>
       </Reveal>
@@ -67,11 +67,11 @@ export default function Particuliers() {
               >
                 <Icon className="h-6 w-6 text-bt-cyan" />
               </div>
-              <h3 className="font-syne mb-2 text-base sm:text-lg font-semibold text-white">
+              <h3 className="font-syne mb-2 text-base font-semibold text-white">
                 {c.title}
               </h3>
-              <p className="text-sm sm:text-base leading-relaxed text-white/70">{c.text}</p>
-              <p className="mt-3 text-xs italic leading-relaxed text-white/50 sm:text-sm">
+              <p className="text-sm leading-relaxed text-white/70">{c.text}</p>
+              <p className="mt-3 text-xs leading-relaxed text-white/50 sm:text-sm">
                 {c.example}
               </p>
             </Reveal>

@@ -29,7 +29,7 @@ export default function Hero() {
           </div>
 
           {/* H1 */}
-          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-[28px] font-bold leading-[1.15] tracking-tight text-white overflow-visible sm:mt-6 sm:text-4xl lg:text-5xl">
+          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-3xl font-bold leading-[1.2] tracking-tight text-white sm:mt-6 sm:text-4xl">
             L&apos;identité numérique qui protège vos échanges.
           </h1>
 
@@ -38,12 +38,9 @@ export default function Hero() {
             La preuve que c&apos;est <span className="font-semibold text-bt-cyan">vous</span>.
             La certitude que c&apos;est <span className="font-semibold text-gold">eux</span>.
           </p>
-          <p className="opacity-0 animate-fade-up [animation-delay:360ms] text-white/40 text-sm leading-relaxed max-w-xl mt-2">
-            Certifiez ce que vous envoyez.
-            <br />
-            Vérifiez ce que vous recevez.
-            <br />
-            Faux RIB, faux conseiller, faux fournisseur — détectés en 1 scan, avant que le mal soit fait.
+          <p className="opacity-0 animate-fade-up [animation-delay:360ms] mt-2 max-w-2xl text-sm leading-relaxed text-white/40">
+            Certifiez ce que vous envoyez. Vérifiez ce que vous recevez. Faux RIB, faux conseiller, faux
+            fournisseur — détectés en 1 scan, avant que le mal soit fait.
           </p>
 
           {/* CTAs + micro-copy */}
@@ -62,7 +59,7 @@ export default function Hero() {
                 Voir comment ça marche
               </Link>
             </div>
-            <p className="text-xs font-light text-white/60">
+            <p className="text-xs font-light leading-relaxed text-white/60 sm:text-sm sm:whitespace-nowrap">
               Vérification gratuite pour tous · Certifiez votre identité dès {essentielTtc}€ TTC/mois · Sans
               engagement
             </p>
