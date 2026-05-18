@@ -5,9 +5,16 @@ import { usePathname } from 'next/navigation'
 const titles: Record<string, string> = {
   '/admin': 'Tableau de bord',
   '/admin/dashboard': 'Tableau de bord',
-  '/admin/certificates': 'Demandes de certificats',
+  '/admin/clients': 'Vue clients',
   '/admin/users': 'Utilisateurs',
-  '/admin/alerts': 'Alertes IA',
+  '/admin/organizations': 'Organisations B2B',
+  '/admin/certificates': 'Certificats',
+  '/admin/kyc': 'KYC',
+  '/admin/demandes': 'Demandes Trust',
+  '/admin/surveillance': 'Surveillance IA',
+  '/admin/alerts': 'Alertes & Surveillance',
+  '/admin/ai-alerts': 'Alertes & Surveillance',
+  '/admin/team': 'Équipe BLOCKTRUST',
 }
 
 function getTitle(pathname: string): string {
