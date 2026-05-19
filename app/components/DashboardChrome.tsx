@@ -1,20 +1,23 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Children, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 
 /**
  * Shell dashboard : sidebar fixe desktop, drawer + overlay sur mobile (< md).
+ * Enfants attendus (ordre) : [0] sidebar (RSC), [1] contenu principal.
  */
 export default function DashboardChrome({
-  sidebar,
   children,
 }: {
-  sidebar: React.ReactNode
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const pathname = usePathname() ?? ''
+
+  const childList = Children.toArray(children)
+  const sidebar = childList[0] ?? null
+  const main = childList[1] ?? null
 
   useEffect(() => {
     setOpen(false)
@@ -66,9 +69,7 @@ export default function DashboardChrome({
         {sidebar}
       </aside>
 
-      <div className="min-h-screen pt-14 md:ml-[220px] md:pt-0">
-        {children}
-      </div>
+      <div className="min-h-screen pt-14 md:ml-[220px] md:pt-0">{main}</div>
     </div>
   )
 }

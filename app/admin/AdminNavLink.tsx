@@ -2,17 +2,44 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import type { LucideIcon } from 'lucide-react'
+import {
+  LayoutDashboard,
+  Users,
+  UserCog,
+  Building2,
+  BadgeCheck,
+  ShieldCheck,
+  GitPullRequest,
+  Activity,
+  Bell,
+  Crown,
+} from 'lucide-react'
+
+const adminIconMap = {
+  LayoutDashboard,
+  Users,
+  UserCog,
+  Building2,
+  BadgeCheck,
+  ShieldCheck,
+  GitPullRequest,
+  Activity,
+  Bell,
+  Crown,
+} as const
+
+export type AdminNavIconName = keyof typeof adminIconMap
 
 export type AdminNavLinkProps = {
   href: string
   label: string
-  icon: LucideIcon
+  icon: AdminNavIconName
   badge?: number
 }
 
-export default function AdminNavLink({ href, label, icon: Icon, badge }: AdminNavLinkProps) {
+export default function AdminNavLink({ href, label, icon, badge }: AdminNavLinkProps) {
   const pathname = usePathname() ?? ''
+  const Icon = adminIconMap[icon] ?? LayoutDashboard
   const active =
     pathname === href ||
     pathname.startsWith(`${href}/`) ||

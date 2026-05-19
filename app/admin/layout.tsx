@@ -15,18 +15,7 @@ import AdminPageHeader from '@/app/admin/AdminPageHeader'
 import AdminNavLink from '@/app/admin/AdminNavLink'
 import { prisma } from '@/app/lib/db'
 import type { Metadata } from 'next'
-import {
-  LayoutDashboard,
-  Users,
-  UserCog,
-  Building2,
-  BadgeCheck,
-  ShieldCheck,
-  GitPullRequest,
-  Activity,
-  Bell,
-  Crown,
-} from 'lucide-react'
+import type { AdminNavIconName } from '@/app/admin/AdminNavLink'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,40 +26,43 @@ export const metadata: Metadata = {
   },
 }
 
-const navSections = [
+const navSections: {
+  label: string
+  links: { href: string; label: string; icon: AdminNavIconName }[]
+}[] = [
   {
     label: "Vue d'ensemble",
     links: [
-      { href: '/admin/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+      { href: '/admin/dashboard', label: 'Tableau de bord', icon: 'LayoutDashboard' },
     ],
   },
   {
     label: 'Clients',
     links: [
-      { href: '/admin/clients', label: 'Vue clients', icon: Users },
-      { href: '/admin/users', label: 'Utilisateurs', icon: UserCog },
-      { href: '/admin/organizations', label: 'Organisations B2B', icon: Building2 },
+      { href: '/admin/clients', label: 'Vue clients', icon: 'Users' },
+      { href: '/admin/users', label: 'Utilisateurs', icon: 'UserCog' },
+      { href: '/admin/organizations', label: 'Organisations B2B', icon: 'Building2' },
     ],
   },
   {
     label: 'Certification',
     links: [
-      { href: '/admin/certificates', label: 'Certificats', icon: BadgeCheck },
-      { href: '/admin/kyc', label: 'KYC', icon: ShieldCheck },
-      { href: '/admin/demandes', label: 'Demandes Trust', icon: GitPullRequest },
+      { href: '/admin/certificates', label: 'Certificats', icon: 'BadgeCheck' },
+      { href: '/admin/kyc', label: 'KYC', icon: 'ShieldCheck' },
+      { href: '/admin/demandes', label: 'Demandes Trust', icon: 'GitPullRequest' },
     ],
   },
   {
     label: 'Sécurité',
     links: [
-      { href: '/admin/surveillance', label: 'Surveillance IA', icon: Activity },
-      { href: '/admin/alerts', label: 'Alertes', icon: Bell },
+      { href: '/admin/surveillance', label: 'Surveillance IA', icon: 'Activity' },
+      { href: '/admin/alerts', label: 'Alertes', icon: 'Bell' },
     ],
   },
   {
     label: 'Administration',
     links: [
-      { href: '/admin/team', label: 'Équipe BLOCKTRUST', icon: Crown },
+      { href: '/admin/team', label: 'Équipe BLOCKTRUST', icon: 'Crown' },
     ],
   },
 ]

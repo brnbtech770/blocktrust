@@ -85,13 +85,10 @@ export default async function DashboardSegmentLayout({
     }
 
     return (
-      <DashboardChrome
-        sidebar={
-          <DashboardSidebarBoundary>
-            <DashboardSidebar />
-          </DashboardSidebarBoundary>
-        }
-      >
+      <DashboardChrome>
+        <DashboardSidebarBoundary>
+          <DashboardSidebar />
+        </DashboardSidebarBoundary>
         <DashboardPageChrome>{children}</DashboardPageChrome>
       </DashboardChrome>
     )
