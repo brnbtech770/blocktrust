@@ -88,34 +88,6 @@ function urlQueryDiagnostic(sp: ReturnType<typeof useSearchParams>): string | nu
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
-/**
- * Pour signIn('google') : si callback est une URL absolue autorisée, envoyer un chemin relatif
- * (réduit InvalidCallbackUrl côté assertConfig). `safeCallbackUrl` est déjà passée par sanitizeCallbackUrl.
- */
-function googleSignInCallbackUrl(safeCallbackUrl: string): string {
-  const t = safeCallbackUrl.trim();
-  if (typeof window === "undefined") {
-    return t.startsWith("/") ? t : "/dashboard";
-  }
-  if (t.startsWith("http://") || t.startsWith("https://")) {
-    try {
-      const u = new URL(t);
-      const originOk =
-        u.origin === window.location.origin ||
-        u.hostname === "blocktrust.tech" ||
-        u.hostname === "localhost";
-      if (originOk) {
-        const pq = `${u.pathname}${u.search}${u.hash}`;
-        return pq.length > 0 ? pq : "/";
-      }
-      return "/dashboard";
-    } catch {
-      return "/dashboard";
-    }
-  }
-  return t.startsWith("/") ? t : "/dashboard";
-}
-
 function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -194,8 +166,13 @@ function SignInContent() {
   }
 
   function handleGoogle() {
-    // Auth.js v5 : flux sign-in OAuth via signIn() (POST/CSRF) — pas de GET /api/auth/signin/google.
-    signIn("google", { callbackUrl: googleSignInCallbackUrl(callbackUrl) });
+    const absolute = callbackUrl?.startsWith("http")
+      ? callbackUrl
+      : `https://blocktrust.tech${callbackUrl || "/dashboard"}`;
+
+    window.location.assign(
+      `/api/auth/signin/google?callbackUrl=${encodeURIComponent(absolute)}`
+    );
   }
 
   return (
