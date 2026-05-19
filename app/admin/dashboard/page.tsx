@@ -72,32 +72,34 @@ export default async function AdminDashboard() {
     verificationsToday,
     alertsUnreadWeek,
   ] = await Promise.all([
-    prisma.certificate.count({
-      where: { status: 'PENDING' },
-    }),
-    prisma.user.count(),
-    prisma.certificate.count({
-      where: { status: { in: ['ACTIVE', 'ANCHORED'] } },
-    }),
-    prisma.certificate.count({
-      where: { status: 'REVOKED' },
-    }),
-    prisma.subscription.count({
-      where: { status: 'active' },
-    }),
-    prisma.user.count({
-      where: { createdAt: { gte: startOfMonth } },
-    }),
-    prisma.subscription.findMany({
-      where: { status: 'active' },
-      select: { plan: true, stripePriceId: true },
-    }),
-    prisma.verification.count({
-      where: { verifiedAt: { gte: startOfDay } },
-    }),
-    prisma.adminAlert.count({
-      where: { read: false, createdAt: { gte: weekAgo } },
-    }),
+    prisma.certificate
+      .count({ where: { status: 'PENDING' } })
+      .catch(() => 0),
+    prisma.user.count().catch(() => 0),
+    prisma.certificate
+      .count({ where: { status: { in: ['ACTIVE', 'ANCHORED'] } } })
+      .catch(() => 0),
+    prisma.certificate
+      .count({ where: { status: 'REVOKED' } })
+      .catch(() => 0),
+    prisma.subscription
+      .count({ where: { status: 'active' } })
+      .catch(() => 0),
+    prisma.user
+      .count({ where: { createdAt: { gte: startOfMonth } } })
+      .catch(() => 0),
+    prisma.subscription
+      .findMany({
+        where: { status: 'active' },
+        select: { plan: true, stripePriceId: true },
+      })
+      .catch(() => [] as { plan: string; stripePriceId: string | null }[]),
+    prisma.verification
+      .count({ where: { verifiedAt: { gte: startOfDay } } })
+      .catch(() => 0),
+    prisma.adminAlert
+      .count({ where: { read: false, createdAt: { gte: weekAgo } } })
+      .catch(() => 0),
   ])
 
   let mrrDb = 0
