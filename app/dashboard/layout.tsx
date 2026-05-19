@@ -32,8 +32,16 @@ export default async function DashboardSegmentLayout({
 }: {
   children: React.ReactNode
 }) {
+  let session
   try {
-    const session = await auth()
+    session = await auth()
+  } catch (error) {
+    rethrowIfRedirect(error)
+    console.error('[DashboardSegmentLayout] auth error:', error)
+    redirect('/auth/signin?callbackUrl=%2Fdashboard&reason=auth-error')
+  }
+
+  try {
     const rscPrefetch = await isRscPrefetchRequest()
 
     // Admin → tableau de bord admin
