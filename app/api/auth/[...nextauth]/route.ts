@@ -7,7 +7,7 @@
 //
 // Magic link (`POST …/signin/email`) : rate limit strict IP + email (`lib/rate-limit-verify.ts`).
 
-import { handlers } from "@/app/lib/auth";
+import { handlers } from "@/app/lib/auth-server";
 import { authRatelimit, checkRateLimit } from "@/lib/rate-limit-verify";
 import { NextRequest, NextResponse } from "next/server";
 

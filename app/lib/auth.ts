@@ -10,7 +10,6 @@ import { z } from "zod";
 import authEdgeConfig from "./auth.edge.config";
 import { isSafeCallbackUrl } from "./auth-callback-url";
 import { isAdmin } from "@/lib/admin-utils";
-import { ensureAdminBootstrapForSession } from "@/lib/admin-bootstrap";
 
 /**
  * Configuration NextAuth avec Google OAuth
@@ -254,6 +253,9 @@ export const authOptions: NextAuthConfig = {
 
       if (token.sub && typeof token.email === "string" && isAdmin(token.email as string)) {
         try {
+          const { ensureAdminBootstrapForSession } = await import(
+            "@/lib/admin-bootstrap"
+          );
           await ensureAdminBootstrapForSession(
             token.sub as string,
             token.email as string
@@ -331,9 +333,6 @@ export const authOptions: NextAuthConfig = {
   },
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
 };
-
-/** Handlers / auth() — instance NextAuth (évite import circulaire depuis les routes API). */
-export { auth, handlers, signIn, signOut } from "./auth-server";
 
 /**
  * Helper pour vérifier l'authentification
