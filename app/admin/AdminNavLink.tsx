@@ -12,7 +12,7 @@ export type AdminNavLinkProps = {
 }
 
 export default function AdminNavLink({ href, label, icon: Icon, badge }: AdminNavLinkProps) {
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ''
   const active =
     pathname === href ||
     pathname.startsWith(`${href}/`) ||
