@@ -6,6 +6,7 @@ import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
 import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
+import { rethrowIfRedirect } from '@/app/lib/is-redirect-error'
 import { redirect } from 'next/navigation'
 import SignOutButton from '@/app/components/SignOutButton'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
@@ -79,6 +80,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
+  try {
   const session = await auth()
 
   if (!session?.user?.email) {
@@ -105,9 +107,9 @@ export default async function AdminLayout({
     redirect('/dashboard')
   }
 
-  const unreadAdminAlerts = await prisma.adminAlert.count({
-    where: { read: false },
-  })
+  const unreadAdminAlerts = await prisma.adminAlert
+    .count({ where: { read: false } })
+    .catch(() => 0)
 
   return (
     <div
@@ -181,10 +183,17 @@ export default async function AdminLayout({
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <AdminPageHeader />
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8">
+        <div
+          className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 lg:p-8"
+        >
           <div className="mx-auto max-w-7xl">{children}</div>
         </div>
       </div>
     </div>
   )
+  } catch (error) {
+    rethrowIfRedirect(error)
+    console.error('[AdminLayout]', error)
+    redirect('/dashboard')
+  }
 }
