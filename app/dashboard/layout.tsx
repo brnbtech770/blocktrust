@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { prisma } from '@/app/lib/db'
 import DashboardSidebar from '@/app/components/DashboardSidebar'
+import DashboardSidebarBoundary from '@/app/components/DashboardSidebarBoundary'
 import DashboardChrome from '@/app/components/DashboardChrome'
 import DashboardPageChrome from '@/app/components/dashboard/DashboardLayout'
 import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
@@ -72,7 +73,13 @@ export default async function DashboardSegmentLayout({
   }
 
   return (
-    <DashboardChrome sidebar={<DashboardSidebar />}>
+    <DashboardChrome
+      sidebar={
+        <DashboardSidebarBoundary>
+          <DashboardSidebar />
+        </DashboardSidebarBoundary>
+      }
+    >
       <DashboardPageChrome>{children}</DashboardPageChrome>
     </DashboardChrome>
   )
