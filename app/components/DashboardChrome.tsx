@@ -14,7 +14,7 @@ export default function DashboardChrome({
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ''
 
   useEffect(() => {
     setOpen(false)

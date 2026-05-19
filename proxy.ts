@@ -133,15 +133,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Admin connecté : racine /dashboard → back-office
-  if (pathname === '/dashboard') {
+  // Admin connecté : / et /dashboard → back-office (évite auth() bloquant sur la landing)
+  if (pathname === '/' || pathname === '/dashboard') {
     try {
       const email = await getEmailFromSession(request)
       if (email && isAdmin(email)) {
         return NextResponse.redirect(new URL('/admin/dashboard', request.url))
       }
     } catch (error) {
-      console.error('Proxy admin redirect from dashboard:', error)
+      console.error('Proxy admin redirect from home/dashboard:', error)
     }
   }
 
