@@ -35,13 +35,15 @@ async function upsertMutualAdminEdge(fromUserId: string, toUserId: string): Prom
 export async function ensureAdminCapabilities(userId: string, email: string): Promise<void> {
   if (!isAdmin(email)) return
 
-  try {
-    const enterprisePlan = await prisma.plan.findFirst({
+  const enterprisePlan = await prisma.plan
+    .findFirst({
       where: { type: 'B2B_ENTERPRISE', isActive: true },
       select: { id: true },
     })
+    .catch(() => null)
 
-    await prisma.user.update({
+  await prisma.user
+    .update({
       where: { id: userId },
       data: {
         ...(enterprisePlan ? { planId: enterprisePlan.id } : {}),
@@ -49,24 +51,22 @@ export async function ensureAdminCapabilities(userId: string, email: string): Pr
         trustScoreAt: new Date(),
       },
     })
+    .catch(() => null)
 
-    await prisma.subscription
-      .upsert({
-        where: { userId },
-        create: {
-          userId,
-          plan: 'ENTERPRISE',
-          status: 'active',
-        },
-        update: {
-          plan: 'ENTERPRISE',
-          status: 'active',
-        },
-      })
-      .catch(() => null)
-  } catch {
-    /* fail-soft */
-  }
+  await prisma.subscription
+    .upsert({
+      where: { userId },
+      create: {
+        userId,
+        plan: 'ENTERPRISE',
+        status: 'active',
+      },
+      update: {
+        plan: 'ENTERPRISE',
+        status: 'active',
+      },
+    })
+    .catch(() => null)
 }
 
 /**
@@ -76,8 +76,8 @@ export async function ensureAdminMutualTrust(userId: string): Promise<void> {
   const adminEmails = getAdminEmailList()
   if (adminEmails.length === 0) return
 
-  try {
-    const otherAdmins = await prisma.user.findMany({
+  const otherAdmins = await prisma.user
+    .findMany({
       where: {
         AND: [
           {
@@ -90,13 +90,11 @@ export async function ensureAdminMutualTrust(userId: string): Promise<void> {
       },
       select: { id: true },
     })
+    .catch(() => [] as { id: string }[])
 
-    for (const other of otherAdmins) {
-      await upsertMutualAdminEdge(userId, other.id)
-      await upsertMutualAdminEdge(other.id, userId)
-    }
-  } catch {
-    /* fail-soft */
+  for (const other of otherAdmins) {
+    await upsertMutualAdminEdge(userId, other.id)
+    await upsertMutualAdminEdge(other.id, userId)
   }
 }
 
@@ -110,8 +108,8 @@ export async function runAdminBootstrapForAllAdminEmails(): Promise<void> {
   const adminEmails = getAdminEmailList()
   if (adminEmails.length === 0) return
 
-  try {
-    const users = await prisma.user.findMany({
+  const users = await prisma.user
+    .findMany({
       where: {
         OR: adminEmails.map((e) => ({
           email: { equals: e, mode: 'insensitive' as const },
@@ -119,17 +117,15 @@ export async function runAdminBootstrapForAllAdminEmails(): Promise<void> {
       },
       select: { id: true, email: true },
     })
+    .catch(() => [] as { id: string; email: string | null }[])
 
-    for (const u of users) {
-      const em = u.email
-      if (em && isAdmin(em)) await ensureAdminCapabilities(u.id, em)
-    }
+  for (const u of users) {
+    const em = u.email
+    if (em && isAdmin(em)) await ensureAdminCapabilities(u.id, em)
+  }
 
-    const ids = users.map((u) => u.id)
-    for (const id of ids) {
-      await ensureAdminMutualTrust(id)
-    }
-  } catch {
-    /* fail-soft */
+  const ids = users.map((u) => u.id)
+  for (const id of ids) {
+    await ensureAdminMutualTrust(id)
   }
 }
