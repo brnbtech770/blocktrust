@@ -168,7 +168,7 @@ export default async function DashboardSidebar() {
     return (
       <div className={shellClass()}>
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-          <DashboardSidebarNav sections={sections ?? []} />
+          <DashboardSidebarNav sections={sections} />
           <div className="mt-5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-[11px] leading-relaxed text-white/45">
             <p>
               <span className="font-semibold text-white/65">{wording.contactsLabel}</span> — personnes ou

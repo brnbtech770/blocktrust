@@ -44,8 +44,8 @@ export type SidebarSection = {
 }
 
 function NavItem({ item }: { item: SidebarItem }) {
-  const pathname = usePathname() ?? ''
-  const Icon = iconMap[item.icon] ?? Shield
+  const pathname = usePathname()
+  const Icon = iconMap[item.icon]
   const pathOnly = item.href.split('?')[0]
   const isDashboardRoot = pathOnly === '/dashboard'
   const isActive =
@@ -76,34 +76,28 @@ function NavItem({ item }: { item: SidebarItem }) {
   )
 }
 
-export default function DashboardSidebarNav({ sections }: { sections?: SidebarSection[] }) {
-  const safeSections = sections ?? []
-
+export default function DashboardSidebarNav({ sections }: { sections: SidebarSection[] }) {
   return (
     <nav>
-      {safeSections.map((section, idx) => {
-        if (!section?.items) return null
-
-        return (
-          <div key={section.label ?? `section-${idx}`} className={idx > 0 ? 'mt-4' : ''}>
-            {section.label ? (
-              <p className="mb-1 px-3 pt-1 text-[10px] uppercase tracking-widest text-white/20">
-                {section.label}
-              </p>
-            ) : null}
-            <div className="space-y-1">
-              {section.items.map((item) => (
-                <NavItem key={`${item.href}-${item.name}`} item={item} />
-              ))}
-            </div>
+      {sections.map((section, idx) => (
+        <div key={section.label ?? `section-${idx}`} className={idx > 0 ? 'mt-4' : ''}>
+          {section.label ? (
+            <p className="mb-1 px-3 pt-1 text-[10px] uppercase tracking-widest text-white/20">
+              {section.label}
+            </p>
+          ) : null}
+          <div className="space-y-1">
+            {section.items.map((item) => (
+              <NavItem key={`${item.href}-${item.name}`} item={item} />
+            ))}
           </div>
-        )
-      })}
+        </div>
+      ))}
     </nav>
   )
 }
 
 // Rétrocompatibilité : liste plate → une section sans label
 export function DashboardSidebarNavFlat({ items }: { items: SidebarItem[] }) {
-  return <DashboardSidebarNav sections={[{ items: items ?? [] }]} />
+  return <DashboardSidebarNav sections={[{ items }]} />
 }
