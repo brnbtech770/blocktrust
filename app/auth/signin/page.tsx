@@ -88,6 +88,31 @@ function urlQueryDiagnostic(sp: ReturnType<typeof useSearchParams>): string | nu
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
+/** Chemin relatif same-origin pour assertConfig (évite InvalidCallbackUrl / Configuration). */
+function googleSignInCallbackUrl(safeCallbackUrl: string): string {
+  const t = safeCallbackUrl.trim();
+  if (typeof window === "undefined") {
+    return t.startsWith("/") ? t : "/dashboard";
+  }
+  if (t.startsWith("http://") || t.startsWith("https://")) {
+    try {
+      const u = new URL(t);
+      const originOk =
+        u.origin === window.location.origin ||
+        u.hostname === "blocktrust.tech" ||
+        u.hostname === "localhost";
+      if (originOk) {
+        const pq = `${u.pathname}${u.search}${u.hash}`;
+        return pq.length > 0 ? pq : "/";
+      }
+      return "/dashboard";
+    } catch {
+      return "/dashboard";
+    }
+  }
+  return t.startsWith("/") ? t : "/dashboard";
+}
+
 function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -166,13 +191,10 @@ function SignInContent() {
   }
 
   function handleGoogle() {
-    const absolute = callbackUrl?.startsWith("http")
-      ? callbackUrl
-      : `https://blocktrust.tech${callbackUrl || "/dashboard"}`;
-
-    window.location.assign(
-      `/api/auth/signin/google?callbackUrl=${encodeURIComponent(absolute)}`
-    );
+    // Auth.js v5 : OAuth via signIn() (POST + CSRF). GET /api/auth/signin/google → Configuration.
+    void signIn("google", {
+      callbackUrl: googleSignInCallbackUrl(callbackUrl),
+    });
   }
 
   return (
@@ -243,6 +265,10 @@ function SignInContent() {
               <code style={{ fontSize: "0.8rem" }}>[auth]</code> au moment où vous cliquez sur Google).
             </p>
             <ol style={{ margin: 0, paddingLeft: "1.2rem" }}>
+              <li style={{ marginBottom: "8px" }}>
+                Utiliser le bouton « Continuer avec Google » (flux POST Auth.js) — pas de lien direct
+                vers <code style={{ fontSize: "0.78rem" }}>/api/auth/signin/google</code> en GET.
+              </li>
               <li style={{ marginBottom: "8px" }}>
                 <a
                   href="/api/auth/reset-oauth-cookies"
