@@ -44,7 +44,7 @@ export type SidebarSection = {
 }
 
 function NavItem({ item }: { item: SidebarItem }) {
-  const pathname = usePathname()
+  const pathname = usePathname() ?? ''
   const Icon = iconMap[item.icon]
   const pathOnly = item.href.split('?')[0]
   const isDashboardRoot = pathOnly === '/dashboard'
