@@ -19,6 +19,17 @@ function inferSecureCookie(req: NextRequest): boolean {
   return false
 }
 
+/** Cookie présent → seulement alors appeler getToken (évite blocage landing visiteurs anonymes). */
+function hasAuthJsSessionCookieOnRequest(req: NextRequest): boolean {
+  return req.cookies.getAll().some(
+    (c) =>
+      c.name === 'authjs.session-token' ||
+      c.name === '__Secure-authjs.session-token' ||
+      c.name.startsWith('authjs.session-token.') ||
+      c.name.startsWith('__Secure-authjs.session-token.')
+  )
+}
+
 async function getEmailFromSession(req: NextRequest): Promise<string | null> {
   const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET
   if (!secret) return null
@@ -133,15 +144,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Admin connecté : / et /dashboard → back-office (évite auth() bloquant sur la landing)
+  // Admin connecté : / et /dashboard → back-office (getToken uniquement si cookie session)
   if (pathname === '/' || pathname === '/dashboard') {
-    try {
-      const email = await getEmailFromSession(request)
-      if (email && isAdmin(email)) {
-        return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+    if (hasAuthJsSessionCookieOnRequest(request)) {
+      try {
+        const email = await getEmailFromSession(request)
+        if (email && isAdmin(email)) {
+          return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+        }
+      } catch (error) {
+        console.error('Proxy admin redirect from home/dashboard:', error)
       }
-    } catch (error) {
-      console.error('Proxy admin redirect from home/dashboard:', error)
     }
   }
 
