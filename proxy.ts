@@ -73,6 +73,11 @@ function isProtectedApi(pathname: string): boolean {
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
+  // Auth.js : /api/auth/* hors proxy (CSRF, OAuth, magic link) — ne pas modifier les requêtes.
+  if (pathname.startsWith('/api/auth')) {
+    return NextResponse.next()
+  }
+
   // Défense en profondeur : ne jamais exposer l’ancienne route de diagnostic auth en prod.
   if (
     pathname === '/api/debug-auth' ||
@@ -208,6 +213,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
+  // /api/auth/* volontairement absent du matcher (MissingCSRF si intercepté / cookies altérés).
   matcher: [
     '/',
     '/dashboard',

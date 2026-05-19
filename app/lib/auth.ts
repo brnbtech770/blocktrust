@@ -96,6 +96,7 @@ async function resolveDbUserAfterOAuth(user: {
 // allowDangerousEmailAccountLinking : uniquement sur GoogleProvider (pas d’option globale Auth.js v5)
 export const authOptions: NextAuthConfig = {
   ...authEdgeConfig,
+  trustHost: true,
   debug: process.env.NODE_ENV !== "production",
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -313,8 +314,25 @@ export const authOptions: NextAuthConfig = {
   session: {
     strategy: "jwt",
   },
+  cookies: {
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === "production"
+          ? "__Secure-authjs.session-token"
+          : "authjs.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET,
 };
+
+/** Handlers / auth() — instance NextAuth (évite import circulaire depuis les routes API). */
+export { auth, handlers, signIn, signOut } from "./auth-server";
 
 /**
  * Helper pour vérifier l'authentification
