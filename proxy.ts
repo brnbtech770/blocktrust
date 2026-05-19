@@ -31,7 +31,7 @@ function hasAuthJsSessionCookieOnRequest(req: NextRequest): boolean {
 }
 
 async function getEmailFromSession(req: NextRequest): Promise<string | null> {
-  const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET
   if (!secret) return null
 
   const primary = inferSecureCookie(req)

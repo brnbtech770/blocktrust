@@ -9,9 +9,18 @@ export const authEnvShim = {
 }
 
 if (typeof process !== 'undefined') {
-  if (process.env.NEXTAUTH_SECRET && !process.env.AUTH_SECRET) {
-    process.env.AUTH_SECRET = process.env.NEXTAUTH_SECRET
-    authEnvShim.secretMirrored = true
+  // Une seule source de vérité : Auth.js v5 lit AUTH_SECRET en priorité (Vercel l’injecte souvent seul).
+  const resolvedSecret =
+    process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
+  if (resolvedSecret) {
+    if (process.env.AUTH_SECRET !== resolvedSecret) {
+      process.env.AUTH_SECRET = resolvedSecret
+      authEnvShim.secretMirrored = true
+    }
+    if (process.env.NEXTAUTH_SECRET !== resolvedSecret) {
+      process.env.NEXTAUTH_SECRET = resolvedSecret
+      authEnvShim.secretMirrored = true
+    }
   }
   if (process.env.NEXTAUTH_URL && !process.env.AUTH_URL) {
     process.env.AUTH_URL = process.env.NEXTAUTH_URL

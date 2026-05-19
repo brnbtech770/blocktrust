@@ -1,0 +1,2 @@
+{"sessionId":"31c940","runId":"post-fix","hypothesisId":"G","location":"verify:local","message":"landing after proxy cookie guard","data":{"httpCode":200,"curlSeconds":4.9,"playwrightMs":260,"heroOk":true,"appError":false},"timestamp":1779196259771}
+{"sessionId":"31c940","runId":"post-fix","hypothesisId":"G","location":"verify:prod","message":"landing prod playwright","data":{"playwrightMs":2044,"heroOk":true,"appError":false},"timestamp":1779196259772}

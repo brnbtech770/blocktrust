@@ -17,9 +17,10 @@ import { ensureAdminBootstrapForSession } from "@/lib/admin-bootstrap";
  * Version minimale pour déboguer
  */
 // Vérifier les variables d'environnement requises (avertissement seulement)
-if (!process.env.NEXTAUTH_SECRET) {
-  console.warn('⚠️  NEXTAUTH_SECRET est manquant dans les variables d\'environnement');
-  console.warn('   Générez-le avec: openssl rand -base64 32');
+if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET) {
+  console.warn(
+    '⚠️  AUTH_SECRET / NEXTAUTH_SECRET manquant — générez avec: openssl rand -base64 32'
+  );
 }
 
 if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
@@ -328,7 +329,7 @@ export const authOptions: NextAuthConfig = {
       },
     },
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
 };
 
 /** Handlers / auth() — instance NextAuth (évite import circulaire depuis les routes API). */
