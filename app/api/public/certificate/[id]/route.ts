@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
 import { hashIp } from "@/app/lib/auth";
+import { auth } from "@/app/lib/auth-server";
 import { checkRateLimitVerifyAsync } from "@/lib/rate-limit-verify";
 import { walletNetworkLabelFr } from "@/lib/wallet-validation";
 import {
@@ -13,6 +14,7 @@ import {
   notifyCertificateOwnerFraudAlertFireAndForget,
 } from "@/lib/verify-fraud";
 import { persistUserTrustScore } from "@/lib/trustscore";
+import { computeTrustEngineScore } from "@/lib/trust-engine";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -298,12 +300,22 @@ export async function GET(
       certifiedEmails.length > 0 ||
       certifiedPhones.length > 0);
 
+  let trustEngine = null;
+  if (verdict === "VALID") {
+    const session = await auth().catch(() => null);
+    trustEngine = await computeTrustEngineScore(
+      certificatePublicId,
+      session?.user?.id,
+    ).catch(() => null);
+  }
+
   return NextResponse.json({
     verdict,
     entityName,
     certifiedAt,
     certificateId: certificatePublicId,
     certificateStatus: status,
+    ...(trustEngine ? { trustEngine } : {}),
     ...(showWalletPublic
       ? {
           walletAddress: walletAddressTrim,

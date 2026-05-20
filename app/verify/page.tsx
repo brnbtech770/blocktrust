@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import {
+  AlertTriangle,
   Check,
   Clock,
   Globe,
   Mail,
+  Minus,
   Phone,
   RotateCcw,
   Search,
@@ -17,6 +19,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Logo } from "@/app/components/ui/Logo";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
+import type { TrustEngineResult } from "@/lib/trust-engine";
 
 const C = {
   valid: "#10b981",
@@ -114,6 +117,7 @@ type VerifyApiSuccess = {
   certifiedDomains?: string[];
   certifiedEmails?: string[];
   certifiedPhones?: string[];
+  trustEngine?: TrustEngineResult | null;
 };
 
 function formatCertifiedDate(iso: string | undefined | null): string {
@@ -155,6 +159,7 @@ function VerifyContent() {
     inOrganization: boolean;
     match: boolean;
   } | null>(null);
+  const [trustEngine, setTrustEngine] = useState<TrustEngineResult | null>(null);
 
   const hasValidToken = token.trim().length > 10;
 
@@ -276,6 +281,7 @@ function VerifyContent() {
     setCertifiedDomains([]);
     setCertifiedEmails([]);
     setCertifiedPhones([]);
+    setTrustEngine(null);
 
     const ac = new AbortController();
     let cancelled = false;
@@ -344,6 +350,7 @@ function VerifyContent() {
     setCertifiedDomains([]);
     setCertifiedEmails([]);
     setCertifiedPhones([]);
+    setTrustEngine(null);
 
     const ac = new AbortController();
     let cancelled = false;
@@ -377,6 +384,7 @@ function VerifyContent() {
         setCertifiedPhones(
           Array.isArray(data.certifiedPhones) ? data.certifiedPhones : [],
         );
+        setTrustEngine(data.trustEngine ?? null);
       } catch (e: unknown) {
         clearTimeout(timeoutId);
         if (cancelled) return;
@@ -458,6 +466,7 @@ function VerifyContent() {
     setCertifiedDomains([]);
     setCertifiedEmails([]);
     setCertifiedPhones([]);
+    setTrustEngine(null);
     setToken("");
     setTokenFixApplied(false);
     setVerifyErrorMessage(null);
@@ -694,6 +703,10 @@ function VerifyContent() {
               </div>
             ) : null}
 
+            {trustEngine ? (
+              <TrustEnginePanel engine={trustEngine} />
+            ) : null}
+
             <div className="h-px w-full bg-white/10" aria-hidden />
 
             <div className="w-full rounded-xl border border-[#00d4ff]/20 bg-[#00d4ff]/5 p-4 text-left">
@@ -771,6 +784,55 @@ function VerifyContent() {
           </p>
         </div>
       </main>
+    </div>
+  );
+}
+
+function TrustEnginePanel({ engine }: { engine: TrustEngineResult }) {
+  const scoreColor =
+    engine.globalScore >= 75
+      ? "text-emerald-400"
+      : engine.globalScore >= 50
+        ? "text-[#BDA76B]"
+        : "text-[#E05252]";
+
+  const recommendationColor =
+    engine.recommendation === "TRUST"
+      ? "text-emerald-400"
+      : engine.recommendation === "VERIFY"
+        ? "text-[#BDA76B]"
+        : "text-[#E05252]";
+
+  return (
+    <div className="mt-4 w-full space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left">
+      <div className="flex items-center justify-between">
+        <span className="text-xs uppercase tracking-widest text-white/50">
+          Score de confiance
+        </span>
+        <span className={`text-lg font-bold ${scoreColor}`}>
+          {engine.globalScore}/100
+        </span>
+      </div>
+
+      {engine.signals.map((signal) => (
+        <div key={signal.type} className="flex items-center gap-2 py-1 text-xs">
+          {signal.impact === "positive" ? (
+            <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden />
+          ) : signal.impact === "negative" ? (
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-[#E05252]" aria-hidden />
+          ) : (
+            <Minus className="h-3.5 w-3.5 shrink-0 text-white/40" aria-hidden />
+          )}
+          <span className="text-white/60">{signal.label}</span>
+          {signal.detail ? (
+            <span className="ml-auto text-white/30">{signal.detail}</span>
+          ) : null}
+        </div>
+      ))}
+
+      <div className={`mt-2 text-xs font-semibold ${recommendationColor}`}>
+        {engine.contextLabel}
+      </div>
     </div>
   );
 }
