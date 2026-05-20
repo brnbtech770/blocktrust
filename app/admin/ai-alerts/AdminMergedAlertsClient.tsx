@@ -7,7 +7,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useTransition } from 'react'
-import { ShieldCheck, Search, Check, X, OctagonX, Bell } from 'lucide-react'
+import { ShieldCheck, Search, CheckCircle, EyeOff, Bell } from 'lucide-react'
 
 export type MergedAdminAlertRow = {
   id: string
@@ -154,9 +154,9 @@ function getSeverityStyle(severity: string) {
 function getStatusStyle(status: string) {
   switch (status) {
     case 'PENDING':
-      return { background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)' }
+      return { background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }
     case 'INVESTIGATING':
-      return { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' }
+      return { background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)' }
     case 'RESOLVED':
       return { background: 'rgba(29,184,126,0.15)', color: '#1DB87E' }
     case 'DISMISSED':
@@ -165,6 +165,23 @@ function getStatusStyle(status: string) {
       return { background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' }
     default:
       return { background: 'rgba(255,255,255,0.08)', color: 'var(--bt-muted)' }
+  }
+}
+
+function statusLabel(status: string): string {
+  switch (status) {
+    case 'PENDING':
+      return 'En attente'
+    case 'INVESTIGATING':
+      return 'Investigation'
+    case 'RESOLVED':
+      return 'Résolu'
+    case 'DISMISSED':
+      return 'Ignoré'
+    case 'ESCALATED':
+      return 'Escaladé'
+    default:
+      return status
   }
 }
 
@@ -181,6 +198,7 @@ export default function AdminMergedAlertsClient({
   const [pending, startTransition] = useTransition()
   const [banner, setBanner] = useState<string | null>(null)
   const [adminAlerts, setAdminAlerts] = useState(initialAdmin)
+  const [aiAlertsState, setAiAlertsState] = useState(aiAlerts)
   const tab = initialTab
 
   const unified = useMemo((): UnifiedAlert[] => {
@@ -188,14 +206,14 @@ export default function AdminMergedAlertsClient({
       ...a,
       tabCategory: categorizeAdminType(a.type),
     }))
-    const ai: UnifiedAlert[] = aiAlerts.map((a) => ({
+    const ai: UnifiedAlert[] = aiAlertsState.map((a) => ({
       ...a,
       tabCategory: categorizeAiType(a.alertType),
     }))
     return [...admin, ...ai].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
-  }, [adminAlerts, aiAlerts])
+  }, [adminAlerts, aiAlertsState])
 
   const filtered = useMemo(() => {
     if (tab === 'ALL') return unified
@@ -218,6 +236,38 @@ export default function AdminMergedAlertsClient({
     if (!res.ok) return
     setAdminAlerts((prev) => prev.map((a) => ({ ...a, read: true })))
     setBanner('Toutes les alertes opérationnelles ont été marquées comme lues.')
+    startTransition(() => router.refresh())
+  }
+
+  async function updateAiAlertStatus(
+    id: string,
+    status: 'INVESTIGATING' | 'RESOLVED' | 'IGNORED'
+  ) {
+    const res = await fetch(`/api/admin/ai-alerts/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    })
+    if (!res.ok) {
+      setBanner('Impossible de mettre à jour l’alerte.')
+      return
+    }
+    const data = (await res.json()) as { status?: string }
+    const nextStatus = data.status ?? (status === 'IGNORED' ? 'DISMISSED' : status)
+    setAiAlertsState((prev) =>
+      prev.map((a) =>
+        a.id === id
+          ? {
+              ...a,
+              status: nextStatus,
+              resolvedAt:
+                nextStatus === 'RESOLVED' || nextStatus === 'DISMISSED'
+                  ? new Date().toISOString()
+                  : null,
+            }
+          : a
+      )
+    )
     startTransition(() => router.refresh())
   }
 
@@ -362,7 +412,7 @@ export default function AdminMergedAlertsClient({
                         className="rounded-full px-3 py-1 text-xs font-bold"
                         style={getStatusStyle(ai.status)}
                       >
-                        {ai.status}
+                        {statusLabel(ai.status)}
                       </span>
                       <span className="text-xs font-medium text-white/55">
                         {aiAlertTypeLabel(ai.alertType)}
@@ -421,10 +471,12 @@ export default function AdminMergedAlertsClient({
                 )}
 
                 {ai.status === 'PENDING' && (
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition"
+                      disabled={pending}
+                      onClick={() => updateAiAlertStatus(ai.id, 'INVESTIGATING')}
+                      className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition disabled:opacity-40"
                       style={{ background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' }}
                     >
                       <Search className="h-4 w-4 shrink-0" aria-hidden />
@@ -432,41 +484,47 @@ export default function AdminMergedAlertsClient({
                     </button>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition"
+                      disabled={pending}
+                      onClick={() => updateAiAlertStatus(ai.id, 'RESOLVED')}
+                      className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition disabled:opacity-40"
                       style={{ background: 'rgba(29,184,126,0.15)', color: '#1DB87E' }}
                     >
-                      <Check className="h-4 w-4 shrink-0" aria-hidden />
+                      <CheckCircle className="h-4 w-4 shrink-0" aria-hidden />
                       Résoudre
                     </button>
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition"
+                      disabled={pending}
+                      onClick={() => updateAiAlertStatus(ai.id, 'IGNORED')}
+                      className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition disabled:opacity-40"
                       style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--bt-muted)' }}
                     >
-                      <X className="h-4 w-4 shrink-0" aria-hidden />
+                      <EyeOff className="h-4 w-4 shrink-0" aria-hidden />
                       Ignorer
                     </button>
                   </div>
                 )}
                 {ai.status === 'INVESTIGATING' && (
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition"
+                      disabled={pending}
+                      onClick={() => updateAiAlertStatus(ai.id, 'RESOLVED')}
+                      className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition disabled:opacity-40"
                       style={{ background: 'rgba(29,184,126,0.15)', color: '#1DB87E' }}
                     >
-                      <Check className="h-4 w-4 shrink-0" aria-hidden />
+                      <CheckCircle className="h-4 w-4 shrink-0" aria-hidden />
                       Résoudre
                     </button>
-                    <button
-                      type="button"
-                      className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition"
-                      style={{ background: 'rgba(224,82,82,0.15)', color: 'var(--bt-danger)' }}
-                    >
-                      <OctagonX className="h-4 w-4 shrink-0" aria-hidden />
-                      Escalader
-                    </button>
                   </div>
+                )}
+                {(ai.status === 'RESOLVED' || ai.status === 'DISMISSED') && (
+                  <p className="text-sm font-medium" style={{ color: getStatusStyle(ai.status).color }}>
+                    {ai.status === 'RESOLVED' ? 'Résolu' : 'Ignoré'}
+                    {ai.resolvedAt
+                      ? ` · ${relativeTimeFr(ai.resolvedAt)}`
+                      : ''}
+                  </p>
                 )}
               </div>
             )
