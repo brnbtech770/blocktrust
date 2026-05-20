@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/app/lib/db";
+import { redactEmailRecipient, sendEmail } from "@/lib/email";
 import crypto from "crypto";
 
 const bodySchema = z.object({ email: z.string().email() });
@@ -33,20 +34,25 @@ export async function POST(req: NextRequest) {
         process.env.NEXT_PUBLIC_APP_URL ||
         process.env.NEXTAUTH_URL ||
         "https://blocktrust.tech";
-      const link = `${baseUrl}/auth/reset-password?token=${token}`;
+      const resetUrl = `${baseUrl}/auth/reset-password?token=${token}`;
 
-      if (process.env.RESEND_API_KEY) {
-        const { Resend } = await import("resend");
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        await resend.emails.send({
-          from: "BlockTrust <noreply@blocktrust.tech>",
-          to: email,
-          subject: "Réinitialisation de votre mot de passe",
-          html: `Cliquez pour réinitialiser votre mot de passe : <a href="${link}">${link}</a>. Ce lien expire dans 1 heure.`,
-        });
-      } else {
+      const ReactImport = await import("react");
+      const { PasswordResetEmail, subject } = await import("@/emails/PasswordResetEmail");
+
+      const { error } = await sendEmail({
+        to: email,
+        subject,
+        react: ReactImport.createElement(PasswordResetEmail, {
+          resetUrl,
+          userName: user.name ?? undefined,
+        }),
+      });
+
+      if (error) {
         console.error(
-          "[FORGOT-PASSWORD] RESEND_API_KEY absent : aucun email envoyé (ne jamais logger le lien reset)"
+          "[FORGOT-PASSWORD] Échec envoi email:",
+          redactEmailRecipient(email),
+          error
         );
       }
     })().catch((err) => console.error("[FORGOT-PASSWORD]", err));
