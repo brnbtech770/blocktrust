@@ -31,6 +31,57 @@ chrome.storage.local.get(["apiKey"], (data) => {
 });
 
 /**
+ * Styles globaux dans le head Gmail (résiste aux overrides Gmail).
+ */
+function injectGlobalStyles() {
+  if (document.getElementById("blocktrust-styles")) return;
+
+  const style = document.createElement("style");
+  style.id = "blocktrust-styles";
+  style.textContent = `
+    .bt-trust-badge {
+      display: inline-flex !important;
+      align-items: center !important;
+      padding: 2px 8px !important;
+      border-radius: 10px !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      margin-left: 8px !important;
+      font-family: Inter, Arial, sans-serif !important;
+      vertical-align: middle !important;
+      white-space: nowrap !important;
+      cursor: default !important;
+      z-index: 9999 !important;
+      position: relative !important;
+      line-height: 1.4 !important;
+      letter-spacing: 0 !important;
+      text-decoration: none !important;
+      border: none !important;
+      box-sizing: border-box !important;
+    }
+    .bt-certified {
+      background: #10b981 !important;
+      color: #ffffff !important;
+    }
+    .bt-contacts {
+      background: #0ea5e9 !important;
+      color: #ffffff !important;
+    }
+    .bt-fraud {
+      background: #ef4444 !important;
+      color: #ffffff !important;
+    }
+    .bt-unknown {
+      background: #e2e8f0 !important;
+      color: #64748b !important;
+    }
+  `;
+
+  const target = document.head || document.documentElement;
+  target.appendChild(style);
+}
+
+/**
  * Récupère la clé API utilisateur (format bt_ext_...) depuis chrome.storage.local
  */
 function getApiKey() {
@@ -152,48 +203,71 @@ function addToQueue(email, domain, element) {
  */
 function createVerifyBadge(result) {
   const badge = document.createElement("span");
-  badge.className = "bt-trust-badge bt-badge";
   badge.setAttribute("role", "status");
   badge.title = result.message || result.status || "";
-  badge.style.cssText = `
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
-    margin-left: 8px;
-    font-family: Inter, Arial, sans-serif;
-    vertical-align: middle;
-    cursor: default;
-    z-index: 9999;
-    position: relative;
-    line-height: 1.4;
-    white-space: nowrap;
+
+  const baseStyles = `
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 2px 8px !important;
+    border-radius: 10px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    margin-left: 8px !important;
+    font-family: Inter, Arial, sans-serif !important;
+    vertical-align: middle !important;
+    cursor: default !important;
+    z-index: 9999 !important;
+    position: relative !important;
+    white-space: nowrap !important;
+    text-decoration: none !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0 !important;
+    box-sizing: border-box !important;
   `;
 
+  let colorStyles = "";
+  let statusClass = "bt-unknown";
+  let text = "";
+
   if (result.status === "CERTIFIED") {
-    badge.style.background = "rgba(16,185,129,0.15)";
-    badge.style.border = "1px solid rgba(16,185,129,0.4)";
-    badge.style.color = "#10b981";
-    badge.innerHTML = "✓ Certifié BLOCKTRUST™";
+    statusClass = "bt-certified";
+    colorStyles = `
+      background: #10b981 !important;
+      color: #ffffff !important;
+      border: none !important;
+    `;
+    text = "✓ Certifié BLOCKTRUST™";
   } else if (result.status === "IN_CONTACTS") {
-    badge.style.background = "rgba(0,212,255,0.1)";
-    badge.style.border = "1px solid rgba(0,212,255,0.3)";
-    badge.style.color = "#00d4ff";
-    badge.innerHTML = "◎ Dans vos contacts";
+    statusClass = "bt-contacts";
+    colorStyles = `
+      background: #0ea5e9 !important;
+      color: #ffffff !important;
+      border: none !important;
+    `;
+    text = "◎ Dans vos contacts";
   } else if (result.status === "FRAUD") {
-    badge.style.background = "rgba(239,68,68,0.15)";
-    badge.style.border = "1px solid rgba(239,68,68,0.4)";
-    badge.style.color = "#ef4444";
-    badge.innerHTML = "⚠ FRAUDE DÉTECTÉE";
+    statusClass = "bt-fraud";
+    colorStyles = `
+      background: #ef4444 !important;
+      color: #ffffff !important;
+      border: none !important;
+    `;
+    text = "⚠ FRAUDE";
   } else {
-    badge.style.background = "rgba(255,255,255,0.05)";
-    badge.style.border = "1px solid rgba(255,255,255,0.1)";
-    badge.style.color = "#64748b";
-    badge.innerHTML = "? Non certifié";
+    statusClass = "bt-unknown";
+    colorStyles = `
+      background: #e2e8f0 !important;
+      color: #64748b !important;
+      border: none !important;
+    `;
+    text = "? Non certifié";
   }
+
+  badge.className = `bt-trust-badge bt-badge ${statusClass}`;
+  badge.setAttribute("style", baseStyles + colorStyles);
+  badge.textContent = text;
 
   return badge;
 }
@@ -207,7 +281,7 @@ function injectBadge(senderElement, badge) {
   const parent = senderElement.parentElement;
   if (!parent) {
     senderElement.insertAdjacentElement("afterend", badge);
-    console.log("[BLOCKTRUST] Badge injecté (afterend):", badge.innerHTML);
+    console.log("[BLOCKTRUST] Badge injecté (afterend):", badge.textContent);
     return;
   }
 
@@ -215,7 +289,7 @@ function injectBadge(senderElement, badge) {
   if (existing) existing.remove();
 
   parent.insertBefore(badge, senderElement.nextSibling);
-  console.log("[BLOCKTRUST] Badge injecté:", badge.innerHTML);
+  console.log("[BLOCKTRUST] Badge injecté:", badge.textContent);
 }
 
 /**
@@ -365,8 +439,13 @@ function observeGmail() {
   scheduleGmailScan();
 }
 
-if (document.body) {
+function bootstrapBlockTrust() {
+  injectGlobalStyles();
   observeGmail();
+}
+
+if (document.body) {
+  bootstrapBlockTrust();
 } else {
-  document.addEventListener("DOMContentLoaded", observeGmail, { once: true });
+  document.addEventListener("DOMContentLoaded", bootstrapBlockTrust, { once: true });
 }
