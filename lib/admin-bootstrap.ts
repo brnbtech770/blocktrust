@@ -40,33 +40,74 @@ function splitDisplayName(userName: string): { firstName: string; lastName: stri
 
 async function ensureBadgeSignature(
   certificateId: string,
-  entityId: string,
-  publicId: string | null
+  userId: string
 ): Promise<void> {
   const existing = await prisma.signature
     .findFirst({
-      where: { certificateId, purpose: 'badge' },
-      select: { id: true },
+      where: {
+        certificateId,
+        purpose: 'badge',
+      },
     })
     .catch(() => null)
 
   if (existing) return
 
-  const jti = publicId ?? certificateId
+  const cert = await prisma.certificate
+    .findUnique({
+      where: { id: certificateId },
+      include: { entity: true },
+    })
+    .catch(() => null)
+
+  if (!cert) return
+
+  const publicId = cert.publicId ?? cert.id
   const contextHash = crypto.createHash('sha256').update(`badge:${certificateId}`).digest('hex')
+  let jti: string = crypto.randomUUID()
+  let signatureJwt: string | undefined
+
+  try {
+    const privateKeyPem = (process.env.BLOCKTRUST_JWT_PRIVATE_KEY ?? '').replace(/\\n/g, '\n')
+    if (privateKeyPem.includes('BEGIN PRIVATE KEY') || privateKeyPem.includes('BEGIN EC PRIVATE KEY')) {
+      const { SignJWT, importPKCS8 } = await import('jose')
+      const alg = privateKeyPem.includes('BEGIN RSA PRIVATE KEY') ? 'RS256' : 'ES256'
+      const privateKey = await importPKCS8(privateKeyPem, alg)
+
+      signatureJwt = await new SignJWT({
+        sub: publicId,
+        entityId: cert.entityId,
+        userId,
+        purpose: 'badge',
+      })
+        .setProtectedHeader({ alg, typ: 'JWT' })
+        .setIssuedAt()
+        .setJti(jti)
+        .setIssuer('blocktrust')
+        .setAudience('blocktrust.verify')
+        .setExpirationTime(Math.floor(Date.now() / 1000) + 10 * 365 * 24 * 3600)
+        .sign(privateKey)
+    }
+  } catch (e) {
+    console.error('ensureBadgeSignature JWT skipped:', e)
+    jti = publicId
+  }
 
   await prisma.signature
     .create({
       data: {
         jti,
         certificateId,
-        entityId,
-        contextHash,
+        entityId: cert.entityId,
         purpose: 'badge',
+        contextHash,
+        signature: signatureJwt,
         expiresAt: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000),
       },
     })
     .catch(() => null)
+
+  console.log(`  Signature badge créée pour cert ${certificateId}`)
 }
 
 /**
@@ -88,7 +129,10 @@ export async function ensureAdminCertificate(
       })
       .catch(() => null)
 
-    if (existingCert) return
+    if (existingCert) {
+      await ensureBadgeSignature(existingCert.id, userId).catch(() => null)
+      return
+    }
 
     const pendingCert = await prisma.certificate
       .findFirst({
@@ -107,7 +151,7 @@ export async function ensureAdminCertificate(
           data: { status: 'ACTIVE' },
         })
         .catch(() => null)
-      await ensureBadgeSignature(pendingCert.id, pendingCert.entityId, pendingCert.publicId)
+      await ensureBadgeSignature(pendingCert.id, userId).catch(() => null)
       console.log(`  Certificat activé pour ${userEmail}`)
       return
     }
@@ -152,7 +196,7 @@ export async function ensureAdminCertificate(
 
     if (!certificate) return
 
-    await ensureBadgeSignature(certificate.id, entity.id, certificate.publicId)
+    await ensureBadgeSignature(certificate.id, userId).catch(() => null)
 
     console.log(`  Certificat créé pour ${userEmail}`)
   } catch (e) {
