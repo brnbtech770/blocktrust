@@ -139,6 +139,8 @@ model User {
   certifiedEmails  String[] @default([])
   certifiedPhones  String[] @default([])
   certifiedDomains String[] @default([])
+
+  @@index([trustScore])
 }
 
 enum AccountType {
@@ -207,6 +209,8 @@ model OrganizationMember {
   joinedAt       DateTime?
 
   @@unique([organizationId, userId])
+  @@index([userId])
+  @@index([organizationId])
 }
 
 enum OrgRole {
@@ -247,6 +251,7 @@ model TrustVaultEntry {
   addedBy User       @relation("VaultEntryAuthor", fields: [addedById], references: [id], onDelete: Restrict)
 
   @@index([vaultId])
+  @@index([type])
 }
 
 model TrustVaultPermission {
@@ -386,6 +391,8 @@ model Subscription {
 
   @@index([stripeCustomerId])
   @@index([stripeSubscriptionId])
+  @@index([status])
+  @@index([plan])
 }
 
 // ============================================================
@@ -534,6 +541,7 @@ model Certificate {
   @@index([entityId])
   @@index([status])
   @@index([publicId])
+  @@index([blockchainStatus])
 }
 
 enum CertificateStatus {
@@ -611,6 +619,7 @@ model Verification {
 
   @@index([certificateId])
   @@index([verifiedAt])
+  @@index([result])
   @@index([ipHash, verifiedAt])
 }
 
@@ -765,6 +774,7 @@ model UserTrustRelation {
   @@index([toUserId])
   @@index([inviteToken])
   @@index([toEmail])
+  @@index([status])
 }
 
 // ============================================================
@@ -903,6 +913,8 @@ model AIAlert {
   @@index([certificateId])
   @@index([alertType])
   @@index([status])
+  @@index([severity])
+  @@index([createdAt])
 }
 
 enum AlertType {
