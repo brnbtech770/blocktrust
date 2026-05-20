@@ -135,8 +135,8 @@ export const authOptions: NextAuthConfig = {
           email: user.email ?? undefined,
           name: user.name ?? undefined,
           plan,
-          kycStatus: (user as any).kycStatus ?? 'PENDING',
-          accountType: (user as any).accountType ?? 'PERSONAL',
+          kycStatus: user.kycStatus ?? 'PENDING',
+          accountType: user.accountType ?? 'PERSONAL',
           cookieConsent: user.cookieConsent ?? false,
         };
       },
@@ -176,33 +176,33 @@ export const authOptions: NextAuthConfig = {
     async jwt({ token, user, account }) {
       if (user) {
         if (account?.provider === "credentials") {
-          token.sub = (user as any).id;
+          token.sub = user.id ?? token.sub;
           token.email = user.email ?? undefined;
           token.name = user.name ?? undefined;
-          (token as any).plan = (user as any).plan ?? null;
-          (token as any).kycStatus = (user as any).kycStatus ?? 'PENDING';
-          (token as any).accountType = (user as any).accountType ?? 'PERSONAL';
-          (token as any).cookieConsent = (user as any).cookieConsent ?? false;
+          token.plan = user.plan ?? undefined;
+          token.kycStatus = user.kycStatus ?? 'PENDING';
+          token.accountType = user.accountType ?? 'PERSONAL';
+          token.cookieConsent = user.cookieConsent ?? false;
           token.planFetchedAt = Date.now();
         } else {
           // Connexion Google/OAuth — user vient de l'adapter (id DB + email)
           // Fallback immédiat : toujours peupler le token avec les infos OAuth disponibles
           // pour éviter un JWT vide si la requête DB échoue.
-          token.sub = (user as any).id ?? token.sub;
+          token.sub = user.id ?? token.sub;
           token.email = user.email ?? token.email;
           token.name = user.name ?? token.name;
-          token.picture = (user as any).image ?? token.picture;
+          token.picture = user.image ?? token.picture;
 
           try {
-            const dbUser = await resolveDbUserAfterOAuth(user as any);
+            const dbUser = await resolveDbUserAfterOAuth(user);
             if (dbUser) {
               token.sub = dbUser.id;
               token.email = dbUser.email ?? undefined;
               token.name = dbUser.name ?? undefined;
               token.picture = dbUser.image ?? undefined;
-              (token as any).kycStatus = (dbUser as any).kycStatus ?? "PENDING";
-              (token as any).accountType = dbUser.accountType ?? "PERSONAL";
-              (token as any).cookieConsent = dbUser.cookieConsent ?? false;
+              token.kycStatus = dbUser.kycStatus ?? "PENDING";
+              token.accountType = dbUser.accountType ?? "PERSONAL";
+              token.cookieConsent = dbUser.cookieConsent ?? false;
 
               const oauthEmail = dbUser.email ?? user.email;
               if (oauthEmail && !isAdmin(oauthEmail)) {
@@ -212,13 +212,13 @@ export const authOptions: NextAuthConfig = {
                     select: { plan: true },
                   })
                   .catch(() => null);
-                (token as any).plan = subscription?.plan ?? "ESSENTIEL";
+                token.plan = subscription?.plan ?? "ESSENTIEL";
                 token.planFetchedAt = Date.now();
               }
             } else {
               console.error("[JWT OAuth] impossible de résoudre User en base", {
-                userId: (user as any).id,
-                email: (user as any).email,
+                userId: user.id,
+                email: user.email,
               });
             }
           } catch (error) {
@@ -294,7 +294,7 @@ export const authOptions: NextAuthConfig = {
           ...session,
           user: {
             ...session.user,
-            id: (token.sub ?? (token as any).id ?? '') as string,
+            id: (token.sub ?? token.id ?? '') as string,
             email: session.user.email ?? token.email ?? '',
             plan: (token.plan ?? 'ESSENTIEL') as string,
             planType: token.planType as string | undefined,

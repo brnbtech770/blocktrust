@@ -12,11 +12,49 @@ import TrustCircleInviteModal from '@/app/components/TrustCircleInviteModal'
 import TrustCircleManualModal from '@/app/components/TrustCircleManualModal'
 import { QuotaBanner } from '@/app/components/trust-circle/QuotaBanner'
 
+type TrustCircleUserSummary = {
+  id: string
+  name: string | null
+  email: string | null
+  kycStatus?: string
+}
+
+type TrustRelationItem = {
+  id: string
+  toUser?: TrustCircleUserSummary | null
+  toName?: string | null
+  toEmail?: string | null
+}
+
+type ManualTrustEntry = {
+  id: string
+  entityName: string
+  entityEmail?: string | null
+  toEmail?: string | null
+  toName?: string | null
+}
+
+type TrustCircleCardData = TrustRelationItem | ManualTrustEntry
+
+type ApiEntityRow = {
+  id: string
+  entityType: string
+  firstName?: string | null
+  lastName?: string | null
+  email?: string | null
+  legalName?: string | null
+  tradeName?: string | null
+}
+
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : 'Erreur inconnue'
+}
+
 interface TrustCircleData {
-  mutual: any[]
-  unilateral: any[]
-  pending: any[]
-  manualEntries: any[]
+  mutual: TrustRelationItem[]
+  unilateral: TrustRelationItem[]
+  pending: TrustRelationItem[]
+  manualEntries: ManualTrustEntry[]
   stats: {
     current: number
     limit: number | null
@@ -82,17 +120,17 @@ export default function TrustCirclePage() {
       if (entitiesResponse.ok) {
         const entities = await entitiesResponse.json()
         setUserEntities(
-          (entities || []).map((e: any) => ({
+          (entities as ApiEntityRow[] || []).map((e) => ({
             id: e.id,
             name: e.entityType === 'INDIVIDUAL'
-              ? `${e.firstName || ''} ${e.lastName || ''}`.trim() || e.email
-              : e.legalName || e.tradeName || e.email,
+              ? `${e.firstName || ''} ${e.lastName || ''}`.trim() || e.email || ''
+              : e.legalName || e.tradeName || e.email || '',
             entityType: e.entityType,
           }))
         )
       }
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }
@@ -113,8 +151,8 @@ export default function TrustCirclePage() {
       }
       setToastMessage('Contact supprimé')
       await fetchTrustCircle()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(getErrorMessage(err))
     }
   }
 
@@ -210,26 +248,26 @@ export default function TrustCirclePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
           {activeTab === 'all' && [
-            ...(data.mutual || []).map((r: any) => (
+            ...(data.mutual || []).map((r) => (
               <Card key={r.id} type="mutual" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
             )),
-            ...(data.unilateral || []).map((r: any) => (
+            ...(data.unilateral || []).map((r) => (
               <Card key={r.id} type="unilateral" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
             )),
-            ...(data.pending || []).map((r: any) => (
+            ...(data.pending || []).map((r) => (
               <Card key={r.id} type="pending" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
             )),
-            ...(data.manualEntries || []).map((e: any) => (
+            ...(data.manualEntries || []).map((e) => (
               <Card key={e.id} type="manual" data={e} onDelete={() => handleDelete(e.id, 'manual')} />
             )),
           ]}
-          {activeTab === 'mutual' && (data.mutual || []).map((r: any) => (
+          {activeTab === 'mutual' && (data.mutual || []).map((r) => (
             <Card key={r.id} type="mutual" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
           ))}
-          {activeTab === 'pending' && (data.pending || []).map((r: any) => (
+          {activeTab === 'pending' && (data.pending || []).map((r) => (
             <Card key={r.id} type="pending" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
           ))}
-          {activeTab === 'manual' && (data.manualEntries || []).map((e: any) => (
+          {activeTab === 'manual' && (data.manualEntries || []).map((e) => (
             <Card key={e.id} type="manual" data={e} onDelete={() => handleDelete(e.id, 'manual')} />
           ))}
         </div>
@@ -276,9 +314,11 @@ export default function TrustCirclePage() {
   )
 }
 
-function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pending' | 'manual'; data: any; onDelete?: () => void }) {
-  const name = data.toUser?.name || data.toName || data.entityName || data.toEmail || '—'
-  const email = data.toUser?.email || data.toEmail || data.entityEmail
+function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pending' | 'manual'; data: TrustCircleCardData; onDelete?: () => void }) {
+  const relation = 'toUser' in data ? data : null
+  const manual = 'entityName' in data ? data : null
+  const name = relation?.toUser?.name || relation?.toName || manual?.entityName || relation?.toEmail || manual?.toEmail || '—'
+  const email = relation?.toUser?.email || relation?.toEmail || manual?.entityEmail || manual?.toEmail
   return (
     <div
       className="p-3 sm:p-4 rounded-xl border"

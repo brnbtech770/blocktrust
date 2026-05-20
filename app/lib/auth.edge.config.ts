@@ -2,6 +2,7 @@
  * Fragment de config NextAuth sans dépendances lourdes (Prisma, bcrypt).
  */
 import type { NextAuthConfig } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
 
 export const googleProvider = GoogleProvider({
@@ -34,24 +35,25 @@ const authEdgeConfig = {
   callbacks: {
     async session({ session, token }) {
       if (session.user) {
+        const jwt = token as JWT;
         // Ne pas utiliser ?? : si session.user.email est "" (profil OAuth partiel),
         // ?? ne retombe pas sur token.email → session sans email → redirect sign-in.
         const sessionEmail =
           typeof session.user.email === "string" ? session.user.email.trim() : "";
         const tokenEmail =
-          typeof token.email === "string" ? token.email.trim() : "";
+          typeof jwt.email === "string" ? jwt.email.trim() : "";
         const resolvedEmail = sessionEmail || tokenEmail || "";
 
         return {
           ...session,
           user: {
             ...session.user,
-            id: (token.sub ?? (token as any).id ?? "") as string,
+            id: (jwt.sub ?? jwt.id ?? "") as string,
             email: resolvedEmail,
-            plan: (token as any).plan ?? "ESSENTIEL",
-            kycStatus: (token as any).kycStatus ?? "PENDING",
-            accountType: (token as any).accountType ?? "PERSONAL",
-            cookieConsent: (token as any).cookieConsent ?? false,
+            plan: jwt.plan ?? "ESSENTIEL",
+            kycStatus: jwt.kycStatus ?? "PENDING",
+            accountType: jwt.accountType ?? "PERSONAL",
+            cookieConsent: jwt.cookieConsent ?? false,
           },
         };
       }
