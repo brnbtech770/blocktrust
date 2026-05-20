@@ -11,6 +11,58 @@ dotenv.config()
 import { getAdminEmailList } from '../lib/admin-utils'
 import { prisma } from '../app/lib/db'
 
+const OLIVER_PRO_EMAILS = ['brnbimmo@gmail.com', 'contact@brnb.fr'] as const
+
+async function bootstrapEnterpriseProAccount(
+  email: string,
+  enterprisePlan: { id: string; name: string }
+): Promise<boolean> {
+  const user = await prisma.user
+    .findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } },
+      include: { subscription: true },
+    })
+    .catch(() => null)
+
+  if (!user) {
+    console.log('Ignoré (compte absent en base) :', email)
+    return false
+  }
+
+  await prisma.user
+    .update({
+      where: { id: user.id },
+      data: {
+        planId: enterprisePlan.id,
+        trustScore: 100,
+        trustScoreAt: new Date(),
+      },
+    })
+    .catch(() => null)
+
+  await prisma.subscription
+    .upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        plan: 'B2B_ENTERPRISE',
+        status: 'active',
+      },
+      update: {
+        plan: 'B2B_ENTERPRISE',
+        status: 'active',
+      },
+    })
+    .catch(() => null)
+
+  console.log('Compte pro mis à jour :', email)
+  console.log('  planId (Prisma) :', enterprisePlan.id, `(${enterprisePlan.name})`)
+  console.log('  Subscription.plan : B2B_ENTERPRISE, status: active')
+  console.log('  TrustScore : 100')
+  console.log('  Droits admin : non')
+  return true
+}
+
 async function bootstrapAllAdmins() {
   const emails = getAdminEmailList()
   if (emails.length === 0) {
@@ -73,7 +125,15 @@ async function bootstrapAllAdmins() {
     updated += 1
   }
 
-  console.log(`\nTerminé — ${updated}/${emails.length} compte(s) mis à jour, ${emails.length} email(s) dans ADMIN_EMAILS`)
+  let proUpdated = 0
+  for (const proEmail of OLIVER_PRO_EMAILS) {
+    const ok = await bootstrapEnterpriseProAccount(proEmail, enterprisePlan)
+    if (ok) proUpdated += 1
+  }
+
+  console.log(
+    `\nTerminé — ${updated}/${emails.length} admin(s) mis à jour, ${proUpdated}/${OLIVER_PRO_EMAILS.length} compte(s) pro Olivier`
+  )
 }
 
 bootstrapAllAdmins()
