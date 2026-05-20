@@ -1,6 +1,11 @@
 import { prisma } from '@/app/lib/db'
 import { requireAdminPage } from '@/app/lib/require-admin-page'
+import type { Metadata } from 'next'
 import AdminKycClient from './AdminKycClient'
+
+export const metadata: Metadata = {
+  title: "Vérification d'identité",
+}
 
 export default async function AdminKycPage() {
   await requireAdminPage()

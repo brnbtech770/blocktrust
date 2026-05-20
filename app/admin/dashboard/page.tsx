@@ -118,6 +118,7 @@ export default async function AdminDashboard() {
 
   const revenueRows: RevenueRow[] = [...breakdown.values()]
     .map((row) => {
+      const isEnterprisePlan = row.plan === 'ENTERPRISE' || row.plan === 'B2B_ENTERPRISE'
       const unit =
         row.period === 'YEARLY'
           ? ADMIN_PLAN_PRICES_MONTHLY[row.plan] * 0.8
@@ -127,8 +128,9 @@ export default async function AdminDashboard() {
         plan: row.plan,
         periodLabel: row.period === 'YEARLY' ? 'Annuel (-20 %)' : row.period === 'MONTHLY' ? 'Mensuel' : '—',
         clients: row.count,
-        unitLabel:
-          row.period === 'UNKNOWN'
+        unitLabel: isEnterprisePlan
+          ? 'Sur devis'
+          : row.period === 'UNKNOWN'
             ? '—'
             : `${formatPriceFr(unit)}€ MRR eq. / client`,
         totalMrr,

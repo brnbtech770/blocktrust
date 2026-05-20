@@ -53,6 +53,16 @@ export async function ensureAdminCapabilities(userId: string, email: string): Pr
     })
     .catch(() => null)
 
+  await prisma.user
+    .update({
+      where: { id: userId },
+      data: {
+        kycStatus: 'VERIFIED',
+        kycVerifiedAt: new Date(),
+      },
+    })
+    .catch(() => null)
+
   await prisma.subscription
     .upsert({
       where: { userId },

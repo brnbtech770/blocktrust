@@ -9,7 +9,7 @@ const titles: Record<string, string> = {
   '/admin/users': 'Utilisateurs',
   '/admin/organizations': 'Organisations B2B',
   '/admin/certificates': 'Certificats',
-  '/admin/kyc': 'KYC',
+  '/admin/kyc': "Vérification d'identité",
   '/admin/demandes': 'Demandes Trust',
   '/admin/surveillance': 'Surveillance IA',
   '/admin/alerts': 'Alertes & Surveillance',
