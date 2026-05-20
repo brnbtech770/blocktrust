@@ -1,9 +1,7 @@
 name: Security Audit
+
+# Audit hebdomadaire — la CI complète (push/PR) est dans ci.yml
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   schedule:
     - cron: "0 9 * * 1"
 
@@ -17,13 +15,5 @@ jobs:
           node-version: "20"
           cache: "npm"
       - run: npm ci
-      - name: Prisma validate
-        run: npx prisma validate
-      - name: Build
-        run: npm run build
-        env:
-          NEXTAUTH_URL: http://localhost:3000
-          NEXTAUTH_SECRET: ci-build-placeholder-not-for-production
       - name: Security audit (critical only)
         run: npm audit --audit-level=critical
-      # Lint : npm run lint — 135 erreurs eslint préexistantes (chantier CI complète)
