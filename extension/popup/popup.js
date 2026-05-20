@@ -5,6 +5,7 @@
 const API_BASE = "https://blocktrust.tech";
 
 const el = {
+  statusBar: document.getElementById("extension-status-bar"),
   notConnected: document.getElementById("not-connected"),
   connected: document.getElementById("connected"),
   statusMsg: document.getElementById("status-msg"),
@@ -33,6 +34,41 @@ function hideStatus() {
 function showPanel(mode) {
   if (el.notConnected) el.notConnected.classList.toggle("hidden", mode !== "not-connected");
   if (el.connected) el.connected.classList.toggle("hidden", mode !== "connected");
+}
+
+/**
+ * Barre de statut en tête du popup (Gmail / connexion).
+ * @param {boolean | undefined} isGmail
+ * @param {boolean} isConnected
+ */
+function updateStatusBar(isGmail, isConnected) {
+  if (!el.statusBar) return;
+  el.statusBar.classList.remove(
+    "extension-status-bar--active",
+    "extension-status-bar--idle",
+    "extension-status-bar--disconnected"
+  );
+
+  if (!isConnected) {
+    el.statusBar.classList.add("extension-status-bar--disconnected");
+    el.statusBar.textContent = "Non connecté";
+    return;
+  }
+
+  if (isGmail) {
+    el.statusBar.classList.add("extension-status-bar--active");
+    el.statusBar.textContent = "Actif sur Gmail ✓";
+  } else {
+    el.statusBar.classList.add("extension-status-bar--idle");
+    el.statusBar.textContent = "Ouvrez Gmail pour activer";
+  }
+}
+
+function refreshStatusBar(isConnected) {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const isGmail = Boolean(tabs[0]?.url?.includes("mail.google.com"));
+    updateStatusBar(isGmail, isConnected);
+  });
 }
 
 /**
@@ -91,6 +127,7 @@ async function refreshConnectedView() {
   if (!key) {
     showPanel("not-connected");
     hideStatus();
+    refreshStatusBar(false);
     return;
   }
   try {
@@ -98,6 +135,7 @@ async function refreshConnectedView() {
     fillConnectedUI(data);
     showPanel("connected");
     hideStatus();
+    refreshStatusBar(true);
   } catch (e) {
     console.warn("[TrustScan] /me:", e);
     const msg = e.message || "Session invalide — reconnectez-vous.";
@@ -106,6 +144,7 @@ async function refreshConnectedView() {
       chrome.storage.local.remove(["apiKey"], resolve);
     });
     showPanel("not-connected");
+    refreshStatusBar(false);
   }
 }
 
@@ -135,6 +174,7 @@ async function onConnect() {
     if (el.apiKeyInput) el.apiKeyInput.value = "";
     showPanel("connected");
     hideStatus();
+    refreshStatusBar(true);
   } catch (e) {
     showStatus(e.message || "Échec de la connexion — clé refusée par BLOCKTRUST.", true);
   } finally {
@@ -147,6 +187,7 @@ function onDisconnect() {
   chrome.storage.local.remove(["apiKey"], () => {
     if (el.apiKeyInput) el.apiKeyInput.value = "";
     showPanel("not-connected");
+    refreshStatusBar(false);
   });
 }
 
@@ -156,6 +197,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await refreshConnectedView();
   } else {
     showPanel("not-connected");
+    refreshStatusBar(false);
   }
 
   if (el.connectBtn) el.connectBtn.addEventListener("click", onConnect);

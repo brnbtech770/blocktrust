@@ -19,7 +19,12 @@ const SENDER_SELECTORS = [
   ".zF[email]",
 ];
 
-console.log("[BLOCKTRUST] Extension chargée sur Gmail");
+console.log("[BLOCKTRUST] Content script chargé sur Gmail");
+console.log("[BLOCKTRUST] API_BASE:", API_BASE);
+
+chrome.storage.local.get(["apiKey"], (data) => {
+  console.log("[BLOCKTRUST] Clé API:", data.apiKey ? "présente" : "absente");
+});
 
 /**
  * Récupère la clé API utilisateur (format bt_ext_...) depuis chrome.storage.local
@@ -136,14 +141,19 @@ function normalizeEmailString(raw) {
  */
 function extractSenderFromOpenEmail() {
   for (const selector of SENDER_SELECTORS) {
+    console.log("[BLOCKTRUST] Sélecteur testé:", selector);
     const el = document.querySelector(selector);
+    console.log("[BLOCKTRUST] Élément trouvé:", el);
     if (!el) continue;
     const raw =
       el.getAttribute("email") ||
       el.getAttribute("data-hovercard-id") ||
       el.getAttribute("data-email");
     const email = normalizeEmailString(raw || (el.textContent || "").trim());
-    if (email) return { email, element: el };
+    if (email) {
+      console.log("[BLOCKTRUST] Email expéditeur:", email);
+      return { email, element: el };
+    }
   }
   return null;
 }
@@ -247,7 +257,10 @@ async function processOpenEmailSender() {
   if (parent.querySelector(".bt-trust-badge, .bt-badge")) return;
 
   const apiKey = await getApiKey();
-  if (!apiKey) return;
+  if (!apiKey) {
+    console.log("[BLOCKTRUST] Clé API absente — badge ignoré");
+    return;
+  }
 
   const domain = sender.email.split("@")[1] || "";
   const result = await verifySender(sender.email, domain);
@@ -265,6 +278,7 @@ function scheduleGmailScan() {
   if (gmailDebounceId !== null) clearTimeout(gmailDebounceId);
   gmailDebounceId = setTimeout(() => {
     gmailDebounceId = null;
+    console.log("[BLOCKTRUST] DOM changé — scan en cours...");
     void processOpenEmailSender();
     scanForSenders(document.body);
   }, 200);
