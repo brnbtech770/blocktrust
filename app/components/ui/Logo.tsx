@@ -83,7 +83,7 @@ export function Logo({
         letterSpacing: '0.15em',
         marginTop: '2px',
       }}>
-        BRNB TECH SASU
+        BRNB TECH SAS
       </div>
     </div>
   )

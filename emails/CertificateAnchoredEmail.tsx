@@ -133,7 +133,7 @@ export function CertificateAnchoredEmail({
 
           {/* Footer */}
           <Section style={footerSection}>
-            <Text style={footerBrand}>BLOCKTRUST — BRNB TECH SASU</Text>
+            <Text style={footerBrand}>BLOCKTRUST — BRNB TECH SAS</Text>
             <Text style={footerText}>
               Ancré de façon immuable sur Polygon Mainnet · blocktrust.tech
             </Text>

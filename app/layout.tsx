@@ -54,9 +54,9 @@ export const metadata: Metadata = {
     "faux RIB protection",
     "identité numérique France",
   ],
-  authors: [{ name: "BRNB TECH SASU" }],
-  creator: "BRNB TECH SASU",
-  publisher: "BRNB TECH SASU",
+  authors: [{ name: "BRNB TECH SAS" }],
+  creator: "BRNB TECH SAS",
+  publisher: "BRNB TECH SAS",
   icons: {
     icon: [
       { url: `/favicon.svg?${ICON_CACHE_QUERY}`, type: "image/svg+xml" },

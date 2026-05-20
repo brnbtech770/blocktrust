@@ -53,7 +53,7 @@ export function TrustCircleInviteEmail({
         <Container style={{ maxWidth: 560, margin: '0 auto' }}>
           <Section style={headerSection}>
             <Text style={logoTitle}>BLOCKTRUST</Text>
-            <Text style={logoSub}>BRNB TECH SASU</Text>
+            <Text style={logoSub}>BRNB TECH SAS</Text>
           </Section>
           <Section style={bodySection}>
             <Text style={titleStyle}>Invitation Trust Circle</Text>
@@ -70,7 +70,7 @@ export function TrustCircleInviteEmail({
             </Text>
           </Section>
           <Section style={footerSection}>
-            <Text style={footerText}>© 2026 BRNB TECH SASU · blocktrust.tech</Text>
+            <Text style={footerText}>© 2026 BRNB TECH SAS · blocktrust.tech</Text>
           </Section>
 
           <Section

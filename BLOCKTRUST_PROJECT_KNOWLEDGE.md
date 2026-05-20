@@ -235,7 +235,7 @@ Score            9.7/10
 - [ ] Admin AIAlert boutons actions serveur
 - [ ] PasswordResetEmail template React Email
 - [ ] TrustScore sur tous les chemins FRAUD_ALERT
-- [ ] SASU → SAS dans le code
+- [x] SASU → SAS dans le code
 - [ ] CI complète (lint + build + prisma validate)
 - [ ] Supprimer jsonwebtoken mort
 
