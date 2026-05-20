@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
 import { truncateVerificationPublicId } from '@/lib/truncate-public-id'
+import { copyToClipboard } from '@/lib/copy-to-clipboard'
 import { Copy, Download, ExternalLink, Check, Link2, Clock } from 'lucide-react'
 
 interface BadgeData {
@@ -42,6 +43,8 @@ export default function DashboardBadgePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [embedCopied, setEmbedCopied] = useState(false)
+  const [scriptCopied, setScriptCopied] = useState(false)
+  const [secureLinkCopied, setSecureLinkCopied] = useState(false)
   const [verifyLink, setVerifyLink] = useState<{ url: string; expiresAt: string } | null>(null)
   const [generating, setGenerating] = useState(false)
 
@@ -107,16 +110,39 @@ export default function DashboardBadgePage() {
 </a>`
   }
 
-  const handleCopyEmbed = async () => {
-    const embedCode = getEmbedCode()
-    try {
-      await navigator.clipboard.writeText(embedCode)
+  const getScriptCode = () => {
+    if (!badgeData) return ''
+    const widgetCertKey = badgeData.publicId?.trim() || badgeData.id
+    const baseUrl = window.location.origin
+    return `<!-- BlockTrust Badge Widget -->
+<div id="blocktrust-badge"
+  data-certificate="${widgetCertKey}"
+  data-size="md">
+</div>
+<script src="${baseUrl}/api/widget.js" async defer><\/script>`
+  }
+
+  const handleCopy = async (text: string, target: 'embed' | 'script' | 'secure') => {
+    const ok = await copyToClipboard(text)
+    if (!ok) {
+      alert('Erreur lors de la copie')
+      return
+    }
+    if (target === 'embed') {
       setEmbedCopied(true)
       setTimeout(() => setEmbedCopied(false), 2000)
-    } catch {
-      alert('Erreur lors de la copie')
+    } else if (target === 'script') {
+      setScriptCopied(true)
+      setTimeout(() => setScriptCopied(false), 2000)
+    } else {
+      setSecureLinkCopied(true)
+      setTimeout(() => setSecureLinkCopied(false), 2000)
     }
   }
+
+  const handleCopyEmbed = () => handleCopy(getEmbedCode(), 'embed')
+
+  const handleCopyScript = () => handleCopy(getScriptCode(), 'script')
 
   const handleDownloadQR = (format: 'png' | 'svg') => {
     if (!badgeData) return
@@ -155,6 +181,7 @@ export default function DashboardBadgePage() {
       }
       if (data.verifyUrl && data.expiresAt) {
         setVerifyLink({ url: data.verifyUrl, expiresAt: data.expiresAt })
+        await handleCopy(data.verifyUrl, 'secure')
       }
     } catch {
       alert('Erreur réseau.')
@@ -215,8 +242,10 @@ export default function DashboardBadgePage() {
         </div>
 
         <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
-          <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">Code embed HTML</h2>
-          <div className="mb-4 rounded-lg border border-white/10 bg-black/30 p-4">
+          <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">Intégration</h2>
+
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-white/40">Code embed HTML</p>
+          <div className="mb-3 rounded-lg border border-white/10 bg-black/30 p-4">
             <pre className="overflow-auto text-xs text-white/70">
               <code>{getEmbedCode()}</code>
             </pre>
@@ -224,7 +253,7 @@ export default function DashboardBadgePage() {
           <button
             type="button"
             onClick={handleCopyEmbed}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 px-4 py-2 text-bt-cyan transition hover:bg-bt-cyan/25"
+            className="mb-6 flex w-full items-center justify-center gap-2 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 px-4 py-2 text-bt-cyan transition hover:bg-bt-cyan/25"
           >
             {embedCopied ? (
               <>
@@ -234,7 +263,31 @@ export default function DashboardBadgePage() {
             ) : (
               <>
                 <Copy size={18} aria-hidden />
-                Copier le code
+                Copier le code HTML
+              </>
+            )}
+          </button>
+
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-white/40">Code Script (recommandé)</p>
+          <div className="mb-3 rounded-lg border border-white/10 bg-black/30 p-4">
+            <pre className="overflow-auto text-xs text-white/70">
+              <code>{getScriptCode()}</code>
+            </pre>
+          </div>
+          <button
+            type="button"
+            onClick={handleCopyScript}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#BDA76B]/40 bg-[#BDA76B]/15 px-4 py-2 text-[#BDA76B] transition hover:bg-[#BDA76B]/25"
+          >
+            {scriptCopied ? (
+              <>
+                <Check size={18} aria-hidden />
+                Copié !
+              </>
+            ) : (
+              <>
+                <Copy size={18} aria-hidden />
+                Copier le code script
               </>
             )}
           </button>
@@ -269,7 +322,7 @@ export default function DashboardBadgePage() {
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#BDA76B]/30 bg-[#BDA76B]/10 py-3 text-sm font-semibold text-[#BDA76B] transition hover:bg-[#BDA76B]/20 disabled:opacity-50"
             >
               <Link2 className="h-4 w-4 shrink-0" aria-hidden />
-              {generating ? 'Génération...' : 'Lien sécurisé 24h'}
+              {generating ? 'Génération...' : secureLinkCopied ? 'Lien copié !' : 'Lien sécurisé 24h'}
             </button>
 
             {verifyLink ? (
@@ -291,11 +344,15 @@ export default function DashboardBadgePage() {
                   </code>
                   <button
                     type="button"
-                    onClick={() => void navigator.clipboard.writeText(verifyLink.url)}
+                    onClick={() => void handleCopy(verifyLink.url, 'secure')}
                     className="shrink-0 text-[#00d4ff] transition hover:text-white"
                     aria-label="Copier le lien"
                   >
-                    <Copy className="h-4 w-4" aria-hidden />
+                    {secureLinkCopied ? (
+                      <Check className="h-4 w-4" aria-hidden />
+                    ) : (
+                      <Copy className="h-4 w-4" aria-hidden />
+                    )}
                   </button>
                 </div>
                 <p className="mt-2 text-xs italic text-white/20">

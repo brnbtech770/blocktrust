@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Check, Copy, ScanLine } from 'lucide-react'
+import { copyToClipboard } from '@/lib/copy-to-clipboard'
 
 /** Lien public de partage (même valeur que les QR statiques partagés). */
 const SHARE_VERIFY_ORIGIN = 'https://blocktrust.tech'
@@ -30,10 +31,13 @@ export default function VerifyBadgeButton({
         <button
           type="button"
           onClick={() => {
-            const url = `${SHARE_VERIFY_ORIGIN}/verify?certId=${encodeURIComponent(certId)}`
-            void navigator.clipboard.writeText(url)
-            setCopied(true)
-            setTimeout(() => setCopied(false), 2000)
+            void (async () => {
+              const url = `${SHARE_VERIFY_ORIGIN}/verify?certId=${encodeURIComponent(certId)}`
+              const ok = await copyToClipboard(url)
+              if (!ok) return
+              setCopied(true)
+              setTimeout(() => setCopied(false), 2000)
+            })()
           }}
           className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#00d4ff]/30 bg-[#00d4ff]/10 py-3 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/20"
         >
