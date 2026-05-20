@@ -1,16 +1,20 @@
 /**
  * Script injecté dans Gmail — détection des expéditeurs et appel API BLOCKTRUST.
  * API alignée avec GET /api/extension/verify-sender
- * Sélecteurs Gmail (2026) + observer debouncé.
+ * Scan uniquement sur l’email ouvert + cache local + queue anti rate-limit.
  */
 
 const API_BASE = "https://blocktrust.tech";
-const CACHE_TTL_MS = 3600000;
 
-/** Cache mémoire (onglet) — même TTL que le cache serveur (~1 h). */
+/** Cache résultats pour éviter re-appels (5 min). */
 const verifyCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000;
 
-/** Sélecteurs expéditeur : message ouvert + liste */
+/** Queue séquentielle avec délai entre requêtes API. */
+const scanQueue = [];
+let isProcessing = false;
+
+/** Sélecteurs expéditeur dans le message ouvert */
 const SENDER_SELECTORS = [
   ".gD[email]",
   "[email].go",
@@ -38,21 +42,12 @@ function getApiKey() {
 }
 
 /**
- * Appelle l’API de vérification d’expéditeur.
+ * Appelle l’API de vérification d’expéditeur (sans cache).
  * @param {string} email
  * @param {string} domain
  * @returns {Promise<object|null>}
  */
 async function verifySender(email, domain) {
-  const cacheKey = `${email.toLowerCase()}|${domain.toLowerCase()}`;
-  if (verifyCache.has(cacheKey)) {
-    const cached = verifyCache.get(cacheKey);
-    if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
-      console.log("[BLOCKTRUST] Résultat API (cache):", cached.data);
-      return cached.data;
-    }
-  }
-
   const apiKey = await getApiKey();
   if (!apiKey) return null;
 
@@ -69,12 +64,86 @@ async function verifySender(email, domain) {
 
     if (!response.ok) return null;
 
-    verifyCache.set(cacheKey, { data, timestamp: Date.now() });
     return data;
   } catch (e) {
     console.warn("[BLOCKTRUST] verify-sender erreur:", e);
     return null;
   }
+}
+
+/**
+ * Vérification avec cache local (clé = email).
+ * @param {string} email
+ * @param {string} domain
+ */
+async function verifySenderCached(email, domain) {
+  const cacheKey = email.toLowerCase();
+  const cached = verifyCache.get(cacheKey);
+
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log("[BLOCKTRUST] Résultat API (cache):", cached.result);
+    return cached.result;
+  }
+
+  const result = await verifySender(email, domain);
+
+  if (result) {
+    verifyCache.set(cacheKey, {
+      result,
+      timestamp: Date.now(),
+    });
+  }
+
+  return result;
+}
+
+/**
+ * Traite la queue une requête à la fois (300 ms entre chaque appel).
+ */
+async function processQueue() {
+  if (isProcessing) return;
+  isProcessing = true;
+
+  while (scanQueue.length > 0) {
+    const { email, domain, element } = scanQueue.shift();
+
+    const result = await verifySenderCached(email, domain);
+    console.log("[BLOCKTRUST] Résultat API:", result);
+
+    if (result) {
+      const badge = createVerifyBadge(result);
+      injectBadge(element, badge);
+    }
+
+    await new Promise((r) => setTimeout(r, 300));
+  }
+
+  isProcessing = false;
+}
+
+/**
+ * Ajoute un expéditeur à la queue (ou injecte depuis le cache immédiatement).
+ * @param {string} email
+ * @param {string} domain
+ * @param {Element} element
+ */
+function addToQueue(email, domain, element) {
+  const emailKey = email.toLowerCase();
+
+  const alreadyQueued = scanQueue.some((item) => item.email.toLowerCase() === emailKey);
+  if (alreadyQueued) return;
+
+  const cached = verifyCache.get(emailKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    if (cached.result) {
+      const badge = createVerifyBadge(cached.result);
+      injectBadge(element, badge);
+    }
+    return;
+  }
+
+  scanQueue.push({ email, domain, element });
+  void processQueue();
 }
 
 /**
@@ -163,15 +232,61 @@ function normalizeEmailString(raw) {
 }
 
 /**
- * Email ouvert / premier expéditeur visible — priorité aux sélecteurs 2026.
+ * Un email est-il ouvert (vue message) et non la liste inbox ?
+ */
+function isOpenEmailView() {
+  const main = document.querySelector('[role="main"]');
+  if (!main) return false;
+
+  const openBody = main.querySelector(".a3s.aiL, .a3s.aiL > div");
+  if (openBody) return true;
+
+  const threadMessage = main.querySelector(".gs .gD[email], .gs [email].go");
+  if (threadMessage) return true;
+
+  return false;
+}
+
+/**
+ * Racine DOM du message ouvert (évite les lignes inbox).
+ * @returns {ParentNode | null}
+ */
+function getOpenMessageRoot() {
+  const main = document.querySelector('[role="main"]');
+  if (!main) return null;
+
+  const bodies = main.querySelectorAll(".a3s.aiL");
+  if (bodies.length > 0) {
+    const last = bodies[bodies.length - 1];
+    return last.closest(".gs") || last.closest("[data-message-id]") || last.parentElement;
+  }
+
+  const headerInThread = main.querySelector(".gs .gD[email], .gs [email].go");
+  if (headerInThread) {
+    return headerInThread.closest(".gs") || headerInThread.closest(".adn") || main;
+  }
+
+  return null;
+}
+
+/**
+ * Expéditeur du message actuellement ouvert.
  * @returns {{ email: string, element: Element } | null}
  */
 function extractSenderFromOpenEmail() {
+  if (!isOpenEmailView()) return null;
+
+  const root = getOpenMessageRoot();
+  if (!root) return null;
+
   for (const selector of SENDER_SELECTORS) {
     console.log("[BLOCKTRUST] Sélecteur testé:", selector);
-    const el = document.querySelector(selector);
+    const el = root.querySelector(selector);
     console.log("[BLOCKTRUST] Élément trouvé:", el);
     if (!el) continue;
+
+    if (el.closest("tr.zA, .zA")) continue;
+
     const raw =
       el.getAttribute("email") ||
       el.getAttribute("data-hovercard-id") ||
@@ -185,22 +300,6 @@ function extractSenderFromOpenEmail() {
   return null;
 }
 
-/**
- * Extrait une adresse depuis un nœud Gmail (liste ou thread).
- * @param {Element} emailElement
- * @returns {string | null}
- */
-function extractSenderEmail(emailElement) {
-  const raw =
-    emailElement.getAttribute("email") ||
-    emailElement.getAttribute("data-hovercard-id") ||
-    emailElement.getAttribute("data-email");
-  const fromAttr = normalizeEmailString(raw);
-  if (fromAttr) return fromAttr;
-  const text = (emailElement.textContent || "").trim();
-  return normalizeEmailString(text);
-}
-
 function hasTrustBadgeNear(el) {
   const parent = el.parentElement;
   if (parent?.querySelector(".bt-trust-badge")) return true;
@@ -208,74 +307,35 @@ function hasTrustBadgeNear(el) {
   return false;
 }
 
+/** Dernier email traité (évite re-queue sur mutations DOM identiques). */
+let lastProcessedEmail = null;
+
 /**
- * Traite un élément candidat expéditeur (liste / sous-arbre).
- * @param {Element} el
+ * Scan uniquement l’email ouvert — ajout à la queue si nécessaire.
  */
-async function processSenderElement(el) {
-  if (el.dataset.btProcessed === "true" && hasTrustBadgeNear(el)) return;
-
-  const email = extractSenderEmail(el);
-  if (!email) return;
-
-  if (hasTrustBadgeNear(el)) {
-    el.dataset.btProcessed = "true";
+function processOpenEmailSender() {
+  if (!isOpenEmailView()) {
+    lastProcessedEmail = null;
     return;
   }
 
-  el.dataset.btProcessed = "true";
-  const parts = email.split("@");
-  const domain = parts[1] || "";
-
-  console.log("[BLOCKTRUST] Sender détecté:", email);
-
-  const result = await verifySender(email, domain);
-  console.log("[BLOCKTRUST] Résultat API:", result);
-  if (!result) {
-    delete el.dataset.btProcessed;
-    return;
-  }
-
-  const badge = createVerifyBadge(result);
-  injectBadge(el, badge);
-}
-
-/**
- * Parcourt le document / racine pour tous les sélecteurs expéditeur.
- * @param {ParentNode} root
- */
-function scanForSenders(root) {
-  for (const sel of SENDER_SELECTORS) {
-    root.querySelectorAll(sel).forEach((el) => {
-      void processSenderElement(el);
-    });
-  }
-}
-
-/**
- * Message ouvert : premier match + badge à côté du nœud expéditeur.
- */
-async function processOpenEmailSender() {
   const sender = extractSenderFromOpenEmail();
   if (!sender) return;
 
-  console.log("[BLOCKTRUST] Sender détecté:", sender.email);
-
-  if (hasTrustBadgeNear(sender.element)) return;
-
-  const apiKey = await getApiKey();
-  if (!apiKey) {
-    console.log("[BLOCKTRUST] Clé API absente — badge ignoré");
+  if (hasTrustBadgeNear(sender.element)) {
+    lastProcessedEmail = sender.email;
     return;
   }
 
-  const domain = sender.email.split("@")[1] || "";
-  const result = await verifySender(sender.email, domain);
-  console.log("[BLOCKTRUST] Résultat API:", result);
-  if (!result) return;
+  if (lastProcessedEmail === sender.email && scanQueue.some((i) => i.email === sender.email)) {
+    return;
+  }
 
-  const badge = createVerifyBadge(result);
-  injectBadge(sender.element, badge);
+  console.log("[BLOCKTRUST] Sender détecté:", sender.email);
+  lastProcessedEmail = sender.email;
+
+  const domain = sender.email.split("@")[1] || "";
+  addToQueue(sender.email, domain, sender.element);
 }
 
 /** Debounce : Gmail émet énormément de mutations */
@@ -285,10 +345,10 @@ function scheduleGmailScan() {
   if (gmailDebounceId !== null) clearTimeout(gmailDebounceId);
   gmailDebounceId = setTimeout(() => {
     gmailDebounceId = null;
-    console.log("[BLOCKTRUST] DOM changé — scan en cours...");
-    void processOpenEmailSender();
-    scanForSenders(document.body);
-  }, 200);
+    if (!isOpenEmailView()) return;
+    console.log("[BLOCKTRUST] DOM changé — scan email ouvert...");
+    processOpenEmailSender();
+  }, 400);
 }
 
 function observeGmail() {
