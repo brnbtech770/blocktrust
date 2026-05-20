@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation'
 import SignOutButton from '@/app/components/SignOutButton'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 import Link from 'next/link'
+import { ExternalLink } from 'lucide-react'
 import AdminPageHeader from '@/app/admin/AdminPageHeader'
 import AdminNavLink from '@/app/admin/AdminNavLink'
 import { prisma } from '@/app/lib/db'
@@ -169,6 +170,15 @@ export default async function AdminLayout({
               <p className="truncate text-xs" style={{ color: 'var(--bt-muted)' }}>{session.user.email}</p>
             </div>
           </div>
+          <a
+            href="/dashboard"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 flex items-center gap-3 rounded-lg border-t border-white/5 px-3 py-2 pt-4 text-sm text-white/40 transition hover:bg-white/5 hover:text-white/70"
+          >
+            <ExternalLink className="h-4 w-4 shrink-0" aria-hidden />
+            Mon espace personnel
+          </a>
           <SignOutButton />
         </div>
       </aside>

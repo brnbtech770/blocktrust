@@ -5,7 +5,6 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
-import { isAdmin } from '@/lib/admin-utils'
 import { getPlanWording, resolvePlanKeyForWording } from '@/lib/plan-wording'
 import SettingsClient from './SettingsClient'
 

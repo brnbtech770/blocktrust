@@ -149,8 +149,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Admin connecté : / et /dashboard → back-office (getToken uniquement si cookie session)
-  if (pathname === '/' || pathname === '/dashboard') {
+  // Admin connecté : landing uniquement → back-office (/dashboard/* reste accessible)
+  if (pathname === '/') {
     if (hasAuthJsSessionCookieOnRequest(request)) {
       try {
         const email = await getEmailFromSession(request)

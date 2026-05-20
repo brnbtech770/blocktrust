@@ -2,6 +2,8 @@
 // Contenu sidebar (sans position fixed : géré par DashboardChrome)
 // ============================================================
 
+import Link from 'next/link'
+import { Crown } from 'lucide-react'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
@@ -153,21 +155,20 @@ export default async function DashboardSidebar() {
               ]),
         ],
       },
-      ...(userIsAdmin
-        ? [
-            {
-              label: 'Administration',
-              items: [
-                { name: 'Administration', href: '/admin/dashboard', icon: 'Shield' as const },
-              ],
-            },
-          ]
-        : []),
     ]
 
     return (
       <div className={shellClass()}>
         <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+          {userIsAdmin ? (
+            <Link
+              href="/admin/dashboard"
+              className="mb-2 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-widest text-[#BDA76B] transition hover:bg-[#BDA76B]/5 hover:text-[#BDA76B]/80"
+            >
+              <Crown className="h-3 w-3 shrink-0" aria-hidden />
+              Vue Admin
+            </Link>
+          ) : null}
           <DashboardSidebarNav sections={sections} />
           <div className="mt-5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-[11px] leading-relaxed text-white/45">
             <p>

@@ -44,14 +44,6 @@ export default async function DashboardSegmentLayout({
   try {
     const rscPrefetch = await isRscPrefetchRequest()
 
-    // Admin → tableau de bord admin
-    if (session?.user?.email) {
-      const { isAdmin } = await import('@/app/lib/admin')
-      if (isAdmin(session.user.email)) {
-        redirect('/admin/dashboard')
-      }
-    }
-
     if (!session?.user?.email) {
       if (rscPrefetch) {
         return (
