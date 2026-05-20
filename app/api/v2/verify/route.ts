@@ -8,6 +8,7 @@ import {
   createAdminFraudAlert,
   notifyCertificateOwnerFraudAlertFireAndForget,
 } from "@/lib/verify-fraud";
+import { persistUserTrustScore } from "@/lib/trustscore";
 import { btLog } from "@/lib/prodLog";
 
 function getIp(req: NextRequest) {
@@ -136,6 +137,9 @@ export async function POST(req: NextRequest) {
             jti,
           },
         });
+        void persistUserTrustScore(certWithOwner.entity.userId).catch((e) =>
+          console.error("TrustScore update failed:", e)
+        );
       }
       notifyCertificateOwnerFraudAlertFireAndForget({
         certificateId,

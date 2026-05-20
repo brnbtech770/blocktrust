@@ -15,6 +15,7 @@ import {
   createAdminFraudAlert,
   notifyCertificateOwnerFraudAlertFireAndForget,
 } from '@/lib/verify-fraud'
+import { persistUserTrustScore } from '@/lib/trustscore'
 import { Clock } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -105,6 +106,9 @@ export default async function VerifyQRTokenPage({
       alertType: 'Lien QR dynamique — contexte incorrect',
       detail: 'QR_DYNAMIC_CONTEXT_MISMATCH',
     })
+    void persistUserTrustScore(entity.userId).catch((e) =>
+      console.error('TrustScore update failed:', e)
+    )
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bt-navy)' }}>
         <div className="w-full max-w-md rounded-xl border border-red-500/30 bg-white/5 p-8 text-center backdrop-blur-lg">

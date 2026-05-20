@@ -433,6 +433,9 @@ export default async function VerifyPublicPage({
       alertType: 'Incohérence avec votre réseau de confiance',
       detail: 'TRUST_CIRCLE_CERT_MISMATCH',
     })
+    void persistUserTrustScore(entity.userId).catch((e) =>
+      console.error('TrustScore update failed:', e)
+    )
     return <TrustCircleFraudCertainView />
   }
 

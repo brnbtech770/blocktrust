@@ -18,6 +18,7 @@ import {
   verifyRateLimitHeaders,
 } from '@/lib/verify-fraud'
 import { runEventualAnomalyCheck } from '@/lib/agents/eventual-anomaly-check'
+import { persistUserTrustScore } from '@/lib/trustscore'
 
 function quotaJson(remaining: number, limit: number) {
   const unlimited = limit === Number.POSITIVE_INFINITY
@@ -387,6 +388,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         alertType: 'Anomalie lors de la vérification (signature ou contexte)',
         detail: (signatureVerification?.reason as string) ?? 'FRAUD_ALERT',
       })
+      void persistUserTrustScore(certificate.entity.userId).catch((e) =>
+        console.error('TrustScore update failed:', e)
+      )
     }
 
     const entityName = certificate.entity.legalName || certificate.entity.email
