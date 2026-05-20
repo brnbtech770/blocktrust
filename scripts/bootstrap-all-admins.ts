@@ -9,6 +9,7 @@ dotenv.config({ path: '.env.local' })
 dotenv.config()
 
 import { getAdminEmailList } from '../lib/admin-utils'
+import { ensureAdminCapabilities } from '../lib/admin-bootstrap'
 import { prisma } from '../app/lib/db'
 
 const OLIVER_PRO_EMAILS = ['brnbimmo@gmail.com', 'contact@brnb.fr'] as const
@@ -96,32 +97,9 @@ async function bootstrapAllAdmins() {
       continue
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        planId: enterprisePlan.id,
-        trustScore: 100,
-        trustScoreAt: new Date(),
-      },
-    })
-
-    await prisma.subscription.upsert({
-      where: { userId: user.id },
-      create: {
-        userId: user.id,
-        plan: 'B2B_ENTERPRISE',
-        status: 'active',
-      },
-      update: {
-        plan: 'B2B_ENTERPRISE',
-        status: 'active',
-      },
-    })
+    await ensureAdminCapabilities(user.id, adminEmail, user.name)
 
     console.log('Admin mis à jour :', adminEmail)
-    console.log('  planId (Prisma) :', enterprisePlan.id, `(${enterprisePlan.name})`)
-    console.log('  Subscription.plan : B2B_ENTERPRISE, status: active')
-    console.log('  TrustScore : 100')
     updated += 1
   }
 

@@ -258,7 +258,8 @@ export const authOptions: NextAuthConfig = {
           );
           await ensureAdminBootstrapForSession(
             token.sub as string,
-            token.email as string
+            token.email as string,
+            typeof token.name === 'string' ? token.name : null
           );
         } catch (e) {
           console.error("Bootstrap admin failed:", e);

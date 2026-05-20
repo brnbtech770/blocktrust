@@ -2,6 +2,7 @@
 // Admins BLOCKTRUST™ : plan Enterprise Prisma, TrustScore max, relations Trust Circle mutuelles
 // ============================================================
 
+import crypto from 'crypto'
 import { prisma } from '@/app/lib/db'
 import { isAdmin, getAdminEmailList } from '@/lib/admin-utils'
 
@@ -29,10 +30,144 @@ async function upsertMutualAdminEdge(fromUserId: string, toUserId: string): Prom
     .catch(() => null)
 }
 
+function splitDisplayName(userName: string): { firstName: string; lastName: string | null } {
+  const trimmed = userName.trim()
+  if (!trimmed) return { firstName: 'Admin', lastName: null }
+  const parts = trimmed.split(/\s+/)
+  if (parts.length === 1) return { firstName: parts[0], lastName: null }
+  return { firstName: parts[0], lastName: parts.slice(1).join(' ') }
+}
+
+async function ensureBadgeSignature(
+  certificateId: string,
+  entityId: string,
+  publicId: string | null
+): Promise<void> {
+  const existing = await prisma.signature
+    .findFirst({
+      where: { certificateId, purpose: 'badge' },
+      select: { id: true },
+    })
+    .catch(() => null)
+
+  if (existing) return
+
+  const jti = publicId ?? certificateId
+  const contextHash = crypto.createHash('sha256').update(`badge:${certificateId}`).digest('hex')
+
+  await prisma.signature
+    .create({
+      data: {
+        jti,
+        certificateId,
+        entityId,
+        contextHash,
+        purpose: 'badge',
+        expiresAt: new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000),
+      },
+    })
+    .catch(() => null)
+}
+
+/**
+ * Crée une entité + certificat ACTIVE si l'admin n'en a pas encore (fail-soft).
+ */
+export async function ensureAdminCertificate(
+  userId: string,
+  userName: string,
+  userEmail: string
+): Promise<void> {
+  try {
+    const existingCert = await prisma.certificate
+      .findFirst({
+        where: {
+          entity: { userId },
+          status: { in: ['ACTIVE', 'ANCHORED'] },
+        },
+        select: { id: true },
+      })
+      .catch(() => null)
+
+    if (existingCert) return
+
+    const pendingCert = await prisma.certificate
+      .findFirst({
+        where: {
+          entity: { userId },
+          status: 'PENDING',
+        },
+        select: { id: true, entityId: true, publicId: true },
+      })
+      .catch(() => null)
+
+    if (pendingCert) {
+      await prisma.certificate
+        .update({
+          where: { id: pendingCert.id },
+          data: { status: 'ACTIVE' },
+        })
+        .catch(() => null)
+      await ensureBadgeSignature(pendingCert.id, pendingCert.entityId, pendingCert.publicId)
+      console.log(`  Certificat activé pour ${userEmail}`)
+      return
+    }
+
+    let entity = await prisma.entity
+      .findFirst({
+        where: { userId },
+      })
+      .catch(() => null)
+
+    if (!entity) {
+      const { firstName, lastName } = splitDisplayName(userName)
+      entity = await prisma.entity
+        .create({
+          data: {
+            userId,
+            entityType: 'INDIVIDUAL',
+            firstName,
+            lastName,
+            email: userEmail,
+            certifiedEmails: [userEmail],
+            kycStatus: 'VERIFIED',
+            validationLevel: 'BRONZE',
+            emailVerified: true,
+          },
+        })
+        .catch(() => null)
+    }
+
+    if (!entity) return
+
+    const certificate = await prisma.certificate
+      .create({
+        data: {
+          entityId: entity.id,
+          level: entity.validationLevel,
+          status: 'ACTIVE',
+          issuedAt: new Date(),
+        },
+      })
+      .catch(() => null)
+
+    if (!certificate) return
+
+    await ensureBadgeSignature(certificate.id, entity.id, certificate.publicId)
+
+    console.log(`  Certificat créé pour ${userEmail}`)
+  } catch (e) {
+    console.error('ensureAdminCertificate error:', e)
+  }
+}
+
 /**
  * Met à jour plan Prisma (B2B Enterprise actif) + abonnement code ENTERPRISE + TrustScore 100.
  */
-export async function ensureAdminCapabilities(userId: string, email: string): Promise<void> {
+export async function ensureAdminCapabilities(
+  userId: string,
+  email: string,
+  userName?: string | null
+): Promise<void> {
   if (!isAdmin(email)) return
 
   const enterprisePlan = await prisma.plan
@@ -62,6 +197,8 @@ export async function ensureAdminCapabilities(userId: string, email: string): Pr
       },
     })
     .catch(() => null)
+
+  await ensureAdminCertificate(userId, userName?.trim() || email, email)
 
   await prisma.subscription
     .upsert({
@@ -108,8 +245,12 @@ export async function ensureAdminMutualTrust(userId: string): Promise<void> {
   }
 }
 
-export async function ensureAdminBootstrapForSession(userId: string, email: string): Promise<void> {
-  await ensureAdminCapabilities(userId, email)
+export async function ensureAdminBootstrapForSession(
+  userId: string,
+  email: string,
+  userName?: string | null
+): Promise<void> {
+  await ensureAdminCapabilities(userId, email, userName)
   if (isAdmin(email)) await ensureAdminMutualTrust(userId)
 }
 
@@ -125,13 +266,13 @@ export async function runAdminBootstrapForAllAdminEmails(): Promise<void> {
           email: { equals: e, mode: 'insensitive' as const },
         })),
       },
-      select: { id: true, email: true },
+      select: { id: true, email: true, name: true },
     })
-    .catch(() => [] as { id: string; email: string | null }[])
+    .catch(() => [] as { id: string; email: string | null; name: string | null }[])
 
   for (const u of users) {
     const em = u.email
-    if (em && isAdmin(em)) await ensureAdminCapabilities(u.id, em)
+    if (em && isAdmin(em)) await ensureAdminCapabilities(u.id, em, u.name)
   }
 
   const ids = users.map((u) => u.id)
