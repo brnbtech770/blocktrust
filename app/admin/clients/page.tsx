@@ -163,8 +163,11 @@ export default async function AdminClientsPage({
       entities: {
         select: {
           certificates: {
+            where: {
+              status: { in: ['ACTIVE', 'ANCHORED'] },
+            },
+            take: 1,
             orderBy: { issuedAt: 'desc' },
-            take: 8,
             select: {
               status: true,
               blockchainStatus: true,

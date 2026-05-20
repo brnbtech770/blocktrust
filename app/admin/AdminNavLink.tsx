@@ -43,7 +43,7 @@ export default function AdminNavLink({ href, label, icon, badge }: AdminNavLinkP
   const active =
     pathname === href ||
     pathname.startsWith(`${href}/`) ||
-    (href === '/admin/alerts' && pathname === '/admin/ai-alerts')
+    (href === '/admin/ai-alerts' && pathname === '/admin/alerts')
 
   return (
     <Link

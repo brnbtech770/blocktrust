@@ -56,7 +56,7 @@ const navSections: {
     label: 'Sécurité',
     links: [
       { href: '/admin/surveillance', label: 'Surveillance IA', icon: 'Activity' },
-      { href: '/admin/alerts', label: 'Alertes', icon: 'Bell' },
+      { href: '/admin/ai-alerts', label: 'Alertes', icon: 'Bell' },
     ],
   },
   {
@@ -136,7 +136,7 @@ export default async function AdminLayout({
           </span>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-2">
+        <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-2">
           {navSections.map((section) => (
             <div key={section.label} className="mb-4">
               <p className="mb-1 px-3 pt-3 text-[10px] uppercase tracking-widest text-white/20">
@@ -146,7 +146,7 @@ export default async function AdminLayout({
                 <AdminNavLink
                   key={link.href}
                   {...link}
-                  badge={link.href === '/admin/alerts' ? unreadAdminAlerts : undefined}
+                  badge={link.href === '/admin/ai-alerts' ? unreadAdminAlerts : undefined}
                 />
               ))}
             </div>
