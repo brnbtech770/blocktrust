@@ -3,6 +3,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import type { Prisma, CertificateStatus } from '@prisma/client'
 import { requireAdminPage } from '@/app/lib/require-admin-page'
 import Link from 'next/link'
 import QuickActions from '@/app/components/admin/QuickActions'
@@ -41,10 +42,10 @@ export default async function AdminCertificatesPage({
   const dateFrom = resolvedSearchParams.dateFrom ? new Date(resolvedSearchParams.dateFrom) : null
   const dateTo = resolvedSearchParams.dateTo ? new Date(resolvedSearchParams.dateTo) : null
 
-  const where: any = {}
+  const where: Prisma.CertificateWhereInput = {}
 
   if (statusFilter) {
-    where.status = statusFilter
+    where.status = statusFilter as CertificateStatus
   }
 
   if (typeFilter) {
@@ -100,7 +101,9 @@ export default async function AdminCertificatesPage({
     REVOKED: await prisma.certificate.count({ where: { status: 'REVOKED' } }),
   }
 
-  const getEntityName = (entity: any) => {
+  type EntitySummary = (typeof certificates)[number]['entity']
+
+  const getEntityName = (entity: EntitySummary) => {
     if (entity.entityType === 'INDIVIDUAL') {
       return `${entity.firstName || ''} ${entity.lastName || ''}`.trim() || entity.email
     }

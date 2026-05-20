@@ -207,7 +207,13 @@ export async function POST(req: NextRequest) {
         BUSINESS: 999999,
         ENTERPRISE: 999999,
       }
-      const planName = (user as any).plan || 'ESSENTIEL'
+      const planName =
+        (
+          await prisma.subscription.findUnique({
+            where: { userId: user.id },
+            select: { plan: true },
+          })
+        )?.plan ?? 'ESSENTIEL'
       maxCertificates = planLimits[planName] || 1
     }
 

@@ -47,12 +47,13 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json({ users: formatted })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Admin users list error:', error)
+    const message = error instanceof Error ? error.message : undefined
     return NextResponse.json(
       {
         error: 'Erreur lors de la récupération des utilisateurs',
-        details: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+        details: process.env.NODE_ENV === 'development' ? message : undefined,
       },
       { status: 500 }
     )

@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/app/lib/auth-server';
 import { prisma } from '@/app/lib/db';
+import { Prisma } from '@prisma/client';
 import { z } from 'zod';
 import { checkEntityQuota } from '@/lib/checkQuota';
 import { validateWalletPair } from '@/lib/wallet-validation';
@@ -140,7 +141,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Préparer les données selon le type
-    let entityData: any;
+    let entityData: Prisma.EntityUncheckedCreateInput;
 
     if (data.entityType === 'INDIVIDUAL') {
       // Vérifier si un particulier avec cet email existe déjà
@@ -298,18 +299,21 @@ export async function POST(req: NextRequest) {
         status: certificate.status,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Entity creation error:', error);
 
-    if (error.code === 'P2002') {
-      // Violation de contrainte unique
-      if (error.meta?.target?.includes('siret')) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    ) {
+      const target = error.meta?.target;
+      if (Array.isArray(target) && target.includes('siret')) {
         return NextResponse.json(
           { error: 'Ce SIRET est déjà enregistré' },
           { status: 409 }
         );
       }
-      if (error.meta?.target?.includes('email')) {
+      if (Array.isArray(target) && target.includes('email')) {
         return NextResponse.json(
           { error: 'Cet email est déjà utilisé' },
           { status: 409 }
@@ -317,10 +321,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const message = error instanceof Error ? error.message : undefined;
     return NextResponse.json(
       {
         error: 'Erreur lors de la création de l\'entité',
-        details: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+        details: process.env.NODE_ENV === 'development' ? message : undefined,
       },
       { status: 500 }
     );

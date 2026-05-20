@@ -66,8 +66,8 @@ export default function BillingPage() {
       
       const subscriptionData = await response.json()
       setData(subscriptionData)
-    } catch (err: any) {
-      setError(err.message || 'Erreur inconnue')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setLoading(false)
     }
@@ -106,8 +106,8 @@ export default function BillingPage() {
       if (url) {
         window.location.href = url
       }
-    } catch (err: any) {
-      alert(err.message || 'Erreur lors de l\'ouverture du portail')
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Erreur lors de l\'ouverture du portail')
       setPortalLoading(false)
     }
   }

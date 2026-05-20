@@ -65,7 +65,11 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
 
     // Legacy: Entity-based
-    const userPlan = user.plan || (user as any).plan
+    const subscription = await prisma.subscription.findUnique({
+      where: { userId: user.id },
+      select: { plan: true },
+    })
+    const userPlan = user.plan ?? subscription?.plan ?? 'ESSENTIEL'
     if (!checkPlanFeature(userPlan, 'trustCircle')) {
       return NextResponse.json(
         { error: 'Trust Circle non disponible avec votre plan', code: 'PLAN_LIMIT' },

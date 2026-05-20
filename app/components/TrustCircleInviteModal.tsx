@@ -14,6 +14,8 @@ interface TrustCircleInviteModalProps {
   userEntities: Array<{ id: string; name: string; entityType: string }>
 }
 
+type TrustCircleEntityType = 'INDIVIDUAL' | 'BUSINESS' | 'DOMAIN' | 'EMAIL'
+
 export default function TrustCircleInviteModal({
   isOpen,
   onClose,
@@ -22,7 +24,7 @@ export default function TrustCircleInviteModal({
 }: TrustCircleInviteModalProps) {
   const [toEmail, setToEmail] = useState('')
   const [toName, setToName] = useState('')
-  const [entityType, setEntityType] = useState<'INDIVIDUAL' | 'BUSINESS' | 'DOMAIN' | 'EMAIL'>('INDIVIDUAL')
+  const [entityType, setEntityType] = useState<TrustCircleEntityType>('INDIVIDUAL')
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -60,8 +62,8 @@ export default function TrustCircleInviteModal({
       setToEmail('')
       setToName('')
       setNote('')
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erreur inconnue')
     } finally {
       setLoading(false)
     }
@@ -118,7 +120,7 @@ export default function TrustCircleInviteModal({
             <label className="mb-2 block text-sm font-medium text-white/70">Type de contact</label>
             <select
               value={entityType}
-              onChange={(e) => setEntityType(e.target.value as any)}
+              onChange={(e) => setEntityType(e.target.value as TrustCircleEntityType)}
               className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-bt-cyan/40"
             >
               <option value="INDIVIDUAL">Particulier</option>

@@ -140,13 +140,14 @@ export default async function SubscriptionPage() {
         </div>
       </div>
     )
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Erreur dans SubscriptionPage:', error)
+    const message = error instanceof Error ? error.message : 'Une erreur inattendue s\'est produite'
     return (
       <div className="p-8">
         <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4">
           <p className="text-red-400 font-semibold mb-2">Erreur lors du chargement</p>
-          <p className="text-red-300 text-sm">{error?.message || 'Une erreur inattendue s\'est produite'}</p>
+          <p className="text-red-300 text-sm">{message}</p>
         </div>
       </div>
     )

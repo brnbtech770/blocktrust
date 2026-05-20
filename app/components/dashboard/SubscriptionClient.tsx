@@ -30,8 +30,9 @@ export default function SubscriptionClient() {
       if (data.url) {
         window.location.href = data.url
       }
-    } catch (error: any) {
-      alert(`Erreur : ${error.message}`)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erreur inconnue'
+      alert(`Erreur : ${message}`)
       setLoading(false)
     }
   }

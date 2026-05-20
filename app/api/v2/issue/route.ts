@@ -87,7 +87,8 @@ export async function POST(req: NextRequest) {
     const verifyUrl = `${baseUrl}/verify?token=${encodeURIComponent(token)}`;
 
     return NextResponse.json({ token, verifyUrl, signatureId: signature.id });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || "issue_failed" }, { status: 500 });
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'issue_failed'
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -37,7 +37,11 @@ export async function POST(req: NextRequest) {
     const { fromEntityId, toEmail, relationshipType, message } = parsed.data
 
     // Vérifier si Trust Circle est activé pour ce plan
-    const userPlan = user.plan || (user as any).plan // Support ancien et nouveau format
+    const subscription = await prisma.subscription.findUnique({
+      where: { userId: user.id },
+      select: { plan: true },
+    })
+    const userPlan = user.plan ?? subscription?.plan ?? 'ESSENTIEL'
     if (!checkPlanFeature(userPlan, 'trustCircle')) {
       return NextResponse.json(
         { error: 'Trust Circle non disponible avec votre plan', code: 'PLAN_LIMIT' },

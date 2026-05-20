@@ -55,8 +55,9 @@ export default function DashboardCertificatesList({ certificates }: DashboardCer
 
       // Rafraîchir la page
       router.refresh()
-    } catch (error: any) {
-      alert(`Erreur : ${error.message}`)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erreur inconnue'
+      alert(`Erreur : ${message}`)
     } finally {
       setRevokingId(null)
     }

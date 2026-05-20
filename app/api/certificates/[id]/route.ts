@@ -164,12 +164,13 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       previousStatus: currentStatus,
       newStatus,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Certificate action error:', error);
+    const message = error instanceof Error ? error.message : undefined;
     return NextResponse.json(
       {
         error: 'Erreur lors de la mise à jour du certificat',
-        details: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+        details: process.env.NODE_ENV === 'development' ? message : undefined,
       },
       { status: 500 }
     );

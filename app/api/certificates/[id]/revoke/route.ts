@@ -123,7 +123,7 @@ export async function POST(
         revokedAt: revoked.revokedAt,
       },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Certificate revoke error:', error)
     return NextResponse.json(
       { error: 'Erreur lors de la révocation du certificat' },

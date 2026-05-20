@@ -259,8 +259,9 @@ export async function retryFailedAnchors(max = 25): Promise<RetryAnchorsResult> 
       }).catch(() => undefined)
       notifyAnchorSuccess(cert.id, anchor).catch(() => undefined)
       anchored += 1
-    } catch (err: any) {
-      console.error('[Polygon] retry échec', cert.id, ':', err?.message ?? err)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error('[Polygon] retry échec', cert.id, ':', message)
       await prisma.certificate
         .update({
           where: { id: cert.id },

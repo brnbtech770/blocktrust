@@ -108,8 +108,9 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
       blockNumber: anchor.blockNumber,
       explorerUrl: anchor.explorerUrl,
     })
-  } catch (err: any) {
-    console.error('[Polygon] Retry échoué pour', id, ':', err?.message ?? err)
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[Polygon] Retry échoué pour', id, ':', message)
     await prisma.certificate
       .update({
         where: { id },
@@ -120,7 +121,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
       {
         error: 'Ancrage échoué',
         details:
-          process.env.NODE_ENV === 'development' ? (err?.message ?? String(err)) : undefined,
+          process.env.NODE_ENV === 'development' ? message : undefined,
       },
       { status: 500 }
     )

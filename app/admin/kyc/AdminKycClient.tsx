@@ -44,8 +44,8 @@ export default function AdminKycClient({ users }: { users: User[] }) {
       const res = await fetch(`/api/admin/kyc/${userId}/approve`, { method: 'PATCH', credentials: 'include' })
       if (!res.ok) throw new Error(await res.text())
       window.location.reload()
-    } catch (e: any) {
-      alert(e.message)
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Erreur inconnue')
     }
   }
 
@@ -66,8 +66,8 @@ export default function AdminKycClient({ users }: { users: User[] }) {
       setRejecting(null)
       setRejectReason('')
       window.location.reload()
-    } catch (e: any) {
-      alert(e.message)
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Erreur inconnue')
       setRejecting(null)
     }
   }

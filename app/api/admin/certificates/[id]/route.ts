@@ -173,12 +173,13 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       previousStatus: currentStatus,
       newStatus,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Admin certificate action error:', error)
+    const message = error instanceof Error ? error.message : undefined
     return NextResponse.json(
       {
         error: 'Erreur lors de la mise à jour du certificat',
-        details: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+        details: process.env.NODE_ENV === 'development' ? message : undefined,
       },
       { status: 500 }
     )
@@ -236,8 +237,9 @@ async function triggerPolygonAnchor(certificateId: string): Promise<void> {
       },
     })
     notifyAnchorSuccess(certificateId, anchor).catch(() => undefined)
-  } catch (err: any) {
-    console.error('[Polygon] Ancrage échoué pour', certificateId, ':', err?.message ?? err)
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[Polygon] Ancrage échoué pour', certificateId, ':', message)
     await prisma.certificate
       .update({
         where: { id: certificateId },

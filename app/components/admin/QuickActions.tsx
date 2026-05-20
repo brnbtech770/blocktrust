@@ -80,9 +80,10 @@ export default function QuickActions({ certificateId, currentStatus, blockchainS
       setShowRevokeModal(false)
       setRevokeReason('')
       setPendingAction(null)
-    } catch (err: any) {
-      setError(err.message)
-      alert(`Erreur: ${err.message}`)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erreur inconnue'
+      setError(message)
+      alert(`Erreur: ${message}`)
     } finally {
       setLoading(false)
     }

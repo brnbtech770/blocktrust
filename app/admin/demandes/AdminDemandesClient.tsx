@@ -34,8 +34,8 @@ export default function AdminDemandesClient({ entries }: { entries: Entry[] }) {
       const res = await fetch(`/api/admin/demandes/${id}/approve`, { method: 'PATCH', credentials: 'include' })
       if (!res.ok) throw new Error(await res.text())
       window.location.reload()
-    } catch (e: any) {
-      alert(e.message)
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Erreur inconnue')
     }
   }
 
@@ -51,8 +51,8 @@ export default function AdminDemandesClient({ entries }: { entries: Entry[] }) {
       })
       if (!res.ok) throw new Error(await res.text())
       window.location.reload()
-    } catch (e: any) {
-      alert(e.message)
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Erreur inconnue')
     }
   }
 
