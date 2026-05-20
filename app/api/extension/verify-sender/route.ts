@@ -10,6 +10,7 @@ import {
   buildExtensionVerifyResult,
   normalizeSenderDomain,
   normalizeSenderEmail,
+  type ExtensionVerifyContext,
 } from "@/lib/extension-verify-sender";
 import { getCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
@@ -52,7 +53,7 @@ export async function GET(req: NextRequest) {
   const domainNorm = normalizeSenderDomain(domainRaw);
   const cacheKey =
     emailNorm || domainNorm
-      ? `bt:ext:verify:v1:${userId}:${emailNorm}:${domainNorm}`
+      ? `bt:ext:verify:v2:${userId}:${emailNorm}:${domainNorm}`
       : null;
 
   if (redis && cacheKey) {
@@ -67,15 +68,70 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const entities = await prisma.entity.findMany({
-    where: { userId },
-    include: {
-      certificates: { orderBy: { issuedAt: "desc" } },
-      trustScore: { select: { score: true } },
-    },
-  });
+  const entityInclude = {
+    certificates: { orderBy: { issuedAt: "desc" as const } },
+    trustScore: { select: { score: true } },
+  };
 
-  const payload = buildExtensionVerifyResult(entities, emailRaw, domainRaw, BASE_URL);
+  const [userProfile, trustRelations, ownEntities] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { certifiedEmails: true, certifiedDomains: true },
+    }),
+    prisma.userTrustRelation.findMany({
+      where: {
+        fromUserId: userId,
+        status: { in: ["CONFIRMED", "PENDING"] },
+      },
+      select: { toUserId: true, toEmail: true },
+    }),
+    prisma.entity.findMany({
+      where: { userId },
+      include: entityInclude,
+    }),
+  ]);
+
+  const partnerUserIds = [
+    ...new Set(
+      trustRelations
+        .map((r) => r.toUserId)
+        .filter((id): id is string => typeof id === "string" && id.length > 0),
+    ),
+  ];
+
+  const partnerEntities =
+    partnerUserIds.length > 0
+      ? await prisma.entity.findMany({
+          where: { userId: { in: partnerUserIds } },
+          include: entityInclude,
+        })
+      : [];
+
+  const seenEntityIds = new Set(ownEntities.map((e) => e.id));
+  const entities = [
+    ...ownEntities,
+    ...partnerEntities.filter((e) => {
+      if (seenEntityIds.has(e.id)) return false;
+      seenEntityIds.add(e.id);
+      return true;
+    }),
+  ];
+
+  const verifyContext: ExtensionVerifyContext = {
+    userCertifiedEmails: userProfile?.certifiedEmails ?? [],
+    userCertifiedDomains: userProfile?.certifiedDomains ?? [],
+    trustRelationEmails: trustRelations
+      .map((r) => r.toEmail)
+      .filter((e): e is string => Boolean(e?.trim())),
+  };
+
+  const payload = buildExtensionVerifyResult(
+    entities,
+    emailRaw,
+    domainRaw,
+    BASE_URL,
+    verifyContext,
+  );
 
   if (redis && cacheKey) {
     try {

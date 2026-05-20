@@ -6,6 +6,7 @@ const API_BASE = "https://blocktrust.tech";
 
 const el = {
   statusBar: document.getElementById("extension-status-bar"),
+  loading: document.getElementById("loading"),
   notConnected: document.getElementById("not-connected"),
   connected: document.getElementById("connected"),
   statusMsg: document.getElementById("status-msg"),
@@ -32,8 +33,33 @@ function hideStatus() {
 }
 
 function showPanel(mode) {
+  if (el.loading) el.loading.classList.toggle("hidden", mode !== "loading");
   if (el.notConnected) el.notConnected.classList.toggle("hidden", mode !== "not-connected");
   if (el.connected) el.connected.classList.toggle("hidden", mode !== "connected");
+}
+
+function showLoadingState() {
+  showPanel("loading");
+  if (!el.statusBar) return;
+  el.statusBar.classList.remove(
+    "extension-status-bar--active",
+    "extension-status-bar--idle",
+    "extension-status-bar--disconnected"
+  );
+  el.statusBar.classList.add("extension-status-bar--loading");
+  el.statusBar.textContent = "Chargement…";
+}
+
+function showDisconnectedState() {
+  showPanel("not-connected");
+  refreshStatusBar(false);
+}
+
+function showConnectedState(data) {
+  fillConnectedUI(data);
+  showPanel("connected");
+  hideStatus();
+  refreshStatusBar(true);
 }
 
 /**
@@ -44,6 +70,7 @@ function showPanel(mode) {
 function updateStatusBar(isGmail, isConnected) {
   if (!el.statusBar) return;
   el.statusBar.classList.remove(
+    "extension-status-bar--loading",
     "extension-status-bar--active",
     "extension-status-bar--idle",
     "extension-status-bar--disconnected"
@@ -123,19 +150,15 @@ function fillConnectedUI(data) {
 }
 
 async function refreshConnectedView() {
+  showLoadingState();
   const key = await getStoredApiKey();
   if (!key) {
-    showPanel("not-connected");
-    hideStatus();
-    refreshStatusBar(false);
+    showDisconnectedState();
     return;
   }
   try {
     const data = await fetchMe(key);
-    fillConnectedUI(data);
-    showPanel("connected");
-    hideStatus();
-    refreshStatusBar(true);
+    showConnectedState(data);
   } catch (e) {
     console.warn("[TrustScan] /me:", e);
     const msg = e.message || "Session invalide — reconnectez-vous.";
@@ -143,8 +166,7 @@ async function refreshConnectedView() {
     await new Promise((resolve) => {
       chrome.storage.local.remove(["apiKey"], resolve);
     });
-    showPanel("not-connected");
-    refreshStatusBar(false);
+    showDisconnectedState();
   }
 }
 
@@ -161,8 +183,8 @@ async function onConnect() {
     return;
   }
   if (el.connectBtn) el.connectBtn.disabled = true;
+  showLoadingState();
   try {
-    // 1) Valider auprès du serveur avant stockage local
     const data = await fetchMe(key);
     await new Promise((resolve, reject) => {
       chrome.storage.local.set({ apiKey: key }, () => {
@@ -170,12 +192,10 @@ async function onConnect() {
         else resolve();
       });
     });
-    fillConnectedUI(data);
     if (el.apiKeyInput) el.apiKeyInput.value = "";
-    showPanel("connected");
-    hideStatus();
-    refreshStatusBar(true);
+    showConnectedState(data);
   } catch (e) {
+    showDisconnectedState();
     showStatus(e.message || "Échec de la connexion — clé refusée par BLOCKTRUST.", true);
   } finally {
     if (el.connectBtn) el.connectBtn.disabled = false;
@@ -186,19 +206,30 @@ function onDisconnect() {
   hideStatus();
   chrome.storage.local.remove(["apiKey"], () => {
     if (el.apiKeyInput) el.apiKeyInput.value = "";
-    showPanel("not-connected");
-    refreshStatusBar(false);
+    showDisconnectedState();
   });
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const key = await getStoredApiKey();
-  if (key && looksLikeExtensionKey(key)) {
-    await refreshConnectedView();
-  } else {
-    showPanel("not-connected");
-    refreshStatusBar(false);
-  }
+document.addEventListener("DOMContentLoaded", () => {
+  showLoadingState();
+
+  chrome.storage.local.get(["apiKey"], async (data) => {
+    const key = data.apiKey;
+    if (key && looksLikeExtensionKey(key)) {
+      try {
+        const user = await fetchMe(key);
+        showConnectedState(user);
+      } catch (e) {
+        console.warn("[TrustScan] /me:", e);
+        await new Promise((resolve) => {
+          chrome.storage.local.remove(["apiKey"], resolve);
+        });
+        showDisconnectedState();
+      }
+    } else {
+      showDisconnectedState();
+    }
+  });
 
   if (el.connectBtn) el.connectBtn.addEventListener("click", onConnect);
   if (el.disconnectBtn) el.disconnectBtn.addEventListener("click", onDisconnect);

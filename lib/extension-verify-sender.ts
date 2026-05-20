@@ -24,6 +24,12 @@ type EntityWithCerts = Entity & {
   trustScore: { score: number } | null;
 };
 
+export type ExtensionVerifyContext = {
+  userCertifiedEmails: string[];
+  userCertifiedDomains: string[];
+  trustRelationEmails: string[];
+};
+
 export function normalizeSenderEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -84,6 +90,40 @@ function certIsFullyActive(c: Certificate, now: Date): boolean {
   return c.status === "ACTIVE" || c.status === "ANCHORED";
 }
 
+function senderMatchesUserCertified(
+  emailNorm: string,
+  domainNorm: string,
+  ctx: ExtensionVerifyContext,
+): boolean {
+  if (emailNorm && ctx.userCertifiedEmails.some((x) => x.toLowerCase() === emailNorm)) return true;
+  if (domainNorm && ctx.userCertifiedDomains.some((d) => normalizeSenderDomain(d) === domainNorm)) {
+    return true;
+  }
+  return false;
+}
+
+function senderMatchesTrustRelationEmail(emailNorm: string, ctx: ExtensionVerifyContext): boolean {
+  if (!emailNorm) return false;
+  return ctx.trustRelationEmails.some((x) => x.toLowerCase() === emailNorm);
+}
+
+function inContactsFallbackPayload(
+  emailNorm: string,
+  domainNorm: string,
+  message: string,
+): ExtensionVerifyPayload {
+  return {
+    verified: false,
+    status: "IN_CONTACTS",
+    entityName: emailNorm || domainNorm || null,
+    trustScore: null,
+    badgeUrl: null,
+    certifiedDomains: [],
+    certifiedEmails: emailNorm ? [emailNorm] : [],
+    message,
+  };
+}
+
 function certIsFraudish(c: Certificate, now: Date): boolean {
   if (c.status === "REVOKED" || c.status === "SUSPENDED" || c.status === "EXPIRED") return true;
   if (c.expiresAt && c.expiresAt < now) return true;
@@ -95,10 +135,16 @@ export function buildExtensionVerifyResult(
   emailRaw: string,
   domainRaw: string,
   baseUrl: string,
+  context?: ExtensionVerifyContext,
 ): ExtensionVerifyPayload {
   const emailNorm = normalizeSenderEmail(emailRaw);
   const domainNorm = normalizeSenderDomain(domainRaw);
   const now = new Date();
+  const ctx: ExtensionVerifyContext = context ?? {
+    userCertifiedEmails: [],
+    userCertifiedDomains: [],
+    trustRelationEmails: [],
+  };
 
   if (!emailNorm && !domainNorm) {
     return {
@@ -115,6 +161,20 @@ export function buildExtensionVerifyResult(
 
   const matches = entities.filter((e) => entityMatchesSender(e, emailNorm, domainNorm));
   if (matches.length === 0) {
+    if (senderMatchesTrustRelationEmail(emailNorm, ctx)) {
+      return inContactsFallbackPayload(
+        emailNorm,
+        domainNorm,
+        "Contact présent dans votre Trust Circle.",
+      );
+    }
+    if (senderMatchesUserCertified(emailNorm, domainNorm, ctx)) {
+      return inContactsFallbackPayload(
+        emailNorm,
+        domainNorm,
+        "Email ou domaine présent dans vos coordonnées certifiées.",
+      );
+    }
     return {
       verified: false,
       status: "UNKNOWN",
