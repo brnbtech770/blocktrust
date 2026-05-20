@@ -116,10 +116,10 @@ export async function POST(req: NextRequest) {
           data: { status: 'REQUIRES_INPUT' },
         })
         let verificationUrl: string | undefined = vs.url
-        if (!verificationUrl && (stripe as any).identity?.verificationSessions?.retrieve) {
+        if (!verificationUrl) {
           try {
-            const session = await (stripe as any).identity.verificationSessions.retrieve(vs.id)
-            verificationUrl = session?.url
+            const session = await stripe.identity.verificationSessions.retrieve(vs.id)
+            verificationUrl = session.url ?? undefined
           } catch {
             // ignore
           }

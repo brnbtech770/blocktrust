@@ -205,9 +205,10 @@ export async function POST(req: NextRequest) {
 
   try {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
     btError(
-      `❌ Webhook signature verification failed: ${err?.message ?? err}`,
+      `❌ Webhook signature verification failed: ${message}`,
       'Webhook signature verification failed'
     )
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
@@ -266,17 +267,24 @@ export async function POST(req: NextRequest) {
       }
 
       case 'checkout.session.completed': {
-        const session = event.data.object as any
+        const session = event.data.object as Stripe.Checkout.Session
 
         if (session.mode === 'subscription' && session.subscription) {
           const subscription = await stripe.subscriptions.retrieve(
-            session.subscription as string
+            typeof session.subscription === 'string'
+              ? session.subscription
+              : session.subscription.id
           )
-          const sub = subscription as unknown as { current_period_end: number; id: string; status: string; items: { data: { price: { id: string } }[] }; latest_invoice?: string }
+          const sub = subscription
 
-          const customerId = session.customer as string
+          const customerId =
+            typeof session.customer === 'string'
+              ? session.customer
+              : session.customer?.id
+          if (!customerId) break
+
           const priceId = sub.items.data[0]?.price.id
-          const plan = mapPriceIdToPlan(priceId)
+          const plan = mapPriceIdToPlan(priceId ?? '')
 
           // Trouver l'utilisateur
           const user = await prisma.user.findFirst({
@@ -291,7 +299,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'User not found' }, { status: 500 })
           }
 
-          const currentPeriodEnd = new Date(sub.current_period_end * 1000)
+          const currentPeriodEnd = new Date(
+            (sub as unknown as { current_period_end: number }).current_period_end * 1000
+          )
           await prisma.subscription.upsert({
             where: { userId: user.id },
             create: {
@@ -389,7 +399,7 @@ export async function POST(req: NextRequest) {
       // SUBSCRIPTION DELETED
       // ─────────────────────────────────────────────
       case 'customer.subscription.deleted': {
-        const subscription = event.data.object as any
+        const subscription = event.data.object as Stripe.Subscription
         const customerId = subscription.customer as string
 
         // Mettre à jour la subscription
@@ -412,10 +422,14 @@ export async function POST(req: NextRequest) {
       // SUBSCRIPTION UPDATED
       // ─────────────────────────────────────────────
       case 'customer.subscription.updated': {
-        const subscription = event.data.object as any
-        const customerId = subscription.customer as string
+        const subscription = event.data.object as Stripe.Subscription
+        const customerId =
+          typeof subscription.customer === 'string'
+            ? subscription.customer
+            : subscription.customer?.id
+        if (!customerId) break
         const priceId = subscription.items.data[0]?.price.id
-        const plan = mapPriceIdToPlan(priceId)
+        const plan = mapPriceIdToPlan(priceId ?? '')
 
         // Mettre à jour la subscription
         await prisma.subscription.updateMany({
@@ -424,7 +438,9 @@ export async function POST(req: NextRequest) {
             stripePriceId: priceId,
             plan,
             status: subscription.status === 'active' ? 'active' : 'inactive',
-            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            currentPeriodEnd: new Date(
+              (subscription as unknown as { current_period_end: number }).current_period_end * 1000
+            ),
           },
         })
 
@@ -492,11 +508,13 @@ export async function POST(req: NextRequest) {
           data:  { status: 'REQUIRES_INPUT' },
         })
         let verificationUrl: string | undefined = vs.url
-        if (!verificationUrl && (stripe as any).identity?.verificationSessions?.retrieve) {
+        if (!verificationUrl) {
           try {
-            const session = await (stripe as any).identity.verificationSessions.retrieve(vs.id)
-            verificationUrl = session?.url ?? undefined
-          } catch (_) {}
+            const session = await stripe.identity.verificationSessions.retrieve(vs.id)
+            verificationUrl = session.url ?? undefined
+          } catch {
+            /* ignore */
+          }
         }
         const { sendKYCRetryEmail } = await import('@/lib/kyc-email')
         await sendKYCRetryEmail(userId, verificationUrl)
@@ -522,7 +540,7 @@ export async function POST(req: NextRequest) {
     await stripeWebhookMarkHandled(event.id)
 
     return NextResponse.json({ received: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
     btErrorDevDetails(error, 'Stripe webhook handler error')
     return NextResponse.json(
       { error: 'Webhook handler failed' },

@@ -76,7 +76,13 @@ export async function GET(req: NextRequest) {
       }
       
       // Essayer de récupérer le plan depuis user.plan (ancien format String)
-      const planName = (userWithPlan as any).plan || 'ESSENTIEL'
+      const planName =
+        (
+          await prisma.subscription.findUnique({
+            where: { userId: user.id },
+            select: { plan: true },
+          })
+        )?.plan ?? 'ESSENTIEL'
       limits = planLimits[planName] || planLimits.ESSENTIEL
     }
 
@@ -119,7 +125,9 @@ export async function GET(req: NextRequest) {
     }
 
     // Calculer les infos utiles
-    const currentPeriodEnd = new Date((subscription as any).current_period_end * 1000)
+    const currentPeriodEnd = new Date(
+      (subscription as unknown as { current_period_end: number }).current_period_end * 1000
+    )
     const trialEnd = subscription.trial_end
       ? new Date(subscription.trial_end * 1000)
       : null
@@ -144,17 +152,18 @@ export async function GET(req: NextRequest) {
       },
       limits,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Subscription status error:', error)
+    const err = error instanceof Error ? error : new Error(String(error))
     console.error('Error details:', {
-      message: error?.message,
-      stack: error?.stack,
-      name: error?.name,
+      message: err.message,
+      stack: err.stack,
+      name: err.name,
     })
     return NextResponse.json(
       { 
         error: 'Erreur récupération abonnement',
-        details: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+        details: process.env.NODE_ENV === 'development' ? err.message : undefined,
       },
       { status: 500 }
     )

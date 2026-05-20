@@ -193,10 +193,11 @@ export async function POST(req: NextRequest) {
       sessionId: session.id,
       url: session.url,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erreur création session Stripe:", error);
+    const message = error instanceof Error ? error.message : "Erreur lors de la création de la session";
     return NextResponse.json(
-      { error: error.message || "Erreur lors de la création de la session" },
+      { error: message },
       { status: 500 }
     );
   }

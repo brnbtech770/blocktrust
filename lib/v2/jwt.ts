@@ -15,7 +15,7 @@ function requiredEnv(name: string) {
  * - BLOCKTRUST_JWT_PRIVATE_KEY (PEM PKCS8)
  * - BLOCKTRUST_JWT_PUBLIC_KEY  (PEM SPKI)
  */
-export async function signToken(payload: Record<string, any>, expiresInSeconds: number) {
+export async function signToken(payload: Record<string, unknown>, expiresInSeconds: number) {
   try {
     const privateKeyPem = requiredEnv("BLOCKTRUST_JWT_PRIVATE_KEY").replace(/\\n/g, "\n");
     const privateKey = await importPKCS8(privateKeyPem, ALG);
@@ -28,11 +28,12 @@ export async function signToken(payload: Record<string, any>, expiresInSeconds: 
       .setIssuer("blocktrust")
       .setAudience("blocktrust.verify")
       .sign(privateKey);
-  } catch (error: any) {
-    if (error.message?.includes("Missing required environment variable")) {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes("Missing required environment variable")) {
       throw error;
     }
-    throw new Error(`Failed to sign token: ${error.message || "Unknown error"}`);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Failed to sign token: ${message}`);
   }
 }
 
@@ -45,10 +46,11 @@ export async function verifyToken(token: string) {
       audience: "blocktrust.verify",
     });
     return payload;
-  } catch (error: any) {
-    if (error.message?.includes("Missing required environment variable")) {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message.includes("Missing required environment variable")) {
       throw error;
     }
-    throw new Error(`Failed to verify token: ${error.message || "Unknown error"}`);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`Failed to verify token: ${message}`);
   }
 }

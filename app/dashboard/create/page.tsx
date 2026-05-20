@@ -40,6 +40,8 @@ const businessSchema = z.object({
 type IndividualData = z.infer<typeof individualSchema>;
 type BusinessData = z.infer<typeof businessSchema>;
 
+type CreatedResource = Record<string, unknown>;
+
 /** SIRET : uniquement des chiffres, max 14 (espaces et autres caractères retirés à la saisie). */
 function normalizeSiretInput(raw: string): string {
   return raw.replace(/\D/g, "").slice(0, 14);
@@ -85,8 +87,8 @@ export default function CreateCertificate() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [createdEntity, setCreatedEntity] = useState<any>(null);
-  const [createdCertificate, setCreatedCertificate] = useState<any>(null);
+  const [createdEntity, setCreatedEntity] = useState<CreatedResource | null>(null);
+  const [createdCertificate, setCreatedCertificate] = useState<CreatedResource | null>(null);
   const [certQuota, setCertQuota] = useState<{
     allowed: boolean;
     plan: string;
@@ -229,10 +231,9 @@ export default function CreateCertificate() {
         });
       }
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err instanceof z.ZodError) {
-        const issues = (err as { issues?: Array<{ message?: string }> }).issues;
-        const firstError = issues?.[0];
+        const firstError = err.issues[0];
         setError(firstError?.message || "Veuillez corriger les erreurs du formulaire");
       } else {
         setError("Erreur de validation");
@@ -256,7 +257,7 @@ export default function CreateCertificate() {
 
     try {
       // Préparer les données selon le type
-      let entityPayload: any;
+      let entityPayload: Record<string, unknown>;
 
       if (entityType === "INDIVIDUAL") {
         entityPayload = {
@@ -337,9 +338,9 @@ export default function CreateCertificate() {
       
       // Rediriger vers le dashboard avec message de succès
       router.push("/dashboard?success=true&certificateCreated=true");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Erreur:", err);
-      setError(err.message || "Une erreur est survenue");
+      setError(err instanceof Error ? err.message : "Une erreur est survenue");
     } finally {
       setLoading(false);
     }

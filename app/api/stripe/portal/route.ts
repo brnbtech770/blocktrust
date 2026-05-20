@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ url: portalSession.url })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Portal session error:', error)
     return NextResponse.json(
       { error: 'Erreur création portail' },

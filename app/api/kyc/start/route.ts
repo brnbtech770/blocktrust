@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const verificationSession =
-      await (stripe as any).identity.verificationSessions.create({
+      await stripe.identity.verificationSessions.create({
         type: 'document',
         metadata: {
           userId:      session.user.id,
