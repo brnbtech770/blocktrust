@@ -252,22 +252,19 @@ export const authOptions: NextAuthConfig = {
       }
 
       if (token.sub && typeof token.email === "string" && isAdmin(token.email as string)) {
-        try {
-          const { ensureAdminBootstrapForSession } = await import(
-            "@/lib/admin-bootstrap"
-          );
-          await ensureAdminBootstrapForSession(
-            token.sub as string,
-            token.email as string,
-            typeof token.name === 'string' ? token.name : null
-          );
-        } catch (e) {
-          console.error("Bootstrap admin failed:", e);
-          // Ne pas bloquer la connexion
-        }
-        // Forcer le plan Enterprise en session pour les admins
         token.plan = "B2B_ENTERPRISE";
         token.planType = "B2B_ENTERPRISE";
+
+        if (!token.adminBootstrapped) {
+          token.adminBootstrapped = true;
+          import("@/lib/admin-bootstrap").then(({ ensureAdminBootstrapForSession }) =>
+            ensureAdminBootstrapForSession(
+              token.sub as string,
+              token.email as string,
+              typeof token.name === "string" ? token.name : null
+            ).catch((e) => console.error("Bootstrap silenced:", e))
+          );
+        }
       }
 
       return token;

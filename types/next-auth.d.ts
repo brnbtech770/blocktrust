@@ -28,6 +28,8 @@ declare module "next-auth/jwt" {
     plan?: string;
     /** Plan métier normalisé (ex. B2B_ENTERPRISE pour admins) */
     planType?: string;
+    /** Bootstrap admin déjà lancé pour cette session JWT */
+    adminBootstrapped?: boolean;
     kycStatus?: string;
     accountType?: string;
     cookieConsent?: boolean;
