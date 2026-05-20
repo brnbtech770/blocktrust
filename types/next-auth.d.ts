@@ -9,6 +9,7 @@ declare module "next-auth" {
       name?: string | null;
       image?: string | null;
       plan: string;
+      planType?: string;
       kycStatus?: string;
       accountType?: string;
       cookieConsent?: boolean;
@@ -30,6 +31,8 @@ declare module "next-auth/jwt" {
     planType?: string;
     /** Bootstrap admin déjà lancé pour cette session JWT */
     adminBootstrapped?: boolean;
+    /** Timestamp du dernier fetch plan depuis la DB */
+    planFetchedAt?: number;
     kycStatus?: string;
     accountType?: string;
     cookieConsent?: boolean;

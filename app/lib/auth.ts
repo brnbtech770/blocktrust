@@ -183,6 +183,7 @@ export const authOptions: NextAuthConfig = {
           (token as any).kycStatus = (user as any).kycStatus ?? 'PENDING';
           (token as any).accountType = (user as any).accountType ?? 'PERSONAL';
           (token as any).cookieConsent = (user as any).cookieConsent ?? false;
+          token.planFetchedAt = Date.now();
         } else {
           // Connexion Google/OAuth — user vient de l'adapter (id DB + email)
           // Fallback immédiat : toujours peupler le token avec les infos OAuth disponibles
@@ -202,6 +203,18 @@ export const authOptions: NextAuthConfig = {
               (token as any).kycStatus = (dbUser as any).kycStatus ?? "PENDING";
               (token as any).accountType = dbUser.accountType ?? "PERSONAL";
               (token as any).cookieConsent = dbUser.cookieConsent ?? false;
+
+              const oauthEmail = dbUser.email ?? user.email;
+              if (oauthEmail && !isAdmin(oauthEmail)) {
+                const subscription = await prisma.subscription
+                  .findUnique({
+                    where: { userId: dbUser.id },
+                    select: { plan: true },
+                  })
+                  .catch(() => null);
+                (token as any).plan = subscription?.plan ?? "ESSENTIEL";
+                token.planFetchedAt = Date.now();
+              }
             } else {
               console.error("[JWT OAuth] impossible de résoudre User en base", {
                 userId: (user as any).id,
@@ -215,56 +228,62 @@ export const authOptions: NextAuthConfig = {
           }
         }
       }
-      // Rafraîchir plan + KYC uniquement quand ce n’est pas le premier JWT de cette connexion :
-      // si `user` est défini, on vient déjà de peupler le token (OAuth + resolveDbUserAfterOAuth).
-      // Éviter un second bloc Prisma ici réduit la charge au cold start Vercel (timeouts / session vide).
+      // Rafraîchir plan + profil uniquement si cache expiré (> 1 h) — évite Prisma à chaque requête.
       if (token.sub && !user) {
-        try {
-          const [sub, dbUser] = await Promise.all([
-            prisma.subscription.findUnique({
-              where: { userId: token.sub },
-              select: { plan: true },
-            }),
-            prisma.user.findUnique({
-              where: { id: token.sub },
-              select: {
-                email: true,
-                kycStatus: true,
-                accountType: true,
-                cookieConsent: true,
-              },
-            }),
-          ]);
-          (token as any).plan = sub?.plan ?? null;
-          if (dbUser) {
-            if (dbUser.email) {
-              token.email = dbUser.email;
+        const email = typeof token.email === "string" ? token.email : null;
+        const isAdminUser = email ? isAdmin(email) : false;
+
+        if (!isAdminUser) {
+          const planStale =
+            !token.planFetchedAt || Date.now() - token.planFetchedAt > 3_600_000;
+
+          if (planStale) {
+            const dbUser = await prisma.user
+              .findUnique({
+                where: { id: token.sub },
+                select: {
+                  email: true,
+                  kycStatus: true,
+                  accountType: true,
+                  cookieConsent: true,
+                  subscription: {
+                    select: { plan: true, status: true },
+                  },
+                },
+              })
+              .catch(() => null);
+
+            if (dbUser?.subscription?.plan) {
+              token.plan = dbUser.subscription.plan;
+            } else if (!token.plan) {
+              token.plan = "ESSENTIEL";
             }
-            (token as any).kycStatus = dbUser.kycStatus ?? 'PENDING';
-            (token as any).accountType = dbUser.accountType ?? 'PERSONAL';
-            (token as any).cookieConsent = dbUser.cookieConsent ?? false;
+            if (dbUser) {
+              if (dbUser.email) {
+                token.email = dbUser.email;
+              }
+              token.kycStatus = dbUser.kycStatus ?? "PENDING";
+              token.accountType = dbUser.accountType ?? "PERSONAL";
+              token.cookieConsent = dbUser.cookieConsent ?? false;
+            }
+            token.planFetchedAt = Date.now();
           }
-        } catch (err) {
-          console.error('[JWT callback error]', err);
-          (token as any).kycStatus = (token as any).kycStatus ?? 'PENDING';
-          (token as any).accountType = (token as any).accountType ?? 'PERSONAL';
         }
       }
 
       if (token.sub && typeof token.email === "string" && isAdmin(token.email as string)) {
-        token.plan = "B2B_ENTERPRISE";
-        token.planType = "B2B_ENTERPRISE";
-
         if (!token.adminBootstrapped) {
           token.adminBootstrapped = true;
           import("@/lib/admin-bootstrap").then(({ ensureAdminBootstrapForSession }) =>
             ensureAdminBootstrapForSession(
               token.sub as string,
               token.email as string,
-              typeof token.name === "string" ? token.name : null
-            ).catch((e) => console.error("Bootstrap silenced:", e))
+              typeof token.name === "string" ? token.name : ""
+            ).catch((e) => console.error("[Bootstrap] silenced:", e))
           );
         }
+        token.plan = "B2B_ENTERPRISE";
+        token.planType = "B2B_ENTERPRISE";
       }
 
       return token;
@@ -277,10 +296,11 @@ export const authOptions: NextAuthConfig = {
             ...session.user,
             id: (token.sub ?? (token as any).id ?? '') as string,
             email: session.user.email ?? token.email ?? '',
-            plan: (token as any).plan ?? 'ESSENTIEL',
-            kycStatus: (token as any).kycStatus ?? 'PENDING',
-            accountType: (token as any).accountType ?? 'PERSONAL',
-            cookieConsent: (token as any).cookieConsent ?? false,
+            plan: (token.plan ?? 'ESSENTIEL') as string,
+            planType: token.planType as string | undefined,
+            kycStatus: token.kycStatus ?? 'PENDING',
+            accountType: token.accountType ?? 'PERSONAL',
+            cookieConsent: token.cookieConsent ?? false,
           },
         };
       }
