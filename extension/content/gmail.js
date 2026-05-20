@@ -48,6 +48,7 @@ async function verifySender(email, domain) {
   if (verifyCache.has(cacheKey)) {
     const cached = verifyCache.get(cacheKey);
     if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      console.log("[BLOCKTRUST] Résultat API (cache):", cached.data);
       return cached.data;
     }
   }
@@ -62,13 +63,16 @@ async function verifySender(email, domain) {
     url.searchParams.set("apiKey", apiKey);
 
     const response = await fetch(url.toString());
+    const data = await response.json().catch(() => ({}));
+    console.log("[BLOCKTRUST] Status API:", response.status);
+    console.log("[BLOCKTRUST] Data:", data);
+
     if (!response.ok) return null;
 
-    const data = await response.json();
     verifyCache.set(cacheKey, { data, timestamp: Date.now() });
     return data;
   } catch (e) {
-    console.warn("[TrustScan] verify-sender erreur:", e);
+    console.warn("[BLOCKTRUST] verify-sender erreur:", e);
     return null;
   }
 }
@@ -82,44 +86,67 @@ function createVerifyBadge(result) {
   badge.className = "bt-trust-badge bt-badge";
   badge.setAttribute("role", "status");
   badge.title = result.message || result.status || "";
-  badge.style.cssText = [
-    "display:inline-flex",
-    "align-items:center",
-    "gap:4px",
-    "padding:2px 8px",
-    "border-radius:12px",
-    "font-size:11px",
-    "font-weight:600",
-    'font-family:Inter,system-ui,sans-serif',
-    "margin-left:8px",
-    "vertical-align:middle",
-    "border:1px solid",
-    "transition:opacity 0.2s",
-  ].join(";");
+  badge.style.cssText = `
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+    font-family: Inter, Arial, sans-serif;
+    vertical-align: middle;
+    cursor: default;
+    z-index: 9999;
+    position: relative;
+    line-height: 1.4;
+    white-space: nowrap;
+  `;
 
   if (result.status === "CERTIFIED") {
-    badge.style.background = "rgba(16, 185, 129, 0.12)";
-    badge.style.borderColor = "rgba(16, 185, 129, 0.45)";
+    badge.style.background = "rgba(16,185,129,0.15)";
+    badge.style.border = "1px solid rgba(16,185,129,0.4)";
     badge.style.color = "#10b981";
-    badge.textContent = "Certifié BLOCKTRUST";
+    badge.innerHTML = "✓ Certifié BLOCKTRUST™";
   } else if (result.status === "IN_CONTACTS") {
-    badge.style.background = "rgba(0, 212, 255, 0.1)";
-    badge.style.borderColor = "rgba(0, 212, 255, 0.35)";
+    badge.style.background = "rgba(0,212,255,0.1)";
+    badge.style.border = "1px solid rgba(0,212,255,0.3)";
     badge.style.color = "#00d4ff";
-    badge.textContent = "Dans vos contacts";
+    badge.innerHTML = "◎ Dans vos contacts";
   } else if (result.status === "FRAUD") {
-    badge.style.background = "rgba(239, 68, 68, 0.12)";
-    badge.style.borderColor = "rgba(239, 68, 68, 0.45)";
+    badge.style.background = "rgba(239,68,68,0.15)";
+    badge.style.border = "1px solid rgba(239,68,68,0.4)";
     badge.style.color = "#ef4444";
-    badge.textContent = "Alerte — badge invalide";
+    badge.innerHTML = "⚠ FRAUDE DÉTECTÉE";
   } else {
-    badge.style.background = "rgba(255, 255, 255, 0.06)";
-    badge.style.borderColor = "rgba(255, 255, 255, 0.12)";
-    badge.style.color = "rgba(255,255,255,0.5)";
-    badge.textContent = "Non certifié";
+    badge.style.background = "rgba(255,255,255,0.05)";
+    badge.style.border = "1px solid rgba(255,255,255,0.1)";
+    badge.style.color = "#64748b";
+    badge.innerHTML = "? Non certifié";
   }
 
   return badge;
+}
+
+/**
+ * Injecte le badge immédiatement après l’élément expéditeur Gmail.
+ * @param {Element} senderElement
+ * @param {HTMLElement} badge
+ */
+function injectBadge(senderElement, badge) {
+  const parent = senderElement.parentElement;
+  if (!parent) {
+    senderElement.insertAdjacentElement("afterend", badge);
+    console.log("[BLOCKTRUST] Badge injecté (afterend):", badge.innerHTML);
+    return;
+  }
+
+  const existing = parent.querySelector(".bt-trust-badge");
+  if (existing) existing.remove();
+
+  parent.insertBefore(badge, senderElement.nextSibling);
+  console.log("[BLOCKTRUST] Badge injecté:", badge.innerHTML);
 }
 
 /**
@@ -174,21 +201,10 @@ function extractSenderEmail(emailElement) {
   return normalizeEmailString(text);
 }
 
-/**
- * Ancrage pour badge (évite doublons sur la même ligne).
- * @param {Element} el
- */
-function findBadgeAnchor(el) {
-  let row = el.closest("tr") || el.parentElement;
-  if (!row) return el.parentElement;
-  return row;
-}
-
 function hasTrustBadgeNear(el) {
-  const wrap = el.parentElement;
-  if (wrap && wrap.querySelector(".bt-trust-badge, .bt-badge")) return true;
-  const anchor = findBadgeAnchor(el);
-  if (anchor && anchor.querySelector(".bt-trust-badge, .bt-badge")) return true;
+  const parent = el.parentElement;
+  if (parent?.querySelector(".bt-trust-badge")) return true;
+  if (el.nextElementSibling?.classList?.contains("bt-trust-badge")) return true;
   return false;
 }
 
@@ -197,11 +213,15 @@ function hasTrustBadgeNear(el) {
  * @param {Element} el
  */
 async function processSenderElement(el) {
-  if (el.dataset.btProcessed === "true") return;
+  if (el.dataset.btProcessed === "true" && hasTrustBadgeNear(el)) return;
+
   const email = extractSenderEmail(el);
   if (!email) return;
 
-  if (hasTrustBadgeNear(el)) return;
+  if (hasTrustBadgeNear(el)) {
+    el.dataset.btProcessed = "true";
+    return;
+  }
 
   el.dataset.btProcessed = "true";
   const parts = email.split("@");
@@ -216,19 +236,8 @@ async function processSenderElement(el) {
     return;
   }
 
-  const wrap = el.parentElement;
-  const anchor = findBadgeAnchor(el);
-  if (!anchor) {
-    delete el.dataset.btProcessed;
-    return;
-  }
-
   const badge = createVerifyBadge(result);
-  if (wrap && !wrap.querySelector(".bt-trust-badge, .bt-badge")) {
-    wrap.appendChild(badge);
-  } else if (!anchor.querySelector(".bt-trust-badge, .bt-badge")) {
-    anchor.appendChild(badge);
-  }
+  injectBadge(el, badge);
 }
 
 /**
@@ -252,9 +261,7 @@ async function processOpenEmailSender() {
 
   console.log("[BLOCKTRUST] Sender détecté:", sender.email);
 
-  const parent = sender.element.parentElement;
-  if (!parent) return;
-  if (parent.querySelector(".bt-trust-badge, .bt-badge")) return;
+  if (hasTrustBadgeNear(sender.element)) return;
 
   const apiKey = await getApiKey();
   if (!apiKey) {
@@ -268,7 +275,7 @@ async function processOpenEmailSender() {
   if (!result) return;
 
   const badge = createVerifyBadge(result);
-  parent.appendChild(badge);
+  injectBadge(sender.element, badge);
 }
 
 /** Debounce : Gmail émet énormément de mutations */
