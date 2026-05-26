@@ -12,6 +12,17 @@ import { getAdminEmailList } from '../lib/admin-utils'
 import { ensureAdminCapabilities } from '../lib/admin-bootstrap'
 import { prisma } from '../app/lib/db'
 
+/** Liste canonique — doit rester alignée avec ADMIN_EMAILS (Vercel). */
+const ADMIN_EMAILS = [
+  'brnbtech@gmail.com',
+  'laurianne@winter-keys.com',
+  'deborahbernabe@gmail.com',
+  'shai270202@gmail.com',
+  'brnbimmo@gmail.com',
+  'contact@brnb.fr',
+  'bernabeshai56@gmail.com',
+] as const
+
 const OLIVER_PRO_EMAILS = ['brnbimmo@gmail.com', 'contact@brnb.fr'] as const
 
 async function bootstrapEnterpriseProAccount(
@@ -65,12 +76,12 @@ async function bootstrapEnterpriseProAccount(
 }
 
 async function bootstrapAllAdmins() {
-  const emails = getAdminEmailList()
-  if (emails.length === 0) {
+  const fromEnv = getAdminEmailList()
+  const emails = fromEnv.length > 0 ? fromEnv : [...ADMIN_EMAILS]
+  if (fromEnv.length === 0) {
     console.log(
-      'ADMIN_EMAILS est vide. Ajoutez des emails séparés par des virgules dans .env.local (ex. ADMIN_EMAILS=a@x.com,b@y.com)'
+      'ADMIN_EMAILS (env) vide — utilisation de la liste canonique du script (', emails.length, 'emails )'
     )
-    return
   }
 
   const enterprisePlan = await prisma.plan.findFirst({
