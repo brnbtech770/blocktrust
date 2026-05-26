@@ -3,6 +3,8 @@
 > Plateforme de certification et vérification d'authenticité pour les entreprises  
 > Stack: **Next.js 16**, **Prisma**, **PostgreSQL**, **JWT (ES256)**, **QR Codes**
 
+**Déploiement & Neon (bold-frost / vercel-dev)** : voir [DEPLOYMENT.md](./DEPLOYMENT.md).
+
 ---
 
 ## 🎯 Vue d'ensemble
