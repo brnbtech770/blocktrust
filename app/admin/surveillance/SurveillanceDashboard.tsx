@@ -14,7 +14,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { Activity, Clock, ShieldAlert } from 'lucide-react'
+import { Activity, Bot, Clock, ShieldAlert } from 'lucide-react'
 import { formatDistanceToNow } from '@/lib/format-relative-fr'
 
 type SurveillancePayload = {
@@ -37,6 +37,12 @@ type SurveillancePayload = {
     read: boolean
     createdAt: string
   }[]
+  agents?: {
+    fraud: { active: boolean; lastRunAt: string | null; alertsGenerated: number }
+    security: { active: boolean; lastRunAt: string | null; alertsGenerated: number }
+    subscription: { active: boolean; lastRunAt: string | null; mrrEur: number }
+    onboarding: { active: boolean; lastRunAt: string | null; remindersSent: number }
+  }
 }
 
 function pct(n: number) {
@@ -121,6 +127,73 @@ export default function SurveillanceDashboard() {
           {error}
         </p>
       )}
+
+      <div
+        className="mb-8 rounded-xl border border-white/10 p-5"
+        style={{ background: 'rgba(13,31,60,0.5)' }}
+      >
+        <h2 className="mb-4 font-syne text-sm font-semibold uppercase tracking-wider text-white/60">
+          Agents actifs
+        </h2>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          <AgentStatusRow
+            label="Agent Fraude"
+            active={data?.agents?.fraud.active ?? true}
+            detail={
+              data?.agents?.fraud.lastRunAt
+                ? `Dernière exécution : ${new Date(data.agents.fraud.lastRunAt).toLocaleString('fr-FR')}`
+                : 'En attente de première exécution'
+            }
+            metric={
+              data?.agents
+                ? `${data.agents.fraud.alertsGenerated} alerte(s) dernière exécution`
+                : undefined
+            }
+          />
+          <AgentStatusRow
+            label="Agent Sécurité"
+            active={data?.agents?.security.active ?? true}
+            detail={
+              data?.agents?.security.lastRunAt
+                ? `Dernière exécution : ${new Date(data.agents.security.lastRunAt).toLocaleString('fr-FR')}`
+                : 'En attente de première exécution'
+            }
+            metric={
+              data?.agents
+                ? `${data.agents.security.alertsGenerated} alerte(s) générées (24h)`
+                : undefined
+            }
+          />
+          <AgentStatusRow
+            label="Agent Abonnements"
+            active={data?.agents?.subscription.active ?? true}
+            detail={
+              data?.agents?.subscription.lastRunAt
+                ? `Dernière exécution : ${new Date(data.agents.subscription.lastRunAt).toLocaleString('fr-FR')}`
+                : 'En attente de première exécution'
+            }
+            metric={
+              data?.agents
+                ? `MRR : ${data.agents.subscription.mrrEur.toFixed(2)}€`
+                : undefined
+            }
+          />
+          <AgentStatusRow
+            label="Agent Onboarding"
+            active={data?.agents?.onboarding.active ?? true}
+            detail={
+              data?.agents?.onboarding.lastRunAt
+                ? `Dernière exécution : ${new Date(data.agents.onboarding.lastRunAt).toLocaleString('fr-FR')}`
+                : 'En attente de première exécution'
+            }
+            metric={
+              data?.agents
+                ? `${data.agents.onboarding.remindersSent} rappel(s) dernière exécution`
+                : undefined
+            }
+          />
+        </ul>
+      </div>
 
       <div
         className="mb-8 rounded-xl border border-white/10 p-5"
@@ -270,6 +343,34 @@ export default function SurveillanceDashboard() {
         )}
       </div>
     </div>
+  )
+}
+
+function AgentStatusRow({
+  label,
+  active,
+  detail,
+  metric,
+}: {
+  label: string
+  active: boolean
+  detail: string
+  metric?: string
+}) {
+  return (
+    <li className="flex gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+      <Bot
+        className={`mt-0.5 h-5 w-5 shrink-0 ${active ? 'text-emerald-400' : 'text-white/30'}`}
+        aria-hidden
+      />
+      <div className="min-w-0">
+        <p className="font-medium text-white">
+          {label} : {active ? '✅ Actif' : 'Inactif'}
+        </p>
+        <p className="mt-1 text-sm text-white/45">{detail}</p>
+        {metric ? <p className="mt-1 text-xs text-bt-cyan">{metric}</p> : null}
+      </div>
+    </li>
   )
 }
 

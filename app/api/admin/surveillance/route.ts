@@ -15,6 +15,23 @@ function startOfHour(d: Date): Date {
   return x
 }
 
+function readAuditMetric(
+  newValue: unknown,
+  key: string,
+): number | null {
+  if (!newValue || typeof newValue !== 'object' || Array.isArray(newValue)) return null
+  const v = (newValue as Record<string, unknown>)[key]
+  return typeof v === 'number' ? v : null
+}
+
+async function getLatestAgentRun(action: string, resourceId: string) {
+  return prisma.auditLog.findFirst({
+    where: { action, resource: 'agent', resourceId },
+    orderBy: { createdAt: 'desc' },
+    select: { createdAt: true, newValue: true },
+  })
+}
+
 export async function GET() {
   const session = await auth()
   if (!session?.user?.email || !isAdmin(session.user.email)) {
@@ -32,6 +49,12 @@ export async function GET() {
     polygonAnchored,
     polygonPending,
     polygonFailed,
+    fraudRun,
+    securityRun,
+    subscriptionRun,
+    onboardingRun,
+    mrrCache,
+    securityAlerts24h,
   ] = await Promise.all([
     prisma.verification.count({
       where: { verifiedAt: { gte: oneDayAgo } },
@@ -56,6 +79,21 @@ export async function GET() {
     prisma.certificate.count({ where: { blockchainStatus: 'ANCHORED' } }),
     prisma.certificate.count({ where: { blockchainStatus: 'PENDING', status: 'ACTIVE' } }),
     prisma.certificate.count({ where: { blockchainStatus: 'FAILED' } }),
+    getLatestAgentRun('FRAUD_SURVEILLANCE_RUN', 'fraud-surveillance'),
+    getLatestAgentRun('SECURITY_MONITOR_RUN', 'security-monitor'),
+    getLatestAgentRun('SUBSCRIPTION_MONITOR_RUN', 'subscription-monitor'),
+    getLatestAgentRun('ONBOARDING_MONITOR_RUN', 'onboarding-monitor'),
+    prisma.auditLog.findFirst({
+      where: { action: 'SUBSCRIPTION_MRR_CACHE', resourceId: 'subscription-monitor' },
+      orderBy: { createdAt: 'desc' },
+      select: { newValue: true, createdAt: true },
+    }),
+    prisma.adminAlert.count({
+      where: {
+        type: 'SECURITY',
+        createdAt: { gte: oneDayAgo },
+      },
+    }),
   ])
 
   const fraudRate = verifications24h > 0 ? fraudCount / verifications24h : 0
@@ -108,6 +146,21 @@ export async function GET() {
     take: 10,
   })
 
+  const fraudAlertsGenerated =
+    (readAuditMetric(fraudRun?.newValue, 'fraudAlertsCreated') ?? 0) +
+    (readAuditMetric(fraudRun?.newValue, 'lowTrustAlerts') ?? 0) +
+    (readAuditMetric(fraudRun?.newValue, 'failedClusterAlerts') ?? 0) +
+    (readAuditMetric(fraudRun?.newValue, 'ipClusterAlerts') ?? 0)
+
+  const onboardingReminders =
+    (readAuditMetric(onboardingRun?.newValue, 'kycRemindersSent') ?? 0) +
+    (readAuditMetric(onboardingRun?.newValue, 'activationRemindersSent') ?? 0)
+
+  const mrrEur =
+    readAuditMetric(mrrCache?.newValue, 'mrrEur') ??
+    readAuditMetric(subscriptionRun?.newValue, 'mrrEur') ??
+    0
+
   return NextResponse.json({
     verifications24h,
     fraudRate,
@@ -129,5 +182,27 @@ export async function GET() {
       read: a.read,
       createdAt: a.createdAt.toISOString(),
     })),
+    agents: {
+      fraud: {
+        active: true,
+        lastRunAt: fraudRun?.createdAt?.toISOString() ?? null,
+        alertsGenerated: fraudAlertsGenerated,
+      },
+      security: {
+        active: true,
+        lastRunAt: securityRun?.createdAt?.toISOString() ?? null,
+        alertsGenerated: securityAlerts24h,
+      },
+      subscription: {
+        active: true,
+        lastRunAt: subscriptionRun?.createdAt?.toISOString() ?? mrrCache?.createdAt?.toISOString() ?? null,
+        mrrEur,
+      },
+      onboarding: {
+        active: true,
+        lastRunAt: onboardingRun?.createdAt?.toISOString() ?? null,
+        remindersSent: onboardingReminders,
+      },
+    },
   })
 }

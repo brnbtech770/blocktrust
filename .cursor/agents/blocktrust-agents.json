@@ -1,0 +1,28 @@
+{
+  "agents": [
+    {
+      "name": "fraud-surveillance",
+      "description": "Détecte les fraudes en temps réel",
+      "trigger": "cron:*/5 * * * *",
+      "endpoint": "/api/cron/qstash-surveillance"
+    },
+    {
+      "name": "security-monitor",
+      "description": "Surveille les tentatives d'intrusion",
+      "trigger": "cron:*/15 * * * *",
+      "endpoint": "/api/cron/qstash-surveillance"
+    },
+    {
+      "name": "subscription-monitor",
+      "description": "Gère les abonnements et MRR",
+      "trigger": "cron:0 * * * *",
+      "endpoint": "/api/cron/subscription-monitor"
+    },
+    {
+      "name": "onboarding-monitor",
+      "description": "Rappels KYC et activation",
+      "trigger": "cron:0 9 * * *",
+      "endpoint": "/api/cron/qstash-surveillance"
+    }
+  ]
+}
