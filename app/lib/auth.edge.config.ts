@@ -14,6 +14,15 @@ export const googleProvider =
     ? GoogleProvider({ clientId, clientSecret })
     : null;
 
+console.log(
+  "[AUTH EDGE] GOOGLE_CLIENT_ID:",
+  process.env.GOOGLE_CLIENT_ID ? "présent" : "ABSENT"
+);
+console.log(
+  "[AUTH EDGE] googleProvider:",
+  googleProvider ? "défini" : "NULL"
+);
+
 /** Base partagée ; instance complète = auth-server (adapter Prisma, credentials, etc.). */
 const authEdgeConfig = {
   trustHost: true,
