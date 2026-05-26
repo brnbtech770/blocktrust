@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle2, AlertTriangle, Loader2, Building2, MapPin, Briefcase, Hash } from 'lucide-react'
 import { Logo } from '@/app/components/ui/Logo'
+import { BiometricConsentModal } from '@/app/components/BiometricConsentModal'
 
 type Step = 'select' | 'siret' | 'launching' | 'complete'
 
@@ -26,6 +27,9 @@ export function OnboardingVerifyClient() {
   const [siretStatus, setSiretStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle')
   const [siretError, setSiretError] = useState<string | null>(null)
   const [siretInfo, setSiretInfo] = useState<SiretInfo | null>(null)
+  const [showConsentModal, setShowConsentModal] = useState(false)
+  const [consentDeclined, setConsentDeclined] = useState(false)
+  const [consentError, setConsentError] = useState<string | null>(null)
 
   const statusComplete = searchParams.get('status') === 'complete'
 
@@ -76,6 +80,7 @@ export function OnboardingVerifyClient() {
 
   async function startVerification() {
     setStep('launching')
+    setConsentError(null)
     try {
       const res = await fetch('/api/kyc/start', {
         method: 'POST',
@@ -93,6 +98,11 @@ export function OnboardingVerifyClient() {
         }),
       })
       const data = await res.json()
+      if (res.status === 403 && data.code === 'BIOMETRIC_CONSENT_REQUIRED') {
+        setShowConsentModal(true)
+        setStep(accountType === 'BUSINESS' ? 'siret' : 'select')
+        return
+      }
       if (!res.ok) throw new Error(data.error || 'Erreur')
       if (data.url) {
         window.location.href = data.url
@@ -105,11 +115,57 @@ export function OnboardingVerifyClient() {
     }
   }
 
+  async function promptVerification() {
+    setConsentDeclined(false)
+    setConsentError(null)
+    try {
+      const res = await fetch('/api/kyc/consent', { credentials: 'include' })
+      const data = (await res.json()) as { hasConsent?: boolean }
+      if (res.ok && data.hasConsent) {
+        await startVerification()
+        return
+      }
+      setShowConsentModal(true)
+    } catch {
+      setConsentError('Impossible de vérifier le consentement. Réessayez.')
+    }
+  }
+
+  async function handleConsentAccept() {
+    setConsentError(null)
+    try {
+      const res = await fetch('/api/kyc/consent', {
+        method: 'POST',
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string }
+        throw new Error(data.error || 'Erreur')
+      }
+      setShowConsentModal(false)
+      await startVerification()
+    } catch (e: unknown) {
+      setConsentError(e instanceof Error ? e.message : 'Erreur lors de l\'enregistrement du consentement')
+      setShowConsentModal(false)
+    }
+  }
+
+  function handleConsentDecline() {
+    setShowConsentModal(false)
+    setConsentDeclined(true)
+  }
+
   const cardClass =
     'mx-auto max-w-[520px] rounded-xl border border-bt-cyan/20 bg-white/5 p-8 backdrop-blur-sm transition-all hover:border-gold/30'
 
   return (
     <div className="min-h-screen bt-circuit-bg" style={{ background: 'var(--bt-navy)', padding: 24 }}>
+      <BiometricConsentModal
+        isOpen={showConsentModal}
+        onAccept={() => void handleConsentAccept()}
+        onDecline={handleConsentDecline}
+      />
+
       <div className="flex justify-center pt-8 pb-6">
         <Logo size="lg" withText={false} href="/" />
       </div>
@@ -170,11 +226,35 @@ export function OnboardingVerifyClient() {
 
           <button
             type="button"
-            onClick={() => { if (accountType === 'BUSINESS') setStep('siret'); else startVerification(); }}
+            onClick={() => {
+              if (accountType === 'BUSINESS') setStep('siret')
+              else void promptVerification()
+            }}
             className="w-full rounded-lg bg-bt-cyan py-3 font-bold text-navy transition hover:bg-bt-cyan/90"
           >
             {accountType === 'BUSINESS' ? 'Continuer' : 'Démarrer la vérification'}
           </button>
+
+          {consentDeclined && (
+            <div
+              role="status"
+              className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-relaxed text-amber-100/90"
+            >
+              Vous avez refusé la vérification biométrique. Stripe Identity ne sera pas lancé.
+              Vous pouvez accéder au dashboard sans vérification d&apos;identité, mais votre
+              TrustScore restera limité. Vous pourrez accepter plus tard depuis cette page.
+            </div>
+          )}
+
+          {consentError && (
+            <div
+              role="alert"
+              className="mt-4 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400"
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              <span>{consentError}</span>
+            </div>
+          )}
         </div>
       )}
 
@@ -276,12 +356,33 @@ export function OnboardingVerifyClient() {
 
           <button
             type="button"
-            onClick={startVerification}
+            onClick={() => void promptVerification()}
             disabled={siretStatus !== 'ok'}
             className="w-full rounded-lg bg-bt-cyan py-3 font-bold text-navy transition hover:bg-bt-cyan/90 disabled:opacity-50"
           >
             Démarrer la vérification
           </button>
+
+          {consentDeclined && (
+            <div
+              role="status"
+              className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-sm leading-relaxed text-amber-100/90"
+            >
+              Vous avez refusé la vérification biométrique. Stripe Identity ne sera pas lancé.
+              Vous pouvez continuer sans vérification d&apos;identité entreprise, mais votre
+              TrustScore restera limité.
+            </div>
+          )}
+
+          {consentError && (
+            <div
+              role="alert"
+              className="mt-4 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400"
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              <span>{consentError}</span>
+            </div>
+          )}
         </div>
       )}
 

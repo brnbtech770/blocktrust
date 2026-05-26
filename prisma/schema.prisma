@@ -94,6 +94,10 @@ model User {
   cookieConsent   Boolean   @default(false)
   cookieConsentAt DateTime?
 
+  /// Consentement explicite RGPD Art. 9 — données biométriques (Stripe Identity)
+  biometricConsentAt      DateTime?
+  biometricConsentVersion String?
+
   verifyCount      Int      @default(0)
   verifyCountReset DateTime @default(now())
 

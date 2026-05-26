@@ -30,6 +30,21 @@ export async function POST(req: NextRequest) {
   const { accountType, siret, companyName, address, activite } = parsed.data
 
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { biometricConsentAt: true },
+    })
+
+    if (!user?.biometricConsentAt) {
+      return NextResponse.json(
+        {
+          error: 'Consentement biométrique requis avant la vérification d\'identité',
+          code: 'BIOMETRIC_CONSENT_REQUIRED',
+        },
+        { status: 403 },
+      )
+    }
+
     const verificationSession =
       await stripe.identity.verificationSessions.create({
         type: 'document',

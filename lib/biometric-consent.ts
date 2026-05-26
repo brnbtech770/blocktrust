@@ -1,0 +1,1 @@
+export const BIOMETRIC_CONSENT_VERSION = '1.0'
