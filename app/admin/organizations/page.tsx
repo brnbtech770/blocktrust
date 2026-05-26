@@ -7,6 +7,7 @@ import { requireAdminPage } from '@/app/lib/require-admin-page'
 import { countOrgVaultEntries } from '@/lib/vault-utils'
 import Link from 'next/link'
 import { Building2 } from 'lucide-react'
+import AdminOrganizationsActions from '@/app/admin/organizations/AdminOrganizationsActions'
 
 export default async function AdminOrganizationsPage() {
   await requireAdminPage()
@@ -48,7 +49,7 @@ export default async function AdminOrganizationsPage() {
         </div>
       ) : (
         <div className="w-full overflow-x-auto rounded-xl border border-white/10">
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <table className="w-full min-w-[1100px] text-left text-sm">
             <thead className="border-b border-white/10 bg-white/[0.04] text-xs uppercase tracking-wide text-white/45">
               <tr>
                 <th className="px-3 py-2">Organisation</th>
@@ -58,20 +59,38 @@ export default async function AdminOrganizationsPage() {
                 <th className="px-3 py-2 text-right">Membres</th>
                 <th className="px-3 py-2 text-right">Coffres</th>
                 <th className="px-3 py-2 text-right">Entrées</th>
+                <th className="px-3 py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((o) => (
-                <tr key={o.id} className="border-b border-white/5">
+                <tr key={o.id} className="border-b border-white/5 align-top">
                   <td className="px-3 py-2 font-medium text-white">{o.name}</td>
                   <td className="px-3 py-2 font-mono text-xs text-white/60">{o.slug}</td>
-                  <td className="px-3 py-2 font-mono text-xs text-bt-cyan/90">{o.tier}</td>
+                  <td className="px-3 py-2 font-mono text-xs">
+                    <span
+                      className={
+                        o.tier === 'SUSPENDED' ? 'text-amber-400' : 'text-bt-cyan/90'
+                      }
+                    >
+                      {o.tier}
+                    </span>
+                  </td>
                   <td className="max-w-[200px] truncate px-3 py-2 text-xs text-white/55">
                     {o.owner.email ?? '—'}
                   </td>
                   <td className="px-3 py-2 text-right tabular-nums text-white/70">{o._count.members}</td>
                   <td className="px-3 py-2 text-right tabular-nums text-white/70">{o._count.vaults}</td>
                   <td className="px-3 py-2 text-right tabular-nums text-white/70">{o.entryCount}</td>
+                  <td className="px-3 py-2">
+                    <AdminOrganizationsActions
+                      orgId={o.id}
+                      orgName={o.name}
+                      slug={o.slug}
+                      tier={o.tier}
+                      isSuspended={o.tier === 'SUSPENDED'}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>

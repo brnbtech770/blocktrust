@@ -14,6 +14,7 @@ export type AdminUserRow = {
   id: string
   email: string | null
   name: string | null
+  trustScore: number
   planName: string | null
   entitiesCount: number
   certificatesCount: number
@@ -247,6 +248,7 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
               <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Email</th>
               <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Nom</th>
               <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Plan</th>
+              <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">TrustScore</th>
               <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Entités</th>
               <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Certificats</th>
               <th className="border-b border-white/5 px-6 pb-3 pt-4 text-left font-sans text-[10px] font-medium uppercase tracking-widest text-white/40">Date inscription</th>
@@ -306,6 +308,9 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
                       Sans abonnement
                     </span>
                   )}
+                </td>
+                <td className="px-6 py-4 font-mono text-sm tabular-nums" style={{ color: 'var(--bt-muted)' }}>
+                  {user.trustScore}/100
                 </td>
                 <td className="px-6 py-4" style={{ color: 'var(--bt-muted)' }}>
                   {user.entitiesCount}

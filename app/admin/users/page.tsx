@@ -26,6 +26,7 @@ export default async function AdminUsersPage() {
       id: user.id,
       email: user.email,
       name: user.name,
+      trustScore: user.trustScore,
       planName: user.plan?.name ?? null,
       entitiesCount: user.entities.length,
       certificatesCount: totalCertificates,

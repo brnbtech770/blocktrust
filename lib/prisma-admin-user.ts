@@ -7,6 +7,7 @@ export const adminUserListSelect = {
   name: true,
   email: true,
   planId: true,
+  trustScore: true,
   createdAt: true,
   plan: {
     select: {
