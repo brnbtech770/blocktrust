@@ -783,13 +783,15 @@ function ValidView({
 
   return (
     <div className="bt-circuit-bg min-h-screen bg-navy font-sans text-white/80">
-      <div className="mx-auto max-w-xl px-3 py-6 sm:px-4 sm:py-10">
+      <div className="mx-auto max-w-xl px-4 py-6 sm:px-4 sm:py-10">
         <div className="rounded-xl border border-bt-cyan/40 bg-bt-cyan/10 p-4 backdrop-blur-sm sm:p-6 md:p-8">
           <div className="mb-4 flex justify-center sm:mb-6">
-            <BlockTrustBadge size={120} instanceId="verify-id" />
+            <div className="mx-auto w-full max-w-[280px]">
+              <BlockTrustBadge size={120} instanceId="verify-id" />
+            </div>
             <span className="sr-only">Certificat vérifié</span>
           </div>
-          <h1 className="font-syne mb-4 text-center text-xl font-bold leading-tight text-white sm:text-2xl lg:text-3xl">
+          <h1 className="font-syne mb-4 text-center text-xl font-bold leading-tight text-white sm:text-2xl">
             {name}
           </h1>
           <p className="mb-2 text-center font-mono text-xs text-white/60 sm:text-sm">
@@ -952,28 +954,28 @@ function ValidView({
 function FraudAlertView() {
   return (
     <div className="min-h-screen bg-[#0d0505] font-sans text-white/80">
-      <div className="mx-auto max-w-xl px-3 py-6 sm:px-4 sm:py-10">
+      <div className="mx-auto max-w-xl px-4 py-6 sm:px-4 sm:py-10">
         <div className="rounded-xl border border-red-500/50 bg-red-500/10 p-4 sm:p-6 md:p-8">
           <p className="mb-4 text-center text-4xl" aria-hidden>
             ⚠️
           </p>
-          <h1 className="font-syne mb-4 text-center text-lg font-bold leading-snug text-red-300 sm:text-xl lg:text-2xl">
+          <h1 className="font-syne mb-4 text-center text-xl font-bold leading-snug text-red-300 sm:text-2xl">
             Certificat non reconnu ou potentiellement frauduleux
           </h1>
           <p className="mb-4 text-center text-sm leading-relaxed text-white/75">
             Si vous avez reçu ce badge dans un e-mail ou sur un site, ne communiquez aucune information personnelle ni
             bancaire.
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <div className="flex flex-col gap-3">
             <a
               href="mailto:security@blocktrust.tech?subject=Signalement%20fraude%20BlockTrust"
-              className="inline-flex justify-center rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+              className="inline-flex min-h-[48px] w-full items-center justify-center rounded-lg bg-red-600 px-4 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
             >
               Signaler une fraude
             </a>
             <Link
               href={BASE_URL}
-              className="inline-flex justify-center rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white/90 hover:bg-white/5"
+              className="inline-flex min-h-[48px] w-full items-center justify-center rounded-lg border border-white/20 px-4 py-3 text-sm font-medium text-white/90 hover:bg-white/5"
             >
               Retour au site
             </Link>

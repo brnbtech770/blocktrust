@@ -500,7 +500,7 @@ function VerifyContent() {
                 type="text"
                 placeholder="URL ou ID du badge…"
                 aria-label="URL ou identifiant du badge à vérifier"
-                className="min-h-[44px] flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#00d4ff]/50 focus:ring-2 focus:ring-[#00d4ff]/15"
+                className="min-h-[48px] flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-base text-white outline-none transition placeholder:text-white/30 focus:border-[#00d4ff]/50 focus:ring-2 focus:ring-[#00d4ff]/15"
                 value={manualIdInput}
                 onChange={(e) => setManualIdInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleManualVerify()}
@@ -509,7 +509,7 @@ function VerifyContent() {
                 type="button"
                 onClick={handleManualVerify}
                 disabled={!manualIdInput.trim()}
-                className="flex min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/20 px-5 py-2.5 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/30 disabled:pointer-events-none disabled:opacity-40 sm:px-4"
+                className="flex min-h-[48px] w-full shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/20 px-5 py-3 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/30 disabled:pointer-events-none disabled:opacity-40 sm:w-auto sm:px-4"
               >
                 <Search className="h-4 w-4 shrink-0" aria-hidden />
                 Vérifier
@@ -568,7 +568,7 @@ function VerifyContent() {
 
         {verdict && showSuccess ? (
           <div className="mx-auto mt-10 flex w-full max-w-sm flex-col items-center gap-6 px-2 text-center sm:max-w-md">
-            <div className="relative">
+            <div className="relative mx-auto w-full max-w-[280px]">
               <div
                 className="absolute inset-0 scale-125 animate-pulse rounded-full blur-2xl"
                 style={{ backgroundColor: `${C.valid}33` }}
@@ -577,7 +577,7 @@ function VerifyContent() {
               <BlockTrustBadge
                 size={120}
                 instanceId="verify-public"
-                className="relative z-10 [&_svg]:drop-shadow-[0_0_22px_rgba(16,185,129,0.35)]"
+                className="relative z-10 mx-auto [&_svg]:drop-shadow-[0_0_22px_rgba(16,185,129,0.35)]"
               />
             </div>
 
@@ -595,7 +595,7 @@ function VerifyContent() {
               </span>
             </div>
 
-            <p className="font-syne text-2xl font-bold text-white">{displayName}</p>
+            <p className="font-syne text-xl font-bold text-white sm:text-2xl">{displayName}</p>
 
             <p className="text-sm text-white/40">
               Certifié le {dateLabel}
@@ -766,7 +766,7 @@ function VerifyContent() {
           <button
             type="button"
             onClick={resetVerification}
-            className="mx-auto mt-8 flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-white/45 transition hover:bg-white/[0.06] hover:text-white/75"
+            className="mx-auto mt-8 flex min-h-[44px] w-full max-w-xs items-center justify-center gap-1.5 rounded-lg px-4 py-3 text-sm text-white/45 transition hover:bg-white/[0.06] hover:text-white/75 sm:w-auto"
           >
             <RotateCcw className="h-3 w-3 shrink-0" aria-hidden />
             Nouvelle vérification
@@ -815,17 +815,19 @@ function TrustEnginePanel({ engine }: { engine: TrustEngineResult }) {
       </div>
 
       {engine.signals.map((signal) => (
-        <div key={signal.type} className="flex items-center gap-2 py-1 text-xs">
-          {signal.impact === "positive" ? (
-            <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden />
-          ) : signal.impact === "negative" ? (
-            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-[#E05252]" aria-hidden />
-          ) : (
-            <Minus className="h-3.5 w-3.5 shrink-0 text-white/40" aria-hidden />
-          )}
-          <span className="text-white/60">{signal.label}</span>
+        <div key={signal.type} className="flex flex-col gap-1 border-b border-white/5 py-2 text-xs last:border-0 sm:flex-row sm:items-center sm:gap-2 sm:border-0 sm:py-1">
+          <div className="flex items-center gap-2">
+            {signal.impact === "positive" ? (
+              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-400" aria-hidden />
+            ) : signal.impact === "negative" ? (
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-[#E05252]" aria-hidden />
+            ) : (
+              <Minus className="h-3.5 w-3.5 shrink-0 text-white/40" aria-hidden />
+            )}
+            <span className="text-white/60">{signal.label}</span>
+          </div>
           {signal.detail ? (
-            <span className="ml-auto text-white/30">{signal.detail}</span>
+            <span className="pl-6 text-white/30 sm:ml-auto sm:pl-0">{signal.detail}</span>
           ) : null}
         </div>
       ))}

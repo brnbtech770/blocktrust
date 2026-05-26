@@ -12,17 +12,19 @@ const pageBg = "#0a1628";
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
-  padding: "10px 14px",
+  minHeight: "48px",
+  padding: "12px 14px",
   borderRadius: "8px",
   border: "1px solid rgba(0,212,255,0.15)",
   backgroundColor: "rgba(0,0,0,0.3)",
   color: "rgba(232,234,240,0.9)",
   fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
-  fontSize: "14px",
+  fontSize: "16px",
 };
 
 const btnCyan: React.CSSProperties = {
   width: "100%",
+  minHeight: "48px",
   padding: "12px 16px",
   borderRadius: "8px",
   fontWeight: 700,
@@ -199,7 +201,7 @@ function SignInContent() {
 
   return (
     <div
-      className="min-h-screen overflow-x-hidden px-3 py-8 sm:px-4 sm:py-12"
+      className="min-h-screen overflow-x-hidden px-4 py-8 sm:px-4 sm:py-12"
       style={{
         background: pageBg,
         fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
@@ -211,7 +213,7 @@ function SignInContent() {
         </div>
       </div>
       <div className="mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-8">
-        <h1 className="font-syne mb-4 text-2xl font-bold text-white sm:mb-6 sm:text-3xl lg:text-4xl">
+        <h1 className="font-syne mb-4 text-2xl font-bold text-white sm:mb-6 sm:text-3xl">
           Connexion
         </h1>
 
@@ -374,7 +376,7 @@ function SignInContent() {
 
         {/* 2. Magic link */}
         <form onSubmit={handleMagicLink}>
-          <label style={{ color: "rgba(232,234,240,0.75)", display: "block", marginBottom: "8px", fontSize: "13px" }}>
+          <label className="mb-2 block text-sm text-white/75">
             Lien magique (sans mot de passe)
           </label>
           <input
@@ -419,7 +421,7 @@ function SignInContent() {
         {/* 3. Email + mot de passe */}
         <form onSubmit={handleCredentialsSubmit}>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "rgba(232,234,240,0.75)", display: "block", marginBottom: "8px", fontSize: "13px" }}>
+            <label className="mb-2 block text-sm text-white/75">
               Email
             </label>
             <input
@@ -432,7 +434,7 @@ function SignInContent() {
             />
           </div>
           <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "rgba(232,234,240,0.75)", display: "block", marginBottom: "8px", fontSize: "13px" }}>
+            <label className="mb-2 block text-sm text-white/75">
               Mot de passe
             </label>
             <input
