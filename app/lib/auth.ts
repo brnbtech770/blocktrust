@@ -322,7 +322,11 @@ export const authOptions: NextAuthConfig = {
   },
   logger: {
     error(code, ...message) {
-      console.error('[NEXTAUTH ERROR]', code, JSON.stringify(message));
+      const codeLabel = typeof code === 'string' ? code : String(code);
+      console.error('[NEXTAUTH ERROR]', codeLabel, JSON.stringify(message));
+      if (codeLabel === 'AdapterError' || codeLabel === 'OAuthCallbackError') {
+        console.error('[auth] OAuth/adapter failure — vérifier DATABASE_URL, DIRECT_URL et /api/health');
+      }
     },
     warn(code) {
       console.warn('[NEXTAUTH WARN]', code);

@@ -88,9 +88,16 @@ function ErrorContent() {
                 Vercel : <code>NEXTAUTH_URL</code> = <code>AUTH_URL</code> ={" "}
                 <code>https://blocktrust.tech</code> (origine seule)
               </li>
+              <li style={{ marginBottom: "8px" }}>
+                <a href="/api/health" className="font-semibold text-[#00d4ff] underline hover:brightness-110">
+                  /api/health
+                </a>
+                {" "}
+                — vérifier <code>database.connected</code> (Neon / DIRECT_URL)
+              </li>
               <li>
-                Logs runtime Vercel au moment du clic (filtrer <code>[auth]</code>), pas le log de{" "}
-                <code>npm run build</code>.
+                Logs runtime Vercel au moment du clic (filtrer <code>[NEXTAUTH ERROR]</code> ou{" "}
+                <code>AdapterError</code>), pas le log de <code>npm run build</code>.
               </li>
             </ol>
           </div>

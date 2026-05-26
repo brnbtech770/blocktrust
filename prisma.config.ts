@@ -5,16 +5,9 @@
 
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
+import { ensureDatabaseEnv } from "./lib/db-env-shim";
 
-// Intégration Neon/Vercel : DATABASE_URL (pooler) + DATABASE_URL_UNPOOLED (direct).
-// schema.prisma attend DIRECT_URL pour migrations — miroir si absent.
-if (
-  typeof process !== "undefined" &&
-  !process.env.DIRECT_URL?.trim() &&
-  process.env.DATABASE_URL_UNPOOLED?.trim()
-) {
-  process.env.DIRECT_URL = process.env.DATABASE_URL_UNPOOLED.trim();
-}
+ensureDatabaseEnv();
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
