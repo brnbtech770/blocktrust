@@ -17,7 +17,10 @@ function stripWrappingQuotes(value: string): string {
 function normalizeEnvVar(name: string): void {
   const raw = process.env[name]
   if (!raw) return
-  const cleaned = stripWrappingQuotes(raw)
+  let cleaned = stripWrappingQuotes(raw)
+  // Corrige les URLs mal saisies : postgresql://postgresql://...
+  cleaned = cleaned.replace(/^postgresql:\/\/postgresql:\/\//, 'postgresql://')
+  cleaned = cleaned.replace(/^postgres:\/\/postgres:\/\//, 'postgres://')
   if (cleaned !== raw) {
     process.env[name] = cleaned
   }
