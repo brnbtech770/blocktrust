@@ -1,11 +1,15 @@
 // app/api/cron/qstash-surveillance/route.ts
-// Analyse globale déclenchée par QStash (~5 min) — signature Receiver.
+// Analyse globale déclenchée par QStash (~5 min) — agents fraude, sécurité, onboarding
 // ============================================================
 
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifySignatureAppRouter } from '@upstash/qstash/nextjs'
 import { runAnomalyDetection } from '@/lib/agents/anomaly-detector'
+import { runFraudSurveillance } from '@/lib/agents/fraud-surveillance'
+import { runSecurityMonitor } from '@/lib/agents/security-monitor'
+import { runOnboardingMonitor } from '@/lib/agents/onboarding-monitor'
+import { shouldRunAgent } from '@/lib/agents/agent-utils'
 import { retryFailedAnchors } from '@/lib/polygon'
 import { scheduleNextSurveillanceRun } from '@/lib/qstash-scheduler'
 
@@ -22,6 +26,15 @@ async function runPolygonRetrySafe() {
   }
 }
 
+async function runAgentSafe<T>(label: string, fn: () => Promise<T>): Promise<T | null> {
+  try {
+    return await fn()
+  } catch (e) {
+    console.error(`[qstash-surveillance] ${label} failed:`, e)
+    return null
+  }
+}
+
 function qstashRouteUrl(): string | undefined {
   const base =
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
@@ -33,25 +46,41 @@ function qstashRouteUrl(): string | undefined {
 }
 
 async function handle(_req: NextRequest) {
-  try {
-    const result = await runAnomalyDetection()
-    const polygon = await runPolygonRetrySafe()
-    try {
-      await scheduleNextSurveillanceRun()
-    } catch (scheduleErr) {
-      console.error('[qstash-surveillance] programme suivant ignoré:', scheduleErr)
-    }
-    return NextResponse.json({ success: true, ...result, polygon })
-  } catch (e) {
-    console.error('[qstash-surveillance]', e)
-    return NextResponse.json({ error: 'Agent failed' }, { status: 500 })
+  const anomaly = await runAgentSafe('anomaly-detection', runAnomalyDetection)
+  const fraud = await runAgentSafe('fraud-surveillance', runFraudSurveillance)
+
+  let security = null
+  if (await shouldRunAgent('security-monitor', 'SECURITY_MONITOR_RUN', 15 * 60 * 1000)) {
+    security = await runAgentSafe('security-monitor', runSecurityMonitor)
   }
+
+  let onboarding = null
+  if (await shouldRunAgent('onboarding-monitor', 'ONBOARDING_MONITOR_RUN', 24 * 60 * 60 * 1000)) {
+    onboarding = await runAgentSafe('onboarding-monitor', runOnboardingMonitor)
+  }
+
+  const polygon = await runPolygonRetrySafe()
+
+  try {
+    await scheduleNextSurveillanceRun()
+  } catch (scheduleErr) {
+    console.error('[qstash-surveillance] programme suivant ignoré:', scheduleErr)
+  }
+
+  return NextResponse.json({
+    success: true,
+    anomaly,
+    fraud,
+    security,
+    onboarding,
+    polygon,
+  })
 }
 
 async function disabledPost() {
   return NextResponse.json(
     { error: 'QStash signing keys ou URL publique non configurées' },
-    { status: 503 }
+    { status: 503 },
   )
 }
 
