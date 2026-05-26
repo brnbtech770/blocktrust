@@ -1,3 +1,4 @@
+import "./auth-env-shim";
 /**
  * Fragment de config NextAuth sans dépendances lourdes (Prisma, bcrypt).
  */
@@ -5,24 +6,18 @@ import type { NextAuthConfig } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
 
-export const googleProvider = GoogleProvider({
-  clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
-  allowDangerousEmailAccountLinking:
-    process.env.ALLOW_DANGEROUS_EMAIL_LINKING === "true",
-  authorization: {
-    params: {
-      prompt: "select_account",
-      access_type: "offline",
-      response_type: "code",
-    },
-  },
-});
+const clientId = process.env.GOOGLE_CLIENT_ID ?? "";
+const clientSecret = process.env.GOOGLE_CLIENT_SECRET ?? "";
+
+export const googleProvider =
+  clientId && clientSecret
+    ? GoogleProvider({ clientId, clientSecret })
+    : null;
 
 /** Base partagée ; instance complète = auth-server (adapter Prisma, credentials, etc.). */
 const authEdgeConfig = {
   trustHost: true,
-  providers: [googleProvider],
+  providers: [...(googleProvider ? [googleProvider] : [])],
   pages: {
     signIn: "/auth/signin",
     // Ne pas réutiliser la page sign-in : risque ErrorPageLoop / error=Configuration (voir Auth.js).
