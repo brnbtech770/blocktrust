@@ -63,6 +63,7 @@ const navSections: {
   {
     label: 'Administration',
     links: [
+      { href: '/admin/logs', label: "Logs d'activité", icon: 'Activity' },
       { href: '/admin/team', label: 'Équipe BLOCKTRUST', icon: 'Crown' },
     ],
   },

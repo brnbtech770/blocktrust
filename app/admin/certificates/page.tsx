@@ -13,12 +13,17 @@ import TrustScoreCell from '@/app/components/admin/TrustScoreCell'
 import IdCell from '@/app/components/admin/IdCell'
 import BlockchainCell from '@/app/components/admin/BlockchainCell'
 import { DetailsLink } from '@/app/components/admin/ActionButton'
+import ExportCertificatesCsvButton from '@/app/admin/certificates/ExportCertificatesCsvButton'
+import CertificatesPagination, {
+  PAGE_SIZE,
+} from '@/app/admin/certificates/CertificatesPagination'
 
 type SearchParams = {
   status?: string
   type?: string
   dateFrom?: string
   dateTo?: string
+  page?: string
 }
 
 function TH({ children }: { children: React.ReactNode }) {
@@ -29,14 +34,7 @@ function TH({ children }: { children: React.ReactNode }) {
   )
 }
 
-export default async function AdminCertificatesPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>
-}) {
-  await requireAdminPage()
-
-  const resolvedSearchParams = await searchParams
+function buildWhere(resolvedSearchParams: SearchParams): Prisma.CertificateWhereInput {
   const statusFilter = resolvedSearchParams.status as string | undefined
   const typeFilter = resolvedSearchParams.type as string | undefined
   const dateFrom = resolvedSearchParams.dateFrom ? new Date(resolvedSearchParams.dateFrom) : null
@@ -64,25 +62,63 @@ export default async function AdminCertificatesPage({
     }
   }
 
-  const certificates = await prisma.certificate.findMany({
-    where,
-    include: {
-      entity: {
-        select: {
-          id: true,
-          entityType: true,
-          legalName: true,
-          tradeName: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          siret: true,
+  return where
+}
+
+export default async function AdminCertificatesPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  await requireAdminPage()
+
+  const resolvedSearchParams = await searchParams
+  const where = buildWhere(resolvedSearchParams)
+  const page = Math.max(1, Number.parseInt(resolvedSearchParams.page ?? '1', 10) || 1)
+
+  const [totalCount, certificates, exportCertificates] = await Promise.all([
+    prisma.certificate.count({ where }),
+    prisma.certificate.findMany({
+      where,
+      include: {
+        entity: {
+          select: {
+            id: true,
+            entityType: true,
+            legalName: true,
+            tradeName: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            siret: true,
+            user: { select: { email: true } },
+          },
         },
       },
-    },
-    orderBy: { issuedAt: 'desc' },
-    take: 100, // Limiter à 100 pour les performances
-  })
+      orderBy: { issuedAt: 'desc' },
+      take: PAGE_SIZE,
+      skip: (page - 1) * PAGE_SIZE,
+    }),
+    prisma.certificate.findMany({
+      where,
+      select: {
+        id: true,
+        publicId: true,
+        status: true,
+        blockchainStatus: true,
+        issuedAt: true,
+        polygonTxHash: true,
+        entity: {
+          select: {
+            email: true,
+            user: { select: { email: true } },
+          },
+        },
+      },
+      orderBy: { issuedAt: 'desc' },
+      take: 5000,
+    }),
+  ])
 
   const certificatesWithTrustScore = await Promise.all(
     certificates.map(async (cert) => {
@@ -91,7 +127,7 @@ export default async function AdminCertificatesPage({
         select: { score: true, level: true },
       })
       return { ...cert, trustScore }
-    })
+    }),
   )
 
   const statusCounts = {
@@ -113,46 +149,62 @@ export default async function AdminCertificatesPage({
   const filterCls = (active: boolean) =>
     `px-4 py-2 rounded-lg transition ${active ? '' : 'hover:bg-[rgba(255,255,255,0.04)]'}`
 
+  const csvRows = exportCertificates.map((c) => ({
+    id: c.id,
+    publicId: c.publicId,
+    entityEmail: c.entity.email,
+    userEmail: c.entity.user?.email ?? null,
+    status: c.status,
+    blockchainStatus: c.blockchainStatus,
+    issuedAt: new Date(c.issuedAt).toISOString(),
+    txHash: c.polygonTxHash,
+  }))
+
   return (
     <div className="font-sans">
-      <p className="mb-6 text-sm" style={{ color: 'var(--bt-muted)' }}>Gérez toutes les demandes de certificats</p>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm" style={{ color: 'var(--bt-muted)' }}>
+          Gérez toutes les demandes de certificats
+        </p>
+        <ExportCertificatesCsvButton rows={csvRows} />
+      </div>
 
       <div className="mb-6 space-y-4">
         <div className="flex gap-2 flex-wrap">
-          <Link href="/admin/certificates" className={filterCls(!statusFilter)} style={!statusFilter ? { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' } : { color: 'var(--bt-muted)' }}>
-            Tous ({certificates.length})
+          <Link href="/admin/certificates" className={filterCls(!resolvedSearchParams.status)} style={!resolvedSearchParams.status ? { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' } : { color: 'var(--bt-muted)' }}>
+            Tous ({totalCount})
           </Link>
-          <Link href="/admin/certificates?status=PENDING" className={filterCls(statusFilter === 'PENDING')} style={statusFilter === 'PENDING' ? { background: 'rgba(245,158,11,0.15)', color: '#fbbf24' } : { color: 'var(--bt-muted)' }}>
+          <Link href="/admin/certificates?status=PENDING" className={filterCls(resolvedSearchParams.status === 'PENDING')} style={resolvedSearchParams.status === 'PENDING' ? { background: 'rgba(245,158,11,0.15)', color: '#fbbf24' } : { color: 'var(--bt-muted)' }}>
             En attente ({statusCounts.PENDING})
           </Link>
-          <Link href="/admin/certificates?status=ACTIVE" className={filterCls(statusFilter === 'ACTIVE')} style={statusFilter === 'ACTIVE' ? { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' } : { color: 'var(--bt-muted)' }}>
+          <Link href="/admin/certificates?status=ACTIVE" className={filterCls(resolvedSearchParams.status === 'ACTIVE')} style={resolvedSearchParams.status === 'ACTIVE' ? { background: 'rgba(0,212,255,0.1)', color: 'var(--bt-cyan)' } : { color: 'var(--bt-muted)' }}>
             Actifs ({statusCounts.ACTIVE})
           </Link>
-          <Link href="/admin/certificates?status=SUSPENDED" className={filterCls(statusFilter === 'SUSPENDED')} style={statusFilter === 'SUSPENDED' ? { background: 'rgba(245,158,11,0.15)', color: '#fbbf24' } : { color: 'var(--bt-muted)' }}>
+          <Link href="/admin/certificates?status=SUSPENDED" className={filterCls(resolvedSearchParams.status === 'SUSPENDED')} style={resolvedSearchParams.status === 'SUSPENDED' ? { background: 'rgba(245,158,11,0.15)', color: '#fbbf24' } : { color: 'var(--bt-muted)' }}>
             Suspendus ({statusCounts.SUSPENDED})
           </Link>
-          <Link href="/admin/certificates?status=REVOKED" className={filterCls(statusFilter === 'REVOKED')} style={statusFilter === 'REVOKED' ? { background: 'rgba(239,68,68,0.15)', color: '#f87171' } : { color: 'var(--bt-muted)' }}>
+          <Link href="/admin/certificates?status=REVOKED" className={filterCls(resolvedSearchParams.status === 'REVOKED')} style={resolvedSearchParams.status === 'REVOKED' ? { background: 'rgba(239,68,68,0.15)', color: '#f87171' } : { color: 'var(--bt-muted)' }}>
             Révoqués ({statusCounts.REVOKED})
           </Link>
         </div>
         <div className="flex gap-2">
-          <Link href="/admin/certificates?type=B2C" className={filterCls(typeFilter === 'B2C')} style={typeFilter === 'B2C' ? { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' } : { color: 'var(--bt-muted)' }}>
+          <Link href="/admin/certificates?type=B2C" className={filterCls(resolvedSearchParams.type === 'B2C')} style={resolvedSearchParams.type === 'B2C' ? { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' } : { color: 'var(--bt-muted)' }}>
             B2C (Particuliers)
           </Link>
-          <Link href="/admin/certificates?type=B2B" className={filterCls(typeFilter === 'B2B')} style={typeFilter === 'B2B' ? { background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)' } : { color: 'var(--bt-muted)' }}>
+          <Link href="/admin/certificates?type=B2B" className={filterCls(resolvedSearchParams.type === 'B2B')} style={resolvedSearchParams.type === 'B2B' ? { background: 'rgba(189,167,107,0.15)', color: 'var(--bt-gold)' } : { color: 'var(--bt-muted)' }}>
             B2B (Entreprises)
           </Link>
         </div>
       </div>
 
       <div className="w-full overflow-x-auto rounded-xl border border-white/10">
-        <table className="w-full min-w-[800px]">
+        <table className="w-full min-w-[900px]">
           <thead>
             <tr>
               <TH>ID</TH>
               <TH>Entité</TH>
               <TH>Type</TH>
-              <TH>Email</TH>
+              <TH>Compte</TH>
               <TH>Statut</TH>
               <TH>TrustScore</TH>
               <TH>Blockchain</TH>
@@ -177,12 +229,21 @@ export default async function AdminCertificatesPage({
                 </td>
                 <td className="px-6 py-4">
                   <p
-                    className="block max-w-[160px] truncate text-sm"
-                    style={{ color: 'var(--bt-muted)' }}
+                    className="block max-w-[180px] truncate text-sm text-white"
                     title={cert.entity.email}
                   >
                     {cert.entity.email}
                   </p>
+                  {cert.entity.user?.email ? (
+                    <p
+                      className="mt-0.5 block max-w-[180px] truncate text-xs text-white/40"
+                      title={cert.entity.user.email}
+                    >
+                      {cert.entity.user.email}
+                    </p>
+                  ) : (
+                    <p className="mt-0.5 text-xs text-white/25">—</p>
+                  )}
                 </td>
                 <td className="px-6 py-4">
                   <StatusBadge status={cert.status} type="certificate" />
@@ -226,6 +287,17 @@ export default async function AdminCertificatesPage({
           </tbody>
         </table>
       </div>
+
+      <CertificatesPagination
+        page={page}
+        total={totalCount}
+        searchParams={{
+          status: resolvedSearchParams.status,
+          type: resolvedSearchParams.type,
+          dateFrom: resolvedSearchParams.dateFrom,
+          dateTo: resolvedSearchParams.dateTo,
+        }}
+      />
     </div>
   )
 }
