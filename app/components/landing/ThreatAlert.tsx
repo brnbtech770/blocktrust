@@ -32,7 +32,7 @@ export default function ThreatAlert() {
     <section className="relative overflow-hidden py-16">
       <div className="absolute left-1/2 top-0 h-32 w-96 -translate-x-1/2 rounded-full bg-[#E05252]/10 blur-3xl" />
 
-      <div className="relative z-10 mx-auto max-w-5xl px-6">
+      <div className="relative z-10 mx-auto max-w-5xl px-4">
         <div className="mb-12 flex flex-col items-center text-center">
           <p className="neon-red mb-2 text-xs font-semibold uppercase tracking-widest">
             Menaces permanentes

@@ -20,7 +20,7 @@ export default function Navbar() {
 
   return (
     <header
-      className="relative sticky top-0 z-50 flex h-14 items-center overflow-x-clip border-b px-3 backdrop-blur-[16px] sm:h-16 sm:px-6 lg:px-8"
+      className="relative sticky top-0 z-50 flex h-14 items-center overflow-x-clip border-b px-4 backdrop-blur-[16px] sm:h-16 sm:px-6 lg:px-8"
       style={{
         background: 'rgba(10,22,40,0.92)',
         borderBottomColor: 'var(--bt-border)',
@@ -102,7 +102,7 @@ export default function Navbar() {
           type="button"
           aria-label="Menu"
           aria-expanded={menuOpen}
-          className="shrink-0 rounded-lg border p-2 text-white md:hidden"
+          className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg border p-2 text-white md:hidden"
           style={{ borderColor: 'var(--bt-border)' }}
           onClick={() => setMenuOpen((o) => !o)}
         >
@@ -131,7 +131,7 @@ export default function Navbar() {
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-1.5 py-3 px-4 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5"
+                  className="flex min-h-[44px] items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white"
                   onClick={() => setMenuOpen(false)}
                 >
                   <ScanLine className="w-4 h-4 shrink-0" aria-hidden />
@@ -141,7 +141,7 @@ export default function Navbar() {
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-1.5 py-3 px-4 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5"
+                  className="flex min-h-[44px] items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white"
                   onClick={() => setMenuOpen(false)}
                 >
                   <Newspaper className="w-4 h-4 shrink-0" aria-hidden />
@@ -151,7 +151,7 @@ export default function Navbar() {
                 <Link
                   key={href}
                   href={href}
-                  className="py-3 px-4 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/5 transition"
+                  className="flex min-h-[44px] items-center rounded-lg px-4 py-3 text-sm font-medium text-white/60 transition hover:bg-white/5 hover:text-white"
                   onClick={() => setMenuOpen(false)}
                 >
                   {label}
@@ -161,7 +161,7 @@ export default function Navbar() {
             <div className="border-t mt-2 pt-2" style={{ borderColor: 'var(--bt-border)' }}>
               <Link
                 href="/auth/signin"
-                className="block py-3 px-4 rounded-lg text-sm font-medium border"
+                className="flex min-h-[44px] items-center rounded-lg border px-4 py-3 text-sm font-medium"
                 style={{ color: 'white', borderColor: 'var(--bt-border)' }}
                 onClick={() => setMenuOpen(false)}
               >
@@ -169,7 +169,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/auth/register"
-                className="block py-3 px-4 rounded-lg text-sm font-bold mt-2 text-center"
+                className="mt-2 flex min-h-[44px] items-center justify-center rounded-lg px-4 py-3 text-center text-sm font-bold"
                 style={{ background: '#00d4ff', color: '#0a1628' }}
                 onClick={() => setMenuOpen(false)}
               >

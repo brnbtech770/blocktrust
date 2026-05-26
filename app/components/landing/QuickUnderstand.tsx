@@ -3,7 +3,7 @@ import { FileCheck, ShieldAlert, BadgeCheck } from "lucide-react";
 export default function QuickUnderstand() {
   return (
     <section className="py-12">
-      <div className="mx-auto max-w-4xl px-6">
+      <div className="mx-auto max-w-4xl px-4">
         <div className="text-center">
           <p className="mb-2 text-xs uppercase tracking-widest text-white/50 neon-cyan">
             BLOCKTRUST EN 3 CAS CONCRETS
@@ -29,7 +29,7 @@ export default function QuickUnderstand() {
           {/* Cas 2 — Email frauduleux (typosquatting) */}
           <div className="relative flex h-full flex-col overflow-hidden rounded-xl border border-bt-cyan/20 bg-white/[0.03] p-5 text-left">
             <div className="absolute right-3 top-3">
-              <span className="rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] text-red-400">
+              <span className="rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-xs text-red-400">
                 Arnaque fréquente
               </span>
             </div>
@@ -42,7 +42,7 @@ export default function QuickUnderstand() {
             <p className="text-sm leading-relaxed text-white/50">
               Une lettre change dans l&apos;adresse email — invisible à l&apos;oeil nu.
             </p>
-            <div className="mt-3 space-y-1 rounded-lg bg-black/20 p-2 font-mono text-[11px]">
+            <div className="mt-3 space-y-1 rounded-lg bg-black/20 p-2 font-mono text-xs">
               <p className="text-white/40">contact@mabanque.fr ✓</p>
               <p className="text-red-400">
                 contact@maban

@@ -65,7 +65,7 @@ export default function Problem() {
               className="group relative rounded-xl border border-red-500/20 bg-white/5 p-6 backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-red-500/40 hover:bg-white/[0.07]"
             >
               {card.featured && (
-                <span className="neon-red absolute top-3 right-3 rounded-full border border-red-500/30 bg-red-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider">
+                <span className="neon-red absolute top-3 right-3 rounded-full border border-red-500/30 bg-red-500/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider">
                   Menace entrante
                 </span>
               )}

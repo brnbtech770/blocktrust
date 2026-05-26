@@ -77,7 +77,7 @@ export default function PricingTeaser() {
       <Reveal delay={250} className="mt-10 flex flex-col items-center justify-center gap-2">
         <Link
           href="/pricing"
-          className="group inline-flex items-center gap-2 rounded-xl border border-white/15 px-6 py-3 text-sm font-semibold text-white hover:border-bt-cyan/60 hover:text-bt-cyan sm:text-base"
+          className="group inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-6 py-3 text-sm font-semibold text-white hover:border-bt-cyan/60 hover:text-bt-cyan sm:w-auto sm:text-base"
         >
           Voir tous les plans
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

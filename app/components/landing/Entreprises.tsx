@@ -77,7 +77,7 @@ export default function Entreprises() {
       <Reveal delay={300} className="mt-10 flex justify-center">
         <Link
           href="/pricing?tab=entreprises"
-          className="inline-flex items-center justify-center rounded-xl border border-gold/60 bg-gold/10 px-8 py-3.5 text-sm font-bold text-gold transition-all hover:scale-[1.04] hover:bg-gold/20 sm:text-base"
+          className="inline-flex min-h-[52px] w-full max-w-sm items-center justify-center rounded-xl border border-gold/60 bg-gold/10 px-8 py-3.5 text-sm font-bold text-gold transition-all hover:scale-[1.04] hover:bg-gold/20 sm:w-auto sm:text-base"
         >
           {LANDING_CTA_B2B_LABEL}
         </Link>

@@ -29,7 +29,7 @@ export default function Hero() {
           </div>
 
           {/* H1 */}
-          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-3xl font-bold leading-[1.2] tracking-tight text-white sm:mt-6 sm:text-4xl">
+          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-2xl font-bold leading-[1.2] tracking-tight text-white sm:mt-6 sm:text-4xl">
             L&apos;identité numérique qui protège vos échanges.
           </h1>
 
@@ -45,16 +45,16 @@ export default function Hero() {
 
           {/* CTAs + micro-copy */}
           <div className="opacity-0 animate-fade-in [animation-delay:460ms] mt-7 flex flex-col items-start gap-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:gap-4">
               <Link
                 href="/auth/register"
-                className="inline-flex items-center justify-center rounded-xl bg-bt-cyan px-8 py-4 text-sm font-bold text-navy shadow-glow-cyan transition-all hover:scale-[1.04] hover:bg-[#21dfff] sm:text-base"
+                className="inline-flex min-h-[52px] w-full items-center justify-center rounded-xl bg-bt-cyan px-8 py-4 text-sm font-bold text-navy shadow-glow-cyan transition-all hover:scale-[1.04] hover:bg-[#21dfff] sm:w-auto sm:text-base"
               >
                 Certifier mon identité
               </Link>
               <Link
                 href="/how-to"
-                className="inline-flex items-center justify-center rounded-xl border border-white/20 px-8 py-4 text-sm font-semibold text-white transition-all hover:border-white/40 hover:bg-white/5 sm:text-base"
+                className="inline-flex min-h-[52px] w-full items-center justify-center rounded-xl border border-white/20 px-8 py-4 text-sm font-semibold text-white transition-all hover:border-white/40 hover:bg-white/5 sm:w-auto sm:text-base"
               >
                 Voir comment ça marche
               </Link>

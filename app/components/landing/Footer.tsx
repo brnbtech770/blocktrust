@@ -37,7 +37,7 @@ export default function Footer() {
               Pour particuliers et entreprises.
             </p>
             <div
-              className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-white/70"
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-wider text-white/70"
               style={{ borderColor: "var(--bt-cyan-border)" }}
             >
               <Network className="h-3.5 w-3.5 text-bt-cyan" />
@@ -54,7 +54,7 @@ export default function Footer() {
                 <li key={l.href} className="whitespace-nowrap">
                   <Link
                     href={l.href}
-                    className="text-sm text-white/65 transition-colors hover:text-bt-cyan"
+                    className="inline-flex min-h-[44px] items-center text-sm text-white/65 transition-colors hover:text-bt-cyan"
                   >
                     {l.label}
                   </Link>
@@ -71,7 +71,7 @@ export default function Footer() {
               href="https://www.linkedin.com/company/blocktrust"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 text-white/70 transition-all hover:border-bt-cyan/60 hover:text-bt-cyan"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 text-white/70 transition-all hover:border-bt-cyan/60 hover:text-bt-cyan"
               aria-label="LinkedIn BlockTrust"
             >
               <Linkedin className="h-4 w-4" />

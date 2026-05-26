@@ -91,7 +91,7 @@ export default function Integration() {
                 aria-controls={`panel-${t.id}`}
                 id={`tab-${t.id}`}
                 onClick={() => setActive(t.id)}
-                className={`flex flex-1 min-w-[120px] items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all sm:text-sm ${
+                className={`flex min-h-[44px] flex-1 min-w-[120px] items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all sm:text-sm ${
                   isActive
                     ? "bg-bt-cyan text-navy shadow-glow-cyan"
                     : "text-white/70 hover:bg-white/5 hover:text-white"
@@ -127,7 +127,7 @@ export default function Integration() {
                   </pre>
                   <button
                     onClick={() => copy("web", iframeSnippet)}
-                    className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10"
+                    className="absolute right-2 top-2 inline-flex min-h-[44px] items-center gap-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/80 hover:bg-white/10"
                   >
                     {copied === "web" ? (
                       <>
@@ -216,7 +216,7 @@ export default function Integration() {
                   onClick={() =>
                     copy("visio", `https://blocktrust.tech/verify/${SAMPLE_ID}`)
                   }
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-3 text-sm font-medium text-white hover:bg-white/5"
+                  className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-3 text-sm font-medium text-white hover:bg-white/5 sm:w-auto"
                 >
                   {copied === "visio" ? (
                     <>
@@ -265,7 +265,7 @@ export default function Integration() {
                 </pre>
                 <button
                   onClick={() => copy("api", apiSnippet)}
-                  className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-white/80 hover:bg-white/10"
+                  className="absolute right-2 top-2 inline-flex min-h-[44px] items-center gap-1 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/80 hover:bg-white/10"
                 >
                   {copied === "api" ? (
                     <>

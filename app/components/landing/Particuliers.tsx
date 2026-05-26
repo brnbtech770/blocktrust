@@ -82,7 +82,7 @@ export default function Particuliers() {
       <Reveal delay={300} className="mt-10 flex justify-center">
         <Link
           href="/pricing"
-          className="inline-flex items-center justify-center rounded-xl bg-bt-cyan px-8 py-3.5 text-sm font-bold text-navy transition-all hover:scale-[1.04] hover:bg-[#21dfff] sm:text-base"
+          className="inline-flex min-h-[52px] w-full max-w-sm items-center justify-center rounded-xl bg-bt-cyan px-8 py-3.5 text-sm font-bold text-navy transition-all hover:scale-[1.04] hover:bg-[#21dfff] sm:w-auto sm:text-base"
         >
           {LANDING_CTA_B2C_LABEL}
         </Link>

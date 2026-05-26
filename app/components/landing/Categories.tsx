@@ -125,7 +125,7 @@ function CategoryCard({
       <Reveal
         as="li"
         delay={delay}
-        className="group relative flex flex-col rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-cyan-500/10 to-amber-500/5 p-6 shadow-[0_0_40px_rgba(0,212,255,0.15)] backdrop-blur-sm transition-all motion-safe:hover:-translate-y-[2px] motion-safe:hover:shadow-[0_0_56px_rgba(0,212,255,0.28)] sm:col-span-2 lg:col-span-1"
+        className="group relative flex flex-col rounded-2xl border border-cyan-400/30 bg-gradient-to-br from-cyan-500/10 to-amber-500/5 p-6 shadow-[0_0_40px_rgba(0,212,255,0.15)] backdrop-blur-sm transition-all motion-safe:hover:-translate-y-[2px] motion-safe:hover:shadow-[0_0_56px_rgba(0,212,255,0.28)] lg:col-span-1"
       >
         <div className="mb-5 flex items-start justify-between gap-3">
           <div
@@ -142,7 +142,7 @@ function CategoryCard({
             />
           </div>
           <span
-            className="inline-flex items-center rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em]"
+            className="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em]"
             style={{
               color: "#E8D08A",
               background: "rgba(189,167,107,0.12)",
@@ -207,7 +207,7 @@ function CategoryCard({
         >
           <Icon aria-hidden="true" className="h-6 w-6 text-white/40" />
         </div>
-        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/45">
+        <span className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-white/45">
           {category.category}
         </span>
       </div>
