@@ -169,10 +169,41 @@ export const authOptions: NextAuthConfig = {
           include: { subscription: true },
         });
 
-        if (!user || !user.password) return null;
+        if (!user || !user.password) {
+          const { createHash } = await import('node:crypto')
+          const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? ''
+          const emailHash = createHash('sha256').update(`${email}:${secret}`).digest('hex')
+          void prisma.auditLog
+            .create({
+              data: {
+                action: 'AUTH_SIGNIN_FAILED',
+                resource: 'auth',
+                resourceId: emailHash,
+                ipHash: emailHash,
+              },
+            })
+            .catch(() => null)
+          return null
+        }
 
-        const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) return null;
+        const isValid = await bcrypt.compare(password, user.password)
+        if (!isValid) {
+          const { createHash } = await import('node:crypto')
+          const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? ''
+          const emailHash = createHash('sha256').update(`${email}:${secret}`).digest('hex')
+          void prisma.auditLog
+            .create({
+              data: {
+                action: 'AUTH_SIGNIN_FAILED',
+                resource: 'auth',
+                resourceId: emailHash,
+                ipHash: emailHash,
+                userId: user.id,
+              },
+            })
+            .catch(() => null)
+          return null
+        }
 
         const plan = user.subscription?.plan ?? "ESSENTIEL";
 

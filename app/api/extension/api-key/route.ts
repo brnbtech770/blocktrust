@@ -36,6 +36,16 @@ async function writeNewExtensionKey(userId: string): Promise<
           extensionApiKey: maskedDisplay,
         },
       });
+      void prisma.auditLog
+        .create({
+          data: {
+            action: "EXTENSION_API_KEY_CREATED",
+            resource: "user",
+            resourceId: userId,
+            userId,
+          },
+        })
+        .catch(() => null);
       return { ok: true, apiKey, masked: maskedDisplay };
     } catch {
       /* collision rare sur maskedDisplay unique */

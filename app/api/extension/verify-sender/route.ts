@@ -42,6 +42,16 @@ export async function GET(req: NextRequest) {
   const keyHash = hashApiKey(apiKey!);
   const rate = await checkRateLimitExtensionAsync("verify", keyHash);
   if (!rate.ok) {
+    void prisma.auditLog
+      .create({
+        data: {
+          action: "EXTENSION_RATE_LIMIT",
+          resource: "extension",
+          resourceId: keyHash,
+          userId,
+        },
+      })
+      .catch(() => null);
     return extensionJsonResponse(
       req,
       { error: "rate_limited", message: "Trop de requêtes. Réessayez plus tard.", retryAfter: rate.retryAfter },
