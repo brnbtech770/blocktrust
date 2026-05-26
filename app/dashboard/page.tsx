@@ -225,7 +225,7 @@ export default async function Dashboard({
                 <a
                   href={item.href}
                   key={item.step}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition"
+                  className="flex min-h-[44px] items-center gap-3 rounded-lg p-3 transition hover:bg-white/5"
                 >
                   <span
                     className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
@@ -277,13 +277,13 @@ export default async function Dashboard({
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link
                   href="/dashboard/certificates"
-                  className="flex items-center gap-1 text-sm font-semibold text-[#E05252] transition hover:text-white"
+                  className="inline-flex min-h-[44px] items-center gap-1 py-2 text-sm font-semibold text-[#E05252] transition hover:text-white"
                 >
                   Voir mes certificats →
                 </Link>
                 <a
                   href="mailto:security@blocktrust.tech"
-                  className="text-sm text-white/40 transition hover:text-white/70"
+                  className="inline-flex min-h-[44px] items-center py-2 text-sm text-white/40 transition hover:text-white/70"
                 >
                   Signaler à BLOCKTRUST
                 </a>
@@ -299,7 +299,7 @@ export default async function Dashboard({
                 <span className="text-gold">Blockchain</span>
                 <span className="text-white/70"> (Polygon)</span>
               </h2>
-              <span className="font-mono text-[10px] uppercase tracking-widest text-white/40">
+              <span className="font-mono text-xs uppercase tracking-widest text-white/40">
                 Ancrage on-chain
               </span>
             </div>
@@ -325,7 +325,7 @@ export default async function Dashboard({
                   {blockchainStats.failed}
                 </p>
                 {blockchainStats.failed > 0 && (
-                  <p className="mt-1 text-[11px] text-white/50">
+                  <p className="mt-1 text-xs text-white/50">
                     Retry automatique chaque nuit
                   </p>
                 )}
@@ -358,14 +358,14 @@ export default async function Dashboard({
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/dashboard/create"
-              className="inline-flex min-w-0 w-full items-center justify-center gap-2 rounded-lg bg-bt-cyan px-6 py-3 font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:text-base"
+              className="inline-flex min-h-[44px] min-w-0 w-full items-center justify-center gap-2 rounded-lg bg-bt-cyan px-6 py-3 font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:text-base"
             >
               <Plus size={18} aria-hidden />
               Créer un contact
             </Link>
             <Link
               href="/dashboard/certificates"
-              className="inline-flex min-w-0 w-full items-center justify-center gap-2 rounded-lg border border-white/20 px-6 py-3 font-sans text-sm font-semibold text-white transition-all hover:border-bt-cyan/50 hover:text-bt-cyan sm:w-auto sm:text-base"
+              className="inline-flex min-h-[44px] min-w-0 w-full items-center justify-center gap-2 rounded-lg border border-white/20 px-6 py-3 font-sans text-sm font-semibold text-white transition-all hover:border-bt-cyan/50 hover:text-bt-cyan sm:w-auto sm:text-base"
             >
               <Shield size={18} aria-hidden />
               Voir tous mes certificats

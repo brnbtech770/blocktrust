@@ -252,7 +252,7 @@ export default function CertificatesPage() {
         </div>
         <Link
           href="/dashboard/create"
-          className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-bt-cyan px-3 py-2 text-center text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:px-6 sm:py-3 sm:text-base"
+          className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-bt-cyan px-4 py-3 text-center text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:px-6 sm:text-base"
         >
           <Plus className="h-5 w-5 shrink-0" aria-hidden />
           Créer un certificat
@@ -307,13 +307,13 @@ export default function CertificatesPage() {
                     )}
                     <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
                       <div>
-                        <p className="text-[10px] font-medium uppercase tracking-wider text-white/40">
+                        <p className="text-xs font-medium uppercase tracking-wider text-white/40">
                           ID de vérification
                         </p>
                         <p className="mt-0.5 font-mono text-xs text-gray-300">
                           {truncateVerificationPublicId(certificate.publicId)}
                         </p>
-                        <span className="text-[10px] text-white/30">À partager pour la vérification</span>
+                        <span className="text-xs text-white/30">À partager pour la vérification</span>
                       </div>
                     </div>
                     <p className="mt-2 font-sans text-sm text-white/60">
@@ -333,35 +333,39 @@ export default function CertificatesPage() {
                       <button
                         type="button"
                         onClick={() => handleCopyVerifyLink(certificate)}
-                        className="inline-flex items-center gap-2 rounded-lg bg-bt-cyan/20 px-4 py-2 text-sm font-medium text-bt-cyan transition hover:bg-bt-cyan/30"
+                        className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-bt-cyan/20 px-4 py-2.5 text-sm font-medium text-bt-cyan transition hover:bg-bt-cyan/30"
+                        aria-label="Copier le lien de vérification"
                       >
                         {copiedCertId === certificate.id ? (
                           <>
                             <Check className="h-4 w-4 shrink-0" aria-hidden />
-                            Lien copié !
+                            <span className="hidden sm:inline">Lien copié !</span>
+                            <span className="sm:hidden">Copié</span>
                           </>
                         ) : (
                           <>
                             <Copy className="h-4 w-4 shrink-0" aria-hidden />
-                            Copier le lien de vérification
+                            <span className="hidden sm:inline">Copier le lien de vérification</span>
                           </>
                         )}
                       </button>
                       <button
                         type="button"
                         onClick={() => handleCopyEmbed(certificate)}
-                        className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40"
+                        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-lg border border-white/20 px-4 py-2.5 text-sm font-medium text-white transition hover:border-white/40 sm:min-w-0"
+                        aria-label="Copier le code embed"
                       >
                         <Copy className="h-4 w-4 shrink-0" aria-hidden />
-                        Copier embed
+                        <span className="hidden sm:inline">Copier embed</span>
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDownloadQR(certificate)}
-                        className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40"
+                        className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-lg border border-white/20 px-4 py-2.5 text-sm font-medium text-white transition hover:border-white/40 sm:min-w-0"
+                        aria-label="Télécharger le QR code"
                       >
                         <Smartphone className="h-4 w-4 shrink-0" aria-hidden />
-                        QR Code
+                        <span className="hidden sm:inline">QR Code</span>
                       </button>
                     </>
                   ) : certificate.status === "PENDING" ? (
@@ -375,7 +379,7 @@ export default function CertificatesPage() {
                   ) : (
                     <Link
                       href={`/dashboard/badge/${certificate.publicId ?? certificate.id}`}
-                      className="inline-flex rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white transition hover:border-white/40"
+                      className="inline-flex min-h-[44px] items-center rounded-lg border border-white/20 px-4 py-2.5 text-sm font-medium text-white transition hover:border-white/40"
                     >
                       Voir détails
                     </Link>
@@ -392,7 +396,7 @@ export default function CertificatesPage() {
           <p className="mb-6 font-sans text-base text-white/80">Créez votre premier certificat pour commencer</p>
           <Link
             href="/dashboard/create"
-            className="inline-flex rounded-lg bg-bt-cyan px-6 py-3 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90"
+            className="inline-flex min-h-[44px] w-full max-w-xs items-center justify-center rounded-lg bg-bt-cyan px-6 py-3 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto"
           >
             Créer mon premier certificat
           </Link>

@@ -163,14 +163,14 @@ export default async function DashboardSidebar() {
           {userIsAdmin ? (
             <Link
               href="/admin/dashboard"
-              className="mb-2 flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-widest text-[#BDA76B] transition hover:bg-[#BDA76B]/5 hover:text-[#BDA76B]/80"
+              className="mb-2 flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-semibold uppercase tracking-widest text-[#BDA76B] transition hover:bg-[#BDA76B]/5 hover:text-[#BDA76B]/80"
             >
               <Crown className="h-3 w-3 shrink-0" aria-hidden />
               Vue Admin
             </Link>
           ) : null}
           <DashboardSidebarNav sections={sections} />
-          <div className="mt-5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-[11px] leading-relaxed text-white/45">
+          <div className="mt-5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-xs leading-relaxed text-white/45">
             <p>
               <span className="font-semibold text-white/65">{wording.contactsLabel}</span> — personnes ou
               entreprises que vous certifiez dans votre réseau.

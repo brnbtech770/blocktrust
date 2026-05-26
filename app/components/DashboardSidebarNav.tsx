@@ -57,7 +57,7 @@ function NavItem({ item }: { item: SidebarItem }) {
     <Link
       href={item.href}
       title={item.lockTooltip}
-      className={`group flex items-center gap-2 rounded-lg px-3 py-2 font-sans text-sm transition-all ${
+      className={`group flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2.5 font-sans text-sm transition-all ${
         item.locked ? 'opacity-70' : ''
       } ${
         isActive
@@ -82,7 +82,7 @@ export default function DashboardSidebarNav({ sections }: { sections: SidebarSec
       {sections.map((section, idx) => (
         <div key={section.label ?? `section-${idx}`} className={idx > 0 ? 'mt-4' : ''}>
           {section.label ? (
-            <p className="mb-1 px-3 pt-1 text-[10px] uppercase tracking-widest text-white/20">
+            <p className="mb-1 px-3 pt-1 text-xs uppercase tracking-widest text-white/20">
               {section.label}
             </p>
           ) : null}

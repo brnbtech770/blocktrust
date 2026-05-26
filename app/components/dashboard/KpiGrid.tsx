@@ -37,7 +37,7 @@ export default function KpiGrid({
     )
 
   return (
-    <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:mb-8 lg:grid-cols-3 xl:grid-cols-5">
+    <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 md:mb-8 lg:grid-cols-3 xl:grid-cols-5">
       <KpiCard
         label="Certificats actifs"
         value={String(certs)}
@@ -71,7 +71,7 @@ export default function KpiGrid({
               href={polygonExplorerUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 inline-flex font-mono text-[10px] text-bt-cyan hover:underline"
+              className="mt-2 inline-flex min-h-[44px] items-center font-mono text-xs text-bt-cyan hover:underline"
             >
               Voir sur PolygonScan ↗
             </a>
@@ -121,7 +121,7 @@ function KpiCard({
             {label}
           </p>
           <p className="font-mono text-3xl font-bold tabular-nums tracking-tight text-white">{value}</p>
-          <p className="mt-1 truncate font-mono text-[10px] text-white/50">{sub}</p>
+          <p className="mt-1 truncate font-mono text-xs text-white/50">{sub}</p>
           {footer}
         </div>
         <div className="shrink-0">{icon}</div>

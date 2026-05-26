@@ -106,7 +106,7 @@ export default function CertificateTable({ certificates }: CertificateTableProps
               key={tab.key}
               type="button"
               onClick={() => setFilter(tab.key)}
-              className={`font-sans text-sm transition-colors ${
+              className={`min-h-[44px] px-2 font-sans text-sm transition-colors ${
                 isActive
                   ? 'text-bt-cyan'
                   : 'text-white/50 hover:text-white'
@@ -121,19 +121,19 @@ export default function CertificateTable({ certificates }: CertificateTableProps
 
       <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all hover:border-gold/30">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full min-w-[600px] text-left">
             <thead>
               <tr className="border-b" style={{ background: 'rgba(0,0,0,0.3)', borderColor: 'var(--bt-border)' }}>
-                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
+                <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
                   Contact / ID
                 </th>
-                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
+                <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
                   Statut
                 </th>
-                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
+                <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
                   Vérifications
                 </th>
-                <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
+                <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
                   Émis le
                 </th>
                 <th className="px-4 py-3 text-[10px] font-medium uppercase tracking-wider w-32" style={{ fontFamily: 'var(--font-mono-bt), monospace', color: 'var(--bt-muted)' }}>
@@ -162,11 +162,11 @@ export default function CertificateTable({ certificates }: CertificateTableProps
                         <div className="mt-2 space-y-2">
                           <div>
                             <p className="font-mono text-xs text-gray-400">{cert.publicId ?? "—"}</p>
-                            <span className="text-[10px] text-white/30">ID à partager pour vérification</span>
+                            <span className="text-xs text-white/30">ID à partager pour vérification</span>
                           </div>
                           <div>
                             <p className="break-all font-mono text-xs text-gray-500">{cert.id}</p>
-                            <span className="text-[10px] text-white/30">ID technique interne</span>
+                            <span className="text-xs text-white/30">ID technique interne</span>
                           </div>
                         </div>
                       </td>
@@ -179,17 +179,21 @@ export default function CertificateTable({ certificates }: CertificateTableProps
                         <div className="flex items-center gap-2">
                           <Link
                             href={`/dashboard/certificate/${cert.publicId ?? cert.id}`}
-                            className="inline-flex items-center gap-1 rounded-lg bg-[var(--bt-gold)]/20 px-2 py-1.5 text-sm font-medium text-[var(--bt-gold)] hover:bg-[var(--bt-gold)]/30 transition-colors"
+                            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-lg bg-[var(--bt-gold)]/20 px-2 py-1.5 text-sm font-medium text-[var(--bt-gold)] transition-colors hover:bg-[var(--bt-gold)]/30 sm:min-w-0"
+                            aria-label="Voir le certificat"
                           >
-                            <Eye className="w-4 h-4" /> Voir
+                            <Eye className="w-4 h-4" />
+                            <span className="hidden sm:inline">Voir</span>
                           </Link>
                           {!isRevoked && (
                             <button
                               type="button"
                               onClick={() => setRevokeModal(cert)}
-                              className="inline-flex items-center gap-1 rounded-lg bg-[var(--bt-danger)]/20 px-2 py-1.5 text-sm font-medium text-[var(--bt-danger)] hover:bg-[var(--bt-danger)]/30 transition-colors"
+                              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-lg bg-[var(--bt-danger)]/20 px-2 py-1.5 text-sm font-medium text-[var(--bt-danger)] transition-colors hover:bg-[var(--bt-danger)]/30 sm:min-w-0"
+                              aria-label="Révoquer le certificat"
                             >
-                              <ShieldOff className="w-4 h-4" /> Révoquer
+                              <ShieldOff className="w-4 h-4" />
+                              <span className="hidden sm:inline">Révoquer</span>
                             </button>
                           )}
                         </div>
@@ -217,7 +221,7 @@ export default function CertificateTable({ certificates }: CertificateTableProps
                 type="button"
                 onClick={() => setRevokeModal(null)}
                 disabled={revoking}
-                className="rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 disabled:opacity-50"
+                className="min-h-[44px] rounded-lg border border-white/20 px-4 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 disabled:opacity-50"
               >
                 Annuler
               </button>
@@ -225,7 +229,7 @@ export default function CertificateTable({ certificates }: CertificateTableProps
                 type="button"
                 onClick={handleRevokeConfirm}
                 disabled={revoking}
-                className="rounded-lg bg-[var(--bt-danger)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="min-h-[44px] rounded-lg bg-[var(--bt-danger)] px-4 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {revoking ? 'Révoquer...' : 'Révoquer'}
               </button>

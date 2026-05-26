@@ -27,7 +27,7 @@ export default function DashboardChrome({
     <div className="min-h-screen overflow-x-hidden bg-[var(--bt-navy)]">
       <button
         type="button"
-        className="md:hidden fixed top-3 left-3 z-[60] flex h-11 w-11 items-center justify-center rounded-lg border text-white shadow-lg"
+        className="md:hidden fixed top-3 left-3 z-[60] flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border text-white shadow-lg"
         style={{
           borderColor: 'var(--bt-border)',
           background: 'rgba(6,14,26,0.95)',
@@ -59,7 +59,7 @@ export default function DashboardChrome({
 
       <aside
         id="dashboard-sidebar-panel"
-        className={`fixed left-0 top-0 z-50 h-full w-[min(220px,85vw)] max-w-[85vw] transition-transform duration-200 ease-out md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed left-0 top-0 z-50 h-full w-full max-w-[min(280px,100vw)] transition-transform duration-200 ease-out md:w-[220px] md:max-w-none md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{
           background: 'rgba(6,14,26,0.98)',
           borderRight: '1px solid var(--bt-border)',
