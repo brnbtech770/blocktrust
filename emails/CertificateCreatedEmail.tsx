@@ -17,6 +17,7 @@ import {
 } from '@react-email/components'
 import * as React from 'react'
 import { EmailSignatureBadge } from './components/EmailSignatureBadge'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export const subject = 'Votre certificat BlockTrust est généré ✅'
 
@@ -100,6 +101,8 @@ export function CertificateCreatedEmail({
               verifyUrl={ownerVerifyUrl ?? null}
             />
           </Section>
+
+          <CertifiedEmailFooter certId={ownerCertId} />
 
           <Text style={footer}>BlockTrust — Certification numérique fiable</Text>
         </Container>

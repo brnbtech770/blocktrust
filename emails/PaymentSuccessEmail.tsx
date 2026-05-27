@@ -15,6 +15,7 @@ import {
   Text,
 } from '@react-email/components'
 import * as React from 'react'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export function getPaymentSuccessSubject(planName: string) {
   return `Abonnement ${planName} activé — merci !`
@@ -71,6 +72,7 @@ export function PaymentSuccessEmail({
             BlockTrust — Certification numérique fiable. Gestion de l’abonnement : tableau de bord →
             Facturation.
           </Text>
+          <CertifiedEmailFooter />
         </Container>
       </Body>
     </Html>

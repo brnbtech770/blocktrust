@@ -16,6 +16,7 @@ import {
 } from '@react-email/components'
 import * as React from 'react'
 import { EmailSignatureBadge } from './components/EmailSignatureBadge'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export const subject = '⛓️ Votre certificat BLOCKTRUST est ancré sur Polygon'
 
@@ -144,6 +145,8 @@ export function CertificateAnchoredEmail({
             certId={ownerCertId ?? null}
             verifyUrl={ownerVerifyUrl ?? verifyUrl}
           />
+
+          <CertifiedEmailFooter certId={ownerCertId} />
         </Container>
       </Body>
     </Html>

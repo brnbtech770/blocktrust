@@ -15,6 +15,7 @@ import {
   Text,
 } from '@react-email/components'
 import * as React from 'react'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export const subject = '⚠️ Votre certificat a été révoqué'
 
@@ -68,6 +69,7 @@ export function CertificateRevokedEmail({
 
           <Hr style={hr} />
           <Text style={footer}>BlockTrust — Certification numérique fiable</Text>
+          <CertifiedEmailFooter />
         </Container>
       </Body>
     </Html>

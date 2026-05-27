@@ -14,6 +14,7 @@ import {
   Text,
 } from '@react-email/components'
 import * as React from 'react'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export const subject = 'Votre lien de connexion BlockTrust'
 
@@ -36,6 +37,7 @@ export function MagicLinkEmail({ url }: MagicLinkEmailProps) {
             </Link>
           </Section>
           <Text style={muted}>Si vous n&apos;avez pas demandé cet email, ignorez-le.</Text>
+          <CertifiedEmailFooter />
         </Container>
       </Body>
     </Html>

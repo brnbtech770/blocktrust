@@ -24,6 +24,7 @@ import {
   textStyle,
   titleStyle,
 } from './blocktrust-charte'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export type MutualTrustEmailProps = {
   userName: string
@@ -65,6 +66,7 @@ export function MutualTrustEmail({ userName, partnerName }: MutualTrustEmailProp
           <Section style={footerSection}>
             <Text style={footerText}>© 2026 BRNB TECH SAS · blocktrust.tech</Text>
           </Section>
+          <CertifiedEmailFooter />
         </Container>
       </Body>
     </Html>

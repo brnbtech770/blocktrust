@@ -24,6 +24,7 @@ import {
   textStyle,
   titleStyle,
 } from './blocktrust-charte'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export const subject = '✅ Identité vérifiée — Accès activé'
 
@@ -58,6 +59,7 @@ export function KYCApprovedEmail({ userName }: KYCApprovedEmailProps) {
           <Section style={footerSection}>
             <Text style={footerText}>© 2026 BRNB TECH SAS · blocktrust.tech</Text>
           </Section>
+          <CertifiedEmailFooter />
         </Container>
       </Body>
     </Html>

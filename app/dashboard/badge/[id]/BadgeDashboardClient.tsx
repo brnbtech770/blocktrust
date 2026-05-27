@@ -12,7 +12,7 @@ import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
 import { truncateVerificationPublicId } from '@/lib/truncate-public-id'
 import { copyToClipboard } from '@/lib/copy-to-clipboard'
 import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
-import { Copy, Download, ExternalLink, Check, Link2, Clock } from 'lucide-react'
+import { Copy, Download, ExternalLink, Check, Link2, Clock, Mail } from 'lucide-react'
 
 interface BadgeData {
   id: string
@@ -331,6 +331,71 @@ export default function BadgeDashboardClient({ isAdmin }: BadgeDashboardClientPr
             )}
           </button>
         </div>
+      </div>
+
+      <div className="mb-6 rounded-xl border border-white/10 bg-[#0d1f3c] p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#00d4ff]/20 bg-[#00d4ff]/10">
+            <Mail className="h-4 w-4 text-[#00d4ff]" aria-hidden />
+          </div>
+          <h2 className="font-syne text-lg font-semibold text-white">
+            Comment ajouter mon badge à ma signature Gmail
+          </h2>
+        </div>
+        <ol className="space-y-3 text-sm text-white/70">
+          <li className="flex gap-3">
+            <span className="font-mono text-[#00d4ff]">1.</span>
+            <span>
+              Copiez le <strong className="text-white">code HTML du badge</strong> ci-dessus
+              (section Intégration).
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="font-mono text-[#00d4ff]">2.</span>
+            <span>
+              Dans Gmail : <strong className="text-white">Paramètres → Voir tous les paramètres →
+              Général → Signature</strong>.
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="font-mono text-[#00d4ff]">3.</span>
+            <span>
+              Cliquez sur l&apos;icône <strong className="text-white">image</strong> dans l&apos;éditeur
+              de signature.
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="font-mono text-[#00d4ff]">4.</span>
+            <span>
+              Collez le <strong className="text-white">lien de vérification</strong> de votre badge
+              :{' '}
+              <code className="break-all rounded bg-black/30 px-1.5 py-0.5 font-mono text-xs text-[#00d4ff]">
+                {publicVerifyHref}
+              </code>
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="font-mono text-[#00d4ff]">5.</span>
+            <span>Enregistrez — vos emails sortants afficheront votre identité certifiée BLOCKTRUST™.</span>
+          </li>
+        </ol>
+        <button
+          type="button"
+          onClick={handleCopyEmbed}
+          className="mt-5 inline-flex items-center gap-2 rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/15 px-4 py-2 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/25"
+        >
+          {embedCopied ? (
+            <>
+              <Check size={16} aria-hidden />
+              Code HTML copié
+            </>
+          ) : (
+            <>
+              <Copy size={16} aria-hidden />
+              Copier le code HTML du badge
+            </>
+          )}
+        </button>
       </div>
 
       <div className="mb-6 rounded-xl border border-white/10 bg-[#0d1f3c] p-6">

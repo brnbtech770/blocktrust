@@ -16,6 +16,7 @@ import {
   Text,
 } from '@react-email/components'
 import * as React from 'react'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export const subject = 'Bienvenue sur BlockTrust 🔐'
 
@@ -55,6 +56,7 @@ export function WelcomeEmail({ userName, dashboardUrl }: WelcomeEmailProps) {
             BlockTrust — Certification numérique fiable. Pour toute question :{' '}
             <Link href="mailto:support@blocktrust.tech" style={linkFooter}>support@blocktrust.tech</Link>
           </Text>
+          <CertifiedEmailFooter />
         </Container>
       </Body>
     </Html>

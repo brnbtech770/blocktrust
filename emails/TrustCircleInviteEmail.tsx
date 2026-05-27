@@ -25,6 +25,7 @@ import {
   titleStyle,
 } from './blocktrust-charte'
 import { EmailSignatureBadge } from './components/EmailSignatureBadge'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export type TrustCircleInviteEmailProps = {
   inviterName: string
@@ -87,6 +88,8 @@ export function TrustCircleInviteEmail({
               verifyUrl={senderVerifyUrl ?? null}
             />
           </Section>
+
+          <CertifiedEmailFooter certId={senderCertId} />
         </Container>
       </Body>
     </Html>

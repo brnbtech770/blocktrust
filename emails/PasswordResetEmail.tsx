@@ -14,6 +14,7 @@ import {
   Text,
 } from '@react-email/components'
 import * as React from 'react'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export const subject = 'Réinitialisation de votre mot de passe BLOCKTRUST™'
 
@@ -73,6 +74,7 @@ export function PasswordResetEmail({ resetUrl, userName }: PasswordResetEmailPro
               </Link>
             </Text>
           </Section>
+          <CertifiedEmailFooter />
         </Container>
       </Body>
     </Html>

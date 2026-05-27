@@ -5,6 +5,7 @@
 import { Body, Container, Head, Html, Link, Preview, Section, Text } from '@react-email/components'
 import * as React from 'react'
 import { EmailSignatureBadge } from './components/EmailSignatureBadge'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export const subject = 'Invitation équipe — BLOCKTRUST™'
 
@@ -68,6 +69,8 @@ export function OrgInviteEmail({
               verifyUrl={senderVerifyUrl ?? null}
             />
           </Section>
+
+          <CertifiedEmailFooter certId={senderCertId} />
         </Container>
       </Body>
     </Html>

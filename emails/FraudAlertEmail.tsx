@@ -16,6 +16,7 @@ import {
   Text,
 } from '@react-email/components'
 import * as React from 'react'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export const subject = 'Tentative de fraude détectée — BLOCKTRUST™'
 
@@ -82,6 +83,7 @@ export function FraudAlertEmail({
 
           <Hr style={hr} />
           <Text style={footer}>BLOCKTRUST™ — Certification numérique</Text>
+          <CertifiedEmailFooter />
         </Container>
       </Body>
     </Html>

@@ -24,6 +24,7 @@ import {
   textStyle,
   titleStyle,
 } from './blocktrust-charte'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 import { JOIN_BLOCKTRUST_ESSENTIEL_LABEL } from '@/lib/pricing'
 
 export type TrustCircleExternalInviteEmailProps = {
@@ -81,6 +82,7 @@ export function TrustCircleExternalInviteEmail({
           <Section style={footerSection}>
             <Text style={footerText}>© 2026 BRNB TECH SAS · blocktrust.tech</Text>
           </Section>
+          <CertifiedEmailFooter />
         </Container>
       </Body>
     </Html>

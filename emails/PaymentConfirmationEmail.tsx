@@ -15,6 +15,7 @@ import {
   Text,
 } from '@react-email/components'
 import * as React from 'react'
+import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
 export type PaymentConfirmationEmailProps = {
   userName: string
@@ -86,6 +87,7 @@ export function PaymentConfirmationEmail({
               support@blocktrust.tech
             </Link>
           </Text>
+          <CertifiedEmailFooter />
         </Container>
       </Body>
     </Html>
