@@ -1,23 +1,30 @@
-// Politique de confidentialité et cookies (placeholder — à compléter juridiquement)
-// ============================================================
+import type { Metadata } from "next";
+import Navbar from "@/app/components/landing/Navbar";
+import Footer from "@/app/components/landing/Footer";
+import PrivacyContent from "./PrivacyContent";
 
-import Link from 'next/link'
+export const metadata: Metadata = {
+  title: "Politique de confidentialité",
+  description:
+    "Politique de confidentialité BLOCKTRUST™ — BRNB TECH SAS. Données personnelles, RGPD, cookies, extension Chrome TrustScan.",
+  alternates: { canonical: "/privacy" },
+  openGraph: {
+    title: "Politique de confidentialité — BLOCKTRUST™",
+    description:
+      "Traitement des données personnelles, droits RGPD, extension TrustScan et contact DPO.",
+    url: "/privacy",
+  },
+};
 
 export default function PrivacyPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 text-white/80">
-      <h1 className="font-syne mb-6 text-3xl font-bold text-white">
-        Politique de confidentialité &amp; cookies
-      </h1>
-      <p className="mb-4 text-sm text-white/60">
-        Décrit les traitements de données, les cookies nécessaires et analytiques anonymes, et vos droits
-        (RGPD). Ce contenu est un canevas à faire valider juridiquement.
-      </p>
-      <p className="mb-8 text-sm">
-        <Link href="/" className="text-[#00d4ff] hover:underline">
-          ← Retour à l&apos;accueil
-        </Link>
-      </p>
+    <div
+      className="min-h-screen overflow-x-hidden bt-circuit-bg"
+      style={{ background: "var(--bt-navy)" }}
+    >
+      <Navbar />
+      <PrivacyContent />
+      <Footer />
     </div>
-  )
+  );
 }
