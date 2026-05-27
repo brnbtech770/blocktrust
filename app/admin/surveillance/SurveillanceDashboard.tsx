@@ -17,6 +17,8 @@ import {
 import { Activity, Bot, Clock, ShieldAlert } from 'lucide-react'
 import { formatDistanceToNow } from '@/lib/format-relative-fr'
 
+type AgentKey = 'fraud' | 'security' | 'subscription' | 'onboarding'
+
 type SurveillancePayload = {
   verifications24h: number
   fraudRate: number
@@ -43,7 +45,28 @@ type SurveillancePayload = {
     subscription: { active: boolean; lastRunAt: string | null; mrrEur: number }
     onboarding: { active: boolean; lastRunAt: string | null; remindersSent: number }
   }
+  agentExecutionLogs?: {
+    id: string
+    action: string
+    resourceId: string | null
+    createdAt: string
+    meta: unknown
+  }[]
 }
+
+const AGENT_RUN_LABELS: Record<string, string> = {
+  FRAUD_SURVEILLANCE_RUN: 'Fraude',
+  SECURITY_MONITOR_RUN: 'Sécurité',
+  SUBSCRIPTION_MONITOR_RUN: 'Abonnements',
+  ONBOARDING_MONITOR_RUN: 'Onboarding',
+}
+
+const AGENT_KEYS: { key: AgentKey; label: string }[] = [
+  { key: 'fraud', label: 'Fraude' },
+  { key: 'security', label: 'Sécurité' },
+  { key: 'subscription', label: 'Abonnements' },
+  { key: 'onboarding', label: 'Onboarding' },
+]
 
 function pct(n: number) {
   return `${(n * 100).toFixed(2)} %`
@@ -53,6 +76,8 @@ export default function SurveillanceDashboard() {
   const [data, setData] = useState<SurveillancePayload | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [runLoading, setRunLoading] = useState(false)
+  const [restartLoading, setRestartLoading] = useState(false)
+  const [agentRunLoading, setAgentRunLoading] = useState<AgentKey | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -92,6 +117,42 @@ export default function SurveillanceDashboard() {
     }
   }
 
+  async function restartSurveillance() {
+    setRestartLoading(true)
+    setError(null)
+    try {
+      const r = await fetch('/api/admin/restart-surveillance', { method: 'POST' })
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}))
+        setError(typeof j.error === 'string' ? j.error : 'Relance QStash impossible')
+        return
+      }
+      await load()
+    } catch {
+      setError('Erreur réseau')
+    } finally {
+      setRestartLoading(false)
+    }
+  }
+
+  async function runAgent(agent: AgentKey) {
+    setAgentRunLoading(agent)
+    setError(null)
+    try {
+      const r = await fetch(`/api/admin/run-agent?agent=${agent}`, { method: 'POST' })
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}))
+        setError(typeof j.error === 'string' ? j.error : "L'agent n'a pas pu s'exécuter")
+        return
+      }
+      await load()
+    } catch {
+      setError('Erreur réseau')
+    } finally {
+      setAgentRunLoading(null)
+    }
+  }
+
   const lastRunLabel =
     data?.lastRunAt != null ? formatDistanceToNow(data.lastRunAt) : 'Jamais lancée'
 
@@ -111,15 +172,25 @@ export default function SurveillanceDashboard() {
             <span>Dernière analyse : {lastRunLabel}</span>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => void runNow()}
-          disabled={runLoading}
-          className="shrink-0 whitespace-nowrap rounded-lg px-5 py-2.5 text-sm font-semibold text-navy transition hover:brightness-110 disabled:opacity-50"
-          style={{ background: 'var(--bt-cyan)', color: '#0a1628' }}
-        >
-          {runLoading ? 'Analyse en cours…' : 'Lancer maintenant'}
-        </button>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => void restartSurveillance()}
+            disabled={restartLoading || runLoading}
+            className="whitespace-nowrap rounded-lg border border-bt-cyan/40 px-5 py-2.5 text-sm font-semibold text-bt-cyan transition hover:bg-bt-cyan/10 disabled:opacity-50"
+          >
+            {restartLoading ? 'Relance…' : 'Relancer la surveillance'}
+          </button>
+          <button
+            type="button"
+            onClick={() => void runNow()}
+            disabled={runLoading || restartLoading}
+            className="whitespace-nowrap rounded-lg px-5 py-2.5 text-sm font-semibold text-navy transition hover:brightness-110 disabled:opacity-50"
+            style={{ background: 'var(--bt-cyan)', color: '#0a1628' }}
+          >
+            {runLoading ? 'Analyse en cours…' : 'Lancer maintenant'}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -135,6 +206,19 @@ export default function SurveillanceDashboard() {
         <h2 className="mb-4 font-syne text-sm font-semibold uppercase tracking-wider text-white/60">
           Agents actifs
         </h2>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {AGENT_KEYS.map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => void runAgent(key)}
+              disabled={agentRunLoading !== null}
+              className="rounded-lg border border-white/15 px-3 py-1.5 text-xs font-medium text-white/80 transition hover:border-bt-cyan/40 hover:text-bt-cyan disabled:opacity-50"
+            >
+              {agentRunLoading === key ? `Exécution ${label}…` : `Exécuter ${label}`}
+            </button>
+          ))}
+        </div>
         <ul className="grid gap-3 sm:grid-cols-2">
           <AgentStatusRow
             label="Agent Fraude"
@@ -193,6 +277,45 @@ export default function SurveillanceDashboard() {
             }
           />
         </ul>
+      </div>
+
+      <div
+        className="mb-8 rounded-xl border border-white/10 p-5"
+        style={{ background: 'rgba(13,31,60,0.5)' }}
+      >
+        <h2 className="mb-4 font-syne text-sm font-semibold uppercase tracking-wider text-white/60">
+          Dernières exécutions agents
+        </h2>
+        {!data ? (
+          <p className="text-sm" style={{ color: 'var(--bt-muted)' }}>
+            Chargement…
+          </p>
+        ) : !data.agentExecutionLogs?.length ? (
+          <p className="text-sm" style={{ color: 'var(--bt-muted)' }}>
+            Aucune exécution enregistrée — relancez la surveillance QStash.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {data.agentExecutionLogs.map((log) => (
+              <li
+                key={log.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium text-white">
+                    {AGENT_RUN_LABELS[log.action] ?? log.action}
+                  </span>
+                  {log.resourceId ? (
+                    <span className="font-mono text-xs text-white/35">{log.resourceId}</span>
+                  ) : null}
+                </div>
+                <span className="text-xs" style={{ color: 'var(--bt-muted)' }}>
+                  {new Date(log.createdAt).toLocaleString('fr-FR')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       <div

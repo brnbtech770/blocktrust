@@ -4,7 +4,7 @@
 
 import { Client } from '@upstash/qstash'
 
-function appBaseUrl(): string | null {
+export function appBaseUrl(): string | null {
   const trimmed =
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
     process.env.NEXTAUTH_URL?.trim() ||
