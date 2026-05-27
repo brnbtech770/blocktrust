@@ -306,6 +306,7 @@ export async function GET(
     trustEngine = await computeTrustEngineScore(
       certificatePublicId,
       session?.user?.id,
+      { contextIp: getIp(req) },
     ).catch(() => null);
   }
 

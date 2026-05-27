@@ -25,6 +25,10 @@ vi.mock('@/lib/signals/disposable-email', () => ({
   getEmailDomain: vi.fn((email: string) => email.split('@')[1]?.toLowerCase() ?? ''),
 }))
 
+vi.mock('@/lib/signals/ip-reputation', () => ({
+  checkIpReputation: vi.fn().mockResolvedValue({ score: 0, abusive: false, isp: '' }),
+}))
+
 import { computeTrustEngineScore } from '@/lib/trust-engine'
 
 function buildCertFixture(opts: {

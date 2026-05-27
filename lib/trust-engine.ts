@@ -8,6 +8,12 @@ import {
   getEmailDomain,
   isDisposableEmail,
 } from "@/lib/signals/disposable-email";
+import { checkIpReputation } from "@/lib/signals/ip-reputation";
+
+export interface TrustEngineOptions {
+  /** IP du contexte de vérification (optionnel — AbuseIPDB) */
+  contextIp?: string;
+}
 
 export interface TrustSignal {
   type: string;
@@ -59,6 +65,7 @@ function clampScore(value: number): number {
 export async function computeTrustEngineScore(
   certificateLookupId: string,
   viewerUserId?: string,
+  options?: TrustEngineOptions,
 ): Promise<TrustEngineResult> {
   const lookup = certificateLookupId.trim();
   if (!lookup) {
@@ -222,6 +229,34 @@ export async function computeTrustEngineScore(
         impact: "positive",
         weight: 20,
       });
+    } else if (networkScore < 80) {
+      const indirectConnection = await prisma.userTrustRelation
+        .findFirst({
+          where: {
+            fromUserId: viewerUserId,
+            status: "CONFIRMED",
+            toUser: {
+              userTrustFrom: {
+                some: {
+                  toUserId: user.id,
+                  status: "CONFIRMED",
+                },
+              },
+            },
+          },
+        })
+        .catch(() => null);
+
+      if (indirectConnection) {
+        networkScore = Math.min(100, networkScore + 10);
+        signals.push({
+          type: "INDIRECT_NETWORK",
+          label: "Connexion indirecte dans votre réseau",
+          impact: "positive",
+          weight: 10,
+          detail: "Ami d'un de vos contacts",
+        });
+      }
     }
   }
 
@@ -338,6 +373,34 @@ export async function computeTrustEngineScore(
       impact: "negative",
       weight: -30,
     });
+  }
+
+  const contextIp = options?.contextIp?.trim();
+  if (contextIp && contextIp !== "unknown") {
+    const ipRep = await checkIpReputation(contextIp).catch(() => ({
+      score: 0,
+      abusive: false,
+      isp: "",
+    }));
+
+    if (ipRep.abusive) {
+      technicalScore = Math.max(0, technicalScore - 15);
+      signals.push({
+        type: "IP_REPUTATION_BAD",
+        label: "IP associée à des signaux de vigilance",
+        impact: "negative",
+        weight: -15,
+        detail: ipRep.isp ? `FAI : ${ipRep.isp}` : undefined,
+      });
+    } else if (ipRep.score === 0 && ipRep.isp) {
+      signals.push({
+        type: "IP_REPUTATION_OK",
+        label: "IP sans signalement récent",
+        impact: "neutral",
+        weight: 0,
+        detail: ipRep.isp,
+      });
+    }
   }
 
   technicalScore = Math.min(100, technicalScore);
