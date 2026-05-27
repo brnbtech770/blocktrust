@@ -6,7 +6,10 @@ import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { ShieldCheck } from 'lucide-react'
+import { Plus, ShieldCheck } from 'lucide-react'
+import type { OrgRole } from '@prisma/client'
+
+const MANAGE_VAULT_ROLES: OrgRole[] = ['OWNER', 'ADMIN', 'MANAGER']
 
 export default async function VaultIndexPage() {
   const session = await auth()
@@ -16,9 +19,17 @@ export default async function VaultIndexPage() {
 
   const memberships = await prisma.organizationMember.findMany({
     where: { userId: session.user.id, joinedAt: { not: null } },
-    select: { organizationId: true },
+    include: {
+      organization: { select: { id: true, slug: true, name: true } },
+    },
   })
   const orgIds = memberships.map((m) => m.organizationId)
+  const manageableOrgs = memberships.filter((m) => MANAGE_VAULT_ROLES.includes(m.role))
+  const createVaultHref =
+    manageableOrgs.length === 1
+      ? `/dashboard/organization/${manageableOrgs[0].organization.slug}`
+      : '/dashboard/organization'
+  const canCreateVault = manageableOrgs.length > 0
   if (orgIds.length === 0) {
     return (
       <div className="mx-auto max-w-3xl font-sans text-white/80">
@@ -44,12 +55,35 @@ export default async function VaultIndexPage() {
 
   return (
     <div className="mx-auto max-w-3xl font-sans text-white/85">
-      <div className="mb-6 flex items-center gap-2">
-        <ShieldCheck className="h-6 w-6 text-bt-cyan/90" aria-hidden />
-        <h1 className="font-syne text-2xl font-bold tracking-tight text-white">BlockTrust Vault</h1>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-6 w-6 text-bt-cyan/90" aria-hidden />
+          <h1 className="font-syne text-2xl font-bold tracking-tight text-white">BlockTrust Vault</h1>
+        </div>
+        {canCreateVault ? (
+          <Link
+            href={createVaultHref}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 px-4 py-2 text-sm font-medium text-bt-cyan transition hover:bg-bt-cyan/25"
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            Créer un coffre
+          </Link>
+        ) : null}
       </div>
       <p className="mb-6 text-sm text-white/50">Coffres partagés au sein de vos organisations.</p>
       <ul className="space-y-2">
+        {vaults.length === 0 ? (
+          <li className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-6 text-sm text-white/45">
+            Aucun coffre pour l&apos;instant.{' '}
+            {canCreateVault ? (
+              <Link href={createVaultHref} className="text-bt-cyan underline-offset-2 hover:underline">
+                Créer un coffre
+              </Link>
+            ) : (
+              <span>Demandez à un administrateur de votre équipe.</span>
+            )}
+          </li>
+        ) : null}
         {vaults.map((v) => (
           <li key={v.id}>
             <Link

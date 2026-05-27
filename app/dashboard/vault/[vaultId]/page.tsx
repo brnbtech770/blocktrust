@@ -4,7 +4,11 @@
 
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
-import { loadVaultForUser, orgRoleCanManageVaults } from '@/lib/org-vault-server'
+import {
+  loadVaultForUser,
+  orgRoleCanDeleteVault,
+  orgRoleCanManageVaults,
+} from '@/lib/org-vault-server'
 import { notFound, redirect } from 'next/navigation'
 import VaultDetailClient from './VaultDetailClient'
 
@@ -32,6 +36,8 @@ export default async function VaultDetailPage({ params }: Props) {
       organizationSlug={org.slug}
       organizationName={org.name}
       canEdit={orgRoleCanManageVaults(loaded.membership.role)}
+      canDeleteVault={orgRoleCanDeleteVault(loaded.membership.role)}
+      membershipRole={loaded.membership.role}
     />
   )
 }

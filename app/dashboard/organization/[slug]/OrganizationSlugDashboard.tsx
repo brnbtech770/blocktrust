@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import type { OrgRole } from '@prisma/client'
-import { Loader2, MailPlus, ShieldCheck, Trash2 } from 'lucide-react'
+import { Loader2, MailPlus, ShieldCheck, Trash2, UserCog } from 'lucide-react'
+import { showToast } from '@/app/lib/show-toast'
 
 type OrgPayload = {
   organization: {
@@ -25,6 +26,16 @@ type OrgPayload = {
 }
 
 type VaultRow = { id: string; name: string; entryCount: number }
+
+const ASSIGNABLE_ROLES: OrgRole[] = ['ADMIN', 'MANAGER', 'MEMBER']
+
+const ROLE_LABELS: Record<OrgRole, string> = {
+  OWNER: 'Propriétaire',
+  ADMIN: 'Administrateur',
+  MANAGER: 'Gestionnaire',
+  MEMBER: 'Membre',
+  VIEWER: 'Lecteur',
+}
 
 function canManageVaults(r: OrgRole): boolean {
   return r === 'OWNER' || r === 'ADMIN' || r === 'MANAGER'
@@ -63,7 +74,11 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
     setVaultsLoading(true)
     const res = await fetch(`/api/organization/${encodeURIComponent(orgSlug)}/vaults`)
     const j = (await res.json()) as { vaults?: VaultRow[]; error?: string }
-    if (res.ok && j.vaults) setVaults(j.vaults)
+    if (!res.ok) {
+      setErr(j.error ?? 'Impossible de charger les coffres')
+    } else if (j.vaults) {
+      setVaults(j.vaults)
+    }
     setVaultsLoading(false)
   }, [orgSlug])
 
@@ -92,6 +107,7 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
         return
       }
       setVaultName('')
+      showToast('Coffre créé', 'success')
       await loadOrg()
       await loadVaults()
     } finally {
@@ -116,6 +132,32 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
         return
       }
       setInviteEmail('')
+      showToast('Invitation envoyée', 'success')
+      await loadOrg()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function changeMemberRole(memberId: string, role: OrgRole) {
+    if (!data || busy || !canManageOrg(data.membership.role)) return
+    setBusy(true)
+    setErr(null)
+    try {
+      const res = await fetch(
+        `/api/organization/${encodeURIComponent(orgSlug)}/members/${encodeURIComponent(memberId)}`,
+        {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ role }),
+        },
+      )
+      const j = (await res.json()) as { error?: string }
+      if (!res.ok) {
+        setErr(j.error ?? 'Modification du rôle impossible')
+        return
+      }
+      showToast('Rôle mis à jour', 'success')
       await loadOrg()
     } finally {
       setBusy(false)
@@ -137,6 +179,7 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
         setErr(j.error ?? 'Suppression impossible')
         return
       }
+      showToast('Membre retiré', 'warning')
       await loadOrg()
     } finally {
       setBusy(false)
@@ -227,7 +270,10 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
       </section>
 
       <section className="rounded-xl border border-white/10 bg-[#0d1f3c]/60 p-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-white/70">Équipe</h2>
+        <div className="flex items-center gap-2">
+          <UserCog className="h-4 w-4 text-white/50" aria-hidden />
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-white/70">Équipe</h2>
+        </div>
         {canInviteMember(role) ? (
           <form onSubmit={sendInvite} className="mt-3 flex flex-col gap-2 sm:flex-row">
             <input
@@ -251,9 +297,25 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
         <ul className="mt-4 divide-y divide-white/10">
           {data.members.map((m) => (
             <li key={m.id} className="flex items-center justify-between gap-2 py-2 text-sm">
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-white">{m.user.email}</p>
-                <p className="text-xs text-white/40">{m.role}</p>
+                {canManageOrg(role) && m.role !== 'OWNER' ? (
+                  <select
+                    value={m.role}
+                    disabled={busy}
+                    onChange={(e) => void changeMemberRole(m.id, e.target.value as OrgRole)}
+                    className="mt-1 rounded border border-white/10 bg-[#060d1a] px-2 py-0.5 text-xs text-white/70 outline-none focus:border-bt-cyan/40"
+                    aria-label={`Rôle de ${m.user.email ?? 'membre'}`}
+                  >
+                    {ASSIGNABLE_ROLES.map((r) => (
+                      <option key={r} value={r}>
+                        {ROLE_LABELS[r]}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="text-xs text-white/40">{ROLE_LABELS[m.role] ?? m.role}</p>
+                )}
               </div>
               {canManageOrg(role) && m.role !== 'OWNER' ? (
                 <button

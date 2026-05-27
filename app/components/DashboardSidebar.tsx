@@ -88,10 +88,21 @@ export default async function DashboardSidebar() {
         })
       : false
 
-    const showB2BOrgVault =
+    const hasB2BSubscription =
       subscription?.status === 'active' &&
       subscription.plan != null &&
       hasOrgAccess(subscription.plan)
+
+    const isMemberOfOrg = user
+      ? await prisma.organizationMember
+          .findFirst({
+            where: { userId: user.id, joinedAt: { not: null } },
+            select: { id: true },
+          })
+          .catch(() => null)
+      : null
+
+    const showB2BOrgVault = hasB2BSubscription || Boolean(isMemberOfOrg)
 
     const trustCircleItem = plan?.trustCircleEnabled
       ? { name: 'Trust Circle', href: '/dashboard/trust-circle', icon: 'Users' as const }
