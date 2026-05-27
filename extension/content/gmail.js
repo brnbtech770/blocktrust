@@ -72,8 +72,9 @@ function injectGlobalStyles() {
       color: #ffffff !important;
     }
     .bt-unknown {
-      background: #e2e8f0 !important;
-      color: #64748b !important;
+      background: rgba(100, 116, 139, 0.15) !important;
+      border: 1px solid rgba(100, 116, 139, 0.3) !important;
+      color: #94a3b8 !important;
     }
     .bt-tooltip {
       position: fixed !important;
@@ -118,6 +119,26 @@ function injectGlobalStyles() {
     }
     .bt-tooltip-ko {
       color: #64748b !important;
+    }
+    .bt-tooltip-link {
+      display: inline-block !important;
+      margin-top: 8px !important;
+      color: #00d4ff !important;
+      font-weight: 600 !important;
+      text-decoration: none !important;
+    }
+    .bt-tooltip-link:hover {
+      text-decoration: underline !important;
+    }
+    .bt-tooltip-interactive {
+      pointer-events: auto !important;
+    }
+    .bt-tooltip-muted {
+      color: rgba(255, 255, 255, 0.55) !important;
+      line-height: 1.45 !important;
+    }
+    .bt-tooltip-highlight {
+      color: #00d4ff !important;
     }
   `;
 
@@ -309,6 +330,47 @@ function attachBadgeTooltip(badge, result) {
 }
 
 /**
+ * Tooltip expéditeur non certifié + lien inscription.
+ * @param {HTMLElement} badge
+ */
+function attachUnknownBadgeTooltip(badge) {
+  badge.style.cursor = "help";
+
+  badge.addEventListener("mouseenter", () => {
+    if (!activeTooltip) {
+      activeTooltip = document.createElement("div");
+      activeTooltip.className = "bt-tooltip bt-tooltip-interactive";
+      activeTooltip.setAttribute("role", "tooltip");
+      document.body.appendChild(activeTooltip);
+    } else {
+      activeTooltip.className = "bt-tooltip bt-tooltip-interactive";
+    }
+
+    activeTooltip.innerHTML = `
+      <span class="bt-tooltip-title">BLOCKTRUST™ — Non vérifié</span>
+      <div class="bt-tooltip-row bt-tooltip-muted">
+        Expéditeur non certifié<br>
+        Aucune preuve d'identité disponible<br>
+        <span class="bt-tooltip-highlight">Certifiez-vous gratuitement</span>
+      </div>
+      <a class="bt-tooltip-link" href="https://blocktrust.tech/pricing" target="_blank" rel="noopener noreferrer">
+        → Certifier son identité sur blocktrust.tech
+      </a>
+    `;
+
+    positionTooltip(activeTooltip, badge);
+    requestAnimationFrame(() => {
+      activeTooltip?.classList.add("bt-tooltip-visible");
+    });
+  });
+
+  badge.addEventListener("mouseleave", (e) => {
+    if (activeTooltip?.contains(e.relatedTarget)) return;
+    hideBadgeTooltip();
+  });
+}
+
+/**
  * Badge visuel à insérer à côté du nom / email expéditeur.
  * @param {{ status: string, message?: string, trustScore?: number|null, signals?: object }} result
  */
@@ -372,12 +434,20 @@ function createVerifyBadge(result) {
       border: none !important;
     `;
     text = "⚠ FRAUDE";
+  } else if (result.status === "UNKNOWN") {
+    statusClass = "bt-unknown";
+    colorStyles = `
+      background: rgba(100,116,139,0.15) !important;
+      border: 1px solid rgba(100,116,139,0.3) !important;
+      color: #94a3b8 !important;
+    `;
+    text = "? Non vérifié BLOCKTRUST™";
   } else {
     statusClass = "bt-unknown";
     colorStyles = `
-      background: #e2e8f0 !important;
-      color: #64748b !important;
-      border: none !important;
+      background: rgba(100,116,139,0.15) !important;
+      border: 1px solid rgba(100,116,139,0.3) !important;
+      color: #94a3b8 !important;
     `;
     text = "? Non certifié";
   }
@@ -388,6 +458,8 @@ function createVerifyBadge(result) {
 
   if (result.status === "CERTIFIED") {
     attachBadgeTooltip(badge, result);
+  } else if (result.status === "UNKNOWN") {
+    attachUnknownBadgeTooltip(badge);
   } else {
     badge.title = result.message || result.status || "";
   }
