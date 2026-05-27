@@ -8,6 +8,9 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "seed": "node prisma/seed.js",
     "cleanup-bots": "tsx scripts/cleanup-bots.ts",
     "icons:generate": "node scripts/generate-icons.mjs && node scripts/generate-og-image.mjs"
@@ -47,12 +50,14 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.7",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "prisma": "^6.19.3",
     "sharp": "^0.33.5",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.7"
   }
 }
