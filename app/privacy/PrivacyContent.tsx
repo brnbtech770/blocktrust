@@ -77,15 +77,12 @@ export default function PrivacyContent() {
             <br />
             Adresse : 3 rue Sacrot, 94160 Saint-Mandé
             <br />
-            Email :{" "}
-            <a href={`mailto:${DPO_EMAIL}`} className="text-[#00d4ff] hover:underline">
-              {DPO_EMAIL}
-            </a>
+            Responsable de traitement : Olivier Bernabé
           </p>
           <p>
-            <strong className="text-white/90">Déléguée à la protection des données (DPO)</strong>
+            <strong className="text-white/90">Référent à la protection des données personnelles</strong>
             <br />
-            Laurianne Winter —{" "}
+            Email :{" "}
             <a href={`mailto:${DPO_EMAIL}`} className="text-[#00d4ff] hover:underline">
               {DPO_EMAIL}
             </a>
