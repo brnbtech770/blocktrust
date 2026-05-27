@@ -3,6 +3,11 @@
 // ============================================================
 
 import { prisma } from "@/app/lib/db";
+import { getDomainAge } from "@/lib/signals/domain-age";
+import {
+  getEmailDomain,
+  isDisposableEmail,
+} from "@/lib/signals/disposable-email";
 
 export interface TrustSignal {
   type: string;
@@ -296,6 +301,45 @@ export async function computeTrustEngineScore(
     technicalScore = Math.min(100, technicalScore + user.trustScore / 5);
   }
 
+  const primaryEmail =
+    certifiedEmails[0] ?? cert.entity.email ?? user.email ?? "";
+  const emailDomain = getEmailDomain(primaryEmail);
+
+  if (emailDomain) {
+    const domainAge = await getDomainAge(emailDomain).catch(() => ({
+      agedays: -1,
+      suspicious: false,
+    }));
+
+    if (domainAge.suspicious) {
+      technicalScore = Math.max(0, technicalScore - 20);
+      signals.push({
+        type: "DOMAIN_NEW",
+        label: `Domaine créé récemment (${domainAge.agedays} jours)`,
+        impact: "negative",
+        weight: -20,
+      });
+    } else if (domainAge.agedays > 365) {
+      technicalScore = Math.min(100, technicalScore + 10);
+      signals.push({
+        type: "DOMAIN_ESTABLISHED",
+        label: `Domaine établi (${Math.floor(domainAge.agedays / 365)} an(s))`,
+        impact: "positive",
+        weight: 10,
+      });
+    }
+  }
+
+  if (certifiedEmails.some(isDisposableEmail)) {
+    technicalScore = Math.max(0, technicalScore - 30);
+    signals.push({
+      type: "DISPOSABLE_EMAIL",
+      label: "Email jetable détecté",
+      impact: "negative",
+      weight: -30,
+    });
+  }
+
   technicalScore = Math.min(100, technicalScore);
 
   // ─── GLOBAL SCORE ─────────────────────────
@@ -333,7 +377,7 @@ export async function computeTrustEngineScore(
     networkScore: clampScore(networkScore),
     behaviorScore: clampScore(behaviorScore),
     technicalScore: clampScore(technicalScore),
-    signals: signals.slice(0, 6),
+    signals: signals.slice(0, 10),
     recommendation,
     contextLabel,
   };

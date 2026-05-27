@@ -16,6 +16,15 @@ vi.mock('@/app/lib/db', () => ({
   prisma: prismaMock,
 }))
 
+vi.mock('@/lib/signals/domain-age', () => ({
+  getDomainAge: vi.fn().mockResolvedValue({ agedays: 400, suspicious: false }),
+}))
+
+vi.mock('@/lib/signals/disposable-email', () => ({
+  isDisposableEmail: vi.fn().mockReturnValue(false),
+  getEmailDomain: vi.fn((email: string) => email.split('@')[1]?.toLowerCase() ?? ''),
+}))
+
 import { computeTrustEngineScore } from '@/lib/trust-engine'
 
 function buildCertFixture(opts: {
