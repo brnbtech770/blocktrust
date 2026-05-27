@@ -24,6 +24,13 @@ function readAuditMetric(
   return typeof v === 'number' ? v : null
 }
 
+const AGENT_RUN_ACTIONS = [
+  'FRAUD_SURVEILLANCE_RUN',
+  'SECURITY_MONITOR_RUN',
+  'SUBSCRIPTION_MONITOR_RUN',
+  'ONBOARDING_MONITOR_RUN',
+] as const
+
 async function getLatestAgentRun(action: string, resourceId: string) {
   return prisma.auditLog.findFirst({
     where: { action, resource: 'agent', resourceId },
@@ -55,6 +62,7 @@ export async function GET() {
     onboardingRun,
     mrrCache,
     securityAlerts24h,
+    agentExecutionLogs,
   ] = await Promise.all([
     prisma.verification.count({
       where: { verifiedAt: { gte: oneDayAgo } },
@@ -92,6 +100,18 @@ export async function GET() {
       where: {
         type: 'SECURITY',
         createdAt: { gte: oneDayAgo },
+      },
+    }),
+    prisma.auditLog.findMany({
+      where: { action: { in: [...AGENT_RUN_ACTIONS] } },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: {
+        id: true,
+        action: true,
+        createdAt: true,
+        resourceId: true,
+        newValue: true,
       },
     }),
   ])
@@ -204,5 +224,12 @@ export async function GET() {
         remindersSent: onboardingReminders,
       },
     },
+    agentExecutionLogs: agentExecutionLogs.map((log) => ({
+      id: log.id,
+      action: log.action,
+      resourceId: log.resourceId,
+      createdAt: log.createdAt.toISOString(),
+      meta: log.newValue,
+    })),
   })
 }
