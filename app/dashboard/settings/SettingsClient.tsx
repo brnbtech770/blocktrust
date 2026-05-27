@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import {
   AlertTriangle,
+  ArrowUpRight,
   Check,
   Chrome,
   Copy,
@@ -14,6 +15,8 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import SignOutButton from '@/app/components/SignOutButton'
+import Link from 'next/link'
+import type { DelegationRightsSummary } from '@/lib/trust-delegation'
 import {
   CertifiedEmailsTagInput,
   CertifiedPhonesTagInput,
@@ -177,11 +180,13 @@ export default function SettingsClient({
   extensionKeyInitial,
   certifiedContacts,
   planWording,
+  delegationRights,
 }: {
   user: SettingsClientUser
   extensionKeyInitial: ExtensionKeyInitial
   certifiedContacts: CertifiedContactsInitial
   planWording: PlanWording
+  delegationRights: DelegationRightsSummary
 }) {
   const [hasExtensionKey, setHasExtensionKey] = useState(extensionKeyInitial.hasKey)
   const [maskedKey, setMaskedKey] = useState<string | null>(extensionKeyInitial.masked)
@@ -380,6 +385,63 @@ export default function SettingsClient({
             </div>
           </div>
         </div>
+
+        <section className="mb-6 rounded-xl border border-white/10 bg-[#0d1f3c] p-6">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="font-syne text-sm font-semibold text-white">
+                Mes droits de certification
+              </h3>
+              <p className="mt-1 text-xs text-white/40">
+                Rôle :{' '}
+                <span className="font-medium text-[#00d4ff]">{delegationRights.roleLabel}</span>
+              </p>
+            </div>
+            {delegationRights.upgrade ? (
+              <Link
+                href={delegationRights.upgrade.href}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#BDA76B]/40 bg-[#BDA76B]/10 px-3 py-1.5 text-xs font-semibold text-[#BDA76B] transition hover:bg-[#BDA76B]/20"
+              >
+                {delegationRights.upgrade.label}
+                <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
+              </Link>
+            ) : null}
+          </div>
+
+          <ul className="space-y-2">
+            {delegationRights.rights
+              .filter((r) => r.canCertify || r.maxCount > 0)
+              .map((right) => {
+                const atLimit =
+                  right.canCertify &&
+                  right.maxCount !== -1 &&
+                  right.currentCount >= right.maxCount
+                return (
+                  <li
+                    key={right.subject}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-white/5 bg-white/[0.03] px-3 py-2.5 text-sm"
+                  >
+                    <span className="text-white/75">{right.label}</span>
+                    <span
+                      className={`font-mono text-xs tabular-nums ${
+                        atLimit ? 'text-[#E05252]' : 'text-white/50'
+                      }`}
+                    >
+                      {right.canCertify
+                        ? `${right.currentCount}/${right.maxLabel}`
+                        : 'Non disponible'}
+                    </span>
+                  </li>
+                )
+              })}
+          </ul>
+
+          {delegationRights.role === 'PERSONAL' ? (
+            <p className="mt-3 text-xs text-white/35">
+              Complétez votre vérification d&apos;identité pour certifier domaines et wallets.
+            </p>
+          ) : null}
+        </section>
 
         <section className="mb-6 rounded-xl border border-white/10 bg-[#0d1f3c] p-6">
           <div className="mb-6 flex items-center gap-3">

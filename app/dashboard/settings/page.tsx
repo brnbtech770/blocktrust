@@ -5,7 +5,14 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
+import { isAdmin } from '@/app/lib/admin'
 import { getPlanWording, resolvePlanKeyForWording } from '@/lib/plan-wording'
+import {
+  buildDelegationRightsSummary,
+  checkIsOrgAdmin,
+  getUserCertificationCounts,
+  getUserRole,
+} from '@/lib/trust-delegation'
 import SettingsClient from './SettingsClient'
 
 export const dynamic = 'force-dynamic'
@@ -32,6 +39,7 @@ export default async function SettingsPage() {
       certifiedEmails: true,
       certifiedPhones: true,
       certifiedDomains: true,
+      kycStatus: true,
       plan: { select: { type: true } },
     },
   })
@@ -59,8 +67,21 @@ export default async function SettingsPage() {
     where: {
       OR: [{ ownerId: session.user.id }, { members: { some: { userId: session.user.id } } }],
     },
-    select: { maxSeats: true, _count: { select: { members: true } } },
+    select: { id: true, maxSeats: true, _count: { select: { members: true } } },
   })
+
+  const isOrgAdmin = await checkIsOrgAdmin(session.user.id)
+  const delegationRole = getUserRole({
+    kycStatus: user.kycStatus,
+    isAdmin: isAdmin(user.email),
+    isOrgAdmin,
+  })
+  const certificationCounts = await getUserCertificationCounts(session.user.id, org?.id)
+  const delegationRights = buildDelegationRightsSummary(
+    delegationRole,
+    user.kycStatus,
+    certificationCounts,
+  )
 
   let wordingUserCount: number | undefined
   let wordingMaxUsers: number | undefined
@@ -92,6 +113,7 @@ export default async function SettingsPage() {
         certifiedDomains: clampCertified(user.certifiedDomains ?? [], planWording.maxCertifiedDomains),
       }}
       planWording={planWording}
+      delegationRights={delegationRights}
     />
   )
 }
