@@ -15,6 +15,15 @@ import { createAdminAlert } from '@/lib/admin-alerts'
 import { redis } from '@/lib/rate-limit-redis'
 import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 import { getUserEmailSignature } from '@/lib/email-signature'
+import { isAdmin } from '@/app/lib/admin'
+import {
+  checkIsOrgAdmin,
+  countActiveCertificatesForSubject,
+  getUserRole,
+  canUserCertify,
+  inferCertificationSubject,
+  DELEGATION_MATRIX,
+} from '@/lib/trust-delegation'
 
 // ─────────────────────────────────────────────
 // GET — Liste des certificats de l'utilisateur
@@ -226,6 +235,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: 'Entité non trouvée ou non autorisée' },
         { status: 404 }
+      )
+    }
+
+    const isOrgAdmin = await checkIsOrgAdmin(user.id)
+    const role = getUserRole({
+      kycStatus: user.kycStatus,
+      isAdmin: isAdmin(session.user.email),
+      isOrgAdmin,
+    })
+    const certSubject = inferCertificationSubject(entity)
+    const currentCertCount = await countActiveCertificatesForSubject(user.id, certSubject)
+    const { allowed, reason } = canUserCertify(role, certSubject, currentCertCount)
+
+    if (!allowed) {
+      return NextResponse.json({ error: reason, code: 'DELEGATION_DENIED' }, { status: 403 })
+    }
+
+    const subjectRight = DELEGATION_MATRIX[role]?.find((r) => r.subject === certSubject)
+    if (subjectRight?.requiresKYC && user.kycStatus !== 'VERIFIED' && role !== 'ORG_ADMIN' && role !== 'BLOCKTRUST_ADMIN') {
+      return NextResponse.json(
+        { error: "Vérification d'identité requise", code: 'KYC_REQUIRED' },
+        { status: 403 },
       )
     }
 
