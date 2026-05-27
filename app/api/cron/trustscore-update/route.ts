@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { runTrustScoreUpdate } from '@/lib/agents/trustscore-updater'
+import { captureCronFailure } from '@/lib/cron-sentry'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -29,7 +30,7 @@ export async function GET(req: NextRequest) {
     const result = await runTrustScoreUpdate()
     return NextResponse.json({ success: true, ...result })
   } catch (e) {
-    console.error('[cron/trustscore-update]', e)
+    captureCronFailure('trustscore-update', e)
     return NextResponse.json({ error: 'TrustScore update failed' }, { status: 500 })
   }
 }

@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { runThreatArticlesIngest } from "@/lib/threat-articles-ingest"
+import { captureCronFailure } from "@/lib/cron-sentry"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
     const result = await runThreatArticlesIngest()
     return NextResponse.json({ success: true, ...result })
   } catch (e) {
-    console.error("[cron/threat-articles]", e)
+    captureCronFailure("threat-articles", e)
     return NextResponse.json({ error: "Threat articles ingest failed" }, { status: 500 })
   }
 }

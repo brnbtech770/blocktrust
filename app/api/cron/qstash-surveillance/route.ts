@@ -12,6 +12,7 @@ import { runOnboardingMonitor } from '@/lib/agents/onboarding-monitor'
 import { shouldRunAgent } from '@/lib/agents/agent-utils'
 import { retryFailedAnchors } from '@/lib/polygon'
 import { scheduleNextSurveillanceRun } from '@/lib/qstash-scheduler'
+import { captureCronFailure } from '@/lib/cron-sentry'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -30,7 +31,7 @@ async function runAgentSafe<T>(label: string, fn: () => Promise<T>): Promise<T |
   try {
     return await fn()
   } catch (e) {
-    console.error(`[qstash-surveillance] ${label} failed:`, e)
+    captureCronFailure(`qstash-surveillance/${label}`, e)
     return null
   }
 }
@@ -64,7 +65,7 @@ async function handle(_req: NextRequest) {
   try {
     await scheduleNextSurveillanceRun()
   } catch (scheduleErr) {
-    console.error('[qstash-surveillance] programme suivant ignoré:', scheduleErr)
+    captureCronFailure('qstash-surveillance/schedule-next', scheduleErr)
   }
 
   return NextResponse.json({

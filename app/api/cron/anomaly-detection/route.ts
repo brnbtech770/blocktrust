@@ -9,6 +9,7 @@ import { runAnomalyDetection } from '@/lib/agents/anomaly-detector'
 import { retryFailedAnchors } from '@/lib/polygon'
 import { scheduleNextSurveillanceRun } from '@/lib/qstash-scheduler'
 import { ensureStrictEmptyBody } from '@/lib/api-json-body'
+import { captureCronFailure } from '@/lib/cron-sentry'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
     scheduleNextSurveillanceRun().catch((e) => console.error('[qstash-bootstrap]', e))
     return NextResponse.json({ success: true, ...result, polygon })
   } catch (e) {
-    console.error('[cron/anomaly-detection]', e)
+    captureCronFailure('anomaly-detection', e)
     return NextResponse.json({ error: 'Agent failed' }, { status: 500 })
   }
 }
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
     scheduleNextSurveillanceRun().catch((e) => console.error('[qstash-bootstrap]', e))
     return NextResponse.json({ success: true, ...result, polygon })
   } catch (e) {
-    console.error('[cron/anomaly-detection POST]', e)
+    captureCronFailure('anomaly-detection', e, { trigger: 'admin-post' })
     return NextResponse.json({ error: 'Agent failed' }, { status: 500 })
   }
 }

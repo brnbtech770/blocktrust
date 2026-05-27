@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { runSubscriptionMonitor } from '@/lib/agents/subscription-monitor'
+import { captureCronFailure } from '@/lib/cron-sentry'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
     const result = await runSubscriptionMonitor()
     return NextResponse.json({ success: true, ...result })
   } catch (e) {
-    console.error('[cron/subscription-monitor]', e)
+    captureCronFailure('subscription-monitor', e)
     return NextResponse.json({ error: 'Agent failed' }, { status: 500 })
   }
 }
