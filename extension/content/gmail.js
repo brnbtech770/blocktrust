@@ -127,12 +127,6 @@ function injectGlobalStyles() {
       font-weight: 600 !important;
       text-decoration: none !important;
     }
-    .bt-tooltip-link:hover {
-      text-decoration: underline !important;
-    }
-    .bt-tooltip-interactive {
-      pointer-events: auto !important;
-    }
     .bt-tooltip-muted {
       color: rgba(255, 255, 255, 0.55) !important;
       line-height: 1.45 !important;
@@ -277,8 +271,36 @@ function positionTooltip(tooltip, anchor) {
   let left = rect.left;
   const maxLeft = window.innerWidth - 220;
   if (left > maxLeft) left = maxLeft;
-  tooltip.style.top = `${top}px`;
-  tooltip.style.left = `${left}px`;
+  tooltip.style.setProperty("top", `${top}px`, "important");
+  tooltip.style.setProperty("left", `${left}px`, "important");
+}
+
+/** Styles inline — évite les classes CSS rejetées par Gmail (ex. bt-tooltip-interactive). */
+function applyTooltipBaseStyles(tooltip, interactive) {
+  tooltip.style.setProperty("position", "fixed", "important");
+  tooltip.style.setProperty("z-index", "2147483646", "important");
+  tooltip.style.setProperty("min-width", "200px", "important");
+  tooltip.style.setProperty("padding", "10px 12px", "important");
+  tooltip.style.setProperty("border-radius", "10px", "important");
+  tooltip.style.setProperty("background", "#0a1628", "important");
+  tooltip.style.setProperty("border", "1px solid rgba(0, 212, 255, 0.35)", "important");
+  tooltip.style.setProperty("box-shadow", "0 8px 24px rgba(0, 0, 0, 0.35)", "important");
+  tooltip.style.setProperty("font-family", "Inter, Arial, sans-serif", "important");
+  tooltip.style.setProperty("font-size", "11px", "important");
+  tooltip.style.setProperty("color", "#ffffff", "important");
+  tooltip.style.setProperty("opacity", "0", "important");
+  tooltip.style.setProperty("transform", "translateY(4px)", "important");
+  tooltip.style.setProperty("transition", "opacity 0.15s ease, transform 0.15s ease", "important");
+  tooltip.style.setProperty("pointer-events", interactive ? "auto" : "none", "important");
+}
+
+function styleTooltipLink(link) {
+  link.style.setProperty("display", "inline-block", "important");
+  link.style.setProperty("margin-top", "8px", "important");
+  link.style.setProperty("color", "#00d4ff", "important");
+  link.style.setProperty("font-weight", "600", "important");
+  link.style.setProperty("text-decoration", "none", "important");
+  link.style.setProperty("pointer-events", "auto", "important");
 }
 
 /**
@@ -304,7 +326,10 @@ function attachBadgeTooltip(badge, result) {
       activeTooltip.className = "bt-tooltip";
       activeTooltip.setAttribute("role", "tooltip");
       document.body.appendChild(activeTooltip);
+    } else {
+      activeTooltip.className = "bt-tooltip";
     }
+    applyTooltipBaseStyles(activeTooltip, false);
 
     activeTooltip.innerHTML = `
       <span class="bt-tooltip-title">BLOCKTRUST™ — Signaux</span>
@@ -339,12 +364,10 @@ function attachUnknownBadgeTooltip(badge) {
   badge.addEventListener("mouseenter", () => {
     if (!activeTooltip) {
       activeTooltip = document.createElement("div");
-      activeTooltip.className = "bt-tooltip bt-tooltip-interactive";
       activeTooltip.setAttribute("role", "tooltip");
       document.body.appendChild(activeTooltip);
-    } else {
-      activeTooltip.className = "bt-tooltip bt-tooltip-interactive";
     }
+    applyTooltipBaseStyles(activeTooltip, true);
 
     activeTooltip.innerHTML = `
       <span class="bt-tooltip-title">BLOCKTRUST™ — Non vérifié</span>
@@ -357,6 +380,9 @@ function attachUnknownBadgeTooltip(badge) {
         → Certifier son identité sur blocktrust.tech
       </a>
     `;
+
+    const link = activeTooltip.querySelector("a");
+    if (link) styleTooltipLink(link);
 
     positionTooltip(activeTooltip, badge);
     requestAnimationFrame(() => {
