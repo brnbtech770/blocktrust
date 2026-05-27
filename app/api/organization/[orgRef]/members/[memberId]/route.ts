@@ -11,6 +11,7 @@ import {
   orgRoleCanManageOrgSettings,
   requireOrgMember,
 } from '@/lib/org-vault-server'
+import { revokeOrganizationMemberAccess } from '@/lib/org-member-revocation'
 
 const patchBody = z.object({
   role: z.enum(['ADMIN', 'MANAGER', 'MEMBER', 'VIEWER']),
@@ -102,7 +103,20 @@ export async function DELETE(
     return NextResponse.json({ error: 'Impossible de retirer le propriétaire' }, { status: 403 })
   }
 
-  await prisma.organizationMember.delete({ where: { id: target.id } })
+  const revocation = await revokeOrganizationMemberAccess({
+    organizationId: org.id,
+    targetUserId: target.userId,
+    actorUserId: session.user.id,
+  })
 
-  return NextResponse.json({ ok: true })
+  await prisma.organizationMember.delete({ where: { id: target.id } }).catch((err) => {
+    console.error('[org/members] delete membership failed:', err)
+    throw err
+  })
+
+  return NextResponse.json({
+    ok: true,
+    revokedCertificates: revocation.revokedCertificates,
+    removedTrustRelations: revocation.removedTrustRelations,
+  })
 }
