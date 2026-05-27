@@ -3,7 +3,6 @@ import { NextRequest } from "next/server";
 import { createHash } from "node:crypto";
 import { prisma } from "@/app/lib/db";
 import type { NextAuthConfig } from "next-auth";
-import type { Adapter } from "@auth/core/adapters";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
@@ -14,7 +13,6 @@ import { isAdmin } from "@/lib/admin-utils";
 
 /**
  * Configuration NextAuth avec Google OAuth
- * Version minimale pour déboguer
  */
 // Vérifier les variables d'environnement requises (avertissement seulement)
 if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET) {
@@ -94,57 +92,12 @@ async function resolveDbUserAfterOAuth(user: {
   });
 }
 
-function logAdapterError(method: string, e: unknown): void {
-  const detail =
-    e instanceof Error
-      ? JSON.stringify(e, Object.getOwnPropertyNames(e))
-      : JSON.stringify(e);
-  console.error(`[ADAPTER ERROR] ${method}:`, detail);
-}
-
-const baseAdapter = PrismaAdapter(prisma);
-
-const debugAdapter: Adapter = {
-  ...baseAdapter,
-  async getUserByAccount(account) {
-    try {
-      if (!baseAdapter.getUserByAccount) return null;
-      return await baseAdapter.getUserByAccount(account);
-    } catch (e) {
-      logAdapterError("getUserByAccount", e);
-      throw e;
-    }
-  },
-  async createUser(user) {
-    try {
-      if (!baseAdapter.createUser) {
-        throw new Error("createUser not implemented on adapter");
-      }
-      return await baseAdapter.createUser(user);
-    } catch (e) {
-      logAdapterError("createUser", e);
-      throw e;
-    }
-  },
-  async linkAccount(account) {
-    try {
-      if (!baseAdapter.linkAccount) {
-        throw new Error("linkAccount not implemented on adapter");
-      }
-      await baseAdapter.linkAccount(account);
-    } catch (e) {
-      logAdapterError("linkAccount", e);
-      throw e;
-    }
-  },
-};
-
 // allowDangerousEmailAccountLinking : uniquement sur GoogleProvider (pas d’option globale Auth.js v5)
 export const authOptions: NextAuthConfig = {
   ...authEdgeConfig,
   trustHost: true,
-  debug: true,
-  adapter: debugAdapter,
+  debug: process.env.NODE_ENV === 'development',
+  adapter: PrismaAdapter(prisma),
   providers: [
     ...authEdgeConfig.providers,
     emailMagicLinkProvider,
@@ -395,20 +348,6 @@ export const authOptions: NextAuthConfig = {
         /* URL invalide */
       }
       return fallback;
-    },
-  },
-  logger: {
-    error(error) {
-      console.error(
-        "[AUTH ERROR DETAIL]",
-        JSON.stringify(error, null, 2)
-      );
-    },
-    warn(code) {
-      console.warn("[AUTH WARN]", code);
-    },
-    debug(message, metadata) {
-      console.log("[AUTH DEBUG]", message, JSON.stringify(metadata));
     },
   },
   pages: {
