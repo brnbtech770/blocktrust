@@ -7,13 +7,18 @@ import {
   Check,
   Clock,
   Globe,
+  Link2,
   Mail,
   Minus,
   Phone,
   RotateCcw,
   Search,
   ShieldAlert,
+  ShieldCheck,
   ShieldOff,
+  UserPlus,
+  Users,
+  X,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -160,6 +165,10 @@ function VerifyContent() {
     match: boolean;
   } | null>(null);
   const [trustEngine, setTrustEngine] = useState<TrustEngineResult | null>(null);
+  const [contactAddState, setContactAddState] = useState<
+    "idle" | "loading" | "done" | "error"
+  >("idle");
+  const [contactAddMessage, setContactAddMessage] = useState<string | null>(null);
 
   const hasValidToken = token.trim().length > 10;
 
@@ -282,6 +291,8 @@ function VerifyContent() {
     setCertifiedEmails([]);
     setCertifiedPhones([]);
     setTrustEngine(null);
+    setContactAddState("idle");
+    setContactAddMessage(null);
 
     const ac = new AbortController();
     let cancelled = false;
@@ -351,6 +362,8 @@ function VerifyContent() {
     setCertifiedEmails([]);
     setCertifiedPhones([]);
     setTrustEngine(null);
+    setContactAddState("idle");
+    setContactAddMessage(null);
 
     const ac = new AbortController();
     let cancelled = false;
@@ -467,6 +480,8 @@ function VerifyContent() {
     setCertifiedEmails([]);
     setCertifiedPhones([]);
     setTrustEngine(null);
+    setContactAddState("idle");
+    setContactAddMessage(null);
     setToken("");
     setTokenFixApplied(false);
     setVerifyErrorMessage(null);
@@ -567,181 +582,56 @@ function VerifyContent() {
         ) : null}
 
         {verdict && showSuccess ? (
-          <div className="mx-auto mt-10 flex w-full max-w-sm flex-col items-center gap-6 px-2 text-center sm:max-w-md">
-            <div className="relative mx-auto w-full max-w-[280px]">
-              <div
-                className="absolute inset-0 scale-125 animate-pulse rounded-full blur-2xl"
-                style={{ backgroundColor: `${C.valid}33` }}
-                aria-hidden
-              />
-              <BlockTrustBadge
-                size={120}
-                instanceId="verify-public"
-                className="relative z-10 mx-auto [&_svg]:drop-shadow-[0_0_22px_rgba(16,185,129,0.35)]"
-              />
-            </div>
-
-            <div className="flex items-center justify-center gap-2">
-              <div
-                className="h-3 w-3 animate-pulse rounded-full"
-                style={{ backgroundColor: C.valid }}
-                aria-hidden
-              />
-              <span
-                className="font-syne text-lg font-semibold uppercase tracking-widest"
-                style={{ color: C.valid }}
-              >
-                VALIDE
-              </span>
-            </div>
-
-            <p className="font-syne text-xl font-bold text-white sm:text-2xl">{displayName}</p>
-
-            <p className="text-sm text-white/40">
-              Certifié le {dateLabel}
-              {" · "}Vérifié à l&apos;instant
-            </p>
-
-            {walletAddress?.trim() ? (
-              <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 mt-2 text-left w-full">
-                <p className="text-[#00d4ff] text-xs uppercase tracking-widest mb-2">
-                  Wallet certifié
-                </p>
-                <p className="font-mono text-white/70 text-xs break-all">{walletAddress.trim()}</p>
-                <p className="text-white/30 text-xs mt-1">
-                  Réseau : {walletNetworkDisplay ?? "—"}
-                </p>
-                <p className="text-white/20 text-xs mt-1 italic">
-                  Cette adresse wallet est certifiée et liée à l&apos;identité vérifiée ci-dessus.
-                </p>
-              </div>
-            ) : null}
-
-            {(certifiedDomains.length > 0 ||
-              certifiedEmails.length > 0 ||
-              certifiedPhones.length > 0) ? (
-              <div className="bg-white/[0.03] border border-white/10 rounded-xl p-4 mt-4 text-left w-full">
-                <p className="text-[#00d4ff] text-xs uppercase tracking-widest mb-3">
-                  Points de contact certifiés
-                </p>
-
-                {certifiedDomains.length > 0 ? (
-                  <div className="mb-3">
-                    <p className="text-white/40 text-xs mb-1">Domaines officiels</p>
-                    {certifiedDomains.map((d) => (
-                      <p
-                        key={d}
-                        className="flex items-center gap-2 font-mono text-white/70 text-xs"
-                      >
-                        <Globe className="size-3 shrink-0 text-cyan-400/90" aria-hidden />
-                        {d}
-                      </p>
-                    ))}
-                  </div>
-                ) : null}
-
-                {certifiedEmails.length > 0 ? (
-                  <div className="mb-3">
-                    <p className="text-white/40 text-xs mb-1">Emails officiels</p>
-                    {certifiedEmails.map((e) => (
-                      <p
-                        key={e}
-                        className="flex items-center gap-2 font-mono text-white/70 text-xs break-all"
-                      >
-                        <Mail className="size-3 shrink-0 text-cyan-400/90" aria-hidden />
-                        {e}
-                      </p>
-                    ))}
-                  </div>
-                ) : null}
-
-                {certifiedPhones.length > 0 ? (
-                  <div className="mb-3">
-                    <p className="text-white/40 text-xs mb-1">Téléphones officiels</p>
-                    {certifiedPhones.map((p) => (
-                      <p
-                        key={p}
-                        className="flex items-center gap-2 font-mono text-white/70 text-xs"
-                      >
-                        <Phone className="size-3 shrink-0 text-cyan-400/90" aria-hidden />
-                        {p}
-                      </p>
-                    ))}
-                  </div>
-                ) : null}
-
-                <p className="text-white/20 text-xs mt-3 italic">
-                  Ces informations sont certifiées et liées à l&apos;identité vérifiée ci-dessus.
-                  Tout contact utilisant d&apos;autres coordonnées doit être considéré comme suspect.
-                </p>
-              </div>
-            ) : null}
-
-            {showSuccess &&
-            session?.user &&
-            vaultMatchBanner?.inOrganization &&
-            vaultMatchBanner.match ? (
-              <div
-                role="status"
-                className="w-full rounded-xl border border-[#10b981]/35 bg-[#10b981]/10 px-4 py-3 text-left text-sm text-[#10b981]/95"
-              >
-                Ces coordonnées certifiées correspondent à une référence enregistrée dans le BlockTrust Vault de
-                votre organisation.
-              </div>
-            ) : null}
-
-            {showSuccess &&
-            session?.user &&
-            vaultMatchBanner?.inOrganization &&
-            !vaultMatchBanner.match ? (
-              <div
-                role="status"
-                className="w-full rounded-xl border border-[#f59e0b]/35 bg-[#f59e0b]/10 px-4 py-3 text-left text-sm text-[#f59e0b]/95"
-              >
-                Aucune entrée de votre coffre équipe ne correspond à ces coordonnées certifiées. Vérifiez
-                l&apos;identité avec attention.
-              </div>
-            ) : null}
-
-            {trustEngine ? (
-              <TrustEnginePanel engine={trustEngine} />
-            ) : null}
-
-            <div className="h-px w-full bg-white/10" aria-hidden />
-
-            <div className="w-full rounded-xl border border-[#00d4ff]/20 bg-[#00d4ff]/5 p-4 text-left">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#00d4ff]">
-                Anti-falsification
-              </p>
-              <ul className="space-y-1.5">
-                {[
-                  "Signature cryptographique ES256 infalsifiable",
-                  "QR code rotatif — impossible à copier",
-                  "Identité attestée et vérifiable en temps réel",
-                ].map((item) => (
-                  <li key={item} className="flex gap-2 text-xs leading-relaxed text-white/60">
-                    <Check
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0"
-                      style={{ color: C.valid }}
-                      aria-hidden
-                    />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <a
-              href="https://blocktrust.tech"
-              className="text-xs font-syne text-[#00d4ff]/60 transition hover:text-[#00d4ff]"
-              rel="noopener noreferrer"
-            >
-              BLOCKTRUST™ — Certifier votre identité →
-            </a>
-            <p className="mt-4 text-xs text-white/30">
-              Connectez-vous pour voir si ce contact fait partie de votre réseau de confiance
-            </p>
-          </div>
+          <ValidWowView
+            displayName={displayName}
+            dateLabel={dateLabel}
+            trustEngine={trustEngine}
+            walletAddress={walletAddress}
+            walletNetworkDisplay={walletNetworkDisplay}
+            certifiedDomains={certifiedDomains}
+            certifiedEmails={certifiedEmails}
+            certifiedPhones={certifiedPhones}
+            sessionUser={session?.user ?? null}
+            vaultMatchBanner={vaultMatchBanner}
+            contactAddState={contactAddState}
+            contactAddMessage={contactAddMessage}
+            onAddContact={async () => {
+              const email = certifiedEmails[0]?.trim();
+              if (!email || !session?.user) return;
+              setContactAddState("loading");
+              setContactAddMessage(null);
+              try {
+                const res = await fetch("/api/trust-circle/add", {
+                  method: "POST",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({
+                    email,
+                    name: displayName,
+                    entityType: "INDIVIDUAL",
+                  }),
+                });
+                const data = (await res.json()) as {
+                  error?: string;
+                  message?: string;
+                };
+                if (!res.ok) {
+                  if (res.status === 409) {
+                    setContactAddState("done");
+                    setContactAddMessage("Ce contact est déjà dans votre réseau.");
+                    return;
+                  }
+                  throw new Error(data.message ?? data.error ?? "Erreur");
+                }
+                setContactAddState("done");
+                setContactAddMessage(data.message ?? "Contact ajouté à votre réseau.");
+              } catch (e: unknown) {
+                setContactAddState("error");
+                setContactAddMessage(
+                  e instanceof Error ? e.message : "Impossible d'ajouter le contact.",
+                );
+              }
+            }}
+          />
         ) : null}
 
         {verdict && failVerdict ? (
@@ -784,6 +674,348 @@ function VerifyContent() {
           </p>
         </div>
       </main>
+    </div>
+  );
+}
+
+function scoreTextColor(score: number): string {
+  if (score >= 75) return "text-[#10b981]";
+  if (score >= 50) return "text-[#BDA76B]";
+  return "text-[#E05252]";
+}
+
+function mainTrustSignals(engine: TrustEngineResult | null) {
+  const find = (type: string) => engine?.signals.find((s) => s.type === type);
+  const kyc = find("KYC_VERIFIED");
+  const network = find("IN_YOUR_NETWORK");
+  const polygon = find("BLOCKCHAIN_ANCHORED");
+
+  return [
+    {
+      id: "kyc",
+      label: "Vérification d'identité",
+      ok: Boolean(kyc),
+      Icon: ShieldCheck,
+      color: "#10b981",
+    },
+    {
+      id: "network",
+      label: "Dans votre réseau",
+      ok: Boolean(network),
+      Icon: Users,
+      color: "#00d4ff",
+    },
+    {
+      id: "polygon",
+      label: "Ancré Polygon",
+      ok: Boolean(polygon),
+      Icon: Link2,
+      color: "#BDA76B",
+    },
+  ];
+}
+
+function ValidWowView({
+  displayName,
+  dateLabel,
+  trustEngine,
+  walletAddress,
+  walletNetworkDisplay,
+  certifiedDomains,
+  certifiedEmails,
+  certifiedPhones,
+  sessionUser,
+  vaultMatchBanner,
+  contactAddState,
+  contactAddMessage,
+  onAddContact,
+}: {
+  displayName: string;
+  dateLabel: string;
+  trustEngine: TrustEngineResult | null;
+  walletAddress: string | null;
+  walletNetworkDisplay: string | null;
+  certifiedDomains: string[];
+  certifiedEmails: string[];
+  certifiedPhones: string[];
+  sessionUser: { email?: string | null; name?: string | null } | null;
+  vaultMatchBanner: { inOrganization: boolean; match: boolean } | null;
+  contactAddState: "idle" | "loading" | "done" | "error";
+  contactAddMessage: string | null;
+  onAddContact: () => void;
+}) {
+  const signals = mainTrustSignals(trustEngine);
+  const canAddContact = Boolean(sessionUser && certifiedEmails[0]?.trim());
+
+  return (
+    <div className="mx-auto mt-8 flex w-full max-w-lg flex-col items-center gap-7 px-2 sm:max-w-xl">
+      <div className="relative mx-auto w-full max-w-[300px] animate-badge-pop opacity-0">
+        <div
+          className="absolute inset-0 scale-125 rounded-full blur-3xl"
+          style={{ backgroundColor: `${C.valid}40` }}
+          aria-hidden
+        />
+        <BlockTrustBadge
+          size={140}
+          instanceId="verify-public"
+          className="relative z-10 mx-auto [&_svg]:drop-shadow-[0_0_28px_rgba(16,185,129,0.45)]"
+        />
+      </div>
+
+      <div
+        className="flex animate-fade-up items-center justify-center gap-2 opacity-0"
+        style={{ animationDelay: "120ms" }}
+      >
+        <div
+          className="h-3 w-3 animate-pulse rounded-full"
+          style={{ backgroundColor: C.valid }}
+          aria-hidden
+        />
+        <span
+          className="font-syne text-lg font-semibold uppercase tracking-widest"
+          style={{ color: C.valid }}
+        >
+          Identité certifiée
+        </span>
+      </div>
+
+      <p
+        className="font-syne animate-fade-up text-2xl font-bold text-white opacity-0 sm:text-3xl"
+        style={{ animationDelay: "180ms" }}
+      >
+        {displayName}
+      </p>
+
+      {trustEngine ? (
+        <>
+          <div
+            className="animate-fade-up text-center opacity-0"
+            style={{ animationDelay: "240ms" }}
+          >
+            <p className="mb-1 text-xs uppercase tracking-[0.2em] text-white/45">
+              Score de confiance
+            </p>
+            <p
+              className={`font-syne text-6xl font-bold tabular-nums sm:text-7xl ${scoreTextColor(trustEngine.globalScore)}`}
+            >
+              {trustEngine.globalScore}
+              <span className="text-2xl font-semibold text-white/35 sm:text-3xl">/100</span>
+            </p>
+            <p className="mt-2 text-sm text-white/45">{trustEngine.contextLabel}</p>
+          </div>
+
+          <div
+            className="grid w-full animate-fade-up grid-cols-1 gap-3 opacity-0 sm:grid-cols-3"
+            style={{ animationDelay: "300ms" }}
+          >
+            {signals.map((signal) => {
+              const Icon = signal.Icon;
+              return (
+                <div
+                  key={signal.id}
+                  className={`rounded-xl border p-4 text-left transition ${
+                    signal.ok
+                      ? "border-white/10 bg-white/[0.04]"
+                      : "border-white/5 bg-white/[0.02]"
+                  }`}
+                >
+                  <div className="mb-2 flex items-center justify-between">
+                    <Icon
+                      className="h-5 w-5"
+                      style={{ color: signal.ok ? signal.color : "#64748b" }}
+                      aria-hidden
+                    />
+                    {signal.ok ? (
+                      <Check className="h-4 w-4 text-[#10b981]" aria-hidden />
+                    ) : (
+                      <X className="h-4 w-4 text-white/25" aria-hidden />
+                    )}
+                  </div>
+                  <p className={`text-sm font-medium ${signal.ok ? "text-white" : "text-white/45"}`}>
+                    {signal.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : null}
+
+      <p
+        className="animate-fade-up text-sm text-white/40 opacity-0"
+        style={{ animationDelay: "360ms" }}
+      >
+        Certifié le {dateLabel}
+        {" · "}Vérifié à l&apos;instant
+      </p>
+
+      {canAddContact ? (
+        <div
+          className="w-full animate-fade-up opacity-0"
+          style={{ animationDelay: "400ms" }}
+        >
+          <button
+            type="button"
+            onClick={onAddContact}
+            disabled={contactAddState === "loading" || contactAddState === "done"}
+            className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border border-[#00d4ff]/40 bg-[#00d4ff]/15 px-5 py-3 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/25 disabled:pointer-events-none disabled:opacity-50"
+          >
+            <UserPlus className="h-4 w-4 shrink-0" aria-hidden />
+            {contactAddState === "loading"
+              ? "Ajout en cours…"
+              : contactAddState === "done"
+                ? "Contact ajouté"
+                : "Ajouter à mes contacts"}
+          </button>
+          {contactAddMessage ? (
+            <p
+              role="status"
+              className={`mt-2 text-center text-xs ${
+                contactAddState === "error" ? "text-[#E05252]" : "text-[#10b981]"
+              }`}
+            >
+              {contactAddMessage}
+            </p>
+          ) : null}
+        </div>
+      ) : !sessionUser ? (
+        <p
+          className="animate-fade-up text-center text-xs text-white/35 opacity-0"
+          style={{ animationDelay: "400ms" }}
+        >
+          <Link href="/auth/signin" className="text-[#00d4ff] hover:underline">
+            Connectez-vous
+          </Link>{" "}
+          pour ajouter ce contact à votre réseau de confiance
+        </p>
+      ) : null}
+
+      {walletAddress?.trim() ? (
+        <div className="w-full rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left">
+          <p className="mb-2 text-xs uppercase tracking-widest text-[#00d4ff]">
+            Wallet certifié
+          </p>
+          <p className="break-all font-mono text-xs text-white/70">{walletAddress.trim()}</p>
+          <p className="mt-1 text-xs text-white/30">
+            Réseau : {walletNetworkDisplay ?? "—"}
+          </p>
+        </div>
+      ) : null}
+
+      {(certifiedDomains.length > 0 ||
+        certifiedEmails.length > 0 ||
+        certifiedPhones.length > 0) ? (
+        <div className="w-full rounded-xl border border-white/10 bg-white/[0.03] p-4 text-left">
+          <p className="mb-3 text-xs uppercase tracking-widest text-[#00d4ff]">
+            Points de contact certifiés
+          </p>
+
+          {certifiedDomains.length > 0 ? (
+            <div className="mb-3">
+              <p className="mb-1 text-xs text-white/40">Domaines officiels</p>
+              {certifiedDomains.map((d) => (
+                <p
+                  key={d}
+                  className="flex items-center gap-2 font-mono text-xs text-white/70"
+                >
+                  <Globe className="size-3 shrink-0 text-[#00d4ff]" aria-hidden />
+                  {d}
+                </p>
+              ))}
+            </div>
+          ) : null}
+
+          {certifiedEmails.length > 0 ? (
+            <div className="mb-3">
+              <p className="mb-1 text-xs text-white/40">Emails officiels</p>
+              {certifiedEmails.map((e) => (
+                <p
+                  key={e}
+                  className="flex items-center gap-2 break-all font-mono text-xs text-white/70"
+                >
+                  <Mail className="size-3 shrink-0 text-[#00d4ff]" aria-hidden />
+                  {e}
+                </p>
+              ))}
+            </div>
+          ) : null}
+
+          {certifiedPhones.length > 0 ? (
+            <div className="mb-3">
+              <p className="mb-1 text-xs text-white/40">Téléphones officiels</p>
+              {certifiedPhones.map((p) => (
+                <p
+                  key={p}
+                  className="flex items-center gap-2 font-mono text-xs text-white/70"
+                >
+                  <Phone className="size-3 shrink-0 text-[#00d4ff]" aria-hidden />
+                  {p}
+                </p>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {sessionUser &&
+      vaultMatchBanner?.inOrganization &&
+      vaultMatchBanner.match ? (
+        <div
+          role="status"
+          className="w-full rounded-xl border border-[#10b981]/35 bg-[#10b981]/10 px-4 py-3 text-left text-sm text-[#10b981]/95"
+        >
+          Ces coordonnées certifiées correspondent à une référence enregistrée dans le BlockTrust Vault de
+          votre organisation.
+        </div>
+      ) : null}
+
+      {sessionUser &&
+      vaultMatchBanner?.inOrganization &&
+      !vaultMatchBanner.match ? (
+        <div
+          role="status"
+          className="w-full rounded-xl border border-[#f59e0b]/35 bg-[#f59e0b]/10 px-4 py-3 text-left text-sm text-[#f59e0b]/95"
+        >
+          Aucune entrée de votre coffre équipe ne correspond à ces coordonnées certifiées. Vérifiez
+          l&apos;identité avec attention.
+        </div>
+      ) : null}
+
+      {trustEngine && trustEngine.signals.length > 3 ? (
+        <TrustEnginePanel engine={trustEngine} />
+      ) : null}
+
+      <div className="h-px w-full bg-white/10" aria-hidden />
+
+      <div className="w-full rounded-xl border border-[#00d4ff]/20 bg-[#00d4ff]/5 p-4 text-left">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#00d4ff]">
+          Anti-falsification
+        </p>
+        <ul className="space-y-1.5">
+          {[
+            "Signature cryptographique ES256 infalsifiable",
+            "QR code rotatif — impossible à copier",
+            "Identité attestée et vérifiable en temps réel",
+          ].map((item) => (
+            <li key={item} className="flex gap-2 text-xs leading-relaxed text-white/60">
+              <Check
+                className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                style={{ color: C.valid }}
+                aria-hidden
+              />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <a
+        href="https://blocktrust.tech"
+        className="text-xs font-syne text-[#00d4ff]/60 transition hover:text-[#00d4ff]"
+        rel="noopener noreferrer"
+      >
+        BLOCKTRUST™ — Certifier votre identité →
+      </a>
     </div>
   );
 }

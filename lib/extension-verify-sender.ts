@@ -8,6 +8,12 @@ type CertStatus = "PENDING" | "ACTIVE" | "REVOKED" | "EXPIRED" | "ANCHORED" | "S
 
 export type ExtensionVerifyStatus = "CERTIFIED" | "IN_CONTACTS" | "UNKNOWN" | "FRAUD";
 
+export type ExtensionVerifySignals = {
+  kycVerified: boolean;
+  inNetwork: boolean;
+  polygonAnchored: boolean;
+};
+
 export type ExtensionVerifyPayload = {
   verified: boolean;
   status: ExtensionVerifyStatus;
@@ -16,6 +22,7 @@ export type ExtensionVerifyPayload = {
   badgeUrl: string | null;
   certifiedDomains: string[];
   certifiedEmails: string[];
+  signals: ExtensionVerifySignals;
   message: string;
 };
 
@@ -107,10 +114,45 @@ function senderMatchesTrustRelationEmail(emailNorm: string, ctx: ExtensionVerify
   return ctx.trustRelationEmails.some((x) => x.toLowerCase() === emailNorm);
 }
 
+function buildSignals(
+  pick: EntityWithCerts | null,
+  bestCert: Certificate | null,
+  emailNorm: string,
+  domainNorm: string,
+  ctx: ExtensionVerifyContext,
+  status: ExtensionVerifyStatus,
+): ExtensionVerifySignals {
+  const inNetwork =
+    status === "IN_CONTACTS" ||
+    status === "CERTIFIED" ||
+    senderMatchesTrustRelationEmail(emailNorm, ctx) ||
+    senderMatchesUserCertified(emailNorm, domainNorm, ctx);
+
+  if (!pick) {
+    return {
+      kycVerified: false,
+      inNetwork,
+      polygonAnchored: false,
+    };
+  }
+
+  return {
+    kycVerified: pick.kycStatus === "VERIFIED",
+    inNetwork,
+    polygonAnchored: Boolean(
+      bestCert &&
+        (bestCert.blockchainStatus === "ANCHORED" ||
+          bestCert.status === "ANCHORED" ||
+          bestCert.polygonTxHash),
+    ),
+  };
+}
+
 function inContactsFallbackPayload(
   emailNorm: string,
   domainNorm: string,
   message: string,
+  ctx: ExtensionVerifyContext,
 ): ExtensionVerifyPayload {
   return {
     verified: false,
@@ -120,6 +162,7 @@ function inContactsFallbackPayload(
     badgeUrl: null,
     certifiedDomains: [],
     certifiedEmails: emailNorm ? [emailNorm] : [],
+    signals: buildSignals(null, null, emailNorm, domainNorm, ctx, "IN_CONTACTS"),
     message,
   };
 }
@@ -155,6 +198,7 @@ export function buildExtensionVerifyResult(
       badgeUrl: null,
       certifiedDomains: [],
       certifiedEmails: [],
+      signals: buildSignals(null, null, emailNorm, domainNorm, ctx, "UNKNOWN"),
       message: "Paramètres email ou domaine requis.",
     };
   }
@@ -166,6 +210,7 @@ export function buildExtensionVerifyResult(
         emailNorm,
         domainNorm,
         "Contact présent dans votre Trust Circle.",
+        ctx,
       );
     }
     if (senderMatchesUserCertified(emailNorm, domainNorm, ctx)) {
@@ -173,6 +218,7 @@ export function buildExtensionVerifyResult(
         emailNorm,
         domainNorm,
         "Email ou domaine présent dans vos coordonnées certifiées.",
+        ctx,
       );
     }
     return {
@@ -183,6 +229,7 @@ export function buildExtensionVerifyResult(
       badgeUrl: null,
       certifiedDomains: [],
       certifiedEmails: [],
+      signals: buildSignals(null, null, emailNorm, domainNorm, ctx, "UNKNOWN"),
       message: "Aucun contact certifié ne correspond à cet expéditeur.",
     };
   }
@@ -206,6 +253,8 @@ export function buildExtensionVerifyResult(
   const slug = bestCert?.publicId ?? bestCert?.id ?? null;
   const badgeUrl = slug ? `${baseUrl.replace(/\/$/, "")}/badge/${slug}` : null;
 
+  const signals = buildSignals(pick, bestCert, emailNorm, domainNorm, ctx, "CERTIFIED");
+
   if (hasActive) {
     return {
       verified: true,
@@ -215,6 +264,7 @@ export function buildExtensionVerifyResult(
       badgeUrl,
       certifiedDomains,
       certifiedEmails,
+      signals,
       message: "Ce contact possède un badge BLOCKTRUST actif.",
     };
   }
@@ -228,6 +278,7 @@ export function buildExtensionVerifyResult(
       badgeUrl,
       certifiedDomains,
       certifiedEmails,
+      signals: buildSignals(pick, bestCert, emailNorm, domainNorm, ctx, "FRAUD"),
       message: "Badge invalide, expiré ou révoqué pour ce contact.",
     };
   }
@@ -240,6 +291,7 @@ export function buildExtensionVerifyResult(
     badgeUrl: null,
     certifiedDomains,
     certifiedEmails,
+    signals: buildSignals(pick, bestCert, emailNorm, domainNorm, ctx, "IN_CONTACTS"),
     message: "Contact présent dans votre liste, sans badge actif.",
   };
 }

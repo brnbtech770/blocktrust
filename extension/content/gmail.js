@@ -75,6 +75,50 @@ function injectGlobalStyles() {
       background: #e2e8f0 !important;
       color: #64748b !important;
     }
+    .bt-tooltip {
+      position: fixed !important;
+      z-index: 2147483646 !important;
+      min-width: 200px !important;
+      padding: 10px 12px !important;
+      border-radius: 10px !important;
+      background: #0a1628 !important;
+      border: 1px solid rgba(0, 212, 255, 0.35) !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+      font-family: Inter, Arial, sans-serif !important;
+      font-size: 11px !important;
+      color: #ffffff !important;
+      pointer-events: none !important;
+      opacity: 0 !important;
+      transform: translateY(4px) !important;
+      transition: opacity 0.15s ease, transform 0.15s ease !important;
+    }
+    .bt-tooltip.bt-tooltip-visible {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+    .bt-tooltip-title {
+      display: block !important;
+      margin-bottom: 8px !important;
+      font-weight: 700 !important;
+      font-size: 10px !important;
+      letter-spacing: 0.06em !important;
+      text-transform: uppercase !important;
+      color: #00d4ff !important;
+    }
+    .bt-tooltip-row {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      margin-top: 5px !important;
+      line-height: 1.3 !important;
+    }
+    .bt-tooltip-ok {
+      color: #10b981 !important;
+      font-weight: 700 !important;
+    }
+    .bt-tooltip-ko {
+      color: #64748b !important;
+    }
   `;
 
   const target = document.head || document.documentElement;
@@ -197,14 +241,80 @@ function addToQueue(email, domain, element) {
   void processQueue();
 }
 
+/** Tooltip flottant unique (réutilisé entre badges). */
+let activeTooltip = null;
+
+function hideBadgeTooltip() {
+  if (activeTooltip) {
+    activeTooltip.classList.remove("bt-tooltip-visible");
+  }
+}
+
+function positionTooltip(tooltip, anchor) {
+  const rect = anchor.getBoundingClientRect();
+  const top = rect.bottom + 8;
+  let left = rect.left;
+  const maxLeft = window.innerWidth - 220;
+  if (left > maxLeft) left = maxLeft;
+  tooltip.style.top = `${top}px`;
+  tooltip.style.left = `${left}px`;
+}
+
+/**
+ * Popup au survol — 3 signaux principaux.
+ * @param {HTMLElement} badge
+ * @param {{ status: string, trustScore?: number|null, signals?: { kycVerified?: boolean, inNetwork?: boolean, polygonAnchored?: boolean } }} result
+ */
+function attachBadgeTooltip(badge, result) {
+  if (result.status !== "CERTIFIED") return;
+
+  badge.style.cursor = "help";
+
+  const signals = result.signals || {};
+  const rows = [
+    { label: "Vérification d'identité", ok: Boolean(signals.kycVerified) },
+    { label: "Dans votre réseau", ok: Boolean(signals.inNetwork) },
+    { label: "Ancré Polygon", ok: Boolean(signals.polygonAnchored) },
+  ];
+
+  badge.addEventListener("mouseenter", () => {
+    if (!activeTooltip) {
+      activeTooltip = document.createElement("div");
+      activeTooltip.className = "bt-tooltip";
+      activeTooltip.setAttribute("role", "tooltip");
+      document.body.appendChild(activeTooltip);
+    }
+
+    activeTooltip.innerHTML = `
+      <span class="bt-tooltip-title">BLOCKTRUST™ — Signaux</span>
+      ${rows
+        .map(
+          (row) => `
+        <div class="bt-tooltip-row">
+          <span class="${row.ok ? "bt-tooltip-ok" : "bt-tooltip-ko"}">${row.ok ? "✓" : "—"}</span>
+          <span>${row.label}</span>
+        </div>`,
+        )
+        .join("")}
+    `;
+
+    positionTooltip(activeTooltip, badge);
+    requestAnimationFrame(() => {
+      activeTooltip?.classList.add("bt-tooltip-visible");
+    });
+  });
+
+  badge.addEventListener("mouseleave", hideBadgeTooltip);
+  badge.addEventListener("blur", hideBadgeTooltip);
+}
+
 /**
  * Badge visuel à insérer à côté du nom / email expéditeur.
- * @param {{ status: string, message?: string }} result
+ * @param {{ status: string, message?: string, trustScore?: number|null, signals?: object }} result
  */
 function createVerifyBadge(result) {
   const badge = document.createElement("span");
   badge.setAttribute("role", "status");
-  badge.title = result.message || result.status || "";
 
   const baseStyles = `
     display: inline-flex !important;
@@ -238,7 +348,14 @@ function createVerifyBadge(result) {
       color: #ffffff !important;
       border: none !important;
     `;
-    text = "✓ Certifié BLOCKTRUST™";
+    const score =
+      typeof result.trustScore === "number" && Number.isFinite(result.trustScore)
+        ? Math.round(result.trustScore)
+        : null;
+    text =
+      score != null
+        ? `✓ Certifié • Score ${score}/100`
+        : "✓ Certifié BLOCKTRUST™";
   } else if (result.status === "IN_CONTACTS") {
     statusClass = "bt-contacts";
     colorStyles = `
@@ -268,6 +385,12 @@ function createVerifyBadge(result) {
   badge.className = `bt-trust-badge bt-badge ${statusClass}`;
   badge.setAttribute("style", baseStyles + colorStyles);
   badge.textContent = text;
+
+  if (result.status === "CERTIFIED") {
+    attachBadgeTooltip(badge, result);
+  } else {
+    badge.title = result.message || result.status || "";
+  }
 
   return badge;
 }

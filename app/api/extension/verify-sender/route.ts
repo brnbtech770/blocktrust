@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
   const domainNorm = normalizeSenderDomain(domainRaw);
   const cacheKey =
     emailNorm || domainNorm
-      ? `bt:ext:verify:v2:${userId}:${emailNorm}:${domainNorm}`
+      ? `bt:ext:verify:v3:${userId}:${emailNorm}:${domainNorm}`
       : null;
 
   if (redis && cacheKey) {

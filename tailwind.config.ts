@@ -50,6 +50,7 @@ export default {
       animation: {
         "fade-up": "fadeUp 0.7s ease-out forwards",
         "fade-in": "fadeIn 0.7s ease-out forwards",
+        "badge-pop": "badgePop 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
         /** Pulse du halo landing — opacité uniquement pour garder un cercle strict */
         "glow-pulse-opacity": "glowPulseOpacity 2.4s ease-in-out infinite",
         float: "float 4s ease-in-out infinite",
@@ -64,6 +65,10 @@ export default {
         fadeIn: {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
+        },
+        badgePop: {
+          "0%": { opacity: "0", transform: "scale(0.55) translateY(16px)" },
+          "100%": { opacity: "1", transform: "scale(1) translateY(0)" },
         },
         glowPulseOpacity: {
           "0%, 100%": { opacity: "0.58" },
