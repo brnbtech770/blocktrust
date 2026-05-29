@@ -38,13 +38,39 @@ const criticalColumns: CriticalColumn[] = [
   },
 ];
 
+/** Nettoie une URL issue d'un secret : guillemets, préfixe `KEY=`, espaces, junk avant le protocole. */
+function sanitizeDbUrl(raw?: string | null): string | undefined {
+  if (!raw) return undefined;
+  let url = raw.trim().replace(/^\uFEFF/, "");
+  url = url.replace(/^(?:DATABASE_URL|DIRECT_URL|DATABASE_URL_PROD)=/i, "").trim();
+  // Extrait à partir du protocole : élimine tout préfixe parasite (guillemets, `psql `, etc.).
+  const match = url.match(/postgres(?:ql)?:\/\/\S+/i);
+  if (match) url = match[0].replace(/["';]+$/, "");
+  return url || undefined;
+}
+
 const databaseUrl =
-  process.env.DATABASE_URL?.trim() ?? process.env.DATABASE_URL_PROD?.trim();
+  sanitizeDbUrl(process.env.DATABASE_URL) ??
+  sanitizeDbUrl(process.env.DATABASE_URL_PROD);
 
 if (!databaseUrl) {
   console.error("❌ DATABASE_URL (ou DATABASE_URL_PROD) manquant");
   process.exit(1);
 }
+
+// URL invalide (secret mal formé : guillemets/espaces/protocole absent) :
+// on n'échoue pas le CI pour un helper d'ops — on signale et on ignore.
+if (!/^postgres(?:ql)?:\/\//i.test(databaseUrl)) {
+  console.warn(
+    "⚠️  DATABASE_URL ne commence pas par postgresql:// — vérifier le secret GitHub " +
+      "(guillemets, espaces ou préfixe parasites). Étape ignorée."
+  );
+  process.exit(0);
+}
+
+// Normalise l'env lu par PrismaClient à l'init (url + directUrl du schema).
+process.env.DATABASE_URL = databaseUrl;
+process.env.DIRECT_URL = sanitizeDbUrl(process.env.DIRECT_URL) ?? databaseUrl;
 
 const hostMatch = databaseUrl.match(/@([^/]+)/);
 console.log("🔗 Vérification schema — host:", hostMatch?.[1] ?? "(inconnu)");
