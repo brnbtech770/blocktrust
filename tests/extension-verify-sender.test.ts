@@ -31,7 +31,7 @@ function makeCert(status: Certificate['status']): Certificate {
     level: null,
     qrEnabled: true,
     qrSettings: null,
-  } as Certificate
+  } as unknown as Certificate
 }
 
 function makeEntity(
@@ -65,7 +65,7 @@ function makeEntity(
     updatedAt: new Date(),
     certificates: [makeCert(certStatus)],
     trustScore: { score: trustScore },
-  } as EntityWithCerts
+  } as unknown as EntityWithCerts
 }
 
 const emptyCtx: ExtensionVerifyContext = {
