@@ -1,0 +1,457 @@
+90f0c37 fix: sitemap — route accessible GSC
+0c3f611 fix: privacy — anonymiser nom DPO (email uniquement)
+268a253 feat: privacy — politique confidentialité complète RGPD
+79febeb test: vault — tests flux complet
+f63a288 fix: vault — UX complète (édition, rôles, feedback, sidebar membres)
+56aeef4 test: vitest — coverage enrichi trust engine + admin + auth
+c235d57 feat: ops — Vercel Analytics + Speed Insights
+ef9b01f feat: trust-engine — IP reputation + trust graph propagation indirecte
+7f406d7 feat: trust-engine — domain age + disposable email signals
+ee575d4 docs: knowledge base v13 — 27 mai 2026
+d5f65fc fix: vercel — subscription-monitor quotidien (Hobby)
+e984053 feat: surveillance — logs exécution agents visibles
+3c9fbe8 feat: agents — restart endpoint + run manuel par agent
+de9d18d fix: extension — tooltip CSS erreur Gmail
+856fdaa feat: emails — signature certifiée + guide Gmail
+9cd0b4f feat: extension — badge non vérifié visible + tooltip inscription
+5252a37 feat: org — révocation membre complète
+6c2feda feat: settings — affichage droits utilisateur
+90c0e25 feat: trust-delegation — matrice droits certification
+ce68eac chore: redeploy — AUTH_SECRET régénéré
+dd121d8 feat: wow — score dans badge + tooltip + verify redesign
+63f3c60 fix: auth — désactiver debug prod + retirer adapter wrapper
+97bbcdc feat: ops — status page, health monitoring et alertes Sentry crons
+bcb3265 test: vitest — verify + trust engine + stripe + security
+485acc6 feat: admin — TrustScore users + email entité + actions orgs
+01731b3 feat: admin — logs activité + export CSV + pagination certificats
+546203d feat: admin — tableau de bord agents actifs
+1f2a5cb feat: agents — subscription + onboarding monitor
+29f7c97 feat: agents — fraud + security surveillance
+47d43c4 fix: prisma.config — utiliser DATABASE_URL depuis process.env
+9c61712 fix: infra — migration auto + vérification DB pré-déploiement
+3f2e7b1 fix: migration repair — colonnes biometricConsent manquantes en prod
+3b50e93 debug: auth — logs edge GOOGLE_CLIENT_ID et googleProvider au boot
+7501148 debug: auth — adapter wrapper pour capturer AdapterError complète
+019a39a fix: auth OAuth Configuration — shim DIRECT_URL runtime + health DB
+4ba5d83 feat: RGPD — consentement biométrique séparé Stripe Identity
+a110205 fix: mobile — auth + verify 375px
+60fbeba fix: mobile — dashboard 375px ergonomie
+f8d65e2 fix: mobile — landing 375px ergonomie
+fe2c607 docs: 3 skills enrichis — Email, Root of Trust, Threat Model v2
+1fe6df5 feat: bootstrap — admins étendus + vérification Polygon
+37f274d chore: redeploy — Neon Launch + DATABASE_URL
+a9e6bc8 chore: redeploy — GOOGLE_CLIENT_SECRET non-sensitive
+cb8fc33 chore: redeploy — secrets non-sensitive
+6ca44f9 fix: auth — provider Google conditionnel + shim edge
+b0aa811 chore: redeploy — Google secrets fixés
+a0463c8 fix: badge — IDs public + interne restaurés
+c0a4158 fix: badge dashboard — boutons copier restaurés
+50e2949 feat: verify — signaux Trust Engine affichés
+649445a feat: trust-engine — moteur scoring V2
+57fe939 docs: Legal Compliance Architect Skill (RGPD, AI Act, eIDAS)
+8647b2c docs: knowledge v12 + Legal Compliance Skill
+abdc69a perf: prisma — index performance sur requêtes fréquentes
+aced78b ci: workflow complet lint + build + prisma validate
+75b2793 fix: BRNB TECH SASU → SAS dans tout le codebase
+8832823 fix: eslint — no-explicit-any corrections batch 3/3
+3bab155 fix: eslint — no-explicit-any corrections batch 2/3
+b0760e4 fix: eslint — no-explicit-any corrections batch 1/3
+1ad4c7a fix: trustscore — persistUserTrustScore sur tous les chemins FRAUD_ALERT
+543dd5b feat: email reset password — template React Email BLOCKTRUST™
+fa8d822 fix: extension — badge visible !important styles Gmail
+8a149da fix: extension — verify-sender query + popup UX
+4d503a6 fix: extension — cache + queue + rate limit
+0b96d19 fix: extension — badge visible + injection DOM Gmail
+e1325ee fix: CORS extension — accepter mail.google.com + fallback non-vide
+5c27492 feat: extension — debug Gmail + icônes + statut actif
+c625142 feat: admin — accès dashboard personnel + lien Mon espace
+47fd5fd feat: admin AIAlert — boutons Investiguer/Résoudre/Ignorer
+362a11d scripts: repair-admin-signatures one-shot
+8adc3f1 fix: admin-bootstrap — signature badge créée si manquante sur cert existant
+3ed2cb3 perf: auth — connexion rapide admin + users (fire-and-forget + cache JWT)
+3d157e8 perf: auth — bootstrap admin fire-and-forget (connexion non bloquée)
+74488f1 fix: admin — plans lisibles + KYC vérifié admins + badges vue clients
+43ef7e1 feat: admin-bootstrap — certificat auto créé pour les admins
+f125a49 scripts: cleanup comptes test + bootstrap comptes pro Olivier
+bace48d fix: admin — vérification identité + KYC admins auto-approuvés
+5acd687 docs: Trust Engine Skill v2 final
+4a657fd fix: server function passée à client component
+e5631f5 chore: redeploy — GOOGLE_CLIENT_SECRET rempli
+a25355a fix: auth — Google signIn POST (GET signin/google invalide Auth.js v5)
+e9329a9 chore: redeploy — GOOGLE_CLIENT_ID non-sensitive
+634feb5 chore: redeploy — GOOGLE_CLIENT_ID rempli
+a0a0897 fix: auth — GoogleProvider sans assertions !
+4ce18be fix: auth — import dynamique admin-bootstrap (dépendance circulaire)
+6879e35 fix: signin — Google OAuth navigation pleine page
+1a1a275 fix: auth — unifier AUTH_SECRET et NEXTAUTH_SECRET
+59937e3 chore: redeploy — secrets unifiés
+ab4da48 chore: redeploy — AUTH_URL ajouté
+cfb4fab chore: redeploy — Google OAuth credentials
+8859adc chore: redeploy — NEXTAUTH_SECRET sécurisé
+c365cf5 fix: auth — trustHost + cookies CSRF production
+41053b0 fix: requireAdminPage — auth() protégé try/catch
+ca738a0 fix: admin dashboard — tous les appels Prisma en fail-soft
+62e45a3 fix: layouts — try/catch Prisma fail-soft admin + dashboard
+56310ca fix: auth — bootstrap admin ne bloque plus la connexion
+7b0975f fix: proxy — skip getToken sur / sans cookie session
+19b70c7 fix: landing — page statique sans auth() bloquant
+5e02a79 fix: garde pathname null sur sidebar dashboard et admin
+eb0aa2c fix: ajouter react-error-boundary
+ae0b366 fix: rétrograder Next.js 16.2.4 — version stable
+87675e6 fix: restaurer sidebar stable avant refactor
+726ed0a fix: DashboardSidebarNav — pathname null + sections guard + error boundary
+fbece45 Revert "fix: DashboardSidebarNav — pathname null guard"
+3427b26 fix: DashboardSidebarNav — pathname null guard
+d1263d5 fix: CI — security audit seuil vulnérabilités ajusté
+eb0180c fix: landing — typographie harmonisée + retours à la ligne
+104d4da docs: nettoyage doublons knowledge base
+9984f7b docs: knowledge base v11 — 13 mai 2026
+20d60e8 fix: dashboard — sidebar client en sections logiques
+06bbffd fix: admin — fusion alertes + actions rapides clients
+461b071 fix: admin — sidebar restructurée en sections logiques
+9fffab0 fix: api certified-contacts — Enterprise pour admins
+617e349 fix: settings — Enterprise forcé pour les admins en session
+345f3a3 feat: admin — dashboard KPIs financiers + MRR
+8158daf feat: admin — vue clients business
+7edd5d8 debug: settings — log plan Enterprise
+44a505e fix: settings — coordonnées certifiées visibles pour plan Enterprise
+adae69e feat: dashboard — titre + sidebar adaptatifs selon plan
+f2c34d6 feat: settings — coordonnées certifiées restreintes selon plan
+b295483 feat: plan-wording — wording adaptatif par plan B2C/B2B
+9d0321b feat: verify — merger coordonnées user + entity
+9850e40 feat: settings — coordonnées certifiées (emails/phones/domaines) dans les paramètres
+9be7ea7 scripts: bootstrap Johanna — Enterprise sans droits admin
+3731053 fix: admin — alertes IA libellés + couleurs
+f850294 fix: admin — surveillance IA labels + auto-démarrage
+917a067 fix: admin — tableaux scrollables + empty states
+e3e8e3d design: badge SVG serveur — refonte visuelle Lovable animations
+346a222 chore: redeploy — ADMIN_EMAILS Shai
+e1dbb0c scripts: bootstrap-all-admins depuis ADMIN_EMAILS
+c372078 scripts: cleanup profils Laurianne
+adcbd45 chore: redeploy — ADMIN_EMAILS
+d3c817d feat: admin — bootstrap admin + layout + proxy
+a376715 feat: email — signature certifiée intégrée dans tous les templates
+8756e0e feat: email — EmailSignatureBadge avec badge image réel sm + bouton vérifier
+c8d684d feat: plans — ajouter B2B_ENTERPRISE
+ff61833 feat: admin — capacités maximales Enterprise + MUTUAL auto
+6370dd9 fix: dashboard — masquer ID interne client
+89513a6 feat: B2B — dashboard org + vault + verify + admin
+1e57a29 feat: B2B — API organization + vault + entries + bulk
+5109295 feat: B2B — lib vault-utils + org-vault-server + email invite
+61d5974 feat: B2B — migration Prisma Org+Vault
+3aaf3cc feat: white-label — réservé Business+ (sur devis Starter/Team)
+9e3a06a feat: dashboard — badge Pro plans B2B
+6c6b070 feat: admin — page équipe BLOCKTRUST + isAdmin robuste
+54e04d4 docs: BLOCKTRUST_PROJECT_KNOWLEDGE v10 — 11 mai 2026 (vision, pricing, audit, chantiers)
+c466b45 fix: FRAUD_ALERT — email + admin + tax sur public certificate API
+cfc509c fix: checkout — Solo Pro dans validPriceIds
+3ed6626 Revert "feat: BlockTrustBadge — refonte visuelle Lovable + animations"
+5e7e225 Revert "feat: badge dashboard — showVerifyButton + nouvelles props"
+8fc06e3 Revert "design: badge — libellé vérification d'identité (charte UI)"
+248483c design: badge — libellé vérification d'identité (charte UI)
+5ebb079 feat: badge dashboard — showVerifyButton + nouvelles props
+5aad5f5 feat: BlockTrustBadge — refonte visuelle Lovable + animations
+f8aea35 chore: supprimer jsonwebtoken — dépendance morte (jose déjà présent)
+10ea408 fix: verify — extraction certId depuis URL complète collée
+aeffe31 fix: verify page — timeout + token vide + chargement infini
+6627c9c Revert "fix: verify page — timeout + token vide + chargement infini"
+9d4db68 fix: verify page — timeout + token vide + chargement infini
+914d3c7 fix: emails — verifyUrl → /verify?certId= public sur tous les templates
+4625520 design: dashboard — largeur égale TrustScore et activité récente
+866a3fd fix: CORS extension — accepter toutes origines chrome-extension://
+228ddcf design: dashboard TrustScore et activité au-dessus du tableau pleine largeur
+f8acb3e docs: skill audit processus complet
+9d4cb74 fix: extension Chrome — sélecteurs Gmail 2026 + debug logs
+88be4a9 fix: emojis téléchargement → Download lucide
+57eba81 feat: email alerte fraude — notification client FRAUD_ALERT
+e8c6235 fix: dashboard — layout activité récente + alerte fraude proéminente client
+61bf2d3 fix: badge aperçu — conteneur adaptatif + SVG non coupé
+e197062 fix: QR → /verify?certId= public + proxy /verify/qr/* public
+b259cd5 fix: dashboard — copier lien vérification (pas vérifier son propre badge)
+d854c9a fix: badge dashboard — copier lien vérification
+7ae2ad3 fix: QR dynamique + proxy → route publique
+33630ad fix: QR statique → /verify?certId= public
+e0c4dce design: badge SVG — espacements typo et QR (sm/md/lg)
+9da01f3 fix: badge page — layout QR + badge 160px + boutons visibles
+163ddd8 feat: verify-link rotatif 24h Redis + UI
+44ecf8f feat: badge — bouton vérifier QR direct
+544268d fix: trust-circle — loading navy + spinners
+e157be9 fix: dashboard — emojis → Lucide + font-syne
+9f5e8ae fix: badge page — layout + couleurs + responsive
+f760aca fix: CTA B2B — Solo Pro · 9,99€ HT/user/mois
+25c9e95 fix: CTA landing — Solo Pro 9,99€ HT/user + prix corrects
+9489ccb chore: force redeploy — cache purge prix
+757685e fix: anciens tarifs — grep complet + correction tous fichiers
+3c51d66 feat: pricing contacts vs Trust Circle + article clonage vocal /menaces
+4cbd872 feat: onboarding — étape 3 téléphone + cas prospect inconnu
+8e357d2 feat: hero — focus réception + wording raccord features réelles
+993f59b fix: prix CTA landing — 3,99€ TTC + B2B dégressif
+960b91e docs: skills Stripe + Extension Chrome + React Email + Design System
+461c715 feat: extension Chrome TrustScan V1 — structure + Gmail content script + popup
+ecf63d6 feat: dashboard settings — clé API extension Chrome
+dbc75af feat: API extension — add-contact + me + api-key
+0a3bf0b feat: API extension — endpoints verify-sender
+9cdab87 feat: API extension — migration Prisma
+a891e9f feat: pricing — Essentiel 3,99€ + Solo Pro B2B
+eb20b53 feat: articles épinglés /menaces Kratos + FNC-RF
+ea80fca feat: accordion détail par plan /pricing
+81e98b7 seo: meta description FR — contrer sites anglais blocktrust
+bdd880b feat: mention résiliation visible partout pricing
+c68a34d feat: identité complète — affichage /verify
+4c646ca feat: identité complète — TagInput + formulaire
+359e3ce feat: identité complète — migration Prisma
+4f44753 feat: wallet crypto — affichage /verify public
+9e17aab feat: wallet crypto — formulaire + validation
+ab3e5a9 feat: wallet crypto — migration Prisma
+fd41896 chore: docs + scripts test anthropic
+3319dcd docs: mise à jour BLOCKTRUST référence projet v8.1 (6 mai 2026)
+fcfba1a fix: désactiver Turbopack +
+6be4ee1 security: RGPD privacy by design
+7e4655a fix: Stripe lazy init pour build Vercel sans STRIPE_SECRET_KEY
+be066eb security: input validation Zod
+d650e59 security: rate limit strict magic link
+d5082c0 security: sanitizeCallbackUrl
+d0c1706 security: NextAuth open redirect prevention
+fdb910d security: Next.js security headers — CSP + HSTS + X-Frame
+7ba8745 security: QR token entropy + timingSafeEqual
+3c35d17 security: dependabot + npm audit CI
+46ca50a security: distributed lock quota certificats
+c3c50ef security: stripe webhook idempotence Redis
+d23b711 security: whitelist champs admin routes
+48f42d6 security: whitelist champs certificates routes
+f7a6374 security: whitelist champs user routes
+aa8ed54 chore: cursorrules BLOCKTRUST v8 complet — 538 lignes
+6e67820 chore: cursorrules BLOCKTRUST complet v8
+507cbce security: sanitize logs données sensibles
+7bc4a3a security: generateApiKey unique avec retry
+8da8678 security: bloquer activation certificat user
+db77b57 security: supprimer /api/debug-auth production
+e68fa07 feat: badge embarqué, hero mobile, filigrane et vérif dashboard
+62106cd fix(badge): mise en page sm sans chevauchement nom / pastille blockchain
+d343d48 ux(verify): layout lisible, fetch annulé, filigrane masqué dans le chrome
+c2c3f7f fix: mention résiliation visible partout sur le pricing
+1709742 fix(seo): métadonnées canoniques, noindex zones privées, robots et sitemap
+5316016 fix(badge): retirer affichage niveau BRONZE/GOLD du SVG embed
+89db2b4 feat: watermark dynamique badge + règle d'or /verify + badge public
+d0ec206 feat: bouton Vérifier sur page badge/certificat
+d9d3b51 style(dashboard): titres or, bienvenue néon blanc, nav active et header en or
+789c152 fix: dashboard — titres blanc + bienvenue discret + sidebar nom neutre
+103b175 fix: dashboard — settings + contacts + titres + fraude alertes
+080b430 fix: KPI Polygon — exclure certificats révoqués du compteur
+8ddd707 fix: dashboard — bronze supprimé + bonjour + polygon + alertes fraude + ID tooltip + trust circle explication
+d4baa20 fix: /verify — INVALIDE → FRAUDE si ID falsifié
+3089caf fix: /verify — reset après vérification
+070866f fix: /verify — ID redirige vers route publique
+cdbb67b feat: /verify — champ URL/ID pour vérification manuelle
+049cdbf docs: référence projet v8.0 — 4 mai 2026 (stack, navbar, surveillance, env)
+2e2083b fix(ui): logo officiel badge SVG par défaut (Logo + page /badge)
+188a585 feat: agent surveillance temps réel — Option C événementiel + Option A QStash
+58c7331 fix: navbar — hover uniforme sur tous les liens
+e05eab0 fix(threat-articles): modèle Claude Haiku 4.5 + agrégation blocs réponse JSON
+6ee4934 fix: reset threat article placeholders
+ca5588f chore: force redeploy — fix ANTHROPIC_API_KEY
+efcd724 chore: script reset-threat-placeholders pour relancer synthèses Anthropic
+bb30370 fix: threat-articles — prompt robuste + parser JSON + retry articles en échec
+106117d chore: force redeploy — CRON_SECRET
+f2aad12 feat: veille cyber — cron RSS (CERT-FR, Cybermalveillance, ZATAZ), Anthropic, table ThreatArticle, page /menaces
+3581971 feat: section ThreatAlert — menaces permanentes + stats + réponse BLOCKTRUST
+0cc0c85 feat: Trust Circle Cas 1/Cas 2 — /verify alertes réseau de confiance
+d8205df fix: /verify public — retirer protection auth proxy
+bca6a51 fix(auth): logo officiel SVG (BlockTrustBadge) sur connexion et en-tête public
+94dd5b0 feat: /verify 3 niveaux — public épuré + couleurs verdicts + bouton navbar
+f7b7882 feat: refonte /verify — verdict immédiat + anti-falsification + fix RGPD ipHash
+3791247 fix: OG image — nouveau H1
+5f03a41 fix: metadata SEO — cohérence nouveau H1
+d60718e feat: feedback Laurianne — H1 + onboarding + FAQ + Trust Circle exemples
+5496046 fix(icons): favicon PNG et OG depuis favicon.svg — plus d’ancien badge Bitcoin
+e0b2e86 docs: BLOCKTRUST — référence projet v7.0 final (30 avr. 2026)
+07754ad ui(how-to): sous-titre VerificationFlow — gold + single line desktop
+4c84cb6 fix(entreprises): card 5 — Trust Circle B2B (Network icon, partenaires certifiés)
+ff3548a feat: protection menaces entrantes — Problem + Solution + Particuliers + Entreprises
+99cc013 design: QuickUnderstand — icônes Lucide + texte email + bordures supprimées
+defb17b ui(hero): retirer les · — pill = ✦ Certifié ✦ Protégé ✦ Infalsifiable
+2794d5a fix: QuickUnderstand déplacé après Problem — meilleure narration
+a709855 fix: onboarding dashboard — href badge → certificates
+355f9d2 ui(hero): pill — ✦ devant chaque label (Certifié · Protégé · Infalsifiable)
+50ab3c6 feat: onboarding 4 interventions + cas email frauduleux typosquatting
+2dcc581 legal: ™ ajouté navbar + footer
+c63dcfa fix: footer — CGU et Confidentialité 404 corrigés
+01fe81f legal: ajout ™ BLOCKTRUST — dépôt INPI 5253718
+df1770a fix: alignement sous-titre hero
+b2fe65c fix: sous-titre hero — headline validée équipe
+28bb9be docs: knowledge base v7.0 — feedbacks intégrés + roadmap Trust Circle Cas 1/Cas 2
+a337b12 fix: pill Protégé + entité→contact + sous-titre hero refondu
+5fbbcc3 fix: pill hero — neon-gold restauré
+f4e8590 design: effet néon sur labels de section
+4a555ac fix: bouton Lancer l'analyse — whitespace-nowrap + texte raccourci + contraste
+28b9c13 design: halos lumineux sections + tailles polices + pricing uniformisé + fond quadrillé supprimé
+ce81e39 docs: knowledge base v6.1 final — 28/04/2026
+98a41e1 fix: dernier KYC visible — entities dashboard
+a043e78 fix: remplacer KYC par langage accessible côté utilisateur
+7af7795 fix: feedback Laurianne — 8 corrections UX/messaging/pricing
+dc782b3 feat: Upstash Redis rate limiting distribué
+c99c455 refactor: migration prisma.config.ts — compatibilité Prisma 7
+ad9b954 refactor: migration middleware Next.js 16
+a22dc3d design: UpgradePrompt élégant gold/navy remplace bannière rouge
+e239d6f docs: knowledge base v6 — refonte positionnement + ancrage Polygon
+af0f54a chore(branding): purger derniers vestiges ancien logo statique
+3fa7b40 fix(branding): remplacer ancien logo Bitcoin par badge BlockTrust partout
+d93785c feat(og): OG image statique 1200x630 — abandon Satori
+104e6e4 feat(landing): section Categories — comparatif 4ᵉ couche identité
+1291e50 fix(navbar): drawer mobile invisible à cause de overflow-x-hidden
+387dc4a feat(landing): nouveau positionnement "carte d'identité numérique"
+e952176 fix(og): use co-located hexagonal badge image with import.meta.url
+417765e feat: email confirmation ancrage Polygon — CertificateAnchoredEmail
+8f22ce3 design: OG image — embed badge SVG via img tag
+d94dd4d fix: OG image — version stable Satori
+e110c85 design: OG image — embed badge SVG statique authentique
+f63bbdc fix: remplacer stat 99,9% par ES256 cryptographie
+467c639 design: OG image premium — cohérente landing page
+b1c9aca feat: OG image + favicon BlockTrust premium
+fedcb71 docs: knowledge base v5 final — ancrage Polygon réel 27/04/2026
+fbe8490 fix: ancrage Polygon vers burn address — résout from===to rejection
+4035f4a chore: redeploy POLYGON_RPC_URL → polygon-rpc.com
+bbc9171 chore: POLYGON_RPC_URL llamarpc
+eaf485d chore: force redeploy POLYGON_RPC_URL
+655eccb fix: POLYGON_RPC_URL mise à jour
+f4180ac fix: ancrage Polygon fallback hash depuis données certificat
+5bf039a fix: bouton ancrage manuel + tableau admin responsive
+fa03bf9 feat: colonne Blockchain dans admin/certificates
+f077408 fix: fusion cron polygon-retry dans anomaly-detection
+58c71b6 feat: ancrage Polygon réel — certificats ancrés blockchain à l'activation
+644f7da docs: knowledge base v5 — 27/04/2026
+57642b9 test: E2E flow KYC→certificat→QR + corrections
+2134950 feat: architecture White Label — API publique + widget + webhook + dashboard
+6cc4154 fix: how-to corrections visuelles — carte intégration + badges taille
+d8bbf33 feat: page /how-to — guide complet + schéma vérification + démos animées
+1122204 fix: BLOCKTRUST cyan uniforme navbar + majuscules badge label
+b00fd1d fix: BLOCKTRUST majuscules + nouveau logo partout
+140fcc7 fix: badge intégration centré + size 200
+73c894c docs: knowledge base v4 — 26/04/2026
+8cd29e7 fix: logo navbar + casse BlockTrust + forfaits entreprises + badge intégration
+1885955 feat: BlockTrustBadge déployé partout — verify, dashboard, intégration
+91ae244 design: badge wordmark BlockTrust + film lumineux + timeline fix
+d4d97e7 fix: timeline Solution — ligne verticale arrêtée au dernier point
+1f501c1 design: bouclier badge enrichi — gradient profond + checkmark gold
+be322d4 feat: badge BlockTrust Lovable — circuits animés premium
+b274a5a design: circuits animés data-flow + scan line badge
+2be7679 design: badge SVG premium enrichi — circuits + anneau + détails
+f4393f7 feat: badge SVG BlockTrust inline — hero premium
+274d962 fix: hero badge SVG temporaire — remplace logo Bitcoin
+f9d8611 fix: réduction tailles polices + descentes coupées
+09c450c fix: hero descentes police + logo BlockTrust
+7952e67 design: Space Grotesk + rééquilibrage typo landing
+a8ef7a9 fix: landing page — tarifs + CTA + hero + typographie sections
+064f02d feat: Vercel Blob — upload documents Trust manuel
+ee698be feat: intégration API INSEE Sirene — vérification SIRET B2B
+9291120 feat: landing page animée — sections complètes + favicon + badge intégration
+4b340c6 docs: knowledge base v3 — état 22/04/2026
+a5b8eb8 design: admin tableau premium — badges, boutons, statuts cohérents
+83be433 design: boutons cohérents + logo admin + icônes glow high-tech
+7da7fa5 design: déconnexion cyan + activité feed déduplication stricte
+de55916 design: cohérence sidebar + dashboard — déconnexion, filtres, activité
+1317721 fix: vercel.json crons compatibles plan Hobby
+3e545a5 chore: force vercel redeploy
+1cbbbe8 security: isolation données — fix fuite certificats inter-utilisateurs
+c8ace3a security: CRITICAL fix accès admin non autorisé — isolation routes /admin
+4119ebd feat: TrustScore dynamique — calcul réel + cron quotidien
+17d199e fix: supprimer double email confirmation paiement checkout
+90a1655 feat: /verify privée + quotas vérification par plan + bouton dashboard
+70e33cf chore: npm audit fix vulnérabilités
+39d7042 feat: cookie banner RGPD + CGU horodatée inscription
+8152738 fix: redirect admin dashboard
+9415273 feat: email confirmation paiement Stripe
+bd3a4c2 security: anti-bot inscription + cleanup comptes suspects + suppression masse
+6429c03 fix: responsive mobile toutes pages + hero title + double logo
+3c36c87 feat: agent IA surveillance anomalies + Vercel Cron + dashboard surveillance
+8882124 feat: système alertes admin + suppression profils utilisateurs
+5c56b94 security: /verify anti-fraude + détection anomalies + AdminAlert
+7bde4f4 design: harmoniser admin, onboarding et écrans restants
+ac8d0c1 design: système typographique cohérent — Inter/Syne/Mono partout
+57e0a93 security: P2 headers + admin env + logs prod + SECURITY.md
+f3bd5f3 feat: UpgradePrompt élégant — remplace bannière rouge quota
+6427938 security: fix P0 auth bypass + JWT fail-closed + cert activation
+7c693a1 fix: restore admin redirect in dashboard layout (again)
+c8913c2 fix: email paiement Stripe + responsive mobile
+984748c fix: webhook priceId mapping — monthly/yearly + B2B plans
+12c379a fix: restore admin redirect in dashboard layout + align secret
+17809f3 fix: restore session/redirect/pages callbacks removed by external tool
+d3efa2c fix: Trust Circle access for all plans + Stripe debug
+38f4f32 chore: retirer instrumentation debug 467f2c + fix layout dashboard admin/client
+274396f fix: redirect admin users from /dashboard to /admin in layout
+41c9f2e fix(auth): middleware sans getToken sur pages (auth Node layouts) + log H5 home admin
+645a6dd fix(middleware): admins acces espace client /dashboard + nav admin/client
+ef72cef debug(auth): log signIn google callbackUrl normalise (session 467f2c)
+bbc5bf5 fix(auth): normaliser callbackUrl Google (relatif meme origine) + doc GET invalide
+303189e fix: restore signIn() for Google OAuth — GET /signin/google is invalid
+7fc68fb fix(auth): page dédiée /auth/error (évite signIn=error) + AUTH_DEBUG optionnel
+14bcfed ux(auth): bloc étapes pour error=Configuration (reset OAuth, Google URI, Vercel)
+1505fda fix(auth): reset-oauth-cookies + lien si error=Configuration (cookies flux invalides)
+e57ea49 debug(auth): debug-auth v8 authConfigSanity (NEXTAUTH_URL path, adapter email, Configuration)
+3a3ef99 fix(auth): Google callbackUrl same-origin en chemin relatif + aide Configuration (InvalidCallbackUrl)
+ef19aa5 chore(health): authRelease 8 + prefetchRscAuthBypass — marque déploiement post-2e736c9
+2e792c9 fix(auth): ne pas redirect signin pendant préfetch RSC (évite faux négatif session OAuth)
+1db8b25 debug(auth): bandeau Diagnostic URL sur /auth/signin (error, reason, callbackUrl)
+5181fa1 chore(health): authRelease 7 + signinRedirectReason — aligner prod sur main (5fd33f7+)
+5fd33f7 debug(auth): param reason sur redirect signin (cookie vs JWT vs DB) + aide /api/debug-auth
+f47b047 chore(vercel): redeploy — inclure 54e5871 (middleware www→apex)
+54e5871 fix(auth): middleware www→apex canonique (NEXTAUTH_URL) + no-store health/debug-auth; debug-auth v7 wwwVsCanonical
+99a7671 docs: VERCEL_DEPLOY.md — aligner SHA prod vs GitHub
+314b56d chore(vercel): redeploy — prod encore sur 780d893 alors que main=886e111
+886e111 debug(auth): jwt probe dans debug-auth v6 + logs OAuth writeAgentDebugLog; health authRelease 6
+780d893 fix(auth): Google sign-in via navigation pleine page + callbackUrl absolu
+5b4c46e chore(vercel): trigger deploy (inclut 7e72393 AUTH_TRUST_HOST + debug v5)
+7e72393 fix(auth): shim AUTH_TRUST_HOST; debug-auth v5 hostVsNextAuth + health authRelease 5
+74b79b9 chore(health): authRelease marker + hint pour suivi déploiement Vercel
+dd9340f fix(auth): skip duplicate Prisma refresh on initial JWT (OAuth cold start)
+6bfb1fe fix(auth): mirror NEXTAUTH_URL into AUTH_URL at runtime (env shim)
+863f4a6 chore(debug): debug-auth v3 — vercel SHA, authEnvShim flag, runtime AUTH_SECRET
+b87a354 fix(auth): mirror NEXTAUTH_SECRET into AUTH_SECRET at runtime
+e970a32 fix(auth): NextAuth v5 prod/session hardening + debug routes
+6118f23 fix: remove KYC gate from dashboard middleware
+caac4e4 debug: enhanced auth diagnostic endpoint
+23e13ac fix: prevent Google OAuth silent loop — JWT fallback + onboarding resilience
+4763d65 debug: enable NextAuth debug logging to diagnose Google OAuth loop
+3eb2e09 fix: add trustHost for Vercel production
+92ba66d fix: JWT callback token.sub manquant après OAuth Google
+26d1b2e fix: restore signIn callback Google OAuth
+7c2cfea fix: restore signIn callback for Google OAuth
+514e50e fix: corrections visuelles landing + dashboard
+b550fdb fix: simplify auth - remove signIn callback, clean adapter flow
+6bcc0ea fix: static landing page + middleware admin redirect + auth debug
+d92db56 fix: restore PrismaAdapter (required for magic link tokens)
+cb84c3d fix: remove PrismaAdapter to fix OAuthAccountNotLinked
+1052a1d chore: remove debug-session route
+a4887ef chore: temporary debug-session route
+500ac3d fix: remove Trust Circle 403 gate, use quota limits instead
+bb362fe fix: rewrite middleware for Edge Runtime compatibility
+ddafd6a fix: move middleware.ts to project root
+cc66411 fix: redirect admins to /admin from landing page
+15c38f2 fix: landing page accessible sans redirect
+4320780 fix: hardcode allowDangerousEmailAccountLinking to true
+c77cbf1 chore: remove temporary debug-email route
+bd80f65 chore: add temporary debug-email route for prod diagnosis
+1caaa1e fix: await all email sends to prevent Vercel lambda cutoff
+222cc6c feat: suppression entités Trust Circle
+5cc514a fix: SIRET strip espaces + Trust Circle message clair
+4b8c8b9 fix: redirect vers signin avec options au lieu de Google direct
+c5e0cc2 fix: verify sans validation JWT signature
+fa0444b fix: allow Google OAuth account linking
+b37da33 feat: signin 3 options Google + magic link + password
+e624241 fix: build errors pour déploiement Vercel
+2fa8d6c chore: force Vercel rebuild
+9fb531a feat: refonte visuelle complète + pricing mensuel/annuel
+dfbfe77 feat: pricing mensuel/annuel + 14 Price IDs Stripe
+32e3ed8 feat: badge design Lovable + QR dynamique rotatif
+2a627ae fix: QR code pointe sur jti Signature + verify gère les deux cas
+276be72 fix: badge SVG affiché dans dashboard + route publique
+4a46cf3 feat: templates emails KYC + Trust Circle finalisés
+0e5ca87 fix: messaging badges multi-support — 1 badge = 1 identité tous appareils
+0e3df77 feat: refonte visuelle complète — charte Lovable (cyan + navy + gold)
+9f7c9a4 feat: intégration logo réel BlockTrust sur toutes les pages
+35e2018 fix: suppression période d'essai — souscription directe 4,99€/mois
+56649e6 fix: auth Google callback — restore session after Prompt 6
+c49991a fix: add AIAlert relations to Entity and Certificate — unblock build
+5ef9ce6 Initial commit
+90f0c37cf4d40dcb74ae52822b9b33f3ff72ac75
+ven. 29 mai 2026 17:09:34 CEST
