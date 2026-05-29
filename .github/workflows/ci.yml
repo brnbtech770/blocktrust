@@ -44,6 +44,8 @@ jobs:
         run: npx tsx scripts/check-prod-db.ts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # PrismaClient valide tout le bloc datasource (dont directUrl) au init.
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
       - name: TypeScript check
         run: npx tsc --noEmit
