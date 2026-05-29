@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: "20"
           cache: "npm"
@@ -24,13 +24,19 @@ jobs:
         # DATABASE_URL et muterait la prod. Le `prisma generate` explicite ci-dessous suffit.
         run: npm ci --ignore-scripts
 
+      # generate/validate ne se connectent jamais : placeholders suffisent
+      # (le schema declare DATABASE_URL + DIRECT_URL ; sans eux → P1012).
       - name: Prisma generate
         run: npx prisma generate
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: postgresql://user:password@localhost:5432/blocktrust?schema=public
+          DIRECT_URL: postgresql://user:password@localhost:5432/blocktrust?schema=public
 
       - name: Prisma validate
         run: npx prisma validate
+        env:
+          DATABASE_URL: postgresql://user:password@localhost:5432/blocktrust?schema=public
+          DIRECT_URL: postgresql://user:password@localhost:5432/blocktrust?schema=public
 
       - name: Check DB Schema
         # Mute la prod (ALTER TABLE) : uniquement sur push main, jamais sur les PR.
@@ -53,6 +59,7 @@ jobs:
           NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
