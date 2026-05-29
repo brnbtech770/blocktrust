@@ -1,12 +1,18 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site-metadata";
 
+/** Regénération quotidienne — lastmod à jour pour GSC. */
+export const revalidate = 86_400;
+
 /** Pages marketing / publiques uniquement — pas les zones connectées. */
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
-  const paths: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"] }[] =
-    [
-      { path: "", priority: 1, changeFrequency: "weekly" },
+  const paths: {
+    path: string;
+    priority: number;
+    changeFrequency: MetadataRoute.Sitemap[0]["changeFrequency"];
+  }[] = [
+      { path: "/", priority: 1, changeFrequency: "weekly" },
       { path: "/pricing", priority: 0.9, changeFrequency: "weekly" },
       { path: "/verify", priority: 0.85, changeFrequency: "monthly" },
       { path: "/how-to", priority: 0.8, changeFrequency: "monthly" },
