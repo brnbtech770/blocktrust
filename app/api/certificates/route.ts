@@ -12,7 +12,7 @@ import { checkCertificateQuota } from '@/lib/checkQuota'
 import { redactEmailRecipient, sendEmail } from '@/lib/email'
 import { CertificateCreatedEmail, subject as certificateCreatedSubject } from '@/emails/CertificateCreatedEmail'
 import { createAdminAlert } from '@/lib/admin-alerts'
-import { redis } from '@/lib/rate-limit-redis'
+import { getRedis } from '@/lib/rate-limit-redis'
 import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 import { getUserEmailSignature } from '@/lib/email-signature'
 import { isAdmin } from '@/app/lib/admin'
@@ -130,6 +130,7 @@ export async function POST(req: NextRequest) {
 
     const lockKey = `lock:quota:cert:${session.user.id}`
     let lockHeld = false
+    const redis = getRedis()
     if (redis) {
       try {
         const acquired = await redis.set(lockKey, '1', { nx: true, ex: 10 })

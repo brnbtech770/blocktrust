@@ -8,7 +8,7 @@
 //
 // Préférer `checkRateLimitApiAsync` côté nouveau code.
 
-import { tryRedisLimit, apiLimiter } from "@/lib/rate-limit-redis";
+import { tryRedisLimit, getApiLimiter } from "@/lib/rate-limit-redis";
 
 const LIMIT_PER_MINUTE = 30
 const WINDOW_MINUTE_MS = 60_000
@@ -76,7 +76,7 @@ export function checkRateLimitApi(key: string): RateLimitApiResult {
 export async function checkRateLimitApiAsync(
   key: string,
 ): Promise<RateLimitApiResult> {
-  const result = await tryRedisLimit(apiLimiter, key)
+  const result = await tryRedisLimit(getApiLimiter(), key)
 
   if (result) {
     if (!result.success) {

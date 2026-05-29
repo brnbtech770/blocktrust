@@ -14,7 +14,7 @@ import {
 } from "@/lib/extension-verify-sender";
 import { getCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
-import { redis } from "@/lib/rate-limit-redis";
+import { getRedis } from "@/lib/rate-limit-redis";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,6 +66,7 @@ export async function GET(req: NextRequest) {
       ? `bt:ext:verify:v3:${userId}:${emailNorm}:${domainNorm}`
       : null;
 
+  const redis = getRedis();
   if (redis && cacheKey) {
     try {
       const cached = await redis.get<string>(cacheKey);

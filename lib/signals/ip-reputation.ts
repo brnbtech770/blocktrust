@@ -2,7 +2,7 @@
 // Réputation IP via AbuseIPDB (cache Redis 1h)
 // ============================================================
 
-import { redis } from '@/lib/redis'
+import { getRedis } from '@/lib/redis'
 
 export type IpReputationResult = {
   score: number
@@ -46,6 +46,7 @@ export async function checkIpReputation(ip: string): Promise<IpReputationResult>
     }
 
     const cacheKey = `ip-rep:${trimmed}`
+    const redis = getRedis()
 
     if (redis) {
       try {

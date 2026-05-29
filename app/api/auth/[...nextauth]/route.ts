@@ -8,7 +8,7 @@
 // Magic link (`POST …/signin/email`) : rate limit strict IP + email (`lib/rate-limit-verify.ts`).
 
 import { handlers } from "@/app/lib/auth-server";
-import { authRatelimit, checkRateLimit } from "@/lib/rate-limit-verify";
+import { getAuthRatelimit, checkRateLimit } from "@/lib/rate-limit-verify";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = handlers.GET;
@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
   if (isMagicLinkEmailPost(req)) {
     const ip = clientIp(req);
 
+    const authRatelimit = getAuthRatelimit();
     const { limited } = await checkRateLimit(authRatelimit, ip);
     if (limited) {
       return NextResponse.json({ error: "Trop de tentatives" }, { status: 429 });

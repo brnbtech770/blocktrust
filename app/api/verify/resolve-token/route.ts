@@ -2,7 +2,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { redis } from '@/lib/rate-limit-redis'
+import { getRedis } from '@/lib/rate-limit-redis'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'expired' }, { status: 400 })
   }
 
+  const redis = getRedis()
   if (!redis) {
     console.warn('[resolve-token] Redis non configuré')
     return NextResponse.json({ error: 'expired' }, { status: 503 })

@@ -5,7 +5,7 @@ import { randomBytes } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
-import { redis } from '@/lib/rate-limit-redis'
+import { getRedis } from '@/lib/rate-limit-redis'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,6 +43,7 @@ export async function GET(_req: Request, { params }: RouteParams) {
     return NextResponse.json({ error: 'Certificat introuvable' }, { status: 404 })
   }
 
+  const redis = getRedis()
   if (!redis) {
     console.warn('[verify-link] Redis non configuré — lien rotatif indisponible')
     return NextResponse.json(

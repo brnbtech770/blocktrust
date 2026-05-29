@@ -10,8 +10,8 @@
 
 import {
   tryRedisLimit,
-  registerHourLimiter,
-  registerDayLimiter,
+  getRegisterHourLimiter,
+  getRegisterDayLimiter,
 } from "@/lib/rate-limit-redis";
 
 const LIMIT_PER_HOUR = 3
@@ -93,8 +93,8 @@ export function checkRateLimitRegister(ip: string): RateLimitRegisterResult {
 export async function checkRateLimitRegisterAsync(
   ip: string,
 ): Promise<RateLimitRegisterResult> {
-  const hour = await tryRedisLimit(registerHourLimiter, ip)
-  const day = await tryRedisLimit(registerDayLimiter, ip)
+  const hour = await tryRedisLimit(getRegisterHourLimiter(), ip)
+  const day = await tryRedisLimit(getRegisterDayLimiter(), ip)
 
   if (hour && day) {
     if (!hour.success) {

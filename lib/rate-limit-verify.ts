@@ -12,9 +12,9 @@
 import type { Ratelimit } from "@upstash/ratelimit";
 import {
   tryRedisLimit,
-  verifyMinuteLimiter,
-  verifyHourLimiter,
-  magicLinkHourLimiter,
+  getVerifyMinuteLimiter,
+  getVerifyHourLimiter,
+  getMagicLinkHourLimiter,
 } from "@/lib/rate-limit-redis";
 
 const LIMIT_PER_MINUTE = 10
@@ -107,8 +107,8 @@ export function checkRateLimitVerify(ip: string): RateLimitVerifyResult {
 export async function checkRateLimitVerifyAsync(
   ip: string,
 ): Promise<RateLimitVerifyResult> {
-  const minute = await tryRedisLimit(verifyMinuteLimiter, ip)
-  const hour = await tryRedisLimit(verifyHourLimiter, ip)
+  const minute = await tryRedisLimit(getVerifyMinuteLimiter(), ip)
+  const hour = await tryRedisLimit(getVerifyHourLimiter(), ip)
 
   if (minute && hour) {
     if (!minute.success) {
@@ -136,8 +136,8 @@ export async function checkRateLimitVerifyAsync(
 
 // --- Magic link (NextAuth provider id "email") : 3 tentatives / heure / identifiant ---
 
-/** Limiteur partagé magic link (Redis si configuré, sinon mémoire via checkRateLimit). */
-export const authRatelimit: Ratelimit | null = magicLinkHourLimiter;
+/** Limiteur partagé magic link (lazy ; Redis si configuré, sinon mémoire via checkRateLimit). */
+export const getAuthRatelimit = (): Ratelimit | null => getMagicLinkHourLimiter();
 
 const MAGIC_AUTH_LIMIT_PER_HOUR = 3;
 const MAGIC_AUTH_WINDOW_MS = 3_600_000;

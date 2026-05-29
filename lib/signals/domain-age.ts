@@ -2,7 +2,7 @@
 // Âge du domaine via RDAP (cache Redis 24h)
 // ============================================================
 
-import { redis } from '@/lib/redis'
+import { getRedis } from '@/lib/redis'
 
 const WHOIS_CACHE_TTL = 24 * 60 * 60
 
@@ -43,6 +43,7 @@ export async function getDomainAge(domain: string): Promise<DomainAgeResult> {
 
   try {
     const cacheKey = `domain-age:${normalized}`
+    const redis = getRedis()
 
     if (redis) {
       try {

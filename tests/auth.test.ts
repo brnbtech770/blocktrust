@@ -24,7 +24,7 @@ vi.mock('@/app/lib/db', () => ({ prisma: prismaMock }))
 
 vi.mock('@/lib/rate-limit-verify', () => ({
   checkRateLimit: checkRateLimitMock,
-  authRatelimit: {},
+  getAuthRatelimit: () => ({}),
 }))
 
 vi.mock('@/lib/v2/jwt', () => ({

@@ -3,10 +3,10 @@
 // ============================================================
 
 import {
-  extensionVerifyLimiter,
-  extensionWriteLimiter,
-  extensionMeLimiter,
-  extensionKeygenLimiter,
+  getExtensionVerifyLimiter,
+  getExtensionWriteLimiter,
+  getExtensionMeLimiter,
+  getExtensionKeygenLimiter,
   tryRedisLimit,
 } from "@/lib/rate-limit-redis";
 import type { RateLimitApiResult } from "@/lib/rate-limit-api";
@@ -45,13 +45,13 @@ function checkMemory(key: string, kind: ExtensionLimitKind): RateLimitApiResult 
 function limiterFor(kind: ExtensionLimitKind) {
   switch (kind) {
     case "verify":
-      return extensionVerifyLimiter;
+      return getExtensionVerifyLimiter();
     case "write":
-      return extensionWriteLimiter;
+      return getExtensionWriteLimiter();
     case "me":
-      return extensionMeLimiter;
+      return getExtensionMeLimiter();
     case "keygen":
-      return extensionKeygenLimiter;
+      return getExtensionKeygenLimiter();
   }
 }
 

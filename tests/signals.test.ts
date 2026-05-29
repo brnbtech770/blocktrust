@@ -8,7 +8,7 @@ const redisMock = vi.hoisted(() => ({
   set: vi.fn(),
 }))
 
-vi.mock('@/lib/redis', () => ({ redis: redisMock }))
+vi.mock('@/lib/redis', () => ({ getRedis: () => redisMock }))
 
 describe('signals — disposable email', () => {
   it('détecte mailinator', () => {

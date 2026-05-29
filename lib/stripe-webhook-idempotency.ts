@@ -2,7 +2,7 @@
 // Dédup Stripe webhook par event.id (Upstash Redis). Fail-soft si Redis absent ou en erreur.
 // ============================================================
 
-import { redis } from '@/lib/rate-limit-redis'
+import { getRedis } from '@/lib/rate-limit-redis'
 
 const EVENT_KEY_PREFIX = 'stripe:event:'
 
@@ -10,6 +10,7 @@ const EVENT_KEY_PREFIX = 'stripe:event:'
 const EVENT_TTL_SECONDS = 86400
 
 export async function stripeWebhookAlreadyHandled(eventId: string): Promise<boolean> {
+  const redis = getRedis()
   if (!redis) return false
   try {
     const v = await redis.get(`${EVENT_KEY_PREFIX}${eventId}`)
@@ -21,6 +22,7 @@ export async function stripeWebhookAlreadyHandled(eventId: string): Promise<bool
 }
 
 export async function stripeWebhookMarkHandled(eventId: string): Promise<void> {
+  const redis = getRedis()
   if (!redis) return
   try {
     await redis.set(`${EVENT_KEY_PREFIX}${eventId}`, '1', { ex: EVENT_TTL_SECONDS })

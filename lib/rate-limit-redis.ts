@@ -12,55 +12,92 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-const isRedisConfigured =
-  !!process.env.UPSTASH_REDIS_REST_URL &&
-  !!process.env.UPSTASH_REDIS_REST_TOKEN;
-
-/** Client Redis partagé — null si non configuré (fail-soft côté appelants). */
-export const redis: Redis | null = isRedisConfigured
-  ? new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL!,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-    })
-  : null;
-
-export const isUpstashConfigured = isRedisConfigured;
-
-function makeLimiter(
-  tokens: number,
-  window: `${number} ${"s" | "m" | "h" | "d"}`,
-  prefix: string,
-): Ratelimit | null {
-  if (!redis) return null;
-  return new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(tokens, window),
-    analytics: true,
-    prefix,
-  });
+/** Retire d'éventuels guillemets entourants (artefact de copier-coller d'un secret). */
+function unquote(value?: string | null): string {
+  const v = (value ?? "").trim();
+  return v.replace(/^["']|["']$/g, "").trim();
 }
 
-// /verify : 10 req / min par IP — fenêtre courte
-export const verifyMinuteLimiter = makeLimiter(10, "1 m", "bt:verify:m");
-// /verify : 50 req / h par IP — fenêtre longue
-export const verifyHourLimiter = makeLimiter(50, "1 h", "bt:verify:h");
+// Instanciation LAZY : jamais au module-load (sinon `new Redis()` peut lever
+// une UrlError au build, lors de la collecte des pages). Le client n'est créé
+// qu'au premier appel runtime, et de façon fail-soft (null si absent/invalide).
+let _redis: Redis | null = null;
+let _redisChecked = false;
+
+/**
+ * Client Redis lazy + fail-soft. Upstash exige une URL https et lève une
+ * exception synchrone sinon. On valide d'abord, on capture toute erreur, et on
+ * retombe sur null (fallback in-memory côté appelants). Mémoïsé.
+ */
+export function getRedis(): Redis | null {
+  if (_redisChecked) return _redis;
+  _redisChecked = true;
+
+  const url = unquote(process.env.UPSTASH_REDIS_REST_URL);
+  const token = unquote(process.env.UPSTASH_REDIS_REST_TOKEN);
+  if (!url || !token) return _redis;
+  if (!/^https:\/\//i.test(url)) {
+    console.warn(
+      "[RateLimit] UPSTASH_REDIS_REST_URL invalide (https requis) — fallback in-memory",
+    );
+    return _redis;
+  }
+  try {
+    _redis = new Redis({ url, token });
+  } catch (err) {
+    console.warn("[RateLimit] Init Redis échouée — fallback in-memory", err);
+    _redis = null;
+  }
+  return _redis;
+}
+
+/** True si Redis est utilisable (résout le client lazy). */
+export function isUpstashConfigured(): boolean {
+  return getRedis() !== null;
+}
+
+// Limiteurs mémoïsés par prefix — créés lazy au premier accès (pas au build).
+const _limiters = new Map<string, Ratelimit | null>();
+
+function getLimiter(
+  prefix: string,
+  tokens: number,
+  window: `${number} ${"s" | "m" | "h" | "d"}`,
+): Ratelimit | null {
+  const cached = _limiters.get(prefix);
+  if (cached !== undefined) return cached;
+  const redis = getRedis();
+  const limiter = redis
+    ? new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(tokens, window),
+        analytics: true,
+        prefix,
+      })
+    : null;
+  _limiters.set(prefix, limiter);
+  return limiter;
+}
+
+// /verify : 10 req / min + 50 req / h par IP
+export const getVerifyMinuteLimiter = () => getLimiter("bt:verify:m", 10, "1 m");
+export const getVerifyHourLimiter = () => getLimiter("bt:verify:h", 50, "1 h");
 
 // API publique White Label : 30 req / min par apiKeyHash
-export const apiLimiter = makeLimiter(30, "1 m", "bt:api");
+export const getApiLimiter = () => getLimiter("bt:api", 30, "1 m");
 
-// Inscription : 3 req / h par IP — fenêtre courte
-export const registerHourLimiter = makeLimiter(3, "1 h", "bt:register:h");
-// Inscription : 10 req / jour par IP — fenêtre longue
-export const registerDayLimiter = makeLimiter(10, "1 d", "bt:register:d");
+// Inscription : 3 req / h + 10 req / jour par IP
+export const getRegisterHourLimiter = () => getLimiter("bt:register:h", 3, "1 h");
+export const getRegisterDayLimiter = () => getLimiter("bt:register:d", 10, "1 d");
 
 // Magic link (Auth.js email) : 3 envois / h par identifiant (IP ou email)
-export const magicLinkHourLimiter = makeLimiter(3, "1 h", "bt:magiclink:h");
+export const getMagicLinkHourLimiter = () => getLimiter("bt:magiclink:h", 3, "1 h");
 
-// API extension Chrome TrustScan — par hash de clé (jamais la clé en clair dans les logs)
-export const extensionVerifyLimiter = makeLimiter(100, "1 m", "bt:extension:verify");
-export const extensionWriteLimiter = makeLimiter(30, "1 m", "bt:extension:write");
-export const extensionMeLimiter = makeLimiter(60, "1 m", "bt:extension:me");
-export const extensionKeygenLimiter = makeLimiter(10, "1 m", "bt:extension:keygen");
+// API extension Chrome TrustScan — par hash de clé (jamais la clé en clair)
+export const getExtensionVerifyLimiter = () => getLimiter("bt:extension:verify", 100, "1 m");
+export const getExtensionWriteLimiter = () => getLimiter("bt:extension:write", 30, "1 m");
+export const getExtensionMeLimiter = () => getLimiter("bt:extension:me", 60, "1 m");
+export const getExtensionKeygenLimiter = () => getLimiter("bt:extension:keygen", 10, "1 m");
 
 export type RedisLimitResult = {
   success: boolean;
