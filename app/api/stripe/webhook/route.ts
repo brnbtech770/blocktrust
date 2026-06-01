@@ -17,6 +17,7 @@ import { persistUserTrustScore } from '@/lib/trustscore'
 import {
   stripeWebhookAlreadyHandled,
   stripeWebhookMarkHandled,
+  stripeWebhookReleaseClaim,
 } from '@/lib/stripe-webhook-idempotency'
 import {
   isFamilleAddonPriceId,
@@ -289,7 +290,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  const duplicate = await stripeWebhookAlreadyHandled(event.id)
+  // Idempotence DB atomique. Si la base est indisponible, on renvoie 500 (Stripe
+  // rejouera) plutôt que de risquer un double-traitement.
+  let duplicate: boolean
+  try {
+    duplicate = await stripeWebhookAlreadyHandled(event.id, event.type)
+  } catch (e) {
+    btErrorDevDetails(e, 'Stripe idempotency store unavailable')
+    return NextResponse.json(
+      { error: 'idempotency_unavailable' },
+      { status: 500 }
+    )
+  }
   if (duplicate) {
     btLog(
       `[stripe] Event ${event.id} déjà traité`,
@@ -627,6 +639,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (error: unknown) {
+    // Le traitement a échoué : on libère la réclamation pour que Stripe rejoue
+    // l'événement (sinon il serait définitivement marqué comme « déjà traité »).
+    await stripeWebhookReleaseClaim(event.id)
     btErrorDevDetails(error, 'Stripe webhook handler error')
     return NextResponse.json(
       { error: 'Webhook handler failed' },

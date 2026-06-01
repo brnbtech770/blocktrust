@@ -91,3 +91,18 @@ export function timingSafeEqualString(a: string, b: string): boolean {
   if (bufA.length !== bufB.length) return false
   return timingSafeEqual(bufA, bufB)
 }
+
+/**
+ * Compare un header `Authorization: Bearer <secret>` au secret attendu, en
+ * timing-safe. Retourne false sans révéler la cause (préfixe absent, longueur
+ * différente, valeur différente). À utiliser pour CRON_SECRET & co.
+ */
+export function secureCompareBearer(
+  authHeader: string | null | undefined,
+  secret: string | null | undefined,
+): boolean {
+  if (!authHeader || !secret) return false
+  const prefix = 'Bearer '
+  if (!authHeader.startsWith(prefix)) return false
+  return timingSafeEqualString(authHeader.slice(prefix.length), secret)
+}

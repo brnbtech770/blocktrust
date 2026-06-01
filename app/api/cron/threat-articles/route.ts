@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { runThreatArticlesIngest } from "@/lib/threat-articles-ingest"
 import { captureCronFailure } from "@/lib/cron-sentry"
+import { secureCompareBearer } from "@/lib/api-key"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
   }
 
   const authHeader = req.headers.get("authorization")
-  if (authHeader !== `Bearer ${secret}`) {
+  if (!secureCompareBearer(authHeader, secret)) {
     return unauthorizedCron()
   }
 

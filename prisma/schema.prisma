@@ -67,6 +67,15 @@ model PasswordReset {
   @@index([email])
 }
 
+// Idempotence des webhooks Stripe (cas financier critique). La contrainte unique
+// sur `eventId` garantit qu'un événement n'est traité qu'une seule fois, même si
+// le cache Redis est indisponible (fail-closed via la base).
+model ProcessedStripeEvent {
+  eventId   String   @id
+  type      String?
+  createdAt DateTime @default(now())
+}
+
 model User {
   id            String      @id @default(cuid())
   name          String?

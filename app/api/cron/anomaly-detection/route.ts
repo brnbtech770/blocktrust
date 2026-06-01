@@ -10,6 +10,7 @@ import { retryFailedAnchors } from '@/lib/polygon'
 import { scheduleNextSurveillanceRun } from '@/lib/qstash-scheduler'
 import { ensureStrictEmptyBody } from '@/lib/api-json-body'
 import { captureCronFailure } from '@/lib/cron-sentry'
+import { secureCompareBearer } from '@/lib/api-key'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
   }
 
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${secret}`) {
+  if (!secureCompareBearer(authHeader, secret)) {
     return unauthorizedCron()
   }
 
