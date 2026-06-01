@@ -226,6 +226,7 @@ export async function GET(
       certifiedEmails: true,
       certifiedPhones: true,
       certifiedDomains: true,
+      kycStatus: true,
     },
   });
 
@@ -300,6 +301,10 @@ export async function GET(
       certifiedEmails.length > 0 ||
       certifiedPhones.length > 0);
 
+  // Honnêteté juridique : « certifiée » suppose une vérification d'identité (KYC).
+  // Le badge gratuit Découverte n'est PAS KYC → on n'affiche jamais « certifiée ».
+  const identityVerified = verdict === "VALID" && owner?.kycStatus === "VERIFIED";
+
   // Ancrage Polygon — information publique rassurante (visible même anonyme).
   const polygonAnchored =
     verdict === "VALID" &&
@@ -333,6 +338,7 @@ export async function GET(
     certificateId: certificatePublicId,
     certificateStatus: status,
     authenticated,
+    identityVerified,
     polygonAnchored,
     ...(polygonExplorerUrl ? { polygonExplorerUrl } : {}),
     ...(trustEngine ? { trustEngine } : {}),

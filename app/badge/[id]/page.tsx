@@ -60,6 +60,14 @@ export default async function BadgePage({
 
   const entity = certificate.entity;
 
+  // Honnêteté juridique : « certifiée/vérifiée » suppose un contrôle d'identité (KYC).
+  // Le badge gratuit Découverte (non-KYC) ne doit jamais le prétendre.
+  const owner = await prisma.user.findUnique({
+    where: { id: entity.userId },
+    select: { kycStatus: true },
+  });
+  const identityVerified = owner?.kycStatus === "VERIFIED";
+
   // Récupérer le TrustScore de l'entité
   const trustScore = await prisma.trustScore.findUnique({
     where: { entityId: entity.id },
@@ -101,10 +109,14 @@ export default async function BadgePage({
 
         <div className="space-y-4 mb-6">
           <div className="text-center">
-            <p className="text-gray-300 text-sm mb-2">
-              {entity.entityType === 'INDIVIDUAL' 
-                ? '✅ Identité vérifiée par BLOCKTRUST'
-                : `✅ Entreprise certifiée BLOCKTRUST${entity.siret ? ` • SIRET ${entity.siret}` : ''}`}
+            <p className={`text-sm mb-2 ${identityVerified ? 'text-gray-300' : 'text-amber-400'}`}>
+              {identityVerified
+                ? entity.entityType === 'INDIVIDUAL'
+                  ? '✅ Identité vérifiée par BLOCKTRUST'
+                  : `✅ Entreprise certifiée BLOCKTRUST${entity.siret ? ` • SIRET ${entity.siret}` : ''}`
+                : entity.entityType === 'INDIVIDUAL'
+                  ? '⚠️ Identité déclarée — non vérifiée'
+                  : `⚠️ Entreprise déclarée — non vérifiée${entity.siret ? ` • SIRET ${entity.siret}` : ''}`}
             </p>
             <p className="text-white text-xl font-bold">
               {entity.entityType === 'INDIVIDUAL'

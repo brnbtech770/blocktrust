@@ -3,6 +3,8 @@ import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { stripe } from '@/lib/stripe'
 import { z } from 'zod'
+import { isAdmin } from '@/lib/admin-utils'
+import { isDiscoveryExpired, isDiscoveryPlan, resolveAccountPlan } from '@/lib/plan-features'
 
 const schema = z.object({
   accountType: z.enum(['INDIVIDUAL', 'BUSINESS']),
@@ -32,8 +34,29 @@ export async function POST(req: NextRequest) {
   try {
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { biometricConsentAt: true },
+      select: {
+        biometricConsentAt: true,
+        email: true,
+        subscription: { select: { plan: true } },
+      },
     })
+
+    // Le plan gratuit Découverte ne déclenche JAMAIS le KYC (pas de Stripe Identity,
+    // pas de coût 1,50€). La vérification d'identité est réservée aux plans payants.
+    const effectivePlan = resolveAccountPlan(user?.subscription?.plan, {
+      isAdmin: isAdmin(user?.email ?? session.user.email),
+    })
+    if (isDiscoveryPlan(effectivePlan) || isDiscoveryExpired(effectivePlan)) {
+      return NextResponse.json(
+        {
+          error:
+            "La vérification d'identité est disponible avec une formule payante. Activez votre certification pour vérifier votre identité.",
+          code: 'UPGRADE_REQUIRED',
+          upgradeUrl: '/pricing',
+        },
+        { status: 403 },
+      )
+    }
 
     if (!user?.biometricConsentAt) {
       return NextResponse.json(

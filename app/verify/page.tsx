@@ -123,6 +123,7 @@ type VerifyApiSuccess = {
   certifiedEmails?: string[];
   certifiedPhones?: string[];
   trustEngine?: TrustEngineResult | null;
+  identityVerified?: boolean;
   polygonAnchored?: boolean;
   polygonExplorerUrl?: string | null;
 };
@@ -167,6 +168,7 @@ function VerifyContent() {
     match: boolean;
   } | null>(null);
   const [trustEngine, setTrustEngine] = useState<TrustEngineResult | null>(null);
+  const [identityVerified, setIdentityVerified] = useState(false);
   const [polygonAnchored, setPolygonAnchored] = useState(false);
   const [polygonExplorerUrl, setPolygonExplorerUrl] = useState<string | null>(null);
   const [contactAddState, setContactAddState] = useState<
@@ -287,6 +289,7 @@ function VerifyContent() {
 
     setVerdict(null);
     setVerifyErrorMessage(null);
+    setIdentityVerified(false);
     setPolygonAnchored(false);
     setPolygonExplorerUrl(null);
     setEntityName(null);
@@ -360,6 +363,7 @@ function VerifyContent() {
 
     setVerdict(null);
     setVerifyErrorMessage(null);
+    setIdentityVerified(false);
     setPolygonAnchored(false);
     setPolygonExplorerUrl(null);
     setEntityName(null);
@@ -406,6 +410,7 @@ function VerifyContent() {
           Array.isArray(data.certifiedPhones) ? data.certifiedPhones : [],
         );
         setTrustEngine(data.trustEngine ?? null);
+        setIdentityVerified(Boolean(data.identityVerified));
         setPolygonAnchored(Boolean(data.polygonAnchored));
         setPolygonExplorerUrl(
           data.polygonExplorerUrl?.trim() ? data.polygonExplorerUrl : null,
@@ -492,6 +497,7 @@ function VerifyContent() {
     setCertifiedEmails([]);
     setCertifiedPhones([]);
     setTrustEngine(null);
+    setIdentityVerified(false);
     setPolygonAnchored(false);
     setPolygonExplorerUrl(null);
     setContactAddState("idle");
@@ -600,6 +606,7 @@ function VerifyContent() {
             displayName={displayName}
             dateLabel={dateLabel}
             trustEngine={trustEngine}
+            identityVerified={identityVerified}
             polygonAnchored={polygonAnchored}
             polygonExplorerUrl={polygonExplorerUrl}
             walletAddress={walletAddress}
@@ -735,6 +742,7 @@ function ValidWowView({
   displayName,
   dateLabel,
   trustEngine,
+  identityVerified,
   polygonAnchored,
   polygonExplorerUrl,
   walletAddress,
@@ -751,6 +759,7 @@ function ValidWowView({
   displayName: string;
   dateLabel: string;
   trustEngine: TrustEngineResult | null;
+  identityVerified: boolean;
   polygonAnchored: boolean;
   polygonExplorerUrl: string | null;
   walletAddress: string | null;
@@ -789,14 +798,14 @@ function ValidWowView({
       >
         <div
           className="h-3 w-3 animate-pulse rounded-full"
-          style={{ backgroundColor: C.valid }}
+          style={{ backgroundColor: identityVerified ? C.valid : "#f59e0b" }}
           aria-hidden
         />
         <span
           className="font-syne text-lg font-semibold uppercase tracking-widest"
-          style={{ color: C.valid }}
+          style={{ color: identityVerified ? C.valid : "#f59e0b" }}
         >
-          Identité certifiée
+          {identityVerified ? "Identité certifiée BLOCKTRUST™" : "Identité déclarée — non vérifiée"}
         </span>
       </div>
 
@@ -806,6 +815,18 @@ function ValidWowView({
       >
         {displayName}
       </p>
+
+      {!identityVerified ? (
+        <div
+          className="w-full animate-fade-up rounded-xl border border-[#f59e0b]/30 bg-[#f59e0b]/10 px-4 py-3 text-center text-sm leading-relaxed text-[#f59e0b] opacity-0"
+          style={{ animationDelay: "200ms" }}
+        >
+          Cette identité a été <strong>déclarée par son titulaire</strong> mais n&apos;a pas été
+          vérifiée par contrôle d&apos;identité (KYC)
+          {polygonAnchored ? "" : " ni ancrée sur la blockchain"}. Le nom affiché n&apos;est pas une
+          identité certifiée par BLOCKTRUST™.
+        </div>
+      ) : null}
 
       {polygonAnchored ? (
         <a

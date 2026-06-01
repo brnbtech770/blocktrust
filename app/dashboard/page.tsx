@@ -122,8 +122,14 @@ export default async function Dashboard({
     const hasEntities = entitiesCount > 0;
     const hasCertificate = certificates.length > 0;
     const showOnboardingGuide = certificates.length === 0;
+    // Le KYC ne concerne QUE les plans payants (ou admin). Un compte Découverte
+    // gratuit n'est jamais poussé vers la vérification d'identité : on l'invite à upgrader.
+    const canDoKyc = userIsAdmin || hasActiveSub;
+    const firstStep = canDoKyc
+      ? { step: "1", text: "Vérifiez votre identité", href: "/onboarding/verify", done: kycVerified }
+      : { step: "1", text: "Activez votre certification", href: "/pricing", done: false };
     const onboardingSteps: { step: string; text: string; href: string; done: boolean }[] = [
-      { step: "1", text: "Vérifiez votre identité", href: "/onboarding/verify", done: kycVerified },
+      firstStep,
       { step: "2", text: "Créez votre premier contact", href: "/dashboard/entities", done: hasEntities },
       { step: "3", text: "Partagez votre badge", href: "/dashboard/certificates", done: hasCertificate },
     ];
