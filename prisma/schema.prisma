@@ -389,6 +389,10 @@ model Subscription {
   stripePriceId        String?
   plan                 String    @default("ESSENTIEL") // ESSENTIEL, PREMIUM, FAMILLE, FAMILLE_PLUS
   status               String    @default("inactive") // active, inactive, past_due, canceled
+  /// Sièges achetés (B2B Team facturé par utilisateur). Null = quota dérivé du plan.
+  seats                Int?
+  /// Profils Famille supplémentaires achetés (add-on, en plus des 5 inclus).
+  extraProfiles        Int?
   currentPeriodEnd     DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt

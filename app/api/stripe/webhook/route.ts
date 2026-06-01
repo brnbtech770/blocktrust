@@ -18,6 +18,11 @@ import {
   stripeWebhookAlreadyHandled,
   stripeWebhookMarkHandled,
 } from '@/lib/stripe-webhook-idempotency'
+import {
+  isFamilleAddonPriceId,
+  FAMILLE_INCLUDED_PROFILES,
+  FAMILLE_MAX_PROFILES,
+} from '@/lib/pricing'
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
@@ -76,6 +81,76 @@ function mapPriceIdToPlan(priceId: string): string {
   delete priceMap['']
 
   return priceMap[priceId] || 'ESSENTIEL'
+}
+
+/**
+ * Extrait depuis une Subscription Stripe : le priceId du plan de BASE
+ * (en ignorant l'add-on Famille), le nombre de sièges (quantité du plan de
+ * base) et le nombre de profils supplémentaires (quantité de la ligne add-on).
+ */
+function extractPlanQuantities(sub: Stripe.Subscription): {
+  basePriceId: string | undefined
+  seats: number
+  extraProfiles: number
+} {
+  const items = sub.items?.data ?? []
+  const addonItem = items.find((it) => isFamilleAddonPriceId(it.price?.id ?? ''))
+  const baseItem = items.find((it) => !isFamilleAddonPriceId(it.price?.id ?? '')) ?? items[0]
+  return {
+    basePriceId: baseItem?.price?.id,
+    seats: baseItem?.quantity ?? 1,
+    extraProfiles: addonItem?.quantity ?? 0,
+  }
+}
+
+/** Plans B2B (organisations / sièges). */
+function isB2BPlan(planCode: string): boolean {
+  return ['SOLO_PRO', 'STARTER', 'TEAM', 'BUSINESS', 'ENTERPRISE'].includes(planCode)
+}
+
+/**
+ * Provisionne les quotas dérivés de la quantité achetée. Fail-soft : toute
+ * erreur est loguée sans faire échouer le webhook.
+ * - B2B : Organization.maxSeats = sièges (orgs détenues par le user)
+ * - Famille : PersonalAccount.maxProfiles = 5 + profils sup. (plafond 10)
+ */
+async function provisionQuantities(
+  userId: string,
+  planCode: string,
+  seats: number,
+  extraProfiles: number,
+) {
+  try {
+    if (isB2BPlan(planCode) && seats > 0) {
+      await prisma.organization.updateMany({
+        where: { ownerId: userId },
+        data: { maxSeats: seats },
+      })
+      btLog(
+        `🪑 Org maxSeats=${seats} pour user ${userId.slice(0, 8)}…`,
+        'Org maxSeats provisioned',
+      )
+    }
+    if (planCode === 'FAMILLE') {
+      const maxProfiles = Math.min(
+        FAMILLE_INCLUDED_PROFILES + Math.max(0, extraProfiles),
+        FAMILLE_MAX_PROFILES,
+      )
+      await prisma.personalAccount.updateMany({
+        where: { ownerId: userId },
+        data: { maxProfiles },
+      })
+      btLog(
+        `👪 PersonalAccount maxProfiles=${maxProfiles} pour user ${userId.slice(0, 8)}…`,
+        'PersonalAccount maxProfiles provisioned',
+      )
+    }
+  } catch (err) {
+    btErrorDevDetails(
+      { context: 'provisionQuantities', userId, planCode, seats, extraProfiles, err },
+      'Provisioning quantities failed (fail-soft)',
+    )
+  }
 }
 
 function formatSubscriptionAmount(sub: Stripe.Subscription): string {
@@ -247,7 +322,7 @@ export async function POST(req: NextRequest) {
           break
         }
 
-        const priceId = sub.items.data[0]?.price?.id
+        const { basePriceId: priceId } = extractPlanQuantities(sub)
         const plan = mapPriceIdToPlan(priceId || '')
         const amountLabel = formatSubscriptionAmount(sub)
 
@@ -283,7 +358,7 @@ export async function POST(req: NextRequest) {
               : session.customer?.id
           if (!customerId) break
 
-          const priceId = sub.items.data[0]?.price.id
+          const { basePriceId: priceId, seats, extraProfiles } = extractPlanQuantities(sub)
           const plan = mapPriceIdToPlan(priceId ?? '')
 
           // Trouver l'utilisateur
@@ -310,6 +385,8 @@ export async function POST(req: NextRequest) {
             stripeSubscriptionId: sub.id,
             stripePriceId: priceId,
             plan,
+            seats,
+            extraProfiles,
             status: sub.status === 'active' ? 'active' : 'inactive',
             currentPeriodEnd,
           },
@@ -317,6 +394,8 @@ export async function POST(req: NextRequest) {
             stripeSubscriptionId: sub.id,
             stripePriceId: priceId,
             plan,
+            seats,
+            extraProfiles,
             status: sub.status === 'active' ? 'active' : 'inactive',
             currentPeriodEnd,
           },
@@ -325,8 +404,11 @@ export async function POST(req: NextRequest) {
           // FIX E2E : synchroniser User.planId depuis stripePriceId
           await syncUserPlanFromPriceId(user.id, priceId)
 
+          // Provisionnement des quotas dérivés de la quantité achetée (fail-soft)
+          await provisionQuantities(user.id, plan, seats, extraProfiles)
+
           btLog(
-            `✅ Subscription créée/activée pour user ${user.id} - Plan: ${plan}`,
+            `✅ Subscription créée/activée pour user ${user.id} - Plan: ${plan} (sièges=${seats}, profils+=${extraProfiles})`,
             `Subscription créée/activée — plan: ${plan}`
           )
 
@@ -428,7 +510,7 @@ export async function POST(req: NextRequest) {
             ? subscription.customer
             : subscription.customer?.id
         if (!customerId) break
-        const priceId = subscription.items.data[0]?.price.id
+        const { basePriceId: priceId, seats, extraProfiles } = extractPlanQuantities(subscription)
         const plan = mapPriceIdToPlan(priceId ?? '')
 
         // Mettre à jour la subscription
@@ -437,6 +519,8 @@ export async function POST(req: NextRequest) {
           data: {
             stripePriceId: priceId,
             plan,
+            seats,
+            extraProfiles,
             status: subscription.status === 'active' ? 'active' : 'inactive',
             currentPeriodEnd: new Date(
               (subscription as unknown as { current_period_end: number }).current_period_end * 1000
@@ -451,6 +535,8 @@ export async function POST(req: NextRequest) {
         })
         if (updatedUser) {
           await syncUserPlanFromPriceId(updatedUser.id, priceId)
+          // Re-provisionner si la quantité a changé (ex. portail Stripe)
+          await provisionQuantities(updatedUser.id, plan, seats, extraProfiles)
         }
 
         btLog(
