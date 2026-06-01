@@ -7,6 +7,9 @@
 /** Plan gratuit B2C (Découverte) — badge non ancré sur la blockchain. */
 export const DISCOVERY_PLAN = 'DISCOVERY' as const
 
+/** Plan par défaut d'un compte B2C sans abonnement actif : le plan gratuit Découverte. */
+export const DEFAULT_B2C_PLAN = DISCOVERY_PLAN
+
 /**
  * Statut blockchain d'un certificat émis sous le plan gratuit : signé ES256 mais
  * volontairement jamais ancré sur Polygon. Les agents d'ancrage doivent l'ignorer.
@@ -29,6 +32,22 @@ function normalizePlan(plan?: string | null): string {
 /** True si le plan est le plan gratuit Découverte. */
 export function isDiscoveryPlan(plan?: string | null): boolean {
   return normalizePlan(plan) === DISCOVERY_PLAN
+}
+
+/**
+ * Résout le plan effectif d'un compte :
+ *  - admin (ADMIN_EMAILS) → Enterprise (jamais écrasé) ;
+ *  - sinon l'abonnement Stripe s'il existe ;
+ *  - sinon le plan gratuit Découverte (compte B2C sans abonnement).
+ * Fail-soft : ne lève jamais.
+ */
+export function resolveAccountPlan(
+  subscriptionPlan: string | null | undefined,
+  opts?: { isAdmin?: boolean },
+): string {
+  if (opts?.isAdmin) return 'B2B_ENTERPRISE'
+  const p = (subscriptionPlan ?? '').trim()
+  return p.length > 0 ? p : DEFAULT_B2C_PLAN
 }
 
 /** Ancrage Polygon autorisé pour tous les plans SAUF Découverte (gratuit). */

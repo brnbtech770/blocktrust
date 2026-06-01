@@ -3,6 +3,8 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import { isAdmin } from '@/lib/admin-utils'
+import { resolveAccountPlan } from '@/lib/plan-features'
 
 export type QuotaCheckResult = {
   allowed: boolean
@@ -27,8 +29,8 @@ export async function checkEntityQuota(userId: string): Promise<QuotaCheckResult
     return { allowed: false, reason: 'Utilisateur non trouvé' }
   }
 
-  // Déterminer le plan actif
-  const plan = user.subscription?.plan || 'ESSENTIEL'
+  // Déterminer le plan actif (sans abonnement → DISCOVERY ; admin → Enterprise)
+  const plan = resolveAccountPlan(user.subscription?.plan, { isAdmin: isAdmin(user.email) })
   const fromPlanRow = user.plan?.maxEntities
   const maxEntities =
     fromPlanRow != null && fromPlanRow > 0 ? fromPlanRow : getMaxEntities(plan)
@@ -70,8 +72,8 @@ export async function checkCertificateQuota(userId: string): Promise<QuotaCheckR
     return { allowed: false, reason: 'Utilisateur non trouvé' }
   }
 
-  // Déterminer le plan actif
-  const plan = user.subscription?.plan || 'ESSENTIEL'
+  // Déterminer le plan actif (sans abonnement → DISCOVERY ; admin → Enterprise)
+  const plan = resolveAccountPlan(user.subscription?.plan, { isAdmin: isAdmin(user.email) })
   const maxCertificates = getMaxCertificates(plan)
 
   // Compter les certificats actifs
@@ -133,7 +135,7 @@ export async function getEntityQuotaSnapshot(userId: string): Promise<{
 
   if (!user) return null
 
-  const planStr = user.subscription?.plan ?? 'ESSENTIEL'
+  const planStr = resolveAccountPlan(user.subscription?.plan, { isAdmin: isAdmin(user.email) })
   const fromPlanRow = user.plan?.maxEntities
   const max = fromPlanRow != null && fromPlanRow > 0 ? fromPlanRow : getMaxEntities(planStr)
 

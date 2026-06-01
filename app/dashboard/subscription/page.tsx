@@ -9,6 +9,7 @@ import { auth } from '@/app/lib/auth-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import SubscriptionClient from '@/app/components/dashboard/SubscriptionClient'
+import { DEFAULT_B2C_PLAN } from '@/lib/plan-features'
 
 export default async function SubscriptionPage() {
   try {
@@ -38,7 +39,7 @@ export default async function SubscriptionPage() {
     }
 
     const subscription = user.subscription
-    const plan = subscription?.plan || 'ESSENTIEL'
+    const plan = subscription?.plan || DEFAULT_B2C_PLAN
     const planName = getPlanName(plan)
     const currentPeriodEnd = subscription?.currentPeriodEnd
     const status = subscription?.status || 'inactive'
@@ -156,6 +157,7 @@ export default async function SubscriptionPage() {
 
 function getPlanName(plan: string): string {
   const names: Record<string, string> = {
+    DISCOVERY: 'Découverte',
     ESSENTIEL: 'Essentiel',
     PREMIUM: 'Premium',
     FAMILLE: 'Famille',

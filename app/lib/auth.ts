@@ -10,6 +10,7 @@ import { z } from "zod";
 import authEdgeConfig from "./auth.edge.config";
 import { isSafeCallbackUrl } from "./auth-callback-url";
 import { isAdmin } from "@/lib/admin-utils";
+import { DEFAULT_B2C_PLAN } from "@/lib/plan-features";
 
 /**
  * Configuration NextAuth avec Google OAuth
@@ -158,7 +159,7 @@ export const authOptions: NextAuthConfig = {
           return null
         }
 
-        const plan = user.subscription?.plan ?? "ESSENTIEL";
+        const plan = user.subscription?.plan ?? DEFAULT_B2C_PLAN;
 
         return {
           id: user.id,
@@ -242,7 +243,7 @@ export const authOptions: NextAuthConfig = {
                     select: { plan: true },
                   })
                   .catch(() => null);
-                token.plan = subscription?.plan ?? "ESSENTIEL";
+                token.plan = subscription?.plan ?? DEFAULT_B2C_PLAN;
                 token.planFetchedAt = Date.now();
               }
             } else {
@@ -285,8 +286,9 @@ export const authOptions: NextAuthConfig = {
 
             if (dbUser?.subscription?.plan) {
               token.plan = dbUser.subscription.plan;
-            } else if (!token.plan) {
-              token.plan = "ESSENTIEL";
+            } else {
+              // Aucun abonnement → plan gratuit Découverte (corrige aussi un ESSENTIEL périmé).
+              token.plan = DEFAULT_B2C_PLAN;
             }
             if (dbUser) {
               if (dbUser.email) {
@@ -326,7 +328,7 @@ export const authOptions: NextAuthConfig = {
             ...session.user,
             id: (token.sub ?? token.id ?? '') as string,
             email: session.user.email ?? token.email ?? '',
-            plan: (token.plan ?? 'ESSENTIEL') as string,
+            plan: (token.plan ?? DEFAULT_B2C_PLAN) as string,
             planType: token.planType as string | undefined,
             kycStatus: token.kycStatus ?? 'PENDING',
             accountType: token.accountType ?? 'PERSONAL',
