@@ -284,9 +284,16 @@ export async function GET(
     })
     .catch(() => {});
 
+  // Visiteur ANONYME = badge + nom + ancrage uniquement. Wallet, contacts certifiés
+  // et score détaillé sont RÉSERVÉS aux utilisateurs connectés (gating SERVEUR :
+  // les données ne quittent jamais le serveur pour un anonyme).
+  const session = await auth().catch(() => null);
+  const authenticated = Boolean(session?.user?.id);
+
   const walletAddressTrim = entity.walletAddress?.trim() ?? "";
   const walletNetworkTrim = entity.walletNetwork?.trim() ?? "";
   const showWalletPublic =
+    authenticated &&
     verdict === "VALID" &&
     walletAddressTrim.length > 0 &&
     walletNetworkTrim.length > 0;
@@ -304,6 +311,7 @@ export async function GET(
     owner?.certifiedPhones ?? [],
   );
   const showCertifiedContacts =
+    authenticated &&
     verdict === "VALID" &&
     (certifiedDomains.length > 0 ||
       certifiedEmails.length > 0 ||
@@ -327,9 +335,6 @@ export async function GET(
 
   // Score de confiance détaillé (TrustEngine) : réservé aux utilisateurs CONNECTÉS.
   // Anonyme → badge + ancrage visibles, mais score/sous-scores/signaux masqués (defense-in-depth serveur).
-  const session = await auth().catch(() => null);
-  const authenticated = Boolean(session?.user?.id);
-
   let trustEngine = null;
   if (verdict === "VALID" && authenticated) {
     trustEngine = await computeTrustEngineScore(

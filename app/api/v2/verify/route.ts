@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/app/lib/db";
+import { auth } from "@/app/lib/auth-server";
 import { hashIp } from "@/app/lib/auth";
 import { canonicalizeEmailContext, sha256Hex } from "@/lib/v2/context";
 import { verifyToken } from "@/lib/v2/jwt";
@@ -149,12 +150,16 @@ export async function POST(req: NextRequest) {
       btLog(`[v2/verify] FRAUD_ALERT traité cert=${certificateId}`, "Fraud alert pipeline");
     }
 
+    // Les IDs internes (entityId, certificateId, jti) ne doivent jamais fuiter à un
+    // appelant ANONYME. On ne les renvoie qu'aux utilisateurs connectés ; un visiteur
+    // public ne reçoit que le verdict + nom + date de certification.
+    const session = await auth().catch(() => null);
+    const authenticated = Boolean(session?.user?.id);
+
     return NextResponse.json({
       verdict,
       reason,
-      entityId,
-      certificateId,
-      jti,
+      ...(authenticated ? { entityId, certificateId, jti } : {}),
       ...(entityName ? { entityName } : {}),
       ...(certifiedAt ? { certifiedAt } : {}),
     });

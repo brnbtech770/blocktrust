@@ -1,4 +1,5 @@
 import { prisma } from "@/app/lib/db";
+import { auth } from "@/app/lib/auth-server";
 import { notFound } from "next/navigation";
 import QRCodeImage from "@/app/components/QRCode";
 import VerifyBadgeButton from "@/app/components/VerifyBadgeButton";
@@ -26,18 +27,13 @@ export default async function BadgePage({
   }
 
   if (!certificate) {
-    // Fallback: chercher par entité
-    let entity = await prisma.entity.findUnique({
+    // Fallback: chercher par entité (par ID uniquement).
+    // Le lookup par SIRET est volontairement supprimé : il permettait l'énumération
+    // d'entreprises par un visiteur anonyme (badge accessible sans connaître l'ID réel).
+    const entity = await prisma.entity.findUnique({
       where: { id },
       include: { certificates: true },
     });
-
-    if (!entity) {
-      entity = await prisma.entity.findUnique({
-        where: { siret: id },
-        include: { certificates: true },
-      });
-    }
 
     if (!entity) {
       notFound();
@@ -68,10 +64,15 @@ export default async function BadgePage({
   });
   const identityVerified = owner?.kycStatus === "VERIFIED";
 
-  // Récupérer le TrustScore de l'entité
-  const trustScore = await prisma.trustScore.findUnique({
-    where: { entityId: entity.id },
-  });
+  // Gating SERVEUR : un visiteur ANONYME ne voit que badge + nom + ancrage.
+  // TrustScore, SIRET, statut KYC et niveau de validation sont réservés aux connectés.
+  const session = await auth().catch(() => null);
+  const authenticated = Boolean(session?.user?.id);
+
+  // Récupérer le TrustScore (uniquement si connecté — sinon il ne quitte pas le serveur).
+  const trustScore = authenticated
+    ? await prisma.trustScore.findUnique({ where: { entityId: entity.id } })
+    : null;
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const certIdForVerify = certificate.publicId || certificate.id;
@@ -113,10 +114,10 @@ export default async function BadgePage({
               {identityVerified
                 ? entity.entityType === 'INDIVIDUAL'
                   ? '✅ Identité vérifiée par BLOCKTRUST'
-                  : `✅ Entreprise certifiée BLOCKTRUST${entity.siret ? ` • SIRET ${entity.siret}` : ''}`
+                  : `✅ Entreprise certifiée BLOCKTRUST${authenticated && entity.siret ? ` • SIRET ${entity.siret}` : ''}`
                 : entity.entityType === 'INDIVIDUAL'
                   ? '⚠️ Identité déclarée — non vérifiée'
-                  : `⚠️ Entreprise déclarée — non vérifiée${entity.siret ? ` • SIRET ${entity.siret}` : ''}`}
+                  : `⚠️ Entreprise déclarée — non vérifiée${authenticated && entity.siret ? ` • SIRET ${entity.siret}` : ''}`}
             </p>
             <p className="text-white text-xl font-bold">
               {entity.entityType === 'INDIVIDUAL'
@@ -125,6 +126,7 @@ export default async function BadgePage({
             </p>
           </div>
 
+          {authenticated && (
           <div className="flex justify-center gap-4 flex-wrap">
             <div className="text-center">
               <p className="text-gray-300 text-xs">Niveau</p>
@@ -165,6 +167,7 @@ export default async function BadgePage({
               </div>
             )}
           </div>
+          )}
         </div>
 
         <div className="text-center text-gray-300 text-sm">
@@ -173,7 +176,7 @@ export default async function BadgePage({
         </div>
 
         <div className="mt-6 pt-6 border-t border-blue-800/50 text-center">
-          {entity.entityType === 'BUSINESS' && entity.siret && (
+          {authenticated && entity.entityType === 'BUSINESS' && entity.siret && (
             <p className="text-gray-300 text-xs">SIRET: {entity.siret}</p>
           )}
           <p className="text-cyan-400 text-xs mt-1">blocktrust.io</p>
