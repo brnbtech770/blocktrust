@@ -17,10 +17,9 @@ import QRCodeImage from "@/app/components/QRCode";
 import VerifyBadgeButton from "@/app/components/VerifyBadgeButton";
 import CertificateDetailClient from "@/app/components/dashboard/CertificateDetailClient";
 import CertificateBadgeSection from "@/app/components/dashboard/CertificateBadgeSection";
-import {
-  getValidationLevelAccentClass,
-  getValidationLevelLabel,
-} from "@/lib/validationLevelDisplay";
+import { getValidationLevelAccentClass } from "@/lib/validationLevelDisplay";
+import { getPlanDisplayLabel, resolveAccountPlan } from "@/lib/plan-features";
+import { isAdmin } from "@/lib/admin-utils";
 import { walletNetworkLabelFr } from "@/lib/wallet-validation";
 
 export default async function CertificateDetailPage({
@@ -99,6 +98,16 @@ export default async function CertificateDetailPage({
 
     const statusColor = statusColors[certificate.status as keyof typeof statusColors] || statusColors.PENDING;
     const levelColor = getValidationLevelAccentClass(certificate.level);
+
+    // Pastille = plan RÉEL résolu (jamais le palier de validation codé en dur).
+    const userIsAdmin = isAdmin(session.user.email);
+    const sub = await prisma.subscription
+      .findUnique({ where: { userId: session.user.id }, select: { plan: true } })
+      .catch(() => null);
+    const planLabel = getPlanDisplayLabel(
+      resolveAccountPlan(sub?.plan, { isAdmin: userIsAdmin }),
+      { email: session.user.email },
+    );
     const isPolygonAnchored =
       certificate.blockchainStatus === "ANCHORED" ||
       Boolean(certificate.polygonTxHash || certificate.txHash);
@@ -133,7 +142,7 @@ export default async function CertificateDetailPage({
                 {certificate.status}
               </span>
               <span className={`rounded-full bg-gray-800 px-4 py-2 text-sm font-semibold ${levelColor}`}>
-                {getValidationLevelLabel(certificate.level)}
+                {planLabel}
               </span>
             </div>
           </div>

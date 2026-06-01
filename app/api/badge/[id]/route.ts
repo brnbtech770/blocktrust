@@ -57,6 +57,7 @@ export async function GET(
             firstName: true,
             lastName: true,
             email: true,
+            kycStatus: true,
           },
         },
         signatures: {
@@ -83,6 +84,19 @@ export async function GET(
     const fullName = entityName || 'Contact certifié'
     const maxChars = maxNameChars(dims.w)
     const displayName = fullName.length > maxChars ? fullName.substring(0, maxChars) + '…' : fullName
+
+    // Statuts RÉELS — aucun libellé « certifié » mensonger pour un badge preview Découverte.
+    const isAnchored =
+      certificate.blockchainStatus === 'ANCHORED' ||
+      Boolean(certificate.polygonTxHash || certificate.txHash)
+    const identityVerified = entity.kycStatus === 'VERIFIED'
+
+    const ORANGE = '#f59e0b'
+    const CYAN = '#00d4ff'
+    const identityLabel = identityVerified ? 'Identité Vérifiée' : 'Identité déclarée · non vérifiée'
+    const identityColor = identityVerified ? 'rgba(255,255,255,0.5)' : ORANGE
+    const chainLabel = isAnchored ? 'Certifié Blockchain' : 'Badge preview · non ancré'
+    const chainColor = isAnchored ? CYAN : ORANGE
 
     const signature = certificate.signatures[0]
     const hasValidDynamicToken =
@@ -192,15 +206,16 @@ export async function GET(
   <text x="160" y="168" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700"
     fill="#ffffff" text-anchor="middle" letter-spacing="2">BLOCKTRUST</text>
 
-  <text x="160" y="186" font-family="Inter, Arial, sans-serif" font-size="10"
-    fill="rgba(255,255,255,0.5)" text-anchor="middle">Identité Vérifiée</text>
+  <text x="160" y="186" font-family="Inter, Arial, sans-serif" font-size="9"
+    fill="${identityColor}" text-anchor="middle">${escapeXml(identityLabel)}</text>
 
-  <rect x="90" y="196" width="140" height="22" rx="11" class="pulse-cyan"
-    fill="rgba(0,212,255,0.1)" stroke="rgba(0,212,255,0.3)" stroke-width="1"/>
-  <path d="M104 207 L107 210 L113 204"
-    stroke="#00d4ff" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-  <text x="160" y="211" font-family="Inter, Arial, sans-serif" font-size="9" fill="#00d4ff"
-    text-anchor="middle" font-weight="600">Certifié Blockchain</text>
+  <rect x="80" y="196" width="160" height="22" rx="11"${isAnchored ? ' class="pulse-cyan"' : ''}
+    fill="${isAnchored ? 'rgba(0,212,255,0.1)' : 'rgba(245,158,11,0.12)'}"
+    stroke="${isAnchored ? 'rgba(0,212,255,0.3)' : 'rgba(245,158,11,0.4)'}" stroke-width="1"/>
+  <path d="M96 207 L99 210 L105 204"
+    stroke="${chainColor}" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <text x="164" y="211" font-family="Inter, Arial, sans-serif" font-size="9" fill="${chainColor}"
+    text-anchor="middle" font-weight="600">${escapeXml(chainLabel)}</text>
 
   <text x="160" y="234" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="600"
     fill="rgba(255,255,255,0.9)" text-anchor="middle">${escapeXml(displayName)}</text>

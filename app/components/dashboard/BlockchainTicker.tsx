@@ -1,11 +1,13 @@
 // app/components/dashboard/BlockchainTicker.tsx
-// Bandeau animé type ticker blockchain (hash statique en attendant Polygon)
+// Bandeau animé : réseau d'ancrage Polygon — aucune donnée de transaction factice.
 // ============================================================
 
 'use client'
 
-const STATIC_HASH =
-  '0x7a3f...9e2b • Polygon • Dernier bloc: 52,847,291 • BLOCKTRUST Anchor Pending'
+// Message FACTUEL uniquement (réseau réel). Jamais de hash / numéro de bloc inventé :
+// l'état d'ancrage réel d'un certificat est affiché sur sa page de détail.
+const TICKER_LABEL =
+  'Polygon Mainnet · Chain ID 137 · Ancrage on-chain des certificats BLOCKTRUST'
 
 export default function BlockchainTicker() {
   return (
@@ -24,7 +26,7 @@ export default function BlockchainTicker() {
         {[1, 2].map((i) => (
           <span key={i} className="inline-flex whitespace-nowrap font-mono text-[10px] sm:text-xs">
             <span style={{ color: '#00d4ff' }}>BLOCKCHAIN · </span>
-            <span style={{ color: 'rgba(0,212,255,0.35)' }}>{STATIC_HASH}</span>
+            <span style={{ color: 'rgba(0,212,255,0.35)' }}>{TICKER_LABEL}</span>
           </span>
         ))}
       </div>
