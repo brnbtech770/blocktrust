@@ -4,15 +4,18 @@
 
 /** Prix mensuel catalogue (€ TTC) — aligné dashboard admin & offres. */
 export const ADMIN_PLAN_PRICES_MONTHLY: Record<string, number> = {
+  // Grille finale (1er juin 2026)
+  DISCOVERY: 0,
   ESSENTIEL: 3.99,
-  PREMIUM: 9.99,
-  FAMILLE: 14.99,
+  PREMIUM: 6.99,
+  FAMILLE: 17.99,
+  STARTER: 12.99,
+  TEAM: 8.99,
+  ENTERPRISE: 0,
+  // Plans retirés de la vente — conservés pour les abonnés existants (MRR)
   FAMILLE_PLUS: 24.99,
   SOLO_PRO: 9.99,
-  STARTER: 8.99,
-  TEAM: 7.99,
   BUSINESS: 5.99,
-  ENTERPRISE: 0,
 }
 
 /** IDs Stripe « yearly » connus (env). */

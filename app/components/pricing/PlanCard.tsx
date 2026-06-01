@@ -24,6 +24,10 @@ export type PlanCardProps = {
   ctaLoading?: boolean;
   /** Ligne sous le prix (ex. mentions HT/TVA). */
   priceTaxNote?: string;
+  /** Chip vert affiché à côté du prix (ex. « Économie 12€/an » ou « -20% »). */
+  savingBadge?: string;
+  /** Petite ligne mutée sous le prix (ex. « facturé 35,88€/an »). */
+  billedNote?: string;
 };
 
 const ICONS = {
@@ -83,6 +87,8 @@ export default function PlanCard({
   ctaDisabled = false,
   ctaLoading = false,
   priceTaxNote,
+  savingBadge,
+  billedNote,
 }: PlanCardProps) {
   const [open, setOpen] = useState(false);
   const checkColor = mode === "B2B" ? "#00d4ff" : "var(--bt-gold)";
@@ -134,20 +140,36 @@ export default function PlanCard({
         </div>
       </div>
 
-      <div className="mb-2 mt-4">
+      <div className="mb-2 mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
         {typeof price === "number" ? (
           <>
             <span className="font-mono text-[42px] font-extrabold tabular-nums text-white md:text-4xl">
               {price.toLocaleString("fr-FR", { minimumFractionDigits: 2 })}€
             </span>
-            <span className="ml-1 text-base" style={{ color: "var(--bt-muted)" }}>
+            <span className="text-base" style={{ color: "var(--bt-muted)" }}>
               {priceUnit}
             </span>
           </>
         ) : (
           <span className="font-syne text-2xl font-extrabold text-gold md:text-3xl">{price}</span>
         )}
+        {savingBadge ? (
+          <span
+            className="rounded-full px-2.5 py-1 text-[11px] font-bold"
+            style={{
+              background: "rgba(29,184,126,0.15)",
+              color: "#1DB87E",
+              border: "1px solid rgba(29,184,126,0.3)",
+            }}
+          >
+            {savingBadge}
+          </span>
+        ) : null}
       </div>
+
+      {billedNote ? (
+        <p className="mb-1 text-xs text-white/40">{billedNote}</p>
+      ) : null}
 
       {priceTaxNote ? (
         <p className="mb-2 text-center text-xs text-white/30">{priceTaxNote}</p>

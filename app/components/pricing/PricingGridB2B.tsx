@@ -2,29 +2,23 @@
 
 import { useRouter } from 'next/navigation'
 import PlanCard from './PlanCard'
-import type { PlanB2B, BillingInterval } from '@/lib/pricing'
+import { formatPriceFr, type PlanB2B, type BillingInterval } from '@/lib/pricing'
 
 const DESCRIPTIONS: Record<string, string> = {
-  SOLO_PRO: 'Freelance · Auto-entrepreneur · SASU 1 personne',
-  STARTER: 'Idéal pour les TPE et indépendants',
+  STARTER: 'Indépendants & très petites équipes',
   TEAM: 'Pour les équipes en croissance',
-  BUSINESS: 'Solution entreprise complète',
   ENTERPRISE: 'Pour les grandes organisations',
 }
 
 const CTA_STYLES: Record<string, { background: string; border?: string; color: string }> = {
-  SOLO_PRO: { background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white' },
   STARTER: { background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white' },
   TEAM: { background: '#00d4ff', color: '#0a1628' },
-  BUSINESS: { background: 'var(--bt-gold)', color: '#0a1628' },
   ENTERPRISE: { background: 'transparent', border: '1px solid var(--bt-gold)', color: 'var(--bt-gold)' },
 }
 
 const ICONS: Record<string, 'person' | 'shield' | 'group' | 'building' | 'crown'> = {
-  SOLO_PRO: 'person',
   STARTER: 'person',
   TEAM: 'group',
-  BUSINESS: 'building',
   ENTERPRISE: 'crown',
 }
 
@@ -53,18 +47,24 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
   const router = useRouter()
   return (
     <>
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-2 lg:px-8 xl:grid-cols-3 2xl:grid-cols-5">
+      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-3 lg:px-8">
       {plans.map((plan) => {
         const isCurrent = isAuthenticated && currentPlan === plan.id
+        const isEnterprise = plan.id === 'ENTERPRISE'
         const hasPrices = plan.prices != null
         const priceInfo = hasPrices ? plan.prices?.[interval] : null
-        const amount = priceInfo?.amount ?? ('Sur devis' as const)
         const priceId = priceInfo?.priceId ?? ''
-        const priceUnit =
-          interval === 'monthly' ? ' HT/user/mois' : ' HT/user/an'
+        const isYearly = interval === 'yearly'
 
-        const planBadge =
-          'planBadge' in plan && typeof plan.planBadge === 'string' ? plan.planBadge : undefined
+        const displayPrice = priceInfo
+          ? isYearly && 'perMonth' in priceInfo && typeof priceInfo.perMonth === 'number'
+            ? priceInfo.perMonth
+            : priceInfo.amount
+          : ('Sur devis' as const)
+        const savingBadge =
+          isYearly && priceInfo && 'saving' in priceInfo && priceInfo.saving
+            ? `-${priceInfo.saving.replace('%', '')}%`
+            : undefined
 
         return (
           <PlanCard
@@ -72,27 +72,31 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
             mode="B2B"
             name={plan.name}
             description={DESCRIPTIONS[plan.id] ?? ''}
-            price={amount}
-            priceUnit={hasPrices ? priceUnit : undefined}
+            price={displayPrice}
+            priceUnit={hasPrices ? ' HT/user/mois' : undefined}
+            savingBadge={savingBadge}
             priceTaxNote={hasPrices ? 'Prix HT · TVA 20% en sus' : undefined}
             subtitle={plan.users}
-            badges={[
-              ...(planBadge
-                ? [{ label: planBadge, style: 'gold' as const }]
-                : []),
-              { label: 'Multi-support inclus', style: 'multiSupport' },
-            ]}
+            badges={[{ label: 'Multi-support inclus', style: 'multiSupport' }]}
             features={mapFeatures(plan)}
             accordionFeatures={plan.accordionFeatures}
-            cta={plan.id === 'ENTERPRISE' ? 'Contacter les ventes' : isCurrent ? 'Plan actuel' : !isAuthenticated ? 'Choisir ce plan' : `Choisir ${plan.name}`}
+            cta={
+              isEnterprise
+                ? 'Parler à un expert'
+                : isCurrent
+                ? 'Plan actuel'
+                : !isAuthenticated
+                ? 'Choisir ce plan'
+                : `Choisir ${plan.name}`
+            }
             ctaStyle={CTA_STYLES[plan.id] ?? { background: '#00d4ff', color: '#0a1628' }}
             isPopular={plan.highlighted}
             icon={ICONS[plan.id] ?? 'person'}
             ctaDisabled={isCurrent}
             ctaLoading={hasPrices && loadingPlan === priceId}
-            ctaHref={plan.id === 'ENTERPRISE' ? 'mailto:commercial@blocktrust.tech' : undefined}
+            ctaHref={isEnterprise ? 'mailto:commercial@blocktrust.tech' : undefined}
             ctaOnClick={
-              plan.id === 'ENTERPRISE' || isCurrent
+              isEnterprise || isCurrent
                 ? undefined
                 : !isAuthenticated
                 ? hasPrices && priceId
@@ -106,8 +110,8 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
         )
       })}
       </div>
-      <p className="mx-auto mt-6 max-w-7xl px-4 text-center text-xs text-white/30 sm:px-6 lg:px-8">
-        Prix HT · TVA 20% en sus · Sans engagement
+      <p className="mx-auto mt-6 max-w-5xl px-4 text-center text-xs text-white/30 sm:px-6 lg:px-8">
+        Prix HT · TVA 20% en sus · Sans engagement · White Label en option
       </p>
     </>
   )

@@ -28,7 +28,7 @@ const FAQ = [
   },
   {
     q: 'Proposez-vous des offres pour les entreprises ?',
-    a: 'Oui : Solo Pro à partir de 9,99€ HT/user/mois (1 poste), puis formules dégressives dès 8,99€ HT/user/mois (Starter, 2 à 5 utilisateurs). Contactez commercial@blocktrust.tech pour Enterprise.',
+    a: 'Oui : Starter dès 9,99€ HT/user/mois (engagement annuel, 1 utilisateur), Team dès 6,99€ HT/user/mois (jusqu’à 10 utilisateurs). Pour les grandes organisations, Enterprise est sur devis — contactez commercial@blocktrust.tech.',
   },
 ]
 
@@ -58,7 +58,7 @@ export default function PricingPage() {
   const { data: session, status } = useSession()
   const [plans, setPlans] = useState<PlanB2C[]>([])
   const [plansB2B, setPlansB2B] = useState<PlanB2B[]>([])
-  const [interval, setInterval] = useState<'monthly' | 'yearly'>('monthly')
+  const [interval, setInterval] = useState<'monthly' | 'yearly'>('yearly')
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [mode, setMode] = useState<'B2C' | 'B2B'>('B2C')
@@ -222,8 +222,7 @@ export default function PricingPage() {
           </p>
         </div>
         <p className="mx-auto mt-6 max-w-3xl px-4 text-center text-xs text-white/30 sm:px-6">
-          * Vérifications illimitées pendant la période de lancement (6 mois). Au-delà, des quotas généreux seront
-          appliqués selon votre plan.
+          * Vérifications illimitées pendant le lancement (6 mois), puis quotas selon plan. Usage raisonnable — CGU.
         </p>
       </section>
 
@@ -266,7 +265,7 @@ export default function PricingPage() {
         }}
       >
         <p className="mb-4" style={{ color: 'var(--bt-text)' }}>
-          Vous êtes une entreprise ? Offres B2B dès 8,99€ HT/user/mois — Solo Pro dès 9,99€ HT (1 utilisateur).
+          Vous êtes une entreprise ? Offres B2B dès 6,99€ HT/user/mois (Team, engagement annuel) — Starter dès 9,99€ HT/user/mois.
         </p>
         <a
           href="mailto:commercial@blocktrust.tech"

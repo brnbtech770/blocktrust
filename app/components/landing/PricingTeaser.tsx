@@ -5,7 +5,7 @@ import { ArrowRight, Sparkles, Building2, User } from "lucide-react";
 import {
   ESSENTIEL_MONTHLY_EUR,
   formatPriceFr,
-  STARTER_MONTHLY_PER_USER_HT_EUR,
+  STARTER_YEARLY_PER_USER_HT_EUR,
 } from "@/lib/pricing";
 import Reveal from "./Reveal";
 
@@ -61,12 +61,12 @@ export default function PricingTeaser() {
           <div className="mt-2 flex flex-wrap items-baseline gap-x-2 whitespace-nowrap">
             <span className="text-sm font-medium text-white/60">À partir de</span>
             <span className="font-syne text-2xl font-bold text-white sm:text-3xl">
-              {formatPriceFr(STARTER_MONTHLY_PER_USER_HT_EUR)}€
+              {formatPriceFr(STARTER_YEARLY_PER_USER_HT_EUR)}€
             </span>
             <span className="text-xs text-white/60 sm:text-sm">HT/user/mois</span>
           </div>
           <p className="mt-1 text-xs leading-relaxed text-white/50 sm:text-sm">
-            Solo Pro · Starter · Team · Business · Enterprise sur devis
+            Starter · Team · Enterprise sur devis
           </p>
           <p className="mt-3 text-xs leading-relaxed text-white/70 sm:text-sm">
             API B2B, multi-comptes, vérification d&apos;identité avancée, intégrations dédiées.
