@@ -8,6 +8,7 @@
 
 import { createHmac } from 'node:crypto'
 import { btErrorDevDetails, btLog } from './prodLog'
+import { isPublicWebhookUrl } from './ssrf-guard'
 
 export type WhiteLabelWebhookConfig = {
   webhookUrl?: string | null
@@ -45,6 +46,17 @@ export async function sendWebhook(
 ): Promise<SendWebhookResult> {
   if (!config.webhookUrl) {
     return { ok: true, skipped: true }
+  }
+
+  // Anti-SSRF : valider l'URL (HTTPS + IP résolue publique) AVANT tout fetch.
+  // Bloque loopback / link-local (169.254.169.254 métadonnées cloud) / RFC1918 / ULA.
+  const urlCheck = await isPublicWebhookUrl(config.webhookUrl)
+  if (!urlCheck.ok) {
+    btErrorDevDetails(
+      { context: 'Webhook delivery', reason: urlCheck.reason },
+      'Webhook URL bloquée (garde anti-SSRF)'
+    )
+    return { ok: false, error: 'blocked_url' }
   }
 
   const payload = JSON.stringify({

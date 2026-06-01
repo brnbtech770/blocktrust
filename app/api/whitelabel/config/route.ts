@@ -9,6 +9,7 @@ import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { generateUniqueApiKeyPair, maskApiKey } from '@/lib/api-key'
 import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
+import { isPublicWebhookUrl } from '@/lib/ssrf-guard'
 import { randomBytes } from 'node:crypto'
 
 export const runtime = 'nodejs'
@@ -163,13 +164,20 @@ export async function PATCH(req: NextRequest) {
     const trimmed = body.webhookUrl.trim()
     if (trimmed.length === 0) {
       patch.webhookUrl = null
-    } else if (/^https?:\/\//i.test(trimmed)) {
-      patch.webhookUrl = trimmed.slice(0, 500)
     } else {
-      return NextResponse.json(
-        { error: 'invalid_webhook_url', message: 'Must start with http(s)://' },
-        { status: 400 }
-      )
+      // Anti-SSRF : HTTPS + IP résolue publique uniquement (pas d'adresse interne).
+      const candidate = trimmed.slice(0, 500)
+      const check = await isPublicWebhookUrl(candidate)
+      if (!check.ok) {
+        return NextResponse.json(
+          {
+            error: 'invalid_webhook_url',
+            message: 'A public HTTPS URL is required (internal/private addresses are blocked)',
+          },
+          { status: 400 }
+        )
+      }
+      patch.webhookUrl = candidate
     }
   }
 

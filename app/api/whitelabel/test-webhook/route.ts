@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { sendWebhook } from '@/lib/webhooks'
+import { isPublicWebhookUrl } from '@/lib/ssrf-guard'
 import { ensureStrictEmptyBody } from '@/lib/api-json-body'
 import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
 
@@ -52,6 +53,19 @@ export async function POST(req: NextRequest) {
   if (!config.webhookUrl) {
     return NextResponse.json(
       { error: 'no_webhook_url', message: 'Configure a webhook URL first' },
+      { status: 400 }
+    )
+  }
+
+  // Anti-SSRF : revalider à chaque test (couvre un URL enregistré avant le contrôle
+  // ou un DNS qui résout désormais vers une cible interne).
+  const urlCheck = await isPublicWebhookUrl(config.webhookUrl)
+  if (!urlCheck.ok) {
+    return NextResponse.json(
+      {
+        error: 'invalid_webhook_url',
+        message: 'A public HTTPS URL is required (internal/private addresses are blocked)',
+      },
       { status: 400 }
     )
   }
