@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
     if (!userWithPlan.stripeCustomerId) {
       return NextResponse.json({
         hasSubscription: false,
-        plan: userWithPlan.plan || { type: 'ESSENTIEL', name: 'Essentiel' },
+        plan: userWithPlan.plan || { type: planCode, name: planLabel, trustCircleEnabled: false },
         planCode,
         planLabel,
         subscription: null,
@@ -128,7 +128,7 @@ export async function GET(req: NextRequest) {
     if (!subscription) {
       return NextResponse.json({
         hasSubscription: false,
-        plan: userWithPlan.plan || { type: 'ESSENTIEL', name: 'Essentiel' },
+        plan: userWithPlan.plan || { type: planCode, name: planLabel, trustCircleEnabled: false },
         planCode,
         planLabel,
         subscription: null,
@@ -151,7 +151,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       hasSubscription: true,
-      plan: userWithPlan.plan || { type: 'ESSENTIEL', name: 'Essentiel' },
+      plan: userWithPlan.plan || { type: planCode, name: planLabel, trustCircleEnabled: false },
       planCode,
       planLabel,
       subscription: {

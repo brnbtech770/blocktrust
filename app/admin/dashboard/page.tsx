@@ -13,26 +13,8 @@ import {
   monthlyRevenueForSubscription,
 } from '@/lib/admin-revenue'
 import { formatPriceFr } from '@/lib/pricing'
+import { getPlanDisplayLabel } from '@/lib/plan-features'
 import { AlertTriangle, BadgeCheck, Euro, TrendingUp, Users } from 'lucide-react'
-
-function formatPlanName(plan: string): string {
-  const names: Record<string, string> = {
-    ENTERPRISE: 'Enterprise',
-    B2B_ENTERPRISE: 'Enterprise',
-    B2B_BUSINESS: 'Business',
-    B2B_TEAM: 'Team',
-    B2B_STARTER: 'Starter',
-    B2B_SOLO_PRO: 'Solo Pro',
-    B2C_FAMILLE_PLUS: 'Famille+',
-    B2C_FAMILLE: 'Famille',
-    B2C_PREMIUM: 'Premium',
-    B2C_ESSENTIEL: 'Essentiel',
-    FAMILLE: 'Famille',
-    PREMIUM: 'Premium',
-    ESSENTIEL: 'Essentiel',
-  }
-  return names[plan] ?? plan
-}
 
 function KpiCard({
   label,
@@ -257,7 +239,7 @@ export default async function AdminDashboard() {
               ) : (
                 revenueRows.map((r) => (
                   <tr key={`${r.plan}-${r.periodLabel}`} className="border-b border-white/5 hover:bg-white/[0.03]">
-                    <td className="px-4 py-3 text-xs text-white">{formatPlanName(r.plan)}</td>
+                    <td className="px-4 py-3 text-xs text-white">{getPlanDisplayLabel(r.plan)}</td>
                     <td className="px-4 py-3 font-mono tabular-nums text-white/85">{r.clients}</td>
                     <td className="px-4 py-3 text-xs text-white/70">{r.unitLabel}</td>
                     <td className="px-4 py-3 text-xs text-white/60">{r.periodLabel}</td>
