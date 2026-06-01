@@ -5,6 +5,7 @@ import { stripe } from '@/lib/stripe'
 import { z } from 'zod'
 import { isAdmin } from '@/lib/admin-utils'
 import { isDiscoveryExpired, isDiscoveryPlan, resolveAccountPlan } from '@/lib/plan-features'
+import { checkKycRateLimit } from '@/lib/rate-limit-cost'
 
 const schema = z.object({
   accountType: z.enum(['INDIVIDUAL', 'BUSINESS']),
@@ -65,6 +66,25 @@ export async function POST(req: NextRequest) {
           code: 'BIOMETRIC_CONSENT_REQUIRED',
         },
         { status: 403 },
+      )
+    }
+
+    // Anti-abus : créer une session Stripe Identity coûte ~1,50€. Max 3 démarrages / h
+    // par utilisateur (bt:kyc). Placé juste avant l'appel payant pour ne pas pénaliser
+    // les réponses guardées (Découverte, consentement). Fail-soft via Redis lazy.
+    const kycRate = await checkKycRateLimit(session.user.id)
+    if (!kycRate.ok) {
+      return NextResponse.json(
+        {
+          error: "Trop de démarrages de vérification d'identité. Réessayez plus tard.",
+          code: 'RATE_LIMITED',
+        },
+        {
+          status: 429,
+          headers: kycRate.retryAfter
+            ? { 'Retry-After': String(kycRate.retryAfter) }
+            : undefined,
+        },
       )
     }
 

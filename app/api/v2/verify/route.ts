@@ -11,6 +11,8 @@ import {
 } from "@/lib/verify-fraud";
 import { persistUserTrustScore } from "@/lib/trustscore";
 import { btLog } from "@/lib/prodLog";
+import { checkRateLimitVerifyAsync } from "@/lib/rate-limit-verify";
+import { checkV2VerifyJti } from "@/lib/rate-limit-cost";
 
 function getIp(req: NextRequest) {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -46,6 +48,22 @@ const verifyBodySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // Endpoint PUBLIC : rate limit par IP en tête de route (anti-DoS + anti-pollution
+    // du pipeline de détection de fraude). Fail-soft (Redis lazy + fallback in-memory).
+    const ip = getIp(req);
+    const ipRate = await checkRateLimitVerifyAsync(ip);
+    if (!ipRate.ok) {
+      return NextResponse.json(
+        { verdict: "ERROR", reason: "rate_limited" },
+        {
+          status: 429,
+          headers: ipRate.retryAfter
+            ? { "Retry-After": String(ipRate.retryAfter) }
+            : undefined,
+        },
+      );
+    }
+
     let json: unknown;
     try {
       json = await req.json();
@@ -71,6 +89,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ verdict: "INVALID", reason: "token_missing_claims" }, { status: 400 });
     }
 
+    // Anti-boucle : un même token (jti) ne peut pas être vérifié en rafale.
+    const jtiRate = await checkV2VerifyJti(jti);
+    if (!jtiRate.ok) {
+      return NextResponse.json(
+        { verdict: "ERROR", reason: "rate_limited" },
+        {
+          status: 429,
+          headers: jtiRate.retryAfter
+            ? { "Retry-After": String(jtiRate.retryAfter) }
+            : undefined,
+        },
+      );
+    }
+
     const canonical = canonicalizeEmailContext(context);
     const computedHash = sha256Hex(canonical);
 
@@ -93,7 +125,6 @@ export async function POST(req: NextRequest) {
       reason = "context_hash_mismatch";
     }
 
-    const ip = getIp(req);
     const ua = req.headers.get("user-agent") || "unknown";
     const ipHash = hashIp(ip);
 

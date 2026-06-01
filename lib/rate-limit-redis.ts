@@ -93,6 +93,12 @@ export const getRegisterDayLimiter = () => getLimiter("bt:register:d", 10, "1 d"
 // Magic link (Auth.js email) : 3 envois / h par identifiant (IP ou email)
 export const getMagicLinkHourLimiter = () => getLimiter("bt:magiclink:h", 3, "1 h");
 
+// Vérification d'identité (Stripe Identity, coût réel ~1,50€/session) : 3 démarrages / h par userId
+export const getKycHourLimiter = () => getLimiter("bt:kyc", 3, "1 h");
+
+// Vérification JWT publique /api/v2/verify : anti-boucle sur un même token (jti) — 20 / min par jti
+export const getV2VerifyJtiLimiter = () => getLimiter("bt:v2verify:jti", 20, "1 m");
+
 // API extension Chrome TrustScan — par hash de clé (jamais la clé en clair)
 export const getExtensionVerifyLimiter = () => getLimiter("bt:extension:verify", 100, "1 m");
 export const getExtensionWriteLimiter = () => getLimiter("bt:extension:write", 30, "1 m");
