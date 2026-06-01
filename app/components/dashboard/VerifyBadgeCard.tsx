@@ -1,16 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 type Props = {
   quotaLabel: string | null
   isAdmin: boolean
-  hasActiveSub?: boolean
 }
 
-export default function VerifyBadgeCard({ quotaLabel, isAdmin, hasActiveSub = false }: Props) {
+export default function VerifyBadgeCard({ quotaLabel, isAdmin }: Props) {
   const router = useRouter()
   const [id, setId] = useState('')
 
@@ -52,18 +50,7 @@ export default function VerifyBadgeCard({ quotaLabel, isAdmin, hasActiveSub = fa
         </button>
       </form>
       <p className="mt-3 font-sans text-xs text-white/40">
-        {isAdmin ? (
-          'Sans limite (admin)'
-        ) : hasActiveSub ? (
-          quotaLabel ?? 'Quota non disponible'
-        ) : (
-          <>
-            <Link href="/pricing" className="text-bt-cyan hover:underline">
-              Abonnez-vous
-            </Link>{' '}
-            pour vérifier des badges
-          </>
-        )}
+        {isAdmin ? 'Sans limite (admin)' : quotaLabel ?? 'Quota non disponible'}
       </p>
     </div>
   )

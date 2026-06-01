@@ -247,7 +247,15 @@ export async function GET(
   } else if (certificate.expiresAt && certificate.expiresAt.getTime() < Date.now()) {
     verdict = "EXPIRED";
     verificationResult = "EXPIRED";
-  } else if (status !== "ACTIVE" && status !== "ANCHORED") {
+  } else if (status === "ACTIVE" || status === "ANCHORED") {
+    // VALIDE (valeur par défaut)
+  } else if (certificate.blockchainStatus === "NOT_ANCHORED") {
+    // Badge Découverte légitime : signé (ES256) mais NON ancré et NON KYC.
+    // → VALIDE mais NON VÉRIFIÉ (identityVerified=false ci-dessous gère le wording
+    //   orange « Identité déclarée — non vérifiée »). Ne JAMAIS afficher « invalide ».
+    verdict = "VALID";
+    verificationResult = "VALID";
+  } else {
     verdict = "INVALID";
     verificationResult = "NOT_FOUND";
   }

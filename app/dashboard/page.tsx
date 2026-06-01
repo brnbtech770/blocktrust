@@ -22,6 +22,7 @@ import CertificateTableSkeleton from "@/app/components/dashboard/CertificateTabl
 import ActivityFeedSkeleton from "@/app/components/dashboard/ActivityFeedSkeleton";
 import { getTrustScoreColor, getTrustScoreLabel } from "@/lib/trustscore";
 import { getPlanWording, resolvePlanKeyForWording } from "@/lib/plan-wording";
+import { resolveAccountPlan } from "@/lib/plan-features";
 
 export default async function Dashboard({
   searchParams,
@@ -60,7 +61,9 @@ export default async function Dashboard({
 
     const firstName = user.name?.split(' ')[0] || user.email?.split('@')[0] || 'Utilisateur';
 
-    const trustScoreValue = user.trustScore ?? 0;
+    // Plancher à 0 : un TrustScore ne doit JAMAIS s'afficher en négatif
+    // (valeurs héritées d'anciens calculs possibles avant le plancher).
+    const trustScoreValue = Math.max(0, user.trustScore ?? 0);
     const trustScoreLabel = getTrustScoreLabel(trustScoreValue);
     const trustScoreColor = getTrustScoreColor(trustScoreValue);
     const showKycTrustHint =
@@ -87,12 +90,15 @@ export default async function Dashboard({
       subscriptionStatus: subscription?.status ?? null,
     });
     const dashboardWording = getPlanWording(planKey);
+    // Quota de vérifications affiché pour TOUS les comptes non-admin, y compris
+    // Découverte (20/mois). On ne bloque jamais la vérification côté UI.
     let quotaLabel: string | null = null;
-    if (!userIsAdmin && hasActiveSub && subscription) {
-      const d = await getVerifyQuotaDisplay(user.id, subscription.plan);
+    if (!userIsAdmin) {
+      const planForQuota = resolveAccountPlan(subscription?.plan, { isAdmin: false });
+      const d = await getVerifyQuotaDisplay(user.id, planForQuota);
       quotaLabel = d.unlimited
         ? "Illimité ce mois"
-        : `${d.remaining} vérifications restantes ce mois`;
+        : `${d.remaining}/${d.limit} vérifications ce mois-ci`;
     }
 
     const certificates = await prisma.certificate.findMany({
@@ -358,7 +364,6 @@ export default async function Dashboard({
             <VerifyBadgeCard
               quotaLabel={quotaLabel}
               isAdmin={userIsAdmin}
-              hasActiveSub={hasActiveSub}
             />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
