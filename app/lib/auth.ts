@@ -247,10 +247,8 @@ export const authOptions: NextAuthConfig = {
                 token.planFetchedAt = Date.now();
               }
             } else {
-              console.error("[JWT OAuth] impossible de résoudre User en base", {
-                userId: user.id,
-                email: user.email,
-              });
+              const uid = typeof user.id === "string" ? `${user.id.slice(0, 8)}...` : "?";
+              console.error(`[JWT OAuth] impossible de résoudre User en base userId=${uid}`);
             }
           } catch (error) {
             console.error("❌ Error in JWT callback (OAuth):", error);

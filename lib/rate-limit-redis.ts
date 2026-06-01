@@ -99,6 +99,15 @@ export const getKycHourLimiter = () => getLimiter("bt:kyc", 3, "1 h");
 // Vérification JWT publique /api/v2/verify : anti-boucle sur un même token (jti) — 20 / min par jti
 export const getV2VerifyJtiLimiter = () => getLimiter("bt:v2verify:jti", 20, "1 m");
 
+// Vérification SIRET INSEE (coût API tiers) : 10 / h par userId
+export const getKycSiretLimiter = () => getLimiter("bt:kyc:siret", 10, "1 h");
+
+// Mot de passe oublié (anti-spam d'emails) : 3 / h par identifiant (IP ou email)
+export const getForgotPasswordLimiter = () => getLimiter("bt:forgot", 3, "1 h");
+
+// Résolution de token rotatif /api/verify/resolve-token (anti brute-force) : 30 / min par IP
+export const getResolveTokenLimiter = () => getLimiter("bt:resolvetoken", 30, "1 m");
+
 // API extension Chrome TrustScan — par hash de clé (jamais la clé en clair)
 export const getExtensionVerifyLimiter = () => getLimiter("bt:extension:verify", 100, "1 m");
 export const getExtensionWriteLimiter = () => getLimiter("bt:extension:write", 30, "1 m");

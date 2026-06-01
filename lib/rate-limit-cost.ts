@@ -8,10 +8,14 @@
 //   1. Redis Upstash si configuré (distribué, recommandé en prod)
 //   2. Sinon → fallback in-memory conservateur par instance (jamais bloquer tout le service)
 
+import type { Ratelimit } from "@upstash/ratelimit";
 import {
   tryRedisLimit,
   getKycHourLimiter,
   getV2VerifyJtiLimiter,
+  getKycSiretLimiter,
+  getForgotPasswordLimiter,
+  getResolveTokenLimiter,
 } from "@/lib/rate-limit-redis";
 
 export type CostRateResult = { ok: boolean; retryAfter?: number };
@@ -42,6 +46,27 @@ function memoryLimit(
   if (e.count >= max) return false;
   e.count += 1;
   return true;
+}
+
+/**
+ * Générique : Redis distribué si configuré, sinon fallback in-memory conservateur.
+ * Fail-soft — ne bloque jamais tout le service à cause de Redis.
+ */
+async function costLimit(
+  limiter: Ratelimit | null,
+  store: Map<string, Window>,
+  key: string,
+  max: number,
+  windowMs: number,
+): Promise<CostRateResult> {
+  const r = await tryRedisLimit(limiter, key);
+  if (r !== null) {
+    return r.success
+      ? { ok: true }
+      : { ok: false, retryAfter: Math.max(1, Math.ceil((r.reset - Date.now()) / 1000)) };
+  }
+  const ok = memoryLimit(store, key, max, windowMs);
+  return ok ? { ok: true } : { ok: false, retryAfter: Math.ceil(windowMs / 1000) };
 }
 
 const KYC_MAX = 3;
@@ -80,4 +105,22 @@ export async function checkV2VerifyJti(jti: string): Promise<CostRateResult> {
   }
   const ok = memoryLimit(v2JtiStore, jti, V2_JTI_MAX, V2_JTI_WINDOW_MS);
   return ok ? { ok: true } : { ok: false, retryAfter: Math.ceil(V2_JTI_WINDOW_MS / 1000) };
+}
+
+// ── Vérification SIRET INSEE (coût API tiers) : 10 / h par userId ──
+const kycSiretStore = new Map<string, Window>();
+export async function checkKycSiretRateLimit(userId: string): Promise<CostRateResult> {
+  return costLimit(getKycSiretLimiter(), kycSiretStore, userId, 10, 3_600_000);
+}
+
+// ── Mot de passe oublié (anti-spam d'emails) : 3 / h par identifiant (IP ou email) ──
+const forgotStore = new Map<string, Window>();
+export async function checkForgotPasswordRateLimit(identifier: string): Promise<CostRateResult> {
+  return costLimit(getForgotPasswordLimiter(), forgotStore, identifier, 3, 3_600_000);
+}
+
+// ── Résolution de token rotatif (anti brute-force) : 30 / min par IP ──
+const resolveTokenStore = new Map<string, Window>();
+export async function checkResolveTokenRateLimit(ip: string): Promise<CostRateResult> {
+  return costLimit(getResolveTokenLimiter(), resolveTokenStore, ip, 30, 60_000);
 }

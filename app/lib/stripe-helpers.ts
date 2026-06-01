@@ -59,7 +59,7 @@ export async function checkAndUpdateUserPlan(userId: string, stripeCustomerId: s
       data: { planId },
     })
 
-    console.log(`✅ Plan mis à jour pour l'utilisateur ${userId}: ${planId}`)
+    console.log(`✅ Plan mis à jour pour user=${userId.slice(0, 8)}... → ${planId}`)
     return planId
   } catch (error) {
     console.error('❌ Erreur lors de la vérification Stripe:', error)

@@ -3,6 +3,14 @@ import { z } from "zod";
 import { auth } from "@/app/lib/auth-server";
 import { prisma } from "@/app/lib/db";
 import { verifySiret } from "@/lib/insee";
+import { checkKycSiretRateLimit } from "@/lib/rate-limit-cost";
+
+function tooManySiret() {
+  return NextResponse.json(
+    { error: "Trop de vérifications SIRET. Réessayez plus tard." },
+    { status: 429 },
+  );
+}
 
 /**
  * POST /api/kyc/siret
@@ -45,6 +53,9 @@ export async function POST(req: NextRequest) {
 
   const { siret, entityId } = parsed.data;
 
+  // Rate limit anti-coût INSEE : 10 vérifications / h par utilisateur.
+  if (!(await checkKycSiretRateLimit(session.user.id)).ok) return tooManySiret();
+
   const subscription = await prisma.subscription.findUnique({
     where: { userId: session.user.id },
     select: { status: true },
@@ -71,7 +82,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
-    console.error("[KYC SIRET] user update failed", { userId: session.user.id, err });
+    console.error(`[KYC SIRET] user update failed userId=${session.user.id.slice(0, 8)}...`, err);
   }
 
   // MAJ entité si demandée et appartenant à l'utilisateur
@@ -154,6 +165,9 @@ export async function GET(req: NextRequest) {
   if (!siret) {
     return NextResponse.json({ error: "Paramètre `siret` manquant" }, { status: 400 });
   }
+
+  // Rate limit anti-coût INSEE : 10 vérifications / h par utilisateur.
+  if (!(await checkKycSiretRateLimit(session.user.id)).ok) return tooManySiret();
 
   const result = await verifySiret(siret);
   if (!result.valid) {

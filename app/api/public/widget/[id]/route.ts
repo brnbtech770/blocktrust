@@ -165,14 +165,17 @@ export async function GET(
   <text x="100" y="183" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="7.5" letter-spacing="1.5" fill="rgba(255,255,255,0.35)">POWERED BY BLOCKTRUST</text>
 </svg>`
 
-  return new NextResponse(svg, {
-    status: 200,
-    headers: {
-      'Content-Type': 'image/svg+xml; charset=utf-8',
-      'Cache-Control': 'public, max-age=60',
-      'X-RateLimit-Limit': String(rate.limit),
-      'X-RateLimit-Remaining': String(rate.remaining),
-      'Access-Control-Allow-Origin': '*',
-    },
-  })
+  // Endpoint authentifié par clé API : pas de wildcard CORS. Le widget est
+  // généralement chargé en <img> (sans CORS) ; on n'émet l'ACAO que si une origine
+  // est présente, en l'échoant (partenaire White Label), avec Vary: Origin.
+  const widgetHeaders: Record<string, string> = {
+    'Content-Type': 'image/svg+xml; charset=utf-8',
+    'Cache-Control': 'public, max-age=60',
+    'X-RateLimit-Limit': String(rate.limit),
+    'X-RateLimit-Remaining': String(rate.remaining),
+    Vary: 'Origin',
+  }
+  const widgetOrigin = req.headers.get('origin')
+  if (widgetOrigin) widgetHeaders['Access-Control-Allow-Origin'] = widgetOrigin
+  return new NextResponse(svg, { status: 200, headers: widgetHeaders })
 }

@@ -28,23 +28,36 @@ export const dynamic = 'force-dynamic'
 
 type Verdict = 'VALID' | 'FRAUD_ALERT' | 'REVOKED' | 'NOT_FOUND' | 'EXPIRED'
 
-function corsHeaders() {
-  return {
-    'Access-Control-Allow-Origin': '*',
+// Endpoint authentifié par CLÉ API : on n'émet plus de wildcard `*`. On renvoie
+// l'origine appelante (le partenaire White Label) lorsqu'elle est présente, avec
+// `Vary: Origin`. L'accès aux données reste gardé par la clé API.
+function corsHeaders(origin?: string | null): Record<string, string> {
+  const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-API-Key',
     'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
   }
+  if (origin) headers['Access-Control-Allow-Origin'] = origin
+  return headers
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: corsHeaders() })
+export async function OPTIONS(req: NextRequest) {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders(req.headers.get('origin')),
+  })
 }
 
-function jsonError(status: number, code: string, message: string) {
+function jsonError(
+  status: number,
+  code: string,
+  message: string,
+  origin?: string | null,
+) {
   return NextResponse.json(
     { valid: false, verdict: 'NOT_FOUND', error: code, message },
-    { status, headers: corsHeaders() }
+    { status, headers: corsHeaders(origin) }
   )
 }
 
@@ -53,11 +66,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  if (!id) return jsonError(400, 'invalid_id', 'Missing certificate id')
+  const origin = req.headers.get('origin')
+  if (!id) return jsonError(400, 'invalid_id', 'Missing certificate id', origin)
 
   const apiKey = req.headers.get('x-api-key') ?? req.headers.get('X-API-Key')
   if (!isValidApiKeyShape(apiKey)) {
-    return jsonError(401, 'invalid_api_key', 'Missing or malformed X-API-Key header')
+    return jsonError(401, 'invalid_api_key', 'Missing or malformed X-API-Key header', origin)
   }
 
   const apiKeyHash = hashApiKey(apiKey)
@@ -66,7 +80,7 @@ export async function GET(
     where: { apiKeyHash },
   })
   if (!config || !timingSafeEqualString(config.apiKeyHash, apiKeyHash)) {
-    return jsonError(401, 'unknown_api_key', 'API key not recognized')
+    return jsonError(401, 'unknown_api_key', 'API key not recognized', origin)
   }
   if (!config.canVerify) {
     return jsonError(403, 'permission_denied', 'API key not authorized to verify')
@@ -74,7 +88,7 @@ export async function GET(
 
   const rate = await checkRateLimitApiAsync(apiKeyHash)
   const rateHeaders: Record<string, string> = {
-    ...corsHeaders(),
+    ...corsHeaders(origin),
     'X-RateLimit-Limit': String(rate.limit),
     'X-RateLimit-Remaining': String(rate.remaining),
   }

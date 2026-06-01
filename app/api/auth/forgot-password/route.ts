@@ -2,9 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/app/lib/db";
 import { redactEmailRecipient, sendEmail } from "@/lib/email";
+import { checkForgotPasswordRateLimit } from "@/lib/rate-limit-cost";
 import crypto from "crypto";
 
 const bodySchema = z.object({ email: z.string().email() });
+
+function clientIp(req: NextRequest): string {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +18,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true });
     }
     const { email } = parsed.data;
+
+    // Anti-spam d'emails : limite par IP ET par email. On répond toujours
+    // { success: true } (anti-énumération) mais on n'envoie pas d'email si limité.
+    const ip = clientIp(req);
+    const [ipRate, emailRate] = await Promise.all([
+      checkForgotPasswordRateLimit(`ip:${ip}`),
+      checkForgotPasswordRateLimit(`email:${email.toLowerCase()}`),
+    ]);
+    if (!ipRate.ok || !emailRate.ok) {
+      return NextResponse.json({ success: true });
+    }
 
     void (async () => {
       const user = await prisma.user.findUnique({

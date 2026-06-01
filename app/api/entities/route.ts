@@ -61,20 +61,10 @@ export async function POST(req: NextRequest) {
     // Vérifier l'authentification avec NextAuth v5
     // auth() lit automatiquement les cookies depuis les headers de la requête
     const session = await auth();
-    
-    console.log('🔍 Session check:', { 
-      hasSession: !!session, 
-      hasUser: !!session?.user, 
-      email: session?.user?.email,
-      cookies: req.cookies.getAll().map(c => c.name)
-    });
-    
+
     if (!session?.user?.id) {
-      console.error('❌ No session found:', { 
-        session, 
-        cookies: req.cookies.getAll(),
-        headers: Object.fromEntries(req.headers.entries())
-      });
+      // Ne jamais logger cookies/headers de session (fuite de données sensibles).
+      console.warn('[entities] POST non authentifié');
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
@@ -89,7 +79,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
-      console.error('❌ User not found in database:', session.user.id);
+      console.error(`[entities] user introuvable userId=${session.user.id.slice(0, 8)}...`);
       return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
     }
 
