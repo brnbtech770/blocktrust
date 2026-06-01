@@ -6,6 +6,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUser } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/db'
 import { stripe } from '@/lib/stripe'
+import { getPlanDisplayLabel, resolveAccountPlan } from '@/lib/plan-features'
+import { isAdmin } from '@/lib/admin-utils'
 
 export async function GET(req: NextRequest) {
   try {
@@ -47,6 +49,16 @@ export async function GET(req: NextRequest) {
         },
       },
     })
+
+    // Plan réel résolu (source unique) + libellé affiché (Compte interne pour admins/Johanna).
+    const subForLabel = await prisma.subscription.findUnique({
+      where: { userId: user.id },
+      select: { plan: true },
+    })
+    const planCode = resolveAccountPlan(subForLabel?.plan, {
+      isAdmin: isAdmin(userWithPlan.email),
+    })
+    const planLabel = getPlanDisplayLabel(planCode, { email: userWithPlan.email })
 
     // Définir les limites selon le plan
     // Si le plan existe (nouveau modèle), utiliser ses propriétés
@@ -91,6 +103,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         hasSubscription: false,
         plan: userWithPlan.plan || { type: 'ESSENTIEL', name: 'Essentiel' },
+        planCode,
+        planLabel,
         subscription: null,
         usage: {
           entitiesCount,
@@ -115,6 +129,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({
         hasSubscription: false,
         plan: userWithPlan.plan || { type: 'ESSENTIEL', name: 'Essentiel' },
+        planCode,
+        planLabel,
         subscription: null,
         usage: {
           entitiesCount,
@@ -136,6 +152,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       hasSubscription: true,
       plan: userWithPlan.plan || { type: 'ESSENTIEL', name: 'Essentiel' },
+      planCode,
+      planLabel,
       subscription: {
         id: subscription.id,
         status: subscription.status,

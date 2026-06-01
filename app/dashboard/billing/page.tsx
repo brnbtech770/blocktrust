@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation'
 interface SubscriptionData {
   hasSubscription: boolean
   plan: string
+  planLabel?: string
+  planCode?: string
   subscription: {
     id: string
     status: string
@@ -120,21 +122,6 @@ export default function BillingPage() {
     })
   }
 
-  const getPlanDisplayName = (plan: string) => {
-    const planNames: Record<string, string> = {
-      ESSENTIEL: 'Essentiel',
-      PREMIUM: 'Premium',
-      FAMILLE: 'Famille',
-      'FAMILLE_PLUS': 'Famille+',
-      SOLO_PRO: 'Solo Pro',
-      STARTER: 'Starter',
-      TEAM: 'Team',
-      BUSINESS: 'Business',
-      ENTERPRISE: 'Enterprise',
-    }
-    return planNames[plan] || plan
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -177,7 +164,7 @@ export default function BillingPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-3xl font-bold text-gray-900 tracking-tight">
-                {getPlanDisplayName(data.plan)}
+                {data.planLabel ?? 'Découverte'}
               </p>
               {data.subscription && (
                 <div className="mt-3 space-y-2">

@@ -4,6 +4,8 @@
 // NOT_ANCHORED sont des conventions de chaîne (aucune migration nécessaire).
 // ============================================================
 
+import { isInternalAccount } from '@/lib/admin-utils'
+
 /** Plan gratuit B2C (Découverte) — badge non ancré sur la blockchain. */
 export const DISCOVERY_PLAN = 'DISCOVERY' as const
 
@@ -63,6 +65,49 @@ export function resolveAccountPlan(
   if (opts?.isAdmin) return 'B2B_ENTERPRISE'
   const p = (subscriptionPlan ?? '').trim()
   return p.length > 0 ? p : DEFAULT_B2C_PLAN
+}
+
+/**
+ * Mapping UNIQUE des libellés de plan affichés à l'utilisateur.
+ * Source : plan résolu par resolveAccountPlan (jamais de libellé codé en dur ailleurs).
+ * Gère les codes courts (DISCOVERY, STARTER…) et préfixés (B2B_STARTER, B2C_ESSENTIEL…).
+ */
+const PLAN_DISPLAY_LABELS: Record<string, string> = {
+  DISCOVERY: 'Découverte',
+  DISCOVERY_EXPIRED: 'Découverte expirée',
+  ESSENTIEL: 'Essentiel',
+  B2C_ESSENTIEL: 'Essentiel',
+  PREMIUM: 'Premium',
+  B2C_PREMIUM: 'Premium',
+  FAMILLE: 'Famille',
+  B2C_FAMILLE: 'Famille',
+  FAMILLE_PLUS: 'Famille+',
+  B2C_FAMILLE_PLUS: 'Famille+',
+  SOLO_PRO: 'Solo Pro',
+  B2B_SOLO_PRO: 'Solo Pro',
+  STARTER: 'Starter',
+  B2B_STARTER: 'Starter',
+  TEAM: 'Team',
+  B2B_TEAM: 'Team',
+  BUSINESS: 'Business',
+  B2B_BUSINESS: 'Business',
+  ENTERPRISE: 'Enterprise',
+  B2B_ENTERPRISE: 'Enterprise',
+}
+
+/**
+ * Libellé d'un plan affiché à l'utilisateur, dérivé de resolveAccountPlan.
+ * - Comptes internes (admins + Johanna) → « Compte interne » (cosmétique uniquement,
+ *   les droits Enterprise restent inchangés).
+ * - Jamais de défaut « Essentiel » : un compte sans plan connu → « Découverte ».
+ */
+export function getPlanDisplayLabel(
+  plan: string | null | undefined,
+  opts?: { email?: string | null },
+): string {
+  if (opts?.email && isInternalAccount(opts.email)) return 'Compte interne'
+  const key = normalizePlan(plan)
+  return PLAN_DISPLAY_LABELS[key] ?? 'Découverte'
 }
 
 /** Ancrage Polygon autorisé pour tous les plans SAUF Découverte (gratuit). */
