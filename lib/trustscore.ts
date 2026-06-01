@@ -70,6 +70,15 @@ export function getTrustScoreLabel(score: number): string {
   return 'UNVERIFIED'
 }
 
+/** Libellé TrustScore affiché à l'utilisateur (FR). Jamais « UNVERIFIED » brut ni de négatif. */
+export function getTrustScoreLabelFr(score: number): string {
+  const s = Math.max(0, score)
+  if (s >= 80) return 'Excellent'
+  if (s >= 50) return 'Vérifié'
+  if (s >= 25) return 'Faible'
+  return 'Non vérifié'
+}
+
 export function getTrustScoreColor(score: number): string {
   if (score >= 80) return '#00d4ff'
   if (score >= 50) return '#BDA76B'

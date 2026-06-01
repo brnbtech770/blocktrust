@@ -20,7 +20,7 @@ import ActivityFeed from "@/app/components/dashboard/ActivityFeed";
 import KpiGridSkeleton from "@/app/components/dashboard/KpiGridSkeleton";
 import CertificateTableSkeleton from "@/app/components/dashboard/CertificateTableSkeleton";
 import ActivityFeedSkeleton from "@/app/components/dashboard/ActivityFeedSkeleton";
-import { getTrustScoreColor, getTrustScoreLabel } from "@/lib/trustscore";
+import { getTrustScoreColor, getTrustScoreLabelFr } from "@/lib/trustscore";
 import { getPlanWording, resolvePlanKeyForWording } from "@/lib/plan-wording";
 import { resolveAccountPlan } from "@/lib/plan-features";
 
@@ -64,7 +64,7 @@ export default async function Dashboard({
     // Plancher à 0 : un TrustScore ne doit JAMAIS s'afficher en négatif
     // (valeurs héritées d'anciens calculs possibles avant le plancher).
     const trustScoreValue = Math.max(0, user.trustScore ?? 0);
-    const trustScoreLabel = getTrustScoreLabel(trustScoreValue);
+    const trustScoreLabel = getTrustScoreLabelFr(trustScoreValue);
     const trustScoreColor = getTrustScoreColor(trustScoreValue);
     const showKycTrustHint =
       trustScoreValue < 50 && user.kycStatus !== "VERIFIED";
@@ -371,14 +371,14 @@ export default async function Dashboard({
               href="/dashboard/create"
               className="inline-flex min-h-[44px] min-w-0 w-full items-center justify-center gap-2 rounded-lg bg-bt-cyan px-6 py-3 font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:text-base"
             >
-              <Plus size={18} aria-hidden />
+              <Plus className="h-5 w-5 shrink-0" aria-hidden />
               Créer un contact
             </Link>
             <Link
               href="/dashboard/certificates"
               className="inline-flex min-h-[44px] min-w-0 w-full items-center justify-center gap-2 rounded-lg border border-white/20 px-6 py-3 font-sans text-sm font-semibold text-white transition-all hover:border-bt-cyan/50 hover:text-bt-cyan sm:w-auto sm:text-base"
             >
-              <Shield size={18} aria-hidden />
+              <Shield className="h-5 w-5 shrink-0" aria-hidden />
               Voir tous mes certificats
             </Link>
           </div>
