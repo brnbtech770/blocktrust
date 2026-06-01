@@ -10,6 +10,9 @@ import { z } from 'zod';
 import { checkEntityQuota } from '@/lib/checkQuota';
 import { validateWalletPair } from '@/lib/wallet-validation';
 import { validateCertifiedContactArrays } from '@/lib/certified-contact';
+import { isAdmin } from '@/lib/admin-utils';
+import { resolveAccountPlan } from '@/lib/plan-features';
+import { checkPlanRateLimit } from '@/lib/rate-limit-plan';
 
 // ─────────────────────────────────────────────
 // Schémas de validation
@@ -81,12 +84,34 @@ export async function POST(req: NextRequest) {
       include: { 
         entities: true,
         plan: true,
+        subscription: { select: { plan: true } },
       },
     });
 
     if (!user) {
       console.error('❌ User not found in database:', session.user.id);
       return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+    }
+
+    // Rate limit anti-abus par tier : 5 contacts/min (Découverte) vs 30/min (payant).
+    const effectivePlan = resolveAccountPlan(user.subscription?.plan, {
+      isAdmin: isAdmin(user.email),
+    });
+    const contactsRl = await checkPlanRateLimit('contacts', effectivePlan, user.id);
+    if (!contactsRl.ok) {
+      return NextResponse.json(
+        {
+          error: 'Trop de créations de contacts en peu de temps. Réessayez dans un instant.',
+          code: 'RATE_LIMITED',
+          retryAfter: contactsRl.retryAfter,
+        },
+        {
+          status: 429,
+          headers: contactsRl.retryAfter
+            ? { 'Retry-After': String(contactsRl.retryAfter) }
+            : undefined,
+        },
+      );
     }
 
     // Valider le body

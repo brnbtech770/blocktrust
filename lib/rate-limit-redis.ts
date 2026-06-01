@@ -99,6 +99,15 @@ export const getExtensionWriteLimiter = () => getLimiter("bt:extension:write", 3
 export const getExtensionMeLimiter = () => getLimiter("bt:extension:me", 60, "1 m");
 export const getExtensionKeygenLimiter = () => getLimiter("bt:extension:keygen", 10, "1 m");
 
+// ── Limites différenciées par tier (anti-abus Sybil du plan gratuit Découverte) ──
+// Tier strict (DISCOVERY / DISCOVERY_EXPIRED) vs tier généreux (comptes payants).
+export const getVerifyPlanDiscoveryLimiter = () => getLimiter("bt:plan:verify:disc", 10, "1 m");
+export const getVerifyPlanPaidLimiter = () => getLimiter("bt:plan:verify:paid", 60, "1 m");
+export const getExtensionPlanDiscoveryLimiter = () => getLimiter("bt:plan:ext:disc", 30, "1 m");
+export const getExtensionPlanPaidLimiter = () => getLimiter("bt:plan:ext:paid", 120, "1 m");
+export const getContactsPlanDiscoveryLimiter = () => getLimiter("bt:plan:contacts:disc", 5, "1 m");
+export const getContactsPlanPaidLimiter = () => getLimiter("bt:plan:contacts:paid", 30, "1 m");
+
 export type RedisLimitResult = {
   success: boolean;
   remaining: number;

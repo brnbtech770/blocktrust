@@ -9,6 +9,7 @@ import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { timingSafeEqual } from 'crypto'
 import { checkRateLimitVerifyAsync } from '@/lib/rate-limit-verify'
+import { checkPlanRateLimit } from '@/lib/rate-limit-plan'
 import { checkAndIncrementVerifyQuota } from '@/lib/verify-quotas'
 import {
   createAdminFraudAlert,
@@ -98,6 +99,22 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         return NextResponse.json(
           { error: 'SUBSCRIPTION_REQUIRED', redirectUrl: '/pricing' },
           { status: 403, headers: rateHeaders }
+        )
+      }
+      // Rate limit par tier et par compte (anti-abus, en plus du quota mensuel).
+      const planRate = await checkPlanRateLimit('verify', subscription.plan, session.user.id)
+      if (!planRate.ok) {
+        return NextResponse.json(
+          { status: 'RATE_LIMITED', message: 'Trop de requêtes', code: 'RATE_LIMITED' },
+          {
+            status: 429,
+            headers: {
+              ...rateHeaders,
+              ...(planRate.retryAfter != null
+                ? { 'Retry-After': String(planRate.retryAfter) }
+                : {}),
+            },
+          }
         )
       }
       const quota = await checkAndIncrementVerifyQuota(

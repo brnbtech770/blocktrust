@@ -13,7 +13,8 @@ import {
   type ExtensionVerifyContext,
 } from "@/lib/extension-verify-sender";
 import { getCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
-import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
+import { checkPlanRateLimit } from "@/lib/rate-limit-plan";
+import { resolveAccountPlan } from "@/lib/plan-features";
 import { getRedis } from "@/lib/rate-limit-redis";
 
 export const runtime = "nodejs";
@@ -40,7 +41,12 @@ export async function GET(req: NextRequest) {
   }
 
   const keyHash = hashApiKey(apiKey!);
-  const rate = await checkRateLimitExtensionAsync("verify", keyHash);
+  // Rate limit par tier : 30/min (Découverte) vs 120/min (payant). Fail-soft.
+  const sub = await prisma.subscription
+    .findUnique({ where: { userId }, select: { plan: true } })
+    .catch(() => null);
+  const planForTier = resolveAccountPlan(sub?.plan);
+  const rate = await checkPlanRateLimit("extension", planForTier, keyHash);
   if (!rate.ok) {
     void prisma.auditLog
       .create({
