@@ -195,13 +195,13 @@ export default async function EntitiesPage() {
                 <div className="flex gap-2">
                   <Link
                     href={`/dashboard/badge/${entity.certificates[0]?.id || entity.id}`}
-                    className="flex-1 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 py-2 px-4 text-center text-sm font-medium text-bt-cyan transition-colors hover:bg-bt-cyan/25"
+                    className="flex-1 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 px-4 py-3 text-center text-sm font-medium text-bt-cyan transition-colors hover:bg-bt-cyan/25"
                   >
                     Voir
                   </Link>
                   <Link
                     href={`/dashboard/create?edit=${entity.id}`}
-                    className="flex-1 text-center bg-gray-700/50 text-gray-300 hover:bg-gray-700 py-2 px-4 rounded-lg transition-colors text-sm font-medium"
+                    className="flex-1 rounded-lg bg-gray-700/50 px-4 py-3 text-center text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700"
                   >
                     Modifier
                   </Link>
