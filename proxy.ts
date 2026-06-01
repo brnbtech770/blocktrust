@@ -133,20 +133,26 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isProtectedVerifySubpath(pathname)) {
+    const signInRedirect = () => {
+      const signInUrl = new URL('/auth/signin', request.url)
+      signInUrl.searchParams.set(
+        'callbackUrl',
+        `${pathname}${request.nextUrl.search}`
+      )
+      return NextResponse.redirect(signInUrl)
+    }
     try {
       const email = await getEmailFromSession(request)
       if (!email) {
-        const signInUrl = new URL('/auth/signin', request.url)
-        signInUrl.searchParams.set(
-          'callbackUrl',
-          `${pathname}${request.nextUrl.search}`
-        )
-        return NextResponse.redirect(signInUrl)
+        return signInRedirect()
       }
+      return NextResponse.next()
     } catch (error) {
+      // Fail-CLOSED : une erreur de vérification JWT sur une route protégée ne doit
+      // JAMAIS laisser passer (le /verify public n'est pas un « protected subpath »).
       console.error('Proxy verify redirect:', error)
+      return signInRedirect()
     }
-    return NextResponse.next()
   }
 
   // Admin connecté : landing uniquement → back-office (/dashboard/* reste accessible)

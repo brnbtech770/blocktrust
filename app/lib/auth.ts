@@ -465,12 +465,17 @@ function checkPlanFeatureByType(planType: string, feature: string): boolean {
  * Hash IP pour RGPD (SHA-256 avec salt)
  */
 export function hashIp(ip: string): string {
-  const salt =
-    process.env.IP_HASH_SALT ||
-    (process.env.NODE_ENV === "production" && process.env.NEXTAUTH_SECRET
-      ? `${process.env.NEXTAUTH_SECRET}:blocktrust-ip`
-      : "dev-ip-salt-change-me");
-  return createHash("sha256").update(ip + salt).digest("hex");
+  // Salt DÉDIÉ : on ne dérive plus de NEXTAUTH_SECRET (évite le couplage de secrets).
+  const dedicated = process.env.IP_HASH_SALT?.trim();
+  if (dedicated) {
+    return createHash("sha256").update(ip + dedicated).digest("hex");
+  }
+  if (process.env.NODE_ENV === "production") {
+    console.warn(
+      "[hashIp] IP_HASH_SALT manquant en production — configurez un salt dédié.",
+    );
+  }
+  return createHash("sha256").update(ip + "dev-ip-salt-change-me").digest("hex");
 }
 
 /**

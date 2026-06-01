@@ -8,6 +8,7 @@ import { hashApiKey } from "@/lib/api-key";
 import { findUserIdByExtensionApiKey, EXTENSION_UNAUTHORIZED_BODY } from "@/lib/extension-auth";
 import { getCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
+import { checkPlanRateLimit } from "@/lib/rate-limit-plan";
 import { checkEntityQuota } from "@/lib/checkQuota";
 import { z } from "zod";
 
@@ -61,6 +62,20 @@ export async function POST(req: NextRequest) {
     return extensionJsonResponse(
       req,
       { error: "rate_limited", message: "Trop de requêtes.", retryAfter: rate.retryAfter },
+      429,
+    );
+  }
+
+  // Anti-Sybil (plan Découverte) : limite d'ajouts de contacts par tier.
+  const sub = await prisma.subscription.findUnique({
+    where: { userId },
+    select: { plan: true },
+  });
+  const planRate = await checkPlanRateLimit("contacts", sub?.plan, userId);
+  if (!planRate.ok) {
+    return extensionJsonResponse(
+      req,
+      { error: "rate_limited", message: "Trop d’ajouts de contacts.", retryAfter: planRate.retryAfter },
       429,
     );
   }

@@ -55,6 +55,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Ne jamais faire confiance à l'entityId du body : il doit correspondre au
+    // certificat. On dérive l'entityId réel du certificat pour signer.
+    const derivedEntityId = certificate.entityId;
+    if (entityId !== derivedEntityId) {
+      return NextResponse.json({ error: "entity_mismatch" }, { status: 400 });
+    }
+
     const canonical = canonicalizeEmailContext(context);
     const ctxHash = sha256Hex(canonical);
 
@@ -65,7 +72,7 @@ export async function POST(req: NextRequest) {
       data: {
         jti,
         certificateId,
-        entityId,
+        entityId: derivedEntityId,
         purpose: "email",
         contextHash: ctxHash,
         expiresAt: new Date(Date.now() + expiresInSeconds * 1000),
@@ -75,7 +82,7 @@ export async function POST(req: NextRequest) {
     const token = await signToken(
       {
         jti,
-        entityId,
+        entityId: derivedEntityId,
         certificateId,
         ctx_type: "email",
         ctx_hash: ctxHash,

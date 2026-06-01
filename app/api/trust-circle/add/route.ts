@@ -3,6 +3,7 @@ import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
 import { persistUserTrustScore } from '@/lib/trustscore'
+import { checkPlanRateLimit } from '@/lib/rate-limit-plan'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -30,6 +31,18 @@ export async function POST(req: NextRequest) {
   const { email, name, entityType, note } = parsed.data
   const userId = session.user.id
   const plan = (session.user as { plan?: string }).plan ?? 'ESSENTIEL'
+
+  // Anti-Sybil (plan Découverte) : limite d'ajouts de contacts par tier.
+  const rate = await checkPlanRateLimit('contacts', plan, userId)
+  if (!rate.ok) {
+    return NextResponse.json(
+      { error: 'RATE_LIMITED', message: 'Trop d’ajouts de contacts. Réessayez plus tard.' },
+      {
+        status: 429,
+        headers: rate.retryAfter ? { 'Retry-After': String(rate.retryAfter) } : undefined,
+      }
+    )
+  }
 
   const quota = await checkTrustCircleQuota(userId, plan)
   if (!quota.allowed) {
