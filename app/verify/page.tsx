@@ -123,6 +123,8 @@ type VerifyApiSuccess = {
   certifiedEmails?: string[];
   certifiedPhones?: string[];
   trustEngine?: TrustEngineResult | null;
+  polygonAnchored?: boolean;
+  polygonExplorerUrl?: string | null;
 };
 
 function formatCertifiedDate(iso: string | undefined | null): string {
@@ -165,6 +167,8 @@ function VerifyContent() {
     match: boolean;
   } | null>(null);
   const [trustEngine, setTrustEngine] = useState<TrustEngineResult | null>(null);
+  const [polygonAnchored, setPolygonAnchored] = useState(false);
+  const [polygonExplorerUrl, setPolygonExplorerUrl] = useState<string | null>(null);
   const [contactAddState, setContactAddState] = useState<
     "idle" | "loading" | "done" | "error"
   >("idle");
@@ -283,6 +287,8 @@ function VerifyContent() {
 
     setVerdict(null);
     setVerifyErrorMessage(null);
+    setPolygonAnchored(false);
+    setPolygonExplorerUrl(null);
     setEntityName(null);
     setCertifiedAt(null);
     setWalletAddress(null);
@@ -354,6 +360,8 @@ function VerifyContent() {
 
     setVerdict(null);
     setVerifyErrorMessage(null);
+    setPolygonAnchored(false);
+    setPolygonExplorerUrl(null);
     setEntityName(null);
     setCertifiedAt(null);
     setWalletAddress(null);
@@ -398,6 +406,10 @@ function VerifyContent() {
           Array.isArray(data.certifiedPhones) ? data.certifiedPhones : [],
         );
         setTrustEngine(data.trustEngine ?? null);
+        setPolygonAnchored(Boolean(data.polygonAnchored));
+        setPolygonExplorerUrl(
+          data.polygonExplorerUrl?.trim() ? data.polygonExplorerUrl : null,
+        );
       } catch (e: unknown) {
         clearTimeout(timeoutId);
         if (cancelled) return;
@@ -480,6 +492,8 @@ function VerifyContent() {
     setCertifiedEmails([]);
     setCertifiedPhones([]);
     setTrustEngine(null);
+    setPolygonAnchored(false);
+    setPolygonExplorerUrl(null);
     setContactAddState("idle");
     setContactAddMessage(null);
     setToken("");
@@ -586,6 +600,8 @@ function VerifyContent() {
             displayName={displayName}
             dateLabel={dateLabel}
             trustEngine={trustEngine}
+            polygonAnchored={polygonAnchored}
+            polygonExplorerUrl={polygonExplorerUrl}
             walletAddress={walletAddress}
             walletNetworkDisplay={walletNetworkDisplay}
             certifiedDomains={certifiedDomains}
@@ -719,6 +735,8 @@ function ValidWowView({
   displayName,
   dateLabel,
   trustEngine,
+  polygonAnchored,
+  polygonExplorerUrl,
   walletAddress,
   walletNetworkDisplay,
   certifiedDomains,
@@ -733,6 +751,8 @@ function ValidWowView({
   displayName: string;
   dateLabel: string;
   trustEngine: TrustEngineResult | null;
+  polygonAnchored: boolean;
+  polygonExplorerUrl: string | null;
   walletAddress: string | null;
   walletNetworkDisplay: string | null;
   certifiedDomains: string[];
@@ -744,6 +764,7 @@ function ValidWowView({
   contactAddMessage: string | null;
   onAddContact: () => void;
 }) {
+  const isAuthenticated = Boolean(sessionUser);
   const signals = mainTrustSignals(trustEngine);
   const canAddContact = Boolean(sessionUser && certifiedEmails[0]?.trim());
 
@@ -786,7 +807,23 @@ function ValidWowView({
         {displayName}
       </p>
 
-      {trustEngine ? (
+      {polygonAnchored ? (
+        <a
+          href={polygonExplorerUrl ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`flex w-full animate-fade-up items-center justify-center gap-2 rounded-xl border border-[#BDA76B]/30 bg-[#BDA76B]/10 px-4 py-3 text-sm font-medium text-[#BDA76B] opacity-0 transition ${polygonExplorerUrl ? "hover:bg-[#BDA76B]/20" : "pointer-events-none"}`}
+          style={{ animationDelay: "210ms" }}
+        >
+          <Link2 className="h-4 w-4 shrink-0" aria-hidden />
+          <span>Ancré sur la blockchain Polygon</span>
+          {polygonExplorerUrl ? (
+            <span className="text-xs text-[#BDA76B]/70">· PolygonScan →</span>
+          ) : null}
+        </a>
+      ) : null}
+
+      {isAuthenticated && trustEngine ? (
         <>
           <div
             className="animate-fade-up text-center opacity-0"
@@ -839,6 +876,34 @@ function ValidWowView({
             })}
           </div>
         </>
+      ) : null}
+
+      {!isAuthenticated ? (
+        <div
+          className="w-full animate-fade-up overflow-hidden rounded-2xl border border-[#00d4ff]/25 bg-gradient-to-br from-[#0d1f3c] to-[#0a1628] p-5 text-center opacity-0 sm:p-6"
+          style={{ animationDelay: "300ms" }}
+        >
+          <div
+            aria-hidden
+            className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl border border-[#00d4ff]/30 bg-[#00d4ff]/10"
+          >
+            <ShieldCheck className="h-5 w-5 text-[#00d4ff]" />
+          </div>
+          <p className="font-syne text-base font-semibold text-white">
+            Voir le score de confiance complet
+          </p>
+          <p className="mx-auto mt-1.5 max-w-sm text-sm leading-relaxed text-white/55">
+            Créez votre compte gratuit pour voir le score de confiance complet et certifier votre
+            propre identité.
+          </p>
+          <Link
+            href="/auth/signin"
+            className="mt-4 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[#00d4ff]/40 bg-[#00d4ff]/15 px-5 py-2.5 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/25"
+          >
+            <UserPlus className="h-4 w-4 shrink-0" aria-hidden />
+            Commencer gratuitement
+          </Link>
+        </div>
       ) : null}
 
       <p
@@ -981,7 +1046,7 @@ function ValidWowView({
         </div>
       ) : null}
 
-      {trustEngine && trustEngine.signals.length > 3 ? (
+      {isAuthenticated && trustEngine && trustEngine.signals.length > 3 ? (
         <TrustEnginePanel engine={trustEngine} />
       ) : null}
 

@@ -300,9 +300,25 @@ export async function GET(
       certifiedEmails.length > 0 ||
       certifiedPhones.length > 0);
 
+  // Ancrage Polygon — information publique rassurante (visible même anonyme).
+  const polygonAnchored =
+    verdict === "VALID" &&
+    certificate.blockchainStatus === "ANCHORED" &&
+    Boolean(certificate.polygonTxHash);
+  const polygonExplorerUrl = polygonAnchored
+    ? certificate.polygonExplorerUrl ??
+      (certificate.polygonTxHash
+        ? `https://polygonscan.com/tx/${certificate.polygonTxHash}`
+        : null)
+    : null;
+
+  // Score de confiance détaillé (TrustEngine) : réservé aux utilisateurs CONNECTÉS.
+  // Anonyme → badge + ancrage visibles, mais score/sous-scores/signaux masqués (defense-in-depth serveur).
+  const session = await auth().catch(() => null);
+  const authenticated = Boolean(session?.user?.id);
+
   let trustEngine = null;
-  if (verdict === "VALID") {
-    const session = await auth().catch(() => null);
+  if (verdict === "VALID" && authenticated) {
     trustEngine = await computeTrustEngineScore(
       certificatePublicId,
       session?.user?.id,
@@ -316,6 +332,9 @@ export async function GET(
     certifiedAt,
     certificateId: certificatePublicId,
     certificateStatus: status,
+    authenticated,
+    polygonAnchored,
+    ...(polygonExplorerUrl ? { polygonExplorerUrl } : {}),
     ...(trustEngine ? { trustEngine } : {}),
     ...(showWalletPublic
       ? {

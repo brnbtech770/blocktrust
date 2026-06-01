@@ -56,8 +56,10 @@ vi.mock('@/lib/rate-limit-api', () => ({
   }),
 }))
 
+const authMock = vi.hoisted(() => vi.fn())
+
 vi.mock('@/app/lib/auth-server', () => ({
-  auth: vi.fn().mockResolvedValue(null),
+  auth: authMock,
 }))
 
 vi.mock('@/lib/trust-engine', () => ({
@@ -128,6 +130,7 @@ function revokedCertificate(publicId: string) {
 describe('/verify public flow (GET /api/public/certificate/:id)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    authMock.mockResolvedValue(null)
     prismaMock.signature.findUnique.mockResolvedValue(null)
     prismaMock.signature.findFirst.mockResolvedValue(null)
     prismaMock.user.findUnique.mockResolvedValue({
@@ -138,7 +141,7 @@ describe('/verify public flow (GET /api/public/certificate/:id)', () => {
     prismaMock.certificate.findMany.mockResolvedValue([])
   })
 
-  it('retourne VALID pour un certificat actif', async () => {
+  it('retourne VALID + ancrage mais MASQUE le score pour un visiteur anonyme', async () => {
     prismaMock.certificate.findFirst.mockResolvedValue(activeCertificate(VALID_CERT_ID))
 
     const res = await getPublicCertificate(
@@ -149,6 +152,27 @@ describe('/verify public flow (GET /api/public/certificate/:id)', () => {
 
     expect(res.status).toBe(200)
     expect(data.verdict).toBe('VALID')
+    expect(data.authenticated).toBe(false)
+    // Anonyme : score de confiance masqué (defense-in-depth serveur)
+    expect(data.trustEngine).toBeUndefined()
+    // Mais l'ancrage blockchain reste visible (rassurant)
+    expect(data.polygonAnchored).toBe(true)
+    expect(data.polygonExplorerUrl).toContain('0xabc')
+  })
+
+  it('expose le score complet pour un utilisateur connecté', async () => {
+    authMock.mockResolvedValue({ user: { id: 'viewer-1' } })
+    prismaMock.certificate.findFirst.mockResolvedValue(activeCertificate(VALID_CERT_ID))
+
+    const res = await getPublicCertificate(
+      mockGetRequest(`/api/public/certificate/${VALID_CERT_ID}`),
+      { params: Promise.resolve({ id: VALID_CERT_ID }) },
+    )
+    const data = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(data.verdict).toBe('VALID')
+    expect(data.authenticated).toBe(true)
     expect(data.trustEngine).toBeDefined()
     expect(data.trustEngine.globalScore).toBeGreaterThan(0)
   })
