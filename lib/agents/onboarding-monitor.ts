@@ -46,6 +46,14 @@ const DAY_MS = 24 * 60 * 60 * 1000
 const SINCE_EVER = new Date(0)
 
 /**
+ * Date d'activation du système Découverte 30 jours.
+ * Grandfathering : les comptes créés AVANT cette date ne sont jamais expirés
+ * automatiquement (early adopters, comptes de test/internes jamais informés de la règle).
+ * Ajustable ici si besoin.
+ */
+const DATE_LANCEMENT_DECOUVERTE = new Date('2026-06-01T00:00:00Z')
+
+/**
  * Cycle de vie du plan Découverte (gratuit, 30 jours) — géré par l'agent onboarding.
  * Pour chaque compte B2C sans abonnement (≠ admin, ≠ payant) :
  *   J-7 (jour 23) → email rappel ; J-2 (jour 28) → email rappel ;
@@ -66,7 +74,9 @@ async function processDiscoveryLifecycle(
       where: {
         subscription: { is: null }, // ni payant, ni déjà expiré
         email: { not: null },
-        createdAt: { lt: minAgeThreshold },
+        // Au moins 23 jours, mais seulement les comptes nés APRÈS le lancement
+        // (grandfathering des comptes pré-lancement jamais informés de la règle).
+        createdAt: { gte: DATE_LANCEMENT_DECOUVERTE, lt: minAgeThreshold },
       },
       select: { id: true, email: true, name: true, createdAt: true },
       orderBy: { createdAt: 'asc' }, // les plus anciens (à expirer) d'abord
