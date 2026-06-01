@@ -11,6 +11,16 @@ export const DISCOVERY_PLAN = 'DISCOVERY' as const
 export const DEFAULT_B2C_PLAN = DISCOVERY_PLAN
 
 /**
+ * Plan d'un compte dont la période Découverte gratuite (30 jours) est terminée.
+ * Données conservées, mais badge preview désactivé, vérifications bloquées, contacts en lecture seule.
+ * Convention de chaîne (Subscription.plan est un String côté Prisma — aucune migration).
+ */
+export const DISCOVERY_EXPIRED_PLAN = 'DISCOVERY_EXPIRED' as const
+
+/** Durée de la période Découverte gratuite, en jours. */
+export const DISCOVERY_DURATION_DAYS = 30
+
+/**
  * Statut blockchain d'un certificat émis sous le plan gratuit : signé ES256 mais
  * volontairement jamais ancré sur Polygon. Les agents d'ancrage doivent l'ignorer.
  */
@@ -29,9 +39,14 @@ function normalizePlan(plan?: string | null): string {
   return (plan ?? '').trim().toUpperCase().replace(/-/g, '_')
 }
 
-/** True si le plan est le plan gratuit Découverte. */
+/** True si le plan est le plan gratuit Découverte (période active). */
 export function isDiscoveryPlan(plan?: string | null): boolean {
   return normalizePlan(plan) === DISCOVERY_PLAN
+}
+
+/** True si la période Découverte gratuite est terminée (compte gelé en lecture seule). */
+export function isDiscoveryExpired(plan?: string | null): boolean {
+  return normalizePlan(plan) === DISCOVERY_EXPIRED_PLAN
 }
 
 /**

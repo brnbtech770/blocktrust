@@ -14,7 +14,7 @@ import { copyToClipboard } from '@/lib/copy-to-clipboard'
 import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 import { isNotAnchored } from '@/lib/plan-features'
 import { BlockchainUpgradePrompt } from '@/app/components/ui/BlockchainUpgradePrompt'
-import { Copy, Download, ExternalLink, Check, Link2, Clock, Mail } from 'lucide-react'
+import { Copy, Download, ExternalLink, Check, Link2, Clock, Mail, Lock } from 'lucide-react'
 
 interface BadgeData {
   id: string
@@ -43,9 +43,10 @@ type CopyTarget = 'embed' | 'script' | 'secure' | 'link'
 
 type BadgeDashboardClientProps = {
   isAdmin: boolean
+  planExpired?: boolean
 }
 
-export default function BadgeDashboardClient({ isAdmin }: BadgeDashboardClientProps) {
+export default function BadgeDashboardClient({ isAdmin, planExpired = false }: BadgeDashboardClientProps) {
   const params = useParams()
   const router = useRouter()
   const { status: sessionStatus } = useSession()
@@ -202,6 +203,38 @@ export default function BadgeDashboardClient({ isAdmin }: BadgeDashboardClientPr
     } finally {
       setGenerating(false)
     }
+  }
+
+  if (planExpired) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <Link
+          href="/dashboard/certificates"
+          className="mb-4 inline-block text-sm text-bt-cyan transition hover:text-bt-cyan/90"
+        >
+          ← Retour aux certificats
+        </Link>
+        <div className="rounded-2xl border border-[#BDA76B]/40 bg-[#0a1628] p-8 text-center">
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#00d4ff]/30 bg-[#00d4ff]/10">
+            <Lock className="h-6 w-6 text-[#00d4ff]" aria-hidden />
+          </div>
+          <h1 className="font-syne text-2xl font-bold text-white">
+            Votre période découverte de 30 jours est terminée
+          </h1>
+          <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-white/70">
+            L&apos;aperçu de votre badge est désactivé. Vos données restent conservées. Activez votre
+            certification dès <span className="font-semibold text-[#BDA76B]">2,99€/mois</span> pour
+            réactiver votre badge et l&apos;ancrer sur la blockchain.
+          </p>
+          <Link
+            href="/pricing"
+            className="mt-6 inline-flex items-center justify-center rounded-lg bg-[#00d4ff] px-6 py-3 font-sans font-semibold text-[#0a1628] transition-all hover:bg-[#00d4ff]/90"
+          >
+            Activer ma certification
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   if (sessionStatus === 'loading' || loading) {
