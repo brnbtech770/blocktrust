@@ -3,13 +3,13 @@
 // ============================================================
 //
 // Format de clé : "bt_live_<32 hex>"  → 256 bits de random.
-// La clé est stockée en clair (pour permettre l'affichage masqué dans le
-// dashboard) ET hashée (sha256) pour permettre les lookups rapides via
-// l'index `apiKeyHash` sans dépendre de la valeur exacte.
+// La clé en clair n'est JAMAIS stockée : seul son hash SHA-256 (`apiKeyHash`,
+// indexé/unique) est persisté. Le champ `apiKey` ne contient que l'affichage masqué.
+// La clé en clair n'est montrée qu'UNE FOIS à la création/régénération.
 //
 // La comparaison côté API publique se fait :
-//   1. par lookup sur apiKeyHash (index)
-//   2. par timing-safe equal sur la valeur en clair stockée
+//   1. par lookup sur apiKeyHash (index unique)
+//   2. par timing-safe equal sur le hash (jamais sur la valeur en clair)
 
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import type { PrismaClient } from '@prisma/client'
@@ -32,7 +32,7 @@ export async function generateUniqueApiKeyPair(
   for (let attempts = 0; attempts < 5; attempts++) {
     const pair = generateApiKey()
     const existing = await db.whiteLabelConfig.findUnique({
-      where: { apiKey: pair.apiKey },
+      where: { apiKeyHash: pair.apiKeyHash },
       select: { id: true },
     })
     if (!existing) return pair

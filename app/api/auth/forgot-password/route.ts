@@ -20,14 +20,17 @@ export async function POST(req: NextRequest) {
       });
       if (!user || !user.password) return;
 
+      // Le token en clair n'est transmis QUE par email. En DB on ne stocke que son
+      // hash SHA-256 (hash at rest) : si la base fuite, les tokens ne sont pas utilisables.
       const token = crypto.randomBytes(32).toString("hex");
+      const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
       const expiresAt = new Date(Date.now() + 3600_000);
 
       await prisma.passwordReset.deleteMany({
         where: { email, used: false },
       });
       await prisma.passwordReset.create({
-        data: { email, token, expiresAt, used: false },
+        data: { email, tokenHash, expiresAt, used: false },
       });
 
       const baseUrl =

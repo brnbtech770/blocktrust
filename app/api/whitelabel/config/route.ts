@@ -65,7 +65,7 @@ function serializeConfig(c: {
   primaryColor: string
   secondaryColor: string
   logoUrl: string | null
-  apiKey: string
+  apiKey: string | null
   webhookUrl: string | null
   webhookSecret: string | null
   canEmbed: boolean
@@ -76,15 +76,15 @@ function serializeConfig(c: {
   createdAt: Date
   updatedAt: Date
 }) {
-  // ⚠️ Ne jamais retourner apiKeyHash. La clé en clair n'est retournée
-  // que masquée pour la lecture courante (régénération nécessaire pour la voir).
+  // ⚠️ Ne jamais retourner apiKeyHash ni la clé en clair. `c.apiKey` ne contient
+  // déjà que l'affichage masqué (la clé n'est révélée qu'à la régénération).
   return {
     id: c.id,
     companyName: c.companyName,
     primaryColor: c.primaryColor,
     secondaryColor: c.secondaryColor,
     logoUrl: c.logoUrl,
-    apiKeyMasked: maskApiKey(c.apiKey),
+    apiKeyMasked: c.apiKey ?? '••••••••',
     webhookUrl: c.webhookUrl,
     webhookConfigured: Boolean(c.webhookSecret),
     canEmbed: c.canEmbed,
@@ -116,7 +116,7 @@ export async function GET() {
       data: {
         userId: user.id,
         companyName: user.companyName ?? user.company ?? user.name ?? 'Mon entreprise',
-        apiKey,
+        apiKey: maskApiKey(apiKey),
         apiKeyHash,
         webhookSecret,
         apiCallsLimit: user.plan?.apiRequestsPerMonth ?? 1000,
@@ -213,7 +213,7 @@ export async function PATCH(req: NextRequest) {
     secondaryColor: secondaryCreate,
     logoUrl: logoCreate,
     webhookUrl: webhookCreateResolved,
-    apiKey,
+    apiKey: maskApiKey(apiKey),
     apiKeyHash,
     webhookSecret: randomBytes(32).toString('hex'),
     apiCallsLimit: user.plan?.apiRequestsPerMonth ?? 1000,

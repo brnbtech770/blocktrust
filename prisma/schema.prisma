@@ -54,12 +54,16 @@ model VerificationToken {
 model PasswordReset {
   id        String   @id @default(cuid())
   email     String
-  token     String   @unique
+  // Legacy : ancien token en clair. Désormais optionnel et plus jamais écrit.
+  token     String?  @unique
+  // Hash SHA-256 du token (hash at rest). Le token en clair n'est transmis que par email.
+  tokenHash String?  @unique
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([token])
+  @@index([tokenHash])
   @@index([email])
 }
 
@@ -982,9 +986,10 @@ model WhiteLabelConfig {
   secondaryColor String  @default("#BDA76B")
   logoUrl        String?
 
-  // API
-  apiKey        String  @unique @default(cuid())
-  apiKeyHash    String
+  // API — la clé en clair n'est JAMAIS stockée. `apiKey` ne contient que l'affichage
+  // masqué (ex: bt_live_••••••••••••••••••••abcd). La vérification passe par apiKeyHash.
+  apiKey        String?
+  apiKeyHash    String  @unique
   webhookUrl    String?
   webhookSecret String?
 

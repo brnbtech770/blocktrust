@@ -65,7 +65,7 @@ export async function GET(
   const config = await prisma.whiteLabelConfig.findFirst({
     where: { apiKeyHash },
   })
-  if (!config || !timingSafeEqualString(config.apiKey, apiKey)) {
+  if (!config || !timingSafeEqualString(config.apiKeyHash, apiKeyHash)) {
     return jsonError(401, 'unknown_api_key', 'API key not recognized')
   }
   if (!config.canVerify) {

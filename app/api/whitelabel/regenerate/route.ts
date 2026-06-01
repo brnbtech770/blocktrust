@@ -44,13 +44,16 @@ export async function POST(req: NextRequest) {
 
   const { apiKey, apiKeyHash } = await generateUniqueApiKeyPair(prisma)
 
+  // On ne stocke que l'affichage masqué + le hash. La clé en clair n'est renvoyée
+  // qu'une seule fois dans la réponse ci-dessous.
+  const apiKeyMasked = maskApiKey(apiKey)
   const config = await prisma.whiteLabelConfig.upsert({
     where: { userId: user.id },
-    update: { apiKey, apiKeyHash },
+    update: { apiKey: apiKeyMasked, apiKeyHash },
     create: {
       userId: user.id,
       companyName: user.companyName ?? user.company ?? user.name ?? 'Mon entreprise',
-      apiKey,
+      apiKey: apiKeyMasked,
       apiKeyHash,
       apiCallsLimit: user.plan?.apiRequestsPerMonth ?? 1000,
     },
@@ -58,7 +61,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     apiKey,
-    apiKeyMasked: maskApiKey(apiKey),
+    apiKeyMasked,
     rotatedAt: config.updatedAt.toISOString(),
   })
 }

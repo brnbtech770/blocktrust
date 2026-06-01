@@ -73,7 +73,7 @@ export async function GET(
 
   const apiKeyHash = hashApiKey(apiKey)
   const config = await prisma.whiteLabelConfig.findFirst({ where: { apiKeyHash } })
-  if (!config || !timingSafeEqualString(config.apiKey, apiKey)) {
+  if (!config || !timingSafeEqualString(config.apiKeyHash, apiKeyHash)) {
     return svgError(401, 'API key invalide')
   }
   if (!config.canEmbed) {
