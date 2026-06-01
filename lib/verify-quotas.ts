@@ -5,6 +5,7 @@
 import { prisma } from '@/app/lib/db'
 
 export const VERIFY_QUOTAS: Record<string, number> = {
+  DISCOVERY: 20,
   ESSENTIEL: Number.POSITIVE_INFINITY,
   PREMIUM: Number.POSITIVE_INFINITY,
   FAMILLE: Number.POSITIVE_INFINITY,

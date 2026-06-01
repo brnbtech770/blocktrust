@@ -103,6 +103,7 @@ export async function checkCertificateQuota(userId: string): Promise<QuotaCheckR
  */
 function getMaxEntities(plan: string): number {
   const limits: Record<string, number> = {
+    DISCOVERY: 5,
     ESSENTIEL: 20,
     PREMIUM: 100,
     FAMILLE: 100,
@@ -146,6 +147,7 @@ export async function getEntityQuotaSnapshot(userId: string): Promise<{
  */
 function getMaxCertificates(plan: string): number {
   const limits: Record<string, number> = {
+    DISCOVERY: 1,
     ESSENTIEL: 1,
     PREMIUM: 5,
     FAMILLE: 10,

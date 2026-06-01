@@ -16,6 +16,7 @@ import { getRedis } from '@/lib/rate-limit-redis'
 import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 import { getUserEmailSignature } from '@/lib/email-signature'
 import { isAdmin } from '@/app/lib/admin'
+import { isDiscoveryPlan, BLOCKCHAIN_STATUS_NOT_ANCHORED } from '@/lib/plan-features'
 import {
   checkIsOrgAdmin,
   countActiveCertificatesForSubject,
@@ -72,6 +73,7 @@ export async function GET(req: NextRequest) {
       id: cert.id,
       publicId: cert.publicId,
       status: cert.status,
+      blockchainStatus: cert.blockchainStatus,
       level: cert.level,
       issuedAt: cert.issuedAt.toISOString(),
       expiresAt: cert.expiresAt?.toISOString() || null,
@@ -227,6 +229,15 @@ export async function POST(req: NextRequest) {
       maxCertificates = planLimits[planName] || 1
     }
 
+    // Plan actif (string) — sert à décider de l'ancrage Polygon (jamais pour DISCOVERY)
+    const subscriptionPlan = (
+      await prisma.subscription.findUnique({
+        where: { userId: user.id },
+        select: { plan: true },
+      })
+    )?.plan ?? null
+    const isDiscovery = isDiscoveryPlan(subscriptionPlan)
+
     // Vérifier que l'entité appartient à l'utilisateur
     const entity = await prisma.entity.findFirst({
       where: { id: entityId, userId: user.id },
@@ -314,6 +325,9 @@ export async function POST(req: NextRequest) {
           entityId,
           level: entity.validationLevel,
           status: 'PENDING', // PAS 'ACTIVE' - seul l'admin peut activer
+          // Plan gratuit Découverte : badge signé ES256 mais JAMAIS ancré sur Polygon.
+          // Les agents d'ancrage (retry stale/failed) filtrent sur PENDING/FAILED → ignorent NOT_ANCHORED.
+          ...(isDiscovery ? { blockchainStatus: BLOCKCHAIN_STATUS_NOT_ANCHORED } : {}),
         },
         include: {
           entity: {

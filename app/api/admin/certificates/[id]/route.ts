@@ -209,6 +209,8 @@ async function triggerPolygonAnchor(certificateId: string): Promise<void> {
 
   if (!cert) return
   if (cert.blockchainStatus === 'ANCHORED') return // déjà ancré
+  // Plan gratuit Découverte : badge volontairement non ancré — ne jamais déclencher Polygon.
+  if (cert.blockchainStatus === 'NOT_ANCHORED') return
 
   const hash = computeCertificateAnchorHash(cert)
 

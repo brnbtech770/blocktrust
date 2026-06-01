@@ -12,12 +12,15 @@ import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
 import { truncateVerificationPublicId } from '@/lib/truncate-public-id'
 import { copyToClipboard } from '@/lib/copy-to-clipboard'
 import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
+import { isNotAnchored } from '@/lib/plan-features'
+import { BlockchainUpgradePrompt } from '@/app/components/ui/BlockchainUpgradePrompt'
 import { Copy, Download, ExternalLink, Check, Link2, Clock, Mail } from 'lucide-react'
 
 interface BadgeData {
   id: string
   publicId: string | null
   status: string
+  blockchainStatus?: string | null
   entity: {
     id: string
     entityType: string
@@ -220,6 +223,7 @@ export default function BadgeDashboardClient({ isAdmin }: BadgeDashboardClientPr
   const badgeId = badgeData.publicId || badgeData.id
   const verifyIdLabel = truncateVerificationPublicId(badgeData.publicId)
   const publicVerifyHref = buildPublicVerifyUrl(badgeId)
+  const notAnchored = isNotAnchored(badgeData.blockchainStatus)
 
   return (
     <>
@@ -264,6 +268,12 @@ export default function BadgeDashboardClient({ isAdmin }: BadgeDashboardClientPr
         </div>
       </div>
 
+      {notAnchored ? (
+        <div className="mb-6">
+          <BlockchainUpgradePrompt />
+        </div>
+      ) : null}
+
       <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30">
           <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">Aperçu du badge</h2>
@@ -277,6 +287,11 @@ export default function BadgeDashboardClient({ isAdmin }: BadgeDashboardClientPr
               />
             </div>
             <p className="mt-4 text-center font-mono text-xs text-white/40">{verifyIdLabel}</p>
+            {notAnchored ? (
+              <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[#BDA76B]/30 bg-[#BDA76B]/10 px-3 py-1 text-center text-xs font-medium text-[#BDA76B]">
+                Badge preview — non certifié sur la blockchain
+              </p>
+            ) : null}
           </div>
         </div>
 
