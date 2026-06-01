@@ -84,13 +84,20 @@ export default function PricingPage() {
       .catch(() => { setPlans([]); setPlansB2B([]) })
   }, [])
 
-  async function handleCheckout(priceId: string) {
+  async function handleCheckout(
+    priceId: string,
+    opts?: { quantity?: number; addonQuantity?: number },
+  ) {
     setLoadingPlan(priceId)
     try {
       const res = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId }),
+        body: JSON.stringify({
+          priceId,
+          ...(opts?.quantity != null ? { quantity: opts.quantity } : {}),
+          ...(opts?.addonQuantity != null ? { addonQuantity: opts.addonQuantity } : {}),
+        }),
       })
       const data = await res.json()
       if (data.url) router.push(data.url)

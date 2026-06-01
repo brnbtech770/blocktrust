@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
 import type { PlanAccordionFeature } from "@/lib/pricing";
 
@@ -28,6 +28,8 @@ export type PlanCardProps = {
   savingBadge?: string;
   /** Petite ligne mutée sous le prix (ex. « facturé 35,88€/an »). */
   billedNote?: string;
+  /** Contrôle additionnel rendu juste avant le CTA (ex. sélecteur de sièges). */
+  extraControl?: ReactNode;
 };
 
 const ICONS = {
@@ -89,6 +91,7 @@ export default function PlanCard({
   priceTaxNote,
   savingBadge,
   billedNote,
+  extraControl,
 }: PlanCardProps) {
   const [open, setOpen] = useState(false);
   const checkColor = mode === "B2B" ? "#00d4ff" : "var(--bt-gold)";
@@ -225,6 +228,8 @@ export default function PlanCard({
           </li>
         ))}
       </ul>
+
+      {extraControl ? <div className="mb-4">{extraControl}</div> : null}
 
       {ctaHref ? (
         <a

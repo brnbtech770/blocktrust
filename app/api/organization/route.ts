@@ -97,7 +97,12 @@ export async function POST(req: Request) {
   const { name } = parsed.data
   const slugBase = slugifyOrgName(name)
   const slug = await uniqueOrgSlug(slugBase)
-  const seats = getOrgUserQuota(planCode)
+  // Sièges achetés au checkout (Team facturé par utilisateur) sinon quota du plan.
+  const sub = await prisma.subscription.findUnique({
+    where: { userId: session.user.id },
+    select: { seats: true },
+  })
+  const seats = sub?.seats ?? getOrgUserQuota(planCode)
 
   const org = await prisma.$transaction(async (tx) => {
     const o = await tx.organization.create({

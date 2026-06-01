@@ -293,6 +293,63 @@ export const STARTER_YEARLY_PER_USER_HT_EUR = 9.99;
 /** CTA landing section entreprises → /pricing?tab=entreprises */
 export const LANDING_CTA_B2B_LABEL = `Starter · ${formatPriceFr(STARTER_YEARLY_PER_USER_HT_EUR)}€ HT/user/mois`;
 
+// ============================================================
+// Add-on Famille (profils supplémentaires) + sièges B2B
+// ============================================================
+
+/** Price IDs Stripe de l'add-on « profil supplémentaire » Famille (env). */
+export const FAMILLE_ADDON_PRICE_IDS = {
+  monthly: process.env.STRIPE_PRICE_FAMILLE_ADDON_MONTHLY,
+  yearly: process.env.STRIPE_PRICE_FAMILLE_ADDON_YEARLY,
+} as const;
+
+/** Add-on Famille — 2,99€/mois/profil (mensuel). */
+export const FAMILLE_ADDON_MONTHLY_EUR = 2.99;
+/** Add-on Famille — 29,88€/an/profil = 2,49€/mois (annuel). */
+export const FAMILLE_ADDON_YEARLY_TOTAL_EUR = 29.88;
+export const FAMILLE_ADDON_YEARLY_PER_MONTH_EUR = 2.49;
+
+/** Profils inclus dans Famille + plafond total (inclus + add-on). */
+export const FAMILLE_INCLUDED_PROFILES = 5;
+export const FAMILLE_MAX_PROFILES = 10;
+/** Nombre maximum de profils supplémentaires achetables (10 - 5). */
+export const FAMILLE_ADDON_MAX = FAMILLE_MAX_PROFILES - FAMILLE_INCLUDED_PROFILES;
+
+/** Bornes de sièges B2B Team (par utilisateur). */
+export const TEAM_SEATS_MIN = 2;
+export const TEAM_SEATS_MAX = 10;
+
+/** Plans B2B facturés à l'unité (par siège). */
+export function isPerSeatPlan(planId: string): boolean {
+  return planId === "TEAM";
+}
+
+/** Retourne le priceId add-on Famille pour le cycle, ou undefined si non configuré. */
+export function getFamilleAddonPriceId(interval: BillingInterval): string | undefined {
+  return FAMILLE_ADDON_PRICE_IDS[interval];
+}
+
+/** True si le priceId correspond à l'add-on Famille (mensuel ou annuel). */
+export function isFamilleAddonPriceId(priceId: string): boolean {
+  return (
+    !!priceId &&
+    (priceId === FAMILLE_ADDON_PRICE_IDS.monthly ||
+      priceId === FAMILLE_ADDON_PRICE_IDS.yearly)
+  );
+}
+
+/** Détermine le cycle (mensuel/annuel) d'un priceId catalogue, ou null. */
+export function getIntervalFromPriceId(priceId: string): BillingInterval | null {
+  for (const plan of [...PLANS_B2C, ...PLANS_B2B]) {
+    if (!plan.prices) continue;
+    if (plan.prices.monthly.priceId === priceId) return "monthly";
+    if (plan.prices.yearly.priceId === priceId) return "yearly";
+  }
+  if (priceId === FAMILLE_ADDON_PRICE_IDS.monthly) return "monthly";
+  if (priceId === FAMILLE_ADDON_PRICE_IDS.yearly) return "yearly";
+  return null;
+}
+
 /** Tous les Price IDs valides (mensuel + annuel) pour B2C et B2B (hors plans gratuits / Enterprise). */
 export function getAllValidPriceIds(): string[] {
   const ids: string[] = [];
