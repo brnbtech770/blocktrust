@@ -1,4 +1,8 @@
-﻿import { SignJWT, jwtVerify, importPKCS8, importSPKI } from "jose";
+﻿/**
+ * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
+ * Tous droits réservés. Code propriétaire — reproduction interdite.
+ */
+import { SignJWT, jwtVerify, importPKCS8, importSPKI } from "jose";
 
 const ALG = "ES256"; // Simple default. You can switch to Ed25519 later.
 

@@ -1,3 +1,7 @@
+/**
+ * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
+ * Tous droits réservés. Code propriétaire — reproduction interdite.
+ */
 // lib/stripe.ts
 // Client Stripe — initialisation **lazy** pour ne pas faire échouer `next build`
 // quand STRIPE_SECRET_KEY est absent (ex. preview Vercel / PR Dependabot sans secrets).

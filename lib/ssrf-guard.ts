@@ -1,3 +1,7 @@
+/**
+ * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
+ * Tous droits réservés. Code propriétaire — reproduction interdite.
+ */
 // lib/ssrf-guard.ts
 // Garde anti-SSRF pour les URLs sortantes contrôlées par l'utilisateur (webhooks
 // White Label). Empêche de pointer un webhook vers des cibles internes :

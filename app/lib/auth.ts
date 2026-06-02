@@ -1,3 +1,7 @@
+/**
+ * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
+ * Tous droits réservés. Code propriétaire — reproduction interdite.
+ */
 import "./auth-env-shim";
 import { NextRequest } from "next/server";
 import { createHash } from "node:crypto";

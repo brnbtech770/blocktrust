@@ -1,4 +1,8 @@
-﻿import crypto from "crypto";
+﻿/**
+ * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
+ * Tous droits réservés. Code propriétaire — reproduction interdite.
+ */
+import crypto from "crypto";
 
 /**
  * Canonicalize + hash a context payload.

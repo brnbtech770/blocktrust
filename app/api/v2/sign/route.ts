@@ -1,3 +1,7 @@
+/**
+ * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
+ * Tous droits réservés. Code propriétaire — reproduction interdite.
+ */
 // app/api/v2/sign/route.ts
 // Génère une signature V2 anti-falsification pour un certificat
 // ============================================================

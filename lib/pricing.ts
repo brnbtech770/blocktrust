@@ -1,3 +1,7 @@
+/**
+ * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
+ * Tous droits réservés. Code propriétaire — reproduction interdite.
+ */
 // lib/pricing.ts
 // Grille tarifaire finale (1er juin 2026) — 4 plans B2C + 3 plans B2B.
 // Le plan Découverte est GRATUIT : aucun priceId Stripe, isFree = true,

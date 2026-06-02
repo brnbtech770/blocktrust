@@ -1,3 +1,7 @@
+/**
+ * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
+ * Tous droits réservés. Code propriétaire — reproduction interdite.
+ */
 // lib/stripe-webhook-idempotency.ts
 // Idempotence des webhooks Stripe via la BASE DE DONNÉES (table ProcessedStripeEvent,
 // clé primaire unique sur eventId). Cas financier critique : on préfère la DB au

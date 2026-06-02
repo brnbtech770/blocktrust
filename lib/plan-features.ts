@@ -1,3 +1,7 @@
+/**
+ * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
+ * Tous droits réservés. Code propriétaire — reproduction interdite.
+ */
 // lib/plan-features.ts
 // Source unique des capacités par plan — en particulier le plan gratuit DISCOVERY.
 // blockchainStatus & Subscription.plan sont des String côté Prisma : DISCOVERY et

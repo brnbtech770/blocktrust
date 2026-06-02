@@ -1,3 +1,7 @@
+/**
+ * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
+ * Tous droits réservés. Code propriétaire — reproduction interdite.
+ */
 // app/api/verify/[id]/route.ts
 // Route publique de vérification V2 — rate limit, anti-fraude, en-têtes no-store
 // ============================================================

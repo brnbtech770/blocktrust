@@ -1,3 +1,7 @@
+/**
+ * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
+ * Tous droits réservés. Code propriétaire — reproduction interdite.
+ */
 // app/api/stripe/webhook/route.ts
 // Gère les événements Stripe (webhooks)
 // ============================================================

@@ -1,3 +1,7 @@
+/**
+ * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
+ * Tous droits réservés. Code propriétaire — reproduction interdite.
+ */
 // lib/polygon.ts
 // Ancrage des hashes de certificats sur Polygon (mainnet 137 ou Amoy 80002).
 // Le hash est embarqué dans le champ `data` d'une transaction value=0 envoyée
