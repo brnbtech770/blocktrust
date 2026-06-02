@@ -73,9 +73,9 @@ async function main() {
     process.env.POLYGON_CONTRACT_ADDRESS?.trim() || BURN_ADDRESS
   const data = ethers.hexlify(ethers.toUtf8Bytes(payload))
 
-  let gasLimit = 25000n
+  let gasLimit = BigInt(25000)
   try {
-    gasLimit = await provider.estimateGas({ to: recipient, value: 0n, data })
+    gasLimit = await provider.estimateGas({ to: recipient, value: BigInt(0), data })
   } catch (err) {
     console.warn(
       '⚠️  estimateGas indisponible, fallback 25000 gas :',
@@ -83,7 +83,7 @@ async function main() {
     )
   }
   const fee = await provider.getFeeData()
-  const gasPrice = fee.maxFeePerGas ?? fee.gasPrice ?? 0n
+  const gasPrice = fee.maxFeePerGas ?? fee.gasPrice ?? BigInt(0)
   const costWei = gasLimit * gasPrice
   const costPol = Number(ethers.formatEther(costWei))
 
