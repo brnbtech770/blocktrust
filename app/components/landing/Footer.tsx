@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Linkedin, Network } from "lucide-react";
+import { Instagram, Linkedin, Network } from "lucide-react";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 
 const links: { label: string; href: string }[] = [
@@ -67,15 +67,26 @@ export default function Footer() {
             <p className="font-syne mb-4 text-sm font-bold uppercase tracking-wider text-white">
               Réseaux
             </p>
-            <a
-              href="https://www.linkedin.com/company/blocktrust"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 text-white/70 transition-all hover:border-bt-cyan/60 hover:text-bt-cyan"
-              aria-label="LinkedIn BlockTrust"
-            >
-              <Linkedin className="h-4 w-4" />
-            </a>
+            <div className="flex items-center gap-3">
+              <a
+                href="https://www.linkedin.com/company/blocktrust"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 text-white/70 transition-all hover:border-bt-cyan/60 hover:text-bt-cyan"
+                aria-label="LinkedIn BlockTrust"
+              >
+                <Linkedin className="h-4 w-4" />
+              </a>
+              <a
+                href="https://www.instagram.com/blocktrust.tech/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 text-white/70 transition-all hover:border-bt-cyan/60 hover:text-bt-cyan"
+                aria-label="Instagram BlockTrust"
+              >
+                <Instagram className="h-4 w-4" />
+              </a>
+            </div>
           </div>
         </div>
 
