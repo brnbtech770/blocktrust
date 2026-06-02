@@ -64,21 +64,6 @@ async function main() {
     });
     console.log(`✅ STRIPE_PRICE_FAMILLE_MONTHLY=${famillePrice.id}`);
 
-    // Famille+ - 24,99€/mois
-    const famillePlusProduct = await stripe.products.create({
-      name: "BlockTrust Famille+",
-      description: "Plan Famille+ - Pour grandes familles",
-    });
-    const famillePlusPrice = await stripe.prices.create({
-      unit_amount: 2499, // 24,99€
-      currency: "eur",
-      recurring: {
-        interval: "month",
-      },
-      product: famillePlusProduct.id,
-    });
-    console.log(`✅ STRIPE_PRICE_FAMILLE_PLUS_MONTHLY=${famillePlusPrice.id}`);
-
     // Plans B2C - Annuel
     console.log("\n📦 Création des plans B2C (Annuel)...\n");
 
@@ -111,16 +96,6 @@ async function main() {
       product: familleProduct.id,
     });
     console.log(`✅ STRIPE_PRICE_FAMILLE_YEARLY=${familleYearly.id}`);
-
-    const famillePlusYearly = await stripe.prices.create({
-      unit_amount: 23990, // 239,90€ (annuel)
-      currency: "eur",
-      recurring: {
-        interval: "year",
-      },
-      product: famillePlusProduct.id,
-    });
-    console.log(`✅ STRIPE_PRICE_FAMILLE_PLUS_YEARLY=${famillePlusYearly.id}`);
 
     // Plans B2B - Mensuel
     console.log("\n📦 Création des plans B2B (Mensuel)...\n");
@@ -155,21 +130,6 @@ async function main() {
     });
     console.log(`✅ STRIPE_PRICE_TEAM_MONTHLY=${teamPrice.id}`);
 
-    // Business - 149€/mois
-    const businessProduct = await stripe.products.create({
-      name: "BlockTrust Business",
-      description: "Plan Business - Pour entreprises",
-    });
-    const businessPrice = await stripe.prices.create({
-      unit_amount: 14900, // 149€
-      currency: "eur",
-      recurring: {
-        interval: "month",
-      },
-      product: businessProduct.id,
-    });
-    console.log(`✅ STRIPE_PRICE_BUSINESS_MONTHLY=${businessPrice.id}`);
-
     // Plans B2B - Annuel
     console.log("\n📦 Création des plans B2B (Annuel)...\n");
 
@@ -193,36 +153,22 @@ async function main() {
     });
     console.log(`✅ STRIPE_PRICE_TEAM_YEARLY=${teamYearly.id}`);
 
-    const businessYearly = await stripe.prices.create({
-      unit_amount: 143040, // 1430,40€ (annuel)
-      currency: "eur",
-      recurring: {
-        interval: "year",
-      },
-      product: businessProduct.id,
-    });
-    console.log(`✅ STRIPE_PRICE_BUSINESS_YEARLY=${businessYearly.id}`);
-
     console.log("\n✨ Tous les prix ont été créés avec succès!");
     console.log("\n📋 Ajoutez ces lignes à votre .env.local:\n");
     console.log("# Plans B2C - Mensuel");
     console.log(`STRIPE_PRICE_ESSENTIEL_MONTHLY=${essentielPrice.id}`);
     console.log(`STRIPE_PRICE_PREMIUM_MONTHLY=${premiumPrice.id}`);
     console.log(`STRIPE_PRICE_FAMILLE_MONTHLY=${famillePrice.id}`);
-    console.log(`STRIPE_PRICE_FAMILLE_PLUS_MONTHLY=${famillePlusPrice.id}`);
     console.log("\n# Plans B2C - Annuel");
     console.log(`STRIPE_PRICE_ESSENTIEL_YEARLY=${essentielYearly.id}`);
     console.log(`STRIPE_PRICE_PREMIUM_YEARLY=${premiumYearly.id}`);
     console.log(`STRIPE_PRICE_FAMILLE_YEARLY=${familleYearly.id}`);
-    console.log(`STRIPE_PRICE_FAMILLE_PLUS_YEARLY=${famillePlusYearly.id}`);
     console.log("\n# Plans B2B - Mensuel");
     console.log(`STRIPE_PRICE_STARTER_MONTHLY=${starterPrice.id}`);
     console.log(`STRIPE_PRICE_TEAM_MONTHLY=${teamPrice.id}`);
-    console.log(`STRIPE_PRICE_BUSINESS_MONTHLY=${businessPrice.id}`);
     console.log("\n# Plans B2B - Annuel");
     console.log(`STRIPE_PRICE_STARTER_YEARLY=${starterYearly.id}`);
     console.log(`STRIPE_PRICE_TEAM_YEARLY=${teamYearly.id}`);
-    console.log(`STRIPE_PRICE_BUSINESS_YEARLY=${businessYearly.id}`);
   } catch (error: any) {
     console.error("❌ Erreur lors de la création des prix:", error.message);
     process.exit(1);

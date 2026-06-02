@@ -39,7 +39,7 @@ export default function CreateOrgForm({ disabled }: { disabled: boolean }) {
   if (disabled) {
     return (
       <p className="rounded-lg border border-white/10 bg-white/[0.03] p-4 text-sm text-white/50">
-        Un abonnement équipe (Solo Pro, Starter, Team ou supérieur) est requis pour créer une organisation.
+        Un abonnement équipe (Starter, Team ou supérieur) est requis pour créer une organisation.
       </p>
     )
   }
