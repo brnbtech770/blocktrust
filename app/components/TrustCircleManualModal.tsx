@@ -46,7 +46,9 @@ export default function TrustCircleManualModal({
       const res = await fetch('/api/upload', { method: 'POST', credentials: 'include', body: form })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Upload échoué')
-      setDocuments((d) => [...d, data.url])
+      // Blob privé : on persiste le `pathname` (relecture via endpoint admin gardé),
+      // pas l'URL publique. Fallback sur url pour rétro-compat.
+      setDocuments((d) => [...d, data.pathname || data.url])
       // Reset input pour permettre de re-uploader le même fichier
       e.target.value = ''
     } catch (err: unknown) {

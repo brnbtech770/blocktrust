@@ -16,6 +16,7 @@ import {
   getKycSiretLimiter,
   getForgotPasswordLimiter,
   getResolveTokenLimiter,
+  getBadgeLimiter,
 } from "@/lib/rate-limit-redis";
 
 export type CostRateResult = { ok: boolean; retryAfter?: number };
@@ -123,4 +124,10 @@ export async function checkForgotPasswordRateLimit(identifier: string): Promise<
 const resolveTokenStore = new Map<string, Window>();
 export async function checkResolveTokenRateLimit(ip: string): Promise<CostRateResult> {
   return costLimit(getResolveTokenLimiter(), resolveTokenStore, ip, 30, 60_000);
+}
+
+// ── QR / badge SVG (anti-énumération) : 120 / min par IP ──
+const badgeStore = new Map<string, Window>();
+export async function checkBadgeRateLimit(ip: string): Promise<CostRateResult> {
+  return costLimit(getBadgeLimiter(), badgeStore, ip, 120, 60_000);
 }

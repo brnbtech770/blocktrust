@@ -89,10 +89,10 @@ export default function AdminDemandesClient({ entries }: { entries: Entry[] }) {
               <td className="px-4 py-4">
                 {docs(e.documents).length > 0 ? (
                   <ul className="space-y-1">
-                    {docs(e.documents).map((url, i, arr) => (
-                      <li key={url}>
+                    {docs(e.documents).map((doc, i, arr) => (
+                      <li key={doc}>
                         <a
-                          href={url}
+                          href={`/api/admin/demandes/document?path=${encodeURIComponent(doc)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 rounded-md border border-bt-cyan/25 bg-bt-cyan/5 px-2 py-1 text-xs text-bt-cyan/90 transition hover:border-bt-cyan/60 hover:bg-bt-cyan/15 hover:text-bt-cyan"

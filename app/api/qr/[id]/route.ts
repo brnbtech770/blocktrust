@@ -4,13 +4,23 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
+import { checkBadgeRateLimit } from '@/lib/rate-limit-cost'
 import QRCode from 'qrcode'
+
+function clientIp(req: NextRequest): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+}
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Anti-énumération de certificats : limite IP.
+    if (!(await checkBadgeRateLimit(clientIp(req))).ok) {
+      return new NextResponse('Too Many Requests', { status: 429 })
+    }
+
     const resolvedParams = await params
     const id = resolvedParams.id
     const format = req.nextUrl.searchParams.get('format') || 'png' // png, svg, jpeg

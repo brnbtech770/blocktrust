@@ -105,13 +105,17 @@ export async function POST(req: NextRequest) {
       `${prefix}/${session.user.id}/${safeUploadFilename(file.name || 'upload')}`,
       file,
       {
-        access: 'public',
+        // RGPD : pièces d'identité / justificatifs = données sensibles. Stockage PRIVÉ
+        // (jamais accessible publiquement par URL). La lecture passe par un endpoint
+        // admin authentifié qui streame le blob.
+        access: 'private',
         addRandomSuffix: true,
         contentType: file.type,
         token,
       },
     )
 
+    // On renvoie le `pathname` (stable) : c'est lui qui sert à la relecture privée.
     return NextResponse.json({ url: blob.url, pathname: blob.pathname })
   } catch (err) {
     // NE PAS logger le token / contenu du fichier

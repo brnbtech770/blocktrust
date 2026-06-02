@@ -9,11 +9,9 @@ const { privateKey, publicKey } = generateKeyPairSync('ec', {
 const privateKeyPem = privateKey.export({ type: 'pkcs8', format: 'pem' });
 const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' });
 
-console.log('✅ Clés JWT générées avec succès!\n');
-console.log('BLOCKTRUST_JWT_PRIVATE_KEY=');
-console.log(privateKeyPem);
-console.log('\nBLOCKTRUST_JWT_PUBLIC_KEY=');
-console.log(publicKeyPem);
+// SÉCURITÉ : ne JAMAIS imprimer les clés (surtout la privée) en stdout.
+// On les écrit uniquement dans .env.local (gitignored).
+console.log('✅ Clés JWT (ES256) générées.');
 
 // Ajouter au fichier .env.local
 const envLocalPath = join(process.cwd(), '.env.local');

@@ -5,9 +5,14 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
+import { checkBadgeRateLimit } from '@/lib/rate-limit-cost'
 import QRCode from 'qrcode'
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
+
+function clientIp(req: NextRequest): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+}
 
 const DIMS = {
   sm: { w: 240, h: 280 },
@@ -41,6 +46,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Anti-énumération de certificats / noms d'entités : limite IP.
+    if (!(await checkBadgeRateLimit(clientIp(req))).ok) {
+      return new NextResponse('Too Many Requests', { status: 429 })
+    }
+
     const { id } = await params
     const rawSize = req.nextUrl.searchParams.get('size') ?? 'md'
     const size = (rawSize in DIMS ? rawSize : 'md') as SizeKey

@@ -108,6 +108,10 @@ export const getForgotPasswordLimiter = () => getLimiter("bt:forgot", 3, "1 h");
 // Résolution de token rotatif /api/verify/resolve-token (anti brute-force) : 30 / min par IP
 export const getResolveTokenLimiter = () => getLimiter("bt:resolvetoken", 30, "1 m");
 
+// Génération QR / badge SVG (anti-énumération de certificats/noms) : 120 / min par IP
+// Limite volontairement généreuse : ces ressources sont parfois embarquées (img) et chargées en série.
+export const getBadgeLimiter = () => getLimiter("bt:badge", 120, "1 m");
+
 // API extension Chrome TrustScan — par hash de clé (jamais la clé en clair)
 export const getExtensionVerifyLimiter = () => getLimiter("bt:extension:verify", 100, "1 m");
 export const getExtensionWriteLimiter = () => getLimiter("bt:extension:write", 30, "1 m");
