@@ -13,6 +13,11 @@ const CONTENT_SECURITY_POLICY = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
+  // L5 (sécurité) — CHANTIER DÉDIÉ : durcir la CSP avec des nonces (Next 16 les supporte)
+  // pour retirer 'unsafe-inline' / 'unsafe-eval'. NON fait ici volontairement : le passage
+  // aux nonces touche le rendu (scripts/styles inline de Next, Stripe.js, hydratation) et
+  // doit être validé page par page pour ne rien casser. À traiter dans un ticket isolé,
+  // avec Report-Only en préprod avant enforcement. Voir docs sécurité.
   [
     "script-src",
     "'self'",

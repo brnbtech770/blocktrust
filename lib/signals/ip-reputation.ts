@@ -58,6 +58,17 @@ export async function checkIpReputation(ip: string): Promise<IpReputationResult>
       }
     }
 
+    // ⚠️ RGPD — TRANSFERT D'IP À UN TIERS (AbuseIPDB)
+    // L'adresse IP brute est une donnée à caractère personnel. Cet appel transmet
+    // l'IP du visiteur à AbuseIPDB (sous-traitant / destinataire tiers, hors UE).
+    // Base légale : intérêt légitime (art. 6.1.f RGPD) — prévention de la fraude et
+    // de l'abus sur un service de certification d'identité.
+    // ACTIONS REGISTRE DES TRAITEMENTS (Laurianne / DPO) :
+    //   - Inscrire ce transfert au registre (finalité : anti-fraude / scoring de risque).
+    //   - Vérifier l'existence d'un DPA / clauses contractuelles types avec AbuseIPDB.
+    //   - Documenter la durée de conservation (cache 90 j) et l'information des personnes
+    //     (mention dans la politique de confidentialité).
+    //   - Évaluer la pertinence d'une pseudonymisation/anonymisation préalable.
     const res = await fetch(
       `https://api.abuseipdb.com/api/v2/check?ipAddress=${encodeURIComponent(trimmed)}&maxAgeInDays=90`,
       {
