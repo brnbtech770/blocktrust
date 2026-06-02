@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockGetRequest } from './helpers/mock-request'
+import { mockGetRequest, mockPostRequest } from './helpers/mock-request'
 
 function mockPatchRequest(path: string, body: string): NextRequest {
   return new NextRequest(`http://localhost${path}`, {
@@ -15,6 +15,7 @@ const prismaMock = vi.hoisted(() => ({
     findMany: vi.fn(),
     findUnique: vi.fn(),
     update: vi.fn(),
+    create: vi.fn(),
     count: vi.fn(),
   },
   certificate: { count: vi.fn() },
@@ -38,7 +39,7 @@ vi.mock('@/lib/trustscore', () => ({
 
 import { requireAdminPage } from '@/app/lib/require-admin-page'
 import { GET as getAdminStats } from '@/app/api/admin/stats/route'
-import { GET as getAdminUsers } from '@/app/api/admin/users/route'
+import { GET as getAdminUsers, POST as createTestUser } from '@/app/api/admin/users/route'
 import { PATCH as approveKyc } from '@/app/api/admin/kyc/[userId]/approve/route'
 import { PATCH as rejectKyc } from '@/app/api/admin/kyc/[userId]/reject/route'
 
@@ -158,5 +159,69 @@ describe('Admin — clients / users', () => {
 
     expect(res.status).toBe(403)
     expect(prismaMock.user.findMany).not.toHaveBeenCalled()
+  })
+
+  it('liste users → 500 si la DB échoue (catch)', async () => {
+    authMock.mockResolvedValue({ user: { email: ADMIN_EMAIL, id: 'admin-1' } })
+    prismaMock.user.findMany.mockRejectedValue(new Error('db down'))
+
+    const res = await getAdminUsers(mockGetRequest('/api/admin/users'))
+
+    expect(res.status).toBe(500)
+    const data = await res.json()
+    expect(data.error).toContain('Erreur lors de la récupération')
+  })
+
+  it('POST création user de test → 403 sans admin', async () => {
+    authMock.mockResolvedValue({ user: { email: 'user@example.com', id: 'u1' } })
+
+    const res = await createTestUser(
+      mockPostRequest('/api/admin/users', JSON.stringify({ test: true })),
+    )
+
+    expect(res.status).toBe(403)
+    expect(prismaMock.user.create).not.toHaveBeenCalled()
+  })
+
+  it('POST → 400 si le corps ne contient pas test:true', async () => {
+    authMock.mockResolvedValue({ user: { email: ADMIN_EMAIL, id: 'admin-1' } })
+
+    const res = await createTestUser(
+      mockPostRequest('/api/admin/users', JSON.stringify({ foo: 'bar' })),
+    )
+
+    expect(res.status).toBe(400)
+    expect(prismaMock.user.create).not.toHaveBeenCalled()
+  })
+
+  it('POST test:true → 201 et crée un compte de test', async () => {
+    authMock.mockResolvedValue({ user: { email: ADMIN_EMAIL, id: 'admin-1' } })
+    prismaMock.user.create.mockResolvedValue({
+      id: 'test-1',
+      email: 'test+abcd@blocktrust.test',
+      name: 'Utilisateur test abcd',
+    })
+
+    const res = await createTestUser(
+      mockPostRequest('/api/admin/users', JSON.stringify({ test: true })),
+    )
+
+    expect(res.status).toBe(201)
+    const data = await res.json()
+    expect(data.user.id).toBe('test-1')
+    expect(prismaMock.user.create).toHaveBeenCalledTimes(1)
+  })
+
+  it('POST → 500 si la création DB échoue (catch)', async () => {
+    authMock.mockResolvedValue({ user: { email: ADMIN_EMAIL, id: 'admin-1' } })
+    prismaMock.user.create.mockRejectedValue(new Error('insert failed'))
+
+    const res = await createTestUser(
+      mockPostRequest('/api/admin/users', JSON.stringify({ test: true })),
+    )
+
+    expect(res.status).toBe(500)
+    const data = await res.json()
+    expect(data.error).toBe('insert failed')
   })
 })

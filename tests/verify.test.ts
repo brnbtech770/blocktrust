@@ -203,6 +203,29 @@ describe('/verify public flow (GET /api/public/certificate/:id)', () => {
     const data = await res.json()
     expect(data.verdict).toBe('FRAUD')
   })
+
+  it('badge Découverte non ancré (NOT_ANCHORED) = VALID, sans prétendre à un ancrage', async () => {
+    prismaMock.certificate.findFirst.mockResolvedValue({
+      ...activeCertificate(VALID_CERT_ID),
+      txHash: null,
+      polygonTxHash: null,
+      blockchainStatus: 'NOT_ANCHORED' as const,
+    })
+
+    const res = await getPublicCertificate(
+      mockGetRequest(`/api/public/certificate/${VALID_CERT_ID}`),
+      { params: Promise.resolve({ id: VALID_CERT_ID }) },
+    )
+    const data = await res.json()
+
+    expect(res.status).toBe(200)
+    // Un badge Découverte légitime ne doit pas être qualifié de frauduleux/invalide.
+    expect(data.verdict).toBe('VALID')
+    // Honnêteté : pas d'ancrage blockchain annoncé pour un badge preview gratuit.
+    expect(data.polygonAnchored).toBe(false)
+    // Anonyme : score détaillé toujours masqué.
+    expect(data.trustEngine).toBeUndefined()
+  })
 })
 
 describe('GET /api/public/verify/:id (White Label)', () => {
