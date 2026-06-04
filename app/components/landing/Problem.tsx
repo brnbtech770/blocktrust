@@ -1,42 +1,22 @@
 "use client";
 
-import { Shield, User, AlertTriangle, MailWarning, type LucideIcon } from "lucide-react";
+import { User, Building2, X } from "lucide-react";
 import Reveal from "./Reveal";
 
-type Card = {
-  icon: LucideIcon;
-  iconColor: string;
-  title: string;
-  text: string;
-  featured?: boolean;
-};
+const particuliers: string[] = [
+  "Faux SMS / faux emails",
+  "Faux artisans, faux vendeurs",
+  "Faux conseillers bancaires",
+  "Faux profils sur les marketplaces",
+  "Faux RIB",
+];
 
-const cards: Card[] = [
-  {
-    icon: Shield,
-    iconColor: "#E05252",
-    title: "Usurpation d'identité",
-    text: "Des fraudeurs copient votre email, votre site, vos coordonnées bancaires pour tromper vos contacts.",
-  },
-  {
-    icon: User,
-    iconColor: "#E8943A",
-    title: "Faux profils professionnels",
-    text: "N'importe qui peut se faire passer pour vous sur LinkedIn, email ou WhatsApp.",
-  },
-  {
-    icon: AlertTriangle,
-    iconColor: "#D4B355",
-    title: "Perte de confiance client",
-    text: "Une arnaque associée à votre nom suffit à détruire des années de réputation.",
-  },
-  {
-    icon: MailWarning,
-    iconColor: "#E05252",
-    title: "Un faux vous circule déjà",
-    text: "Une lettre change dans l'adresse email, le nom de domaine, le numéro de téléphone. Vos contacts se font arnaquer en croyant vous contacter. Sans BLOCKTRUST, vous ne le saurez jamais.",
-    featured: true,
-  },
+const professionnels: string[] = [
+  "Fraude au président",
+  "Faux fournisseurs / faux clients",
+  "Usurpation d'identité",
+  "Faux partenaires",
+  "Faux wallets / faux projets Web3",
 ];
 
 export default function Problem() {
@@ -50,42 +30,67 @@ export default function Problem() {
           Le problème
         </p>
         <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-snug text-white sm:text-3xl">
-          Chaque jour, des milliers d&apos;arnaques exploitent votre{" "}
-          <span className="text-red-400">identité digitale</span>
+          L&apos;usurpation de confiance est devenue la{" "}
+          <span className="text-red-400">norme</span>.
         </h2>
+        <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
+          Recevoir un email, un appel, un document ou une demande de paiement ne garantit plus
+          que l&apos;interlocuteur est légitime.
+          <br />
+          Le problème n&apos;est pas seulement l&apos;identité — c&apos;est la confiance.
+        </p>
       </Reveal>
 
-      <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
-        {cards.map((card, i) => {
-          const Icon = card.icon;
-          return (
-            <Reveal
-              key={card.title}
-              delay={150 * i}
-              className="group relative rounded-xl border border-red-500/20 bg-white/5 p-6 backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-red-500/40 hover:bg-white/[0.07]"
+      <div className="mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-5 sm:grid-cols-2 lg:gap-6">
+        <Reveal className="rounded-xl border border-red-500/20 bg-white/5 p-6 backdrop-blur-sm">
+          <div className="mb-5 flex items-center gap-3">
+            <div
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg"
+              style={{ background: "rgba(224,82,82,0.1)", border: "1px solid rgba(224,82,82,0.25)" }}
             >
-              {card.featured && (
-                <span className="neon-red absolute top-3 right-3 rounded-full border border-red-500/30 bg-red-500/15 px-2 py-0.5 text-xs font-semibold uppercase tracking-wider">
-                  Menace entrante
-                </span>
-              )}
-              <div
-                className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-lg"
-                style={{
-                  background: `${card.iconColor}1a`,
-                  border: `1px solid ${card.iconColor}40`,
-                }}
-              >
-                <Icon className="h-6 w-6" style={{ color: card.iconColor }} />
-              </div>
-              <h3 className="font-syne mb-2 text-base font-semibold text-white">
-                {card.title}
-              </h3>
-              <p className="text-sm leading-relaxed text-white/70">{card.text}</p>
-            </Reveal>
-          );
-        })}
+              <User className="h-5 w-5" style={{ color: "#E05252" }} />
+            </div>
+            <h3 className="font-syne text-base font-semibold text-white">Particuliers</h3>
+          </div>
+          <ul className="space-y-2.5">
+            {particuliers.map((item) => (
+              <li key={item} className="flex items-start gap-2.5 text-sm leading-relaxed text-white/70">
+                <X className="mt-0.5 h-4 w-4 shrink-0 text-red-400/70" strokeWidth={2.5} aria-hidden />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+
+        <Reveal delay={150} className="rounded-xl border border-red-500/20 bg-white/5 p-6 backdrop-blur-sm">
+          <div className="mb-5 flex items-center gap-3">
+            <div
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg"
+              style={{ background: "rgba(224,82,82,0.1)", border: "1px solid rgba(224,82,82,0.25)" }}
+            >
+              <Building2 className="h-5 w-5" style={{ color: "#E05252" }} />
+            </div>
+            <h3 className="font-syne text-base font-semibold text-white">Professionnels</h3>
+          </div>
+          <ul className="space-y-2.5">
+            {professionnels.map((item) => (
+              <li key={item} className="flex items-start gap-2.5 text-sm leading-relaxed text-white/70">
+                <X className="mt-0.5 h-4 w-4 shrink-0 text-red-400/70" strokeWidth={2.5} aria-hidden />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
       </div>
+
+      <Reveal delay={250} className="mx-auto mt-10 max-w-2xl text-center">
+        <p className="text-sm leading-relaxed text-white/70 sm:text-base">
+          Dans tous ces cas, la question est la même :
+        </p>
+        <p className="mt-2 font-syne text-lg font-semibold italic leading-snug text-bt-cyan sm:text-xl">
+          « Puis-je faire confiance à cette interaction ? »
+        </p>
+      </Reveal>
     </section>
   );
 }

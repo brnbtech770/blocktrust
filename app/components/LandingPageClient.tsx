@@ -10,6 +10,8 @@ import Solution from "./landing/Solution";
 import Particuliers from "./landing/Particuliers";
 import Entreprises from "./landing/Entreprises";
 import Integration from "./landing/Integration";
+import TrustMonitoring from "./landing/TrustMonitoring";
+import TrustGraph from "./landing/TrustGraph";
 import PricingTeaser from "./landing/PricingTeaser";
 import FinalCTA from "./landing/FinalCTA";
 import Footer from "./landing/Footer";
@@ -26,12 +28,14 @@ export default function LandingPageClient({ threatAlert }: { threatAlert: ReactN
         <Hero />
         <Problem />
         <QuickUnderstand />
+        <Solution />
         <Categories />
         {threatAlert}
-        <Solution />
         <Particuliers />
         <Entreprises />
         <Integration />
+        <TrustMonitoring />
+        <TrustGraph />
         <PricingTeaser />
         <FinalCTA />
       </main>

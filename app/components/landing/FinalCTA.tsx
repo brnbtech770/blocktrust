@@ -1,8 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { Anchor, Award, ShieldCheck, KeyRound, type LucideIcon } from "lucide-react";
 import Reveal from "./Reveal";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
+
+const proofs: { icon: LucideIcon; text: string }[] = [
+  { icon: Anchor, text: "Ancrage Bitcoin (OpenTimestamp, 29 mai 2026) — preuve d'antériorité publique" },
+  { icon: Award, text: "Marque déposée BLOCKTRUST™ n°5253718 (INPI, 30 avril 2026)" },
+  { icon: ShieldCheck, text: "Données hébergées en Europe · Conformité RGPD" },
+  { icon: KeyRound, text: "Cryptographie ES256 + ancrage Polygon Mainnet" },
+];
 
 export default function FinalCTA() {
   return (
@@ -32,12 +40,11 @@ export default function FinalCTA() {
         </div>
 
         <h2 className="font-syne mx-auto mt-6 max-w-2xl text-2xl font-semibold leading-snug text-white sm:text-3xl">
-          Prêt à sécuriser votre{" "}
-          <span className="text-bt-cyan">identité digitale&nbsp;?</span>
+          Commencez à construire votre{" "}
+          <span className="text-bt-cyan">réputation vérifiable.</span>
         </h2>
         <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-white/75 sm:text-base">
-          Rejoignez les professionnels qui font confiance à BLOCKTRUST pour protéger
-          chacune de leurs interactions.
+          Gratuit. Sans carte bancaire. Badge actif en moins d&apos;une minute.
         </p>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
@@ -45,19 +52,36 @@ export default function FinalCTA() {
             href="/auth/register"
             className="inline-flex min-h-[52px] w-full items-center justify-center rounded-xl bg-bt-cyan px-8 py-4 text-sm font-bold text-navy shadow-glow-cyan transition-all hover:scale-[1.04] hover:bg-[#21dfff] sm:w-auto sm:text-base"
           >
-            Créer mon badge maintenant
+            Créer mon badge gratuitement
           </Link>
           <Link
             href="/pricing"
             className="inline-flex min-h-[52px] w-full items-center justify-center rounded-xl border border-white/20 px-8 py-4 text-sm font-semibold text-white transition-all hover:border-white/40 hover:bg-white/5 sm:w-auto sm:text-base"
           >
-            Comparer les plans
+            Voir les tarifs
           </Link>
         </div>
 
-        <p className="mt-5 text-xs text-white/55 sm:text-sm">
-          Sans engagement — Annulable à tout moment
+        <p className="mx-auto mt-5 max-w-md text-xs leading-relaxed text-white/55 sm:text-sm">
+          Le plan Découverte est gratuit. Aucun engagement. Passez au plan payant quand vous en avez
+          besoin.
         </p>
+
+        {/* Preuves (S7) */}
+        <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-3 border-t border-white/10 pt-8 sm:grid-cols-2">
+          {proofs.map((p) => {
+            const Icon = p.icon;
+            return (
+              <div
+                key={p.text}
+                className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-left"
+              >
+                <Icon className="mt-0.5 h-4 w-4 shrink-0 text-bt-cyan" aria-hidden />
+                <span className="text-xs leading-relaxed text-white/65">{p.text}</span>
+              </div>
+            );
+          })}
+        </div>
       </Reveal>
     </section>
   );
