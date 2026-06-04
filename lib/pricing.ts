@@ -328,6 +328,14 @@ export function isPerSeatPlan(planId: string): boolean {
   return planId === "TEAM";
 }
 
+/** Identifiants des plans B2C (particuliers), gratuit inclus. */
+const B2C_PLAN_IDS = new Set<string>(PLANS_B2C.map((p) => p.id));
+
+/** True si le planId est un plan B2C (particulier) → soumis au droit de rétractation. */
+export function isB2CPlanId(planId: string): boolean {
+  return B2C_PLAN_IDS.has(planId);
+}
+
 /** Retourne le priceId add-on Famille pour le cycle, ou undefined si non configuré. */
 export function getFamilleAddonPriceId(interval: BillingInterval): string | undefined {
   return FAMILLE_ADDON_PRICE_IDS[interval];

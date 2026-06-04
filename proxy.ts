@@ -56,6 +56,11 @@ function isProtectedVerifySubpath(pathname: string): boolean {
   return pathname.startsWith('/verify/')
 }
 
+/** Tunnel de paiement (/checkout/*) : session requise. */
+function isProtectedCheckoutPath(pathname: string): boolean {
+  return pathname === '/checkout' || pathname.startsWith('/checkout/')
+}
+
 function isProtectedApi(pathname: string): boolean {
   const isProtectedStripeApi =
     pathname.startsWith('/api/stripe') && !pathname.includes('/webhook')
@@ -132,7 +137,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if (isProtectedVerifySubpath(pathname)) {
+  if (isProtectedVerifySubpath(pathname) || isProtectedCheckoutPath(pathname)) {
     const signInRedirect = () => {
       const signInUrl = new URL('/auth/signin', request.url)
       signInUrl.searchParams.set(
@@ -150,7 +155,7 @@ export async function proxy(request: NextRequest) {
     } catch (error) {
       // Fail-CLOSED : une erreur de vérification JWT sur une route protégée ne doit
       // JAMAIS laisser passer (le /verify public n'est pas un « protected subpath »).
-      console.error('Proxy verify redirect:', error)
+      console.error('Proxy protected redirect:', error)
       return signInRedirect()
     }
   }
@@ -228,6 +233,8 @@ export const config = {
     '/admin/:path*',
     '/verify',
     '/verify/:path*',
+    '/checkout',
+    '/checkout/:path*',
     '/api/debug-auth',
     '/api/certificates/:path*',
     '/api/entities/:path*',

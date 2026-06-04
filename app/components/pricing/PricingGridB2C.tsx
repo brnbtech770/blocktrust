@@ -64,8 +64,8 @@ type Props = {
 
 function signinCheckoutCallbackUrl(priceId: string, addonQuantity?: number) {
   const a = addonQuantity ? `&addonQuantity=${addonQuantity}` : ''
-  const apiPath = `/api/stripe/create-checkout?priceId=${encodeURIComponent(priceId)}${a}`
-  return `/auth/signin?callbackUrl=${encodeURIComponent(apiPath)}`
+  const confirmPath = `/checkout/confirm?priceId=${encodeURIComponent(priceId)}${a}`
+  return `/auth/signin?callbackUrl=${encodeURIComponent(confirmPath)}`
 }
 
 function ProfileAddonSelector({

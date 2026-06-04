@@ -84,29 +84,17 @@ export default function PricingPage() {
       .catch(() => { setPlans([]); setPlansB2B([]) })
   }, [])
 
-  async function handleCheckout(
+  // Redirige vers l'écran de confirmation (acceptation CGU/CGV + renonciation B2C)
+  // qui recueille le consentement avant la création de la session Stripe.
+  function handleCheckout(
     priceId: string,
     opts?: { quantity?: number; addonQuantity?: number },
   ) {
     setLoadingPlan(priceId)
-    try {
-      const res = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId,
-          ...(opts?.quantity != null ? { quantity: opts.quantity } : {}),
-          ...(opts?.addonQuantity != null ? { addonQuantity: opts.addonQuantity } : {}),
-        }),
-      })
-      const data = await res.json()
-      if (data.url) router.push(data.url)
-      else throw new Error(data.error || 'Erreur')
-    } catch (err) {
-      console.error('Checkout error:', err)
-    } finally {
-      setLoadingPlan(null)
-    }
+    const search = new URLSearchParams({ priceId })
+    if (opts?.quantity != null) search.set('quantity', String(opts.quantity))
+    if (opts?.addonQuantity != null) search.set('addonQuantity', String(opts.addonQuantity))
+    router.push(`/checkout/confirm?${search.toString()}`)
   }
 
   const currentPlan = (session?.user as { plan?: string } | null)?.plan ?? null

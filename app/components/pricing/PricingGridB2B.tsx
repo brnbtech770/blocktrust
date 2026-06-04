@@ -51,8 +51,8 @@ type Props = {
 
 function signinCheckoutCallbackUrl(priceId: string, quantity?: number) {
   const q = quantity != null ? `&quantity=${quantity}` : ''
-  const apiPath = `/api/stripe/create-checkout?priceId=${encodeURIComponent(priceId)}${q}`
-  return `/auth/signin?callbackUrl=${encodeURIComponent(apiPath)}`
+  const confirmPath = `/checkout/confirm?priceId=${encodeURIComponent(priceId)}${q}`
+  return `/auth/signin?callbackUrl=${encodeURIComponent(confirmPath)}`
 }
 
 function SeatSelector({

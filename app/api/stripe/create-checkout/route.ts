@@ -14,12 +14,22 @@ import {
   getIntervalFromPriceId,
   getFamilleAddonPriceId,
   isPerSeatPlan,
+  isB2CPlanId,
   TEAM_SEATS_MIN,
   TEAM_SEATS_MAX,
   FAMILLE_ADDON_MAX,
 } from '@/lib/pricing'
+import { LEGAL_DOC_VERSION } from '@/lib/legal'
 
 type CheckoutQuantities = { quantity?: number; addonQuantity?: number }
+
+/** Consentement contractuel recueilli avant la création de la session de paiement. */
+type CheckoutConsent = {
+  /** Acceptation des CGU + CGV (obligatoire, contrôlée aussi par le schéma Zod). */
+  acceptedTerms: boolean
+  /** Renonciation B2C à l'exécution immédiate (art. 10 CGV) — particuliers uniquement. */
+  waiver?: boolean
+}
 
 /**
  * Valide et normalise les quantités côté serveur (defense-in-depth).
@@ -64,7 +74,13 @@ async function createStripeCheckoutUrlForSessionUser(
   email: string,
   priceId: string,
   quantities: CheckoutQuantities = {},
+  consent: CheckoutConsent,
 ): Promise<string> {
+  // Contrôle serveur (defense-in-depth) : pas de session sans acceptation CGU+CGV.
+  if (consent.acceptedTerms !== true) {
+    throw Object.assign(new Error('Acceptation des CGU et CGV requise'), { status: 400 })
+  }
+
   const user = await prisma.user.findUnique({
     where: { email },
   })
@@ -79,6 +95,21 @@ async function createStripeCheckoutUrlForSessionUser(
 
   const planId = getPlanIdFromPriceId(priceId) ?? ''
   const { seatQuantity, addonQuantity } = resolveQuantities(planId, quantities)
+
+  // Trace horodatée du consentement (preuve) — écrite avant la création de session.
+  // La renonciation au droit de rétractation ne concerne que les particuliers (B2C).
+  const isB2C = isB2CPlanId(planId)
+  const now = new Date()
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      cguAcceptedAt: now,
+      cguVersion: LEGAL_DOC_VERSION,
+      cgvAcceptedAt: now,
+      cgvVersion: LEGAL_DOC_VERSION,
+      ...(isB2C && consent.waiver === true ? { retractationWaiverAt: now } : {}),
+    },
+  })
 
   let stripeCustomerId = user.stripeCustomerId
 
@@ -140,11 +171,28 @@ async function createStripeCheckoutUrlForSessionUser(
     lineItems.push({ price: addonPriceId, quantity: addonQuantity })
   }
 
+  // Complément (non substitut) à notre trace DB : case ToS rendue et bloquée par Stripe.
+  // Activé uniquement si STRIPE_TOS_CONSENT=1 ET qu'une "Terms of service URL" est
+  // configurée dans le Dashboard Stripe (sinon Stripe refuse la création de session).
+  const tosConsent = process.env.STRIPE_TOS_CONSENT === '1'
+  const consentParams = tosConsent
+    ? {
+        consent_collection: { terms_of_service: 'required' as const },
+        custom_text: {
+          terms_of_service_acceptance: {
+            message:
+              "J'accepte les Conditions générales d'utilisation et de vente de BLOCKTRUST.",
+          },
+        },
+      }
+    : {}
+
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: 'subscription',
     customer: stripeCustomerId,
     payment_method_types: ['card'],
     line_items: lineItems,
+    ...consentParams,
     success_url: `${baseUrl}/onboarding/verify`,
     cancel_url: `${baseUrl}/pricing`,
     metadata: {
@@ -152,6 +200,8 @@ async function createStripeCheckoutUrlForSessionUser(
       planId,
       seats: String(seatQuantity),
       extraProfiles: String(addonQuantity),
+      cgvVersion: LEGAL_DOC_VERSION,
+      retractationWaiver: isB2C && consent.waiver === true ? 'true' : 'false',
     },
   })
 
@@ -166,6 +216,10 @@ const postCheckoutSchema = z.object({
   priceId: z.string().min(1).max(128),
   quantity: z.number().int().min(1).max(TEAM_SEATS_MAX).optional(),
   addonQuantity: z.number().int().min(0).max(FAMILLE_ADDON_MAX).optional(),
+  // Acceptation CGU+CGV obligatoire : z.literal(true) => 400 si absent ou false.
+  acceptedTerms: z.literal(true),
+  // Renonciation B2C (art. 10 CGV) — optionnelle, prise en compte pour les particuliers.
+  waiver: z.boolean().optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -186,12 +240,14 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 })
     }
-    const { priceId, quantity, addonQuantity } = parsed.data
+    const { priceId, quantity, addonQuantity, acceptedTerms, waiver } = parsed.data
 
-    const url = await createStripeCheckoutUrlForSessionUser(session.user.email, priceId, {
-      quantity,
-      addonQuantity,
-    })
+    const url = await createStripeCheckoutUrlForSessionUser(
+      session.user.email,
+      priceId,
+      { quantity, addonQuantity },
+      { acceptedTerms, waiver },
+    )
     return NextResponse.json({ url })
   } catch (error: unknown) {
     console.error('❌ Erreur création session Stripe:', error)
@@ -206,7 +262,9 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Permet d'utiliser callbackUrl=/api/stripe/create-checkout?priceId=... après /auth/signin.
+ * Compatibilité callbackUrl=/api/stripe/create-checkout?priceId=... après /auth/signin.
+ * Ne crée PLUS de session directement : redirige vers /checkout/confirm afin que
+ * l'acceptation CGU+CGV (et la renonciation B2C) soit toujours recueillie avant paiement.
  */
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -218,25 +276,15 @@ export async function GET(req: NextRequest) {
   }
 
   const priceId = req.nextUrl.searchParams.get('priceId')
-  const pricing = new URL('/pricing', req.url)
-
   if (!priceId) {
-    return NextResponse.redirect(pricing)
+    return NextResponse.redirect(new URL('/pricing', req.url))
   }
 
-  const rawQuantity = req.nextUrl.searchParams.get('quantity')
-  const rawAddon = req.nextUrl.searchParams.get('addonQuantity')
-  const quantity = rawQuantity ? Number(rawQuantity) : undefined
-  const addonQuantity = rawAddon ? Number(rawAddon) : undefined
-
-  try {
-    const url = await createStripeCheckoutUrlForSessionUser(session.user.email, priceId, {
-      quantity: Number.isFinite(quantity) ? quantity : undefined,
-      addonQuantity: Number.isFinite(addonQuantity) ? addonQuantity : undefined,
-    })
-    return NextResponse.redirect(url)
-  } catch (error) {
-    console.error('❌ Erreur création session Stripe (GET):', error)
-    return NextResponse.redirect(pricing)
-  }
+  const confirm = new URL('/checkout/confirm', req.url)
+  confirm.searchParams.set('priceId', priceId)
+  const quantity = req.nextUrl.searchParams.get('quantity')
+  const addonQuantity = req.nextUrl.searchParams.get('addonQuantity')
+  if (quantity) confirm.searchParams.set('quantity', quantity)
+  if (addonQuantity) confirm.searchParams.set('addonQuantity', addonQuantity)
+  return NextResponse.redirect(confirm)
 }
