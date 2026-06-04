@@ -97,8 +97,11 @@ async function createStripeCheckoutUrlForSessionUser(
   const { seatQuantity, addonQuantity } = resolveQuantities(planId, quantities)
 
   // Trace horodatée du consentement (preuve) — écrite avant la création de session.
-  // La renonciation au droit de rétractation ne concerne que les particuliers (B2C).
+  // La renonciation au droit de rétractation ne concerne que les particuliers (B2C) :
+  // double garde — plan B2C ET compte PERSONAL (jamais pour un compte BUSINESS).
   const isB2C = isB2CPlanId(planId)
+  const isPersonal = user.accountType === 'PERSONAL'
+  const recordWaiver = isB2C && isPersonal && consent.waiver === true
   const now = new Date()
   await prisma.user.update({
     where: { id: user.id },
@@ -107,7 +110,7 @@ async function createStripeCheckoutUrlForSessionUser(
       cguVersion: LEGAL_DOC_VERSION,
       cgvAcceptedAt: now,
       cgvVersion: LEGAL_DOC_VERSION,
-      ...(isB2C && consent.waiver === true ? { retractationWaiverAt: now } : {}),
+      ...(recordWaiver ? { retractationWaiverAt: now } : {}),
     },
   })
 
@@ -201,7 +204,7 @@ async function createStripeCheckoutUrlForSessionUser(
       seats: String(seatQuantity),
       extraProfiles: String(addonQuantity),
       cgvVersion: LEGAL_DOC_VERSION,
-      retractationWaiver: isB2C && consent.waiver === true ? 'true' : 'false',
+      retractationWaiver: recordWaiver ? 'true' : 'false',
     },
   })
 
