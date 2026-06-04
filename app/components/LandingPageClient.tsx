@@ -11,7 +11,10 @@ import Particuliers from "./landing/Particuliers";
 import Entreprises from "./landing/Entreprises";
 import Integration from "./landing/Integration";
 import PricingTeaser from "./landing/PricingTeaser";
+import TrustMonitoring from "./landing/TrustMonitoring";
+import TrustGraph from "./landing/TrustGraph";
 import FinalCTA from "./landing/FinalCTA";
+import Proofs from "./landing/Proofs";
 import Footer from "./landing/Footer";
 
 /** Passé depuis `app/page.tsx` (RSC) pour conserver `ThreatAlert` en Server Component. */
@@ -33,7 +36,10 @@ export default function LandingPageClient({ threatAlert }: { threatAlert: ReactN
         <Entreprises />
         <Integration />
         <PricingTeaser />
+        <TrustMonitoring />
+        <TrustGraph />
         <FinalCTA />
+        <Proofs />
       </main>
       <Footer />
     </div>
