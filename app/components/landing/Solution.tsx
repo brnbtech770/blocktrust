@@ -18,24 +18,24 @@ const steps: Step[] = [
     iconColor: "#00d4ff",
     ringColor: "rgba(0,212,255,0.35)",
     step: "Étape 1",
-    title: "Créez votre badge",
-    text: "Inscrivez-vous et certifiez votre identité : email, téléphone, domaine web. Votre badge BLOCKTRUST est généré automatiquement. Il est unique, infalsifiable. L'ancrage sur la blockchain Polygon est activé à partir du plan Essentiel.",
+    title: "Inscrivez-vous et vérifiez votre identité",
+    text: "Vérifiez votre identité en 2 minutes. Particulier ou entreprise, processus rapide et sécurisé.",
   },
   {
     icon: ShieldCheck,
     iconColor: "#BDA76B",
     ringColor: "rgba(189,167,107,0.4)",
     step: "Étape 2",
-    title: "Partagez. Recevez.",
-    text: "Ajoutez votre badge à votre signature email, votre profil, votre site. Vos interlocuteurs peuvent vérifier votre identité en un clic — sans compte, sans app.",
+    title: "Obtenez votre badge certifié blockchain",
+    text: "Un QR code unique, ancré sur Polygon, impossible à copier ou falsifier.",
   },
   {
     icon: CheckCircle2,
     iconColor: "#00d4ff",
     ringColor: "rgba(0,212,255,0.35)",
     step: "Étape 3",
-    title: "Vérifiez avant d'interagir.",
-    text: "Scannez le QR code ou cliquez sur le badge d'un contact. Vous voyez instantanément : identité vérifiée, niveau de confiance (TrustScore), relations certifiées. Vous décidez en connaissance de cause.",
+    title: "Intégrez votre badge partout",
+    text: "Site web, email, documents, appels vidéo, numéro de téléphone — votre identité certifiée visible à chaque échange. Recevez une alerte si quelqu'un usurpe votre identité auprès de vos contacts.",
   },
 ];
 
@@ -47,10 +47,10 @@ export default function Solution() {
     >
       <Reveal className="mx-auto max-w-3xl text-center">
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
-          Comment ça marche
+          La solution
         </p>
         <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-snug text-white sm:text-3xl">
-          3 étapes. <span className="text-bt-cyan">Moins d&apos;une minute.</span>
+          3 étapes pour sécuriser votre <span className="text-bt-cyan">identité</span>
         </h2>
       </Reveal>
 

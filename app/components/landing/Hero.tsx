@@ -15,7 +15,7 @@ export default function Hero() {
       <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-5 lg:gap-12 lg:items-center">
         {/* Texte */}
         <div className="order-1 lg:col-span-3">
-          {/* Surtitle — catégorie */}
+          {/* Pill eyebrow */}
           <div
             className="opacity-0 animate-fade-up [animation-delay:0ms] inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm sm:text-base font-mono tracking-wider neon-gold"
             style={{
@@ -23,19 +23,24 @@ export default function Hero() {
               borderColor: "var(--bt-border-gold)",
             }}
           >
-            <span aria-hidden>✦</span> Infrastructure de confiance numérique
+            <span><span aria-hidden>✦</span> Certifié</span>
+            <span><span aria-hidden>✦</span> Protégé</span>
+            <span><span aria-hidden>✦</span> Infalsifiable</span>
           </div>
 
           {/* H1 */}
           <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-2xl font-bold leading-[1.2] tracking-tight text-white sm:mt-6 sm:text-4xl">
-            Avant de répondre, signer ou payer —{" "}
-            <span className="text-bt-cyan">sachez à qui vous avez vraiment affaire.</span>
+            L&apos;identité numérique qui protège vos échanges.
           </h1>
 
-          {/* Sous-titre */}
-          <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl text-left font-sans text-base leading-relaxed text-white/80 sm:mt-6 sm:text-lg">
-            BLOCKTRUST vous permet de vérifier l&apos;identité, le contexte et la réputation
-            d&apos;un contact avant toute interaction.
+          {/* Sous-titre — headline validée équipe (Deborah + Laurianne 28/04/2026) */}
+          <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl text-left font-sans text-lg leading-relaxed text-white sm:mt-6 sm:text-xl">
+            La preuve que c&apos;est <span className="font-semibold text-bt-cyan">vous</span>.
+            La certitude que c&apos;est <span className="font-semibold text-gold">eux</span>.
+          </p>
+          <p className="opacity-0 animate-fade-up [animation-delay:360ms] mt-2 max-w-2xl text-sm leading-relaxed text-white/40">
+            Certifiez ce que vous envoyez. Vérifiez ce que vous recevez. Faux RIB, faux conseiller, faux
+            fournisseur — détectés en 1 scan, avant que le mal soit fait.
           </p>
 
           {/* CTAs + micro-copy */}
@@ -45,7 +50,7 @@ export default function Hero() {
                 href="/auth/register"
                 className="inline-flex min-h-[52px] w-full items-center justify-center rounded-xl bg-bt-cyan px-8 py-4 text-sm font-bold text-navy shadow-glow-cyan transition-all hover:scale-[1.04] hover:bg-[#21dfff] sm:w-auto sm:text-base"
               >
-                Créer mon badge gratuitement
+                Certifier mon identité
               </Link>
               <Link
                 href="/how-to"
@@ -55,7 +60,8 @@ export default function Hero() {
               </Link>
             </div>
             <p className="text-xs font-light leading-relaxed text-white/60 sm:text-sm sm:whitespace-nowrap">
-              Badge gratuit · Sans carte bancaire · Ancrage Polygon dès {essentielTtc}€ TTC/mois
+              Vérification gratuite pour tous · Certifiez votre identité dès {essentielTtc}€ TTC/mois · Sans
+              engagement
             </p>
           </div>
 
@@ -89,12 +95,6 @@ export default function Hero() {
               </div>
             </li>
           </ul>
-
-          {/* Slogan signature — texte intouchable, mot pour mot */}
-          <p className="opacity-0 animate-fade-up [animation-delay:720ms] font-syne mt-10 max-w-2xl text-lg font-semibold leading-relaxed text-white sm:text-xl">
-            La preuve que c&apos;est <span className="text-bt-cyan">vous</span>.
-            La certitude que c&apos;est <span className="text-gold">eux</span>.
-          </p>
         </div>
 
         {/* Badge — mobile : largeur vue = carré implicite ; halo centré largeur×hauteur identiques (Safari) */}

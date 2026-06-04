@@ -82,10 +82,6 @@ export default function PricingTeaser() {
           Voir tous les plans
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Link>
-        <p className="text-white/45 text-xs text-center mt-3 max-w-xl mx-auto leading-relaxed">
-          Le badge Découverte est entièrement fonctionnel. L&apos;ancrage Polygon — preuve immuable
-          sur blockchain publique — est disponible à partir du plan Essentiel.
-        </p>
         <p className="text-white/30 text-xs text-center mt-3 max-w-lg mx-auto leading-relaxed">
           * Vérifications illimitées pendant la période de lancement (6 mois).{' '}
           <Link href="/pricing" className="text-white/45 underline-offset-2 hover:text-bt-cyan">
