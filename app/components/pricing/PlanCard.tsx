@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, Circle, X } from "lucide-react";
 import type { PlanAccordionFeature } from "@/lib/pricing";
+
+/** Une feature affichée dans la liste principale de la carte. */
+export type PlanCardFeature = string | { label: string; included?: boolean };
 
 export type PlanCardProps = {
   mode: "B2C" | "B2B";
@@ -12,7 +15,7 @@ export type PlanCardProps = {
   priceUnit?: string;
   subtitle: string;
   badges: { label: string; style: "gold" | "muted" | "multiSupport" }[];
-  features: string[];
+  features: PlanCardFeature[];
   accordionFeatures?: readonly PlanAccordionFeature[];
   cta: string;
   ctaStyle: { background: string; border?: string; color: string };
@@ -30,6 +33,8 @@ export type PlanCardProps = {
   billedNote?: string;
   /** Contrôle additionnel rendu juste avant le CTA (ex. sélecteur de sièges). */
   extraControl?: ReactNode;
+  /** Mention discrète affichée sous la CTA (ex. « Ou démarrer à 3,99€/mois… »). */
+  ctaMention?: string;
 };
 
 const ICONS = {
@@ -92,11 +97,17 @@ export default function PlanCard({
   savingBadge,
   billedNote,
   extraControl,
+  ctaMention,
 }: PlanCardProps) {
   const [open, setOpen] = useState(false);
   const checkColor = mode === "B2B" ? "#00d4ff" : "var(--bt-gold)";
   const popularBorder = mode === "B2B" ? "#00d4ff" : "var(--bt-gold)";
   const detailRows = accordionFeatures?.length ? accordionFeatures : [];
+  const normalizedFeatures = features.map((f) =>
+    typeof f === "string"
+      ? { label: f, included: true }
+      : { label: f.label, included: f.included !== false },
+  );
 
   return (
     <div
@@ -209,22 +220,26 @@ export default function PlanCard({
       </p>
 
       <ul className="mb-6 flex-1 space-y-2">
-        {features.map((f, i) => (
+        {normalizedFeatures.map((f, i) => (
           <li
             key={i}
             className="flex items-start gap-2 text-[13px]"
             style={{ color: "var(--bt-muted)", marginBottom: 8 }}
           >
-            <svg
-              className="mt-0.5 h-[14px] w-[14px] shrink-0"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke={checkColor}
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-            <span>{f}</span>
+            {f.included ? (
+              <svg
+                className="mt-0.5 h-[14px] w-[14px] shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke={checkColor}
+                strokeWidth={2}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <Circle className="mt-0.5 h-[14px] w-[14px] shrink-0 text-white/25" aria-hidden />
+            )}
+            <span className={f.included ? undefined : "italic text-white/40"}>{f.label}</span>
           </li>
         ))}
       </ul>
@@ -272,6 +287,10 @@ export default function PlanCard({
           )}
         </button>
       )}
+
+      {ctaMention ? (
+        <p className="mt-2 text-center text-xs text-white/45">{ctaMention}</p>
+      ) : null}
 
       {detailRows.length > 0 ? (
         <>

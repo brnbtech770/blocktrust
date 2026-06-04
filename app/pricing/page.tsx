@@ -3,34 +3,12 @@
 import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { ArrowRight } from 'lucide-react'
 import Navbar from '@/app/components/landing/Navbar'
 import PricingToggle from '@/app/components/pricing/PricingToggle'
 import PricingGridB2C from '@/app/components/pricing/PricingGridB2C'
 import PricingGridB2B from '@/app/components/pricing/PricingGridB2B'
 import type { PlanB2C, PlanB2B } from '@/lib/pricing'
-
-const FAQ = [
-  {
-    q: 'Puis-je annuler à tout moment ?',
-    a: "Oui, sans engagement et sans frais. L'annulation prend effet à la fin de la période en cours. Gérez votre abonnement directement depuis votre espace client.",
-  },
-  {
-    q: "Qu'est-ce qu'un contact certifié ?",
-    a: "Un contact est une personne physique, une entreprise, un domaine web ou tout profil que vous souhaitez certifier avec un badge BLOCKTRUST vérifiable.",
-  },
-  {
-    q: 'Comment fonctionne le badge de vérification ?',
-    a: "Chaque badge contient une signature cryptographique ES256 et un hash SHA-256 du contenu. Toute tentative de copie dans un contexte frauduleux est détectée et affiche une alerte fraude.",
-  },
-  {
-    q: 'Mes données sont-elles sécurisées ?',
-    a: "Oui. Vos données sont chiffrées, hébergées en Europe (Vercel EU), et nous sommes conformes au RGPD. Aucune donnée n'est vendue à des tiers.",
-  },
-  {
-    q: 'Proposez-vous des offres pour les entreprises ?',
-    a: 'Oui : Starter dès 9,99€ HT/user/mois (engagement annuel, 1 utilisateur), Team dès 6,99€ HT/user/mois (jusqu’à 10 utilisateurs). Pour les grandes organisations, Enterprise est sur devis — contactez commercial@blocktrust.tech.',
-  },
-]
 
 function PricingContextMessage() {
   const searchParams = useSearchParams()
@@ -60,7 +38,6 @@ export default function PricingPage() {
   const [plansB2B, setPlansB2B] = useState<PlanB2B[]>([])
   const [interval, setInterval] = useState<'monthly' | 'yearly'>('yearly')
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [mode, setMode] = useState<'B2C' | 'B2B'>('B2C')
 
   // Active automatiquement l'onglet Entreprises depuis ?tab=entreprises ou #entreprises.
@@ -114,16 +91,13 @@ export default function PricingPage() {
           <span className="text-white">Tarifs </span>
           <span className="text-gold">transparents</span>
         </h1>
-        <p className="text-white/40 text-sm text-center mt-2">
-          Sans engagement · Résiliable à tout moment
-        </p>
-        <p className="text-white/50 text-sm text-center mt-2">
-          Le badge BLOCKTRUST est inclus dans votre abonnement.
-          Sans frais cachés — annulable à tout moment.
-        </p>
-        <p className="mx-auto mb-6 max-w-2xl px-1 text-center font-sans text-sm leading-relaxed text-white/80 sm:mb-10 sm:text-base">
-          Choisissez le plan adapté à vos besoins. Annulez à tout moment.
-        </p>
+        <h2 className="mx-auto max-w-2xl text-center text-base font-medium text-white/70 sm:text-lg">
+          Le badge BLOCKTRUST est inclus dans tous nos abonnements. Sans frais cachés.
+        </h2>
+        <div className="mx-auto mb-6 mt-3 max-w-2xl space-y-0.5 px-1 text-center font-sans text-sm leading-relaxed text-white/60 sm:mb-10 sm:text-base">
+          <p>Choisissez la formule adaptée à vos besoins.</p>
+          <p>Mensuel sans engagement ou annuel à tarif préférentiel.</p>
+        </div>
 
         <PricingToggle mode={mode} setMode={setMode} />
 
@@ -153,18 +127,16 @@ export default function PricingPage() {
           >
             Annuel
           </button>
-          {interval === 'yearly' && (
-            <span
-              className="rounded-full px-3 py-1 text-[10px] font-medium"
-              style={{
-                background: 'rgba(29,184,126,0.15)',
-                color: '#1DB87E',
-                fontFamily: 'var(--font-mono-bt), "IBM Plex Mono", monospace',
-              }}
-            >
-              -20% · Engagement annuel
-            </span>
-          )}
+          <span
+            className="rounded-full px-3 py-1 text-[10px] font-medium"
+            style={{
+              background: interval === 'yearly' ? 'rgba(29,184,126,0.15)' : 'rgba(255,255,255,0.06)',
+              color: interval === 'yearly' ? '#1DB87E' : 'var(--bt-muted)',
+              fontFamily: 'var(--font-mono-bt), "IBM Plex Mono", monospace',
+            }}
+          >
+            {interval === 'yearly' ? '−20% • Paiement annuel' : 'Sans engagement'}
+          </span>
         </div>
 
         {/* Pill info */}
@@ -207,6 +179,19 @@ export default function PricingPage() {
             onCheckout={handleCheckout}
           />
         )}
+
+        {/* Lien vers le tableau comparatif détaillé */}
+        <div className="mt-8 text-center">
+          <a
+            href="#compare"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-5 py-2.5 text-sm font-medium transition-all hover:brightness-110"
+            style={{ borderColor: 'var(--bt-border)', color: 'var(--bt-cyan)' }}
+          >
+            Comparer les offres
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </a>
+        </div>
+
         <div className="mx-auto mt-8 max-w-2xl rounded-xl border border-white/5 bg-white/[0.02] p-4 text-center">
           <p className="text-xs leading-relaxed text-white/40">
             <span className="font-semibold text-white/60">Contacts</span> = personnes ou entreprises dont vous
@@ -216,39 +201,32 @@ export default function PricingPage() {
             badge BLOCKTRUST — protection maximale activée automatiquement.
           </p>
         </div>
-        <p className="mx-auto mt-6 max-w-3xl px-4 text-center text-xs text-white/30 sm:px-6">
-          * Vérifications illimitées pendant le lancement (6 mois), puis quotas selon plan. Usage raisonnable — CGU.
-        </p>
+
+        {/* Notes légales */}
+        <div className="mx-auto mt-6 max-w-3xl space-y-1 px-4 text-center text-xs text-white/30 sm:px-6">
+          <p>
+            <span className="font-mono">†</span> Vérifications illimitées : usage raisonnable, voir CGV.
+          </p>
+          <p>
+            <span className="font-mono">*</span> Contacts illimités / vérifications illimitées Team : pendant la
+            période de lancement, quotas appliqués ensuite selon les CGV.
+          </p>
+        </div>
       </section>
 
-      {/* FAQ */}
-      <section id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <h2 className="font-syne mb-8 text-center text-xl font-semibold text-white sm:text-2xl">
-          Questions fréquentes
-        </h2>
-        <div className="space-y-2">
-          {FAQ.map((item, i) => (
-            <div
-              key={i}
-              className="overflow-hidden rounded-xl border border-white/10 bg-white/5 transition-all hover:border-gold/30"
-            >
-              <button
-                type="button"
-                onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="w-full text-left px-6 py-4 flex justify-between items-center"
-                style={{ color: 'var(--bt-text)' }}
-              >
-                <span className="font-medium">{item.q}</span>
-                <span style={{ color: 'var(--bt-cyan)' }}>{openFaq === i ? '−' : '+'}</span>
-              </button>
-              {openFaq === i && (
-                <div className="px-6 pb-4 pt-0" style={{ color: 'var(--bt-muted)' }}>
-                  {item.a}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+      {/* Ancre tableau comparatif (à venir) */}
+      <section id="compare" className="scroll-mt-24" aria-hidden />
+
+      {/* FAQ → page dédiée */}
+      <section className="mx-auto max-w-3xl px-4 pb-16 text-center sm:px-6 lg:px-8">
+        <a
+          href="/faq"
+          className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors hover:brightness-110"
+          style={{ color: 'var(--bt-cyan)' }}
+        >
+          Des questions ? Consulter notre FAQ
+          <ArrowRight className="h-4 w-4" aria-hidden />
+        </a>
       </section>
 
       {/* B2B CTA */}

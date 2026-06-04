@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Minus, Plus } from 'lucide-react'
-import PlanCard from './PlanCard'
+import PlanCard, { type PlanCardFeature } from './PlanCard'
 import {
   formatPriceFr,
   isPerSeatPlan,
@@ -31,11 +31,8 @@ const ICONS: Record<string, 'person' | 'shield' | 'group' | 'building' | 'crown'
   ENTERPRISE: 'crown',
 }
 
-function mapFeatures(plan: PlanB2B): string[] {
-  const badgeLabel = 'Badge multi-support (PC · Mobile · Tablette)'
-  return plan.features
-    .filter((f) => f.included)
-    .map((f) => (f.label.toLowerCase().includes('badge') ? badgeLabel : f.label))
+function mapFeatures(plan: PlanB2B): PlanCardFeature[] {
+  return plan.features.map((f) => ({ label: f.label, included: f.included }))
 }
 
 type CheckoutOpts = { quantity?: number; addonQuantity?: number }
@@ -125,11 +122,30 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
           priceInfo && isYearly && 'perMonth' in priceInfo && typeof priceInfo.perMonth === 'number'
             ? priceInfo.perMonth
             : priceInfo?.amount ?? 0
-        const displayPrice = priceInfo ? perUnit : ('Sur devis' as const)
+
+        // Team est facturé par siège (min. 2) → affichage « À partir de ».
+        const displayPrice: number | string = !priceInfo
+          ? 'Sur devis'
+          : perSeat
+          ? `À partir de ${formatPriceFr(perUnit * TEAM_SEATS_MIN)}€`
+          : perUnit
+        const priceUnit = !priceInfo ? undefined : perSeat ? '/mois' : ' HT/mois'
+
         const savingBadge =
           isYearly && priceInfo && 'saving' in priceInfo && priceInfo.saving
             ? `-${priceInfo.saving.replace('%', '')}%`
             : undefined
+
+        let billedNote: string | undefined
+        if (isEnterprise) {
+          billedNote = 'Dégressivité selon volume d’utilisateurs'
+        } else if (perSeat && priceInfo) {
+          billedNote = isYearly
+            ? `${formatPriceFr(perUnit)}€/utilisateur · Facturé ${formatPriceFr(perUnit * 12 * TEAM_SEATS_MIN)}€/an (${TEAM_SEATS_MIN} utilisateurs min.) · Économisez 20%`
+            : `${formatPriceFr(perUnit)}€/utilisateur (min. ${TEAM_SEATS_MIN})`
+        } else if (priceInfo && isYearly) {
+          billedNote = `Facturé ${formatPriceFr(priceInfo.amount)}€ en une fois · Économisez 20%`
+        }
 
         const quantity = perSeat ? teamSeats : undefined
 
@@ -140,8 +156,9 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
             name={plan.name}
             description={DESCRIPTIONS[plan.id] ?? ''}
             price={displayPrice}
-            priceUnit={hasPrices ? ' HT/user/mois' : undefined}
+            priceUnit={priceUnit}
             savingBadge={savingBadge}
+            billedNote={billedNote}
             priceTaxNote={hasPrices ? 'Prix HT · TVA 20% en sus' : undefined}
             subtitle={plan.users}
             badges={[{ label: 'Multi-support inclus', style: 'multiSupport' }]}
@@ -152,15 +169,7 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
                 <SeatSelector seats={teamSeats} setSeats={setTeamSeats} perUnit={perUnit} />
               ) : undefined
             }
-            cta={
-              isEnterprise
-                ? 'Parler à un expert'
-                : isCurrent
-                ? 'Plan actuel'
-                : !isAuthenticated
-                ? 'Choisir ce plan'
-                : `Choisir ${plan.name}`
-            }
+            cta={isEnterprise ? 'Parler à un expert' : isCurrent ? 'Plan actuel' : 'Démarrer'}
             ctaStyle={CTA_STYLES[plan.id] ?? { background: '#00d4ff', color: '#0a1628' }}
             isPopular={plan.highlighted}
             icon={ICONS[plan.id] ?? 'person'}
