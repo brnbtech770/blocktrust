@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Instagram, Linkedin, Network } from "lucide-react";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
+import { openCookieSettings } from "@/app/lib/cookie-consent";
 
 const links: { label: string; href: string }[] = [
   { label: "Accueil", href: "/" },
@@ -60,6 +61,15 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <li className="whitespace-nowrap">
+                <button
+                  type="button"
+                  onClick={openCookieSettings}
+                  className="inline-flex min-h-[44px] items-center text-sm text-white/65 transition-colors hover:text-bt-cyan"
+                >
+                  Gestion des cookies
+                </button>
+              </li>
             </ul>
           </div>
 
