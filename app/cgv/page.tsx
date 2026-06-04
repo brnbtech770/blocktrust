@@ -4,11 +4,9 @@
 import Link from 'next/link'
 import Markdown from '@/app/components/ui/Markdown'
 
-const CGV_MARKDOWN = `<!-- VERSION DE TRAVAIL — à valider par Laurianne (DPO) avant mise en ligne.
-Corrections appliquées par rapport au document Google Docs de Laurianne (CGV V2, 01/05/2026) :
-  1. URL tarifs : https://blocktrust.tech/tarifs -> https://blocktrust.tech/pricing
-  2. Email de contact : contact@brnbtech.com -> contact@blocktrust.tech (2 occurrences)
-Aucune autre modification de fond. -->
+const CGV_MARKDOWN = `<!-- CGV BLOCKTRUST — VERSION 2 (1er mai 2026), révisée par Laurianne Winter (DPO/juriste), juin 2026.
+Cette version intègre : (1) les corrections factuelles d'import (URL /pricing, contact@blocktrust.tech pour la CGV) ; (2) les modifications de fond rédigées par Laurianne en juin 2026 — Trust Circle, Vaults et contacts de confiance, offres familiales, clause d'ancrage blockchain, clause de disponibilité/maintenance, reformulation du préavis de modification (« délai raisonnable ») et du remboursement (« sommes éligibles »).
+Document de référence pour intégration aux pages /cgu et /cgv. -->
 
 # Conditions Générales de Vente (CGV)
 
@@ -36,10 +34,15 @@ Les services peuvent inclure, selon l’offre souscrite :
 - vérification de transactions ou d’événements ;
 - vérification d’authenticité et d’origine (ex : domaines, URLs, points de contact)
 - émission de certificats cryptographiques non identifiants
-- le cas échéant, la fourniture d’indicateurs de confiance associés (« trust score »).
+- le cas échéant, la fourniture d’indicateurs de confiance associés (« trust score ») ;
+- création de relations de confiance numériques entre utilisateurs disposant d’un badge actif (« Trust Circle ») ;
+- gestion de contacts de confiance et d’espaces de stockage numériques (« Vaults »), pouvant être personnels ou partagés selon l’offre souscrite.
 Les certificats attestent de l’état des vérifications à la date de leur émission, dans le périmètre défini par l’offre.
 Les indicateurs de confiance constituent une appréciation technique et contextuelle, fondée sur les données disponibles au moment de leur établissement.
 Ils sont fournis à titre informatif et ne constituent ni une garantie, ni une évaluation exhaustive de la fiabilité, de la solvabilité ou du comportement futur d’un utilisateur.
+
+Les contacts de confiance peuvent correspondre à des personnes physiques ou morales disposant ou non d’un badge BLOCKTRUST.
+Le Trust Circle constitue un mécanisme relationnel et technique interne à l’écosystème BLOCKTRUST. Il ne constitue ni une garantie absolue de fiabilité, ni une recommandation personnelle, commerciale ou comportementale.
 
 ---
 
@@ -57,6 +60,7 @@ L’accès aux services est conditionné à :
 - le paiement du prix correspondant à l’offre choisie.
 L’accès aux services est réservé aux personnes physiques majeures, âgées d’au moins dix-huit (18) ans.
 En validant son inscription, le client déclare expressément remplir cette condition et disposer de la capacité juridique nécessaire pour contracter.
+Les offres familiales sont réservées aux membres d’un même foyer ou cercle familial proche.
 
 ---
 
@@ -65,6 +69,10 @@ Les services sont proposés sous forme d’abonnements, dont les prix et caract�
 https://blocktrust.tech/pricing
 Les prix sont indiqués en euros, hors taxes ou toutes taxes comprises selon le cas, et tiennent compte de la taxe sur la valeur ajoutée (TVA) applicable au jour de la commande.
 Les prix applicables sont ceux en vigueur et affichés sur la page Tarifs au moment de la souscription de l’abonnement.
+
+Certaines offres peuvent inclure des limitations ou capacités évolutives relatives notamment au nombre de profils, contacts de confiance, fonctionnalités Trust Circle ou espaces Vault disponibles.
+Des extensions ou options complémentaires pourront être proposées selon les offres en vigueur.
+
 La société se réserve le droit de modifier ses tarifs à tout moment. Toute modification tarifaire n’affectera pas les abonnements en cours et ne s’appliquera qu’aux nouvelles souscriptions ou aux renouvellements ultérieurs.
 Clients établis hors France et hors Union européenne :
 Lorsque le client est établi hors de France et, le cas échéant, hors de l’Union européenne, les règles de taxation applicables sont celles en vigueur au jour de la commande, conformément à la réglementation fiscale en vigueur.
@@ -79,6 +87,7 @@ Les moyens de paiement acceptés sont précisés sur la plateforme.
 En cas de défaut de paiement, l’accès aux services pourra être suspendu.
 La société se réserve le droit de faire appel à des prestataires de paiement tiers.
 Les données de paiement sont traitées directement par ces prestataires et ne sont pas conservées par la société.
+La société peut recourir à des prestataires de paiement tiers sécurisés pour le traitement des transactions et des abonnements récurrents.
 
 ---
 
@@ -88,6 +97,7 @@ Sauf résiliation par le client dans les conditions prévues ci-dessous, l’abo
 Le client peut résilier son abonnement à tout moment depuis son espace personnel, la résiliation prenant effet à l’issue de la période d’abonnement en cours, sans remboursement des sommes déjà versées.
 Conformément aux articles L.215-1 à L.215-3 du Code de la consommation, le client consommateur est informé par la société, par tout moyen approprié, de la possibilité de ne pas reconduire l’abonnement, au plus tôt trois (3) mois et au plus tard un (1) mois avant la date de reconduction lorsque la durée de l’abonnement est supérieure à un mois.
 Les modalités de résiliation et de non-reconduction sont accessibles à tout moment depuis l’espace personnel du client.
+Le client peut modifier, upgrader ou downgrader son offre selon les modalités disponibles depuis son espace personnel ou proposées par la plateforme.
 
 ---
 
@@ -97,6 +107,8 @@ Ils peuvent être :
 - expirés automatiquement à l’échéance ;
 - révoqués de manière anticipée en cas d’anomalie, de fraude ou de non-conformité.
 
+La société se réserve également le droit de suspendre, limiter ou révoquer certaines fonctionnalités relationnelles ou collaboratives (notamment Trust Circle ou Vaults partagés) en cas d’usage abusif, frauduleux ou contraire à leur finalité.
+
 ---
 
 ## 10. Droit de rétractation (clients particuliers)
@@ -105,7 +117,7 @@ Pour exercer son droit de rétractation, le client doit notifier sa décision au
 - par courrier électronique à l’adresse suivante : contact@blocktrust.tech ;
 - ou par courrier postal à l’adresse suivante : 20 rue du Donjon 94300 Vincennes
 Le client peut également utiliser le formulaire type de rétractation figurant en annexe des présentes CGV, sans que son usage soit obligatoire.
-En cas d’exercice valable du droit de rétractation, la société procédera au remboursement de l’intégralité des sommes versées, au plus tard dans un délai de quatorze (14) jours à compter de la date à laquelle elle est informée de la décision de rétractation, en utilisant le même moyen de paiement que celui utilisé lors de la transaction initiale, sauf accord exprès du client pour un autre moyen.
+En cas d’exercice valable du droit de rétractation, la société procédera au remboursement des sommes éligibles conformément aux dispositions légales applicables, au plus tard dans un délai de quatorze (14) jours à compter de la date à laquelle elle est informée de la décision de rétractation, en utilisant le même moyen de paiement que celui utilisé lors de la transaction initiale, sauf accord exprès du client pour un autre moyen.
 Conformément à l’article L.221-28 du Code de la consommation, le client reconnaît et accepte expressément que l’exécution du service commence immédiatement après la souscription, et renonce expressément à son droit de rétractation dès lors que le service a été pleinement exécuté avant l’expiration du délai de quatorze (14) jours.
 
 ---
@@ -120,6 +132,7 @@ En tout état de cause, la responsabilité financière de la société est plafo
 La société ne saurait être tenue responsable des décisions prises par des tiers sur la base des certificats émis.
 La société ne garantit pas l’exhaustivité ou l’absence totale d’erreur dans les informations vérifiées.
 La société ne saurait être tenue responsable des décisions prises par des tiers sur la base des certificats ou des indicateurs de confiance fournis.
+La société ne saurait être tenue responsable des relations établies entre utilisateurs, ni des conséquences résultant de l’utilisation des fonctionnalités Trust Circle, Vaults ou contacts de confiance.
 
 ---
 
@@ -137,6 +150,7 @@ La plateforme, les certificats, les marques et les contenus sont protégés par 
 ## 14. Données personnelles
 Les données personnelles sont traitées conformément au RGPD et à la Politique de confidentialité.
 Aucune donnée personnelle n’est stockée sur la blockchain.
+Les données éventuellement enregistrées dans les Vaults ou liées aux contacts de confiance demeurent sous la responsabilité des utilisateurs qui les créent, organisent ou partagent.
 
 ---
 
@@ -168,7 +182,7 @@ En cas de survenance d’un tel événement, l’exécution des obligations est 
 
 ## 18. Modification des CGV
 La société se réserve le droit de modifier les présentes CGV à tout moment.
-Toute modification substantielle sera notifiée au client par email à l’adresse associée à son compte, avec un préavis minimum de trente (30) jours avant son entrée en vigueur.
+Toute modification substantielle des CGV fera l’objet d’une information préalable adressée aux utilisateurs dans un délai raisonnable avant leur entrée en vigueur.
 Les modifications non substantielles pourront être applicables immédiatement.
 En cas de refus des nouvelles CGV, le client pourra résilier son abonnement avant leur entrée en vigueur.
 

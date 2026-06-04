@@ -4,8 +4,9 @@
 import Link from 'next/link'
 import Markdown from '@/app/components/ui/Markdown'
 
-const CGU_MARKDOWN = `<!-- VERSION DE TRAVAIL — à valider par Laurianne (DPO) avant mise en ligne.
-Source : document Google Docs de Laurianne (CGU V2, 01/05/2026). Aucune correction de fond nécessaire (document propre). -->
+const CGU_MARKDOWN = `<!-- CGU BLOCKTRUST — VERSION 2 (1er mai 2026), révisée par Laurianne Winter (DPO/juriste), juin 2026.
+Cette version intègre : (1) les corrections factuelles d'import (URL /pricing, contact@blocktrust.tech pour la CGV) ; (2) les modifications de fond rédigées par Laurianne en juin 2026 — Trust Circle, Vaults et contacts de confiance, offres familiales, clause d'ancrage blockchain, clause de disponibilité/maintenance, reformulation du préavis de modification (« délai raisonnable ») et du remboursement (« sommes éligibles »).
+Document de référence pour intégration aux pages /cgu et /cgv. -->
 
 # Conditions Générales d'Utilisation (CGU)
 
@@ -25,7 +26,18 @@ La plateforme propose les fonctionnalités suivantes :
 - vérification d’identité et de documents, réalisée exclusivement hors blockchain (« off-chain ») ;
 - vérification de transactions ou d’événements ;
 - génération de certificats cryptographiques non identifiants, pouvant être ancrés sur une blockchain.
+
+La plateforme peut également permettre la création de relations de confiance numériques entre utilisateurs disposant d’un badge actif, au travers d’un réseau appelé « Trust Circle ».
+Le Trust Circle constitue un mécanisme relationnel et technique de reconnaissance au sein de l’écosystème BLOCKTRUST. Il ne constitue ni une recommandation personnelle, ni une garantie absolue de fiabilité, ni une validation comportementale ou financière des utilisateurs concernés.
+
 La plateforme ne constitue ni un registre d’état civil, ni un service public d’identité, ni un fournisseur d’identité numérique nominative.
+
+Les utilisateurs peuvent enregistrer au sein de la plateforme des « contacts de confiance » dans des espaces de stockage numériques (« Vaults »).
+Ces contacts peuvent correspondre à des personnes physiques ou morales disposant ou non d’un badge BLOCKTRUST.
+L’ajout d’un contact de confiance ne vaut ni validation officielle, ni approbation, ni certification de ce contact par BLOCKTRUST.
+
+Certains services peuvent permettre le partage de Vaults ou de contacts entre plusieurs utilisateurs autorisés.
+Les utilisateurs restent responsables des accès qu’ils accordent aux espaces partagés ainsi que des informations qu’ils y rendent accessibles.
 
 ---
 
@@ -34,6 +46,7 @@ L’accès à la plateforme et aux services est strictement réservé aux person
 La société ne propose aucun service à destination des mineurs. Toute utilisation des services par une personne mineure est strictement interdite et engage la responsabilité de son représentant légal.
 Pour les entreprises, l’accès est strictement limité aux personnes dûment autorisées à représenter la société.
 L’utilisateur garantit l’exactitude, la sincérité et l’actualité des informations fournies.
+Les offres familiales sont réservées aux membres d’un même foyer ou cercle familial proche.
 
 ---
 
@@ -54,6 +67,9 @@ Le certificat généré par la plateforme :
 - ne contient aucune donnée personnelle ;
 - ne permet pas d’identifier directement ou indirectement un utilisateur ;
 - constitue une preuve technique, et non une preuve d’identité publique.
+
+L’ancrage blockchain constitue un mécanisme technique d’horodatage et d’intégrité des certificats. Il ne confère aucun caractère officiel, réglementaire ou juridique autonome aux éléments ancrés.
+
 Le certificat n’emporte aucune garantie quant au comportement futur de l’utilisateur ou à l’acceptation du certificat par des tiers.
 Le cas échéant, la plateforme peut attribuer un indicateur de confiance ou “trust score” basé sur des éléments techniques et des vérifications ponctuelles.
 Cet indicateur constitue une appréciation technique et contextuelle, reposant sur les données disponibles au moment de son calcul.
@@ -87,6 +103,9 @@ La plateforme ne garantit toutefois pas :
 - les décisions prises par des tiers sur la base du certificat, lesquelles relèvent de leur appréciation propre au regard de leur contexte d’utilisation.
 La responsabilité de la plateforme ne saurait être engagée en cas d’informations inexactes ou frauduleuses fournies par l’utilisateur et non détectables dans le cadre des contrôles réalisés, ni en cas d’événements postérieurs à l’émission du certificat.
 
+La société BRNB TECH s’efforce d’assurer l’accessibilité et la disponibilité de la plateforme BLOCKTRUST de manière continue.
+Des interruptions temporaires peuvent toutefois survenir, notamment pour des opérations de maintenance, des mises à jour, des évolutions techniques, des incidents de sécurité ou en cas de force majeure.
+
 ---
 
 ## 8. Force majeure
@@ -118,7 +137,7 @@ Toute reproduction ou exploitation non autorisée est interdite.
 
 ## 12. Modification des CGU
 La société se réserve le droit de modifier à tout moment les présentes Conditions Générales d’Utilisation.
-Toute modification substantielle des CGU fera l’objet d’une notification préalable par email, adressée à l’adresse électronique associée au compte de l’utilisateur, au moins trente (30) jours avant leur entrée en vigueur.
+Toute modification substantielle des CGU fera l’objet d’une information préalable adressée aux utilisateurs dans un délai raisonnable avant leur entrée en vigueur.
 Les modifications non substantielles pourront être applicables immédiatement et feront l’objet d’une information par tout moyen approprié.
 En cas de refus des nouvelles CGU, l’utilisateur dispose de la faculté de résilier son compte avant la date d’entrée en vigueur des modifications. À défaut de résiliation dans ce délai, les CGU modifiées seront réputées acceptées.
 
