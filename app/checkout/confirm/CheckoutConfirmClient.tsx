@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { Loader2, ShieldCheck } from 'lucide-react'
 
 type PriceInfo = { amount: number; perMonth?: number; priceId?: string }
@@ -55,6 +56,7 @@ function matchPlan(data: PricingResponse, priceId: string): Matched | null {
 export default function CheckoutConfirmClient() {
   const router = useRouter()
   const params = useSearchParams()
+  const { data: session } = useSession()
 
   const priceId = params.get('priceId') ?? ''
   const quantity = params.get('quantity') ? Number(params.get('quantity')) : undefined
@@ -89,6 +91,10 @@ export default function CheckoutConfirmClient() {
   }, [priceId])
 
   const isB2C = matched?.segment === 'B2C'
+  const isPersonal =
+    (session?.user as { accountType?: string } | undefined)?.accountType === 'PERSONAL'
+  // Ceinture+bretelles : la renonciation n'apparaît que si plan B2C ET compte PERSONAL.
+  const showWaiver = isB2C && isPersonal
   const isTeam = matched?.plan.id === 'TEAM'
   const isFamille = matched?.plan.id === 'FAMILLE'
 
@@ -110,7 +116,7 @@ export default function CheckoutConfirmClient() {
         body: JSON.stringify({
           priceId,
           acceptedTerms: true,
-          ...(isB2C ? { waiver } : {}),
+          ...(showWaiver ? { waiver } : {}),
           ...(quantity != null && Number.isFinite(quantity) ? { quantity } : {}),
           ...(addonQuantity != null && Number.isFinite(addonQuantity) ? { addonQuantity } : {}),
         }),
@@ -213,7 +219,7 @@ export default function CheckoutConfirmClient() {
       </label>
 
       {/* Renonciation B2C — particuliers uniquement (art. 10 CGV) */}
-      {isB2C && (
+      {showWaiver && (
         <label className="mb-6 flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-4">
           <input
             type="checkbox"
