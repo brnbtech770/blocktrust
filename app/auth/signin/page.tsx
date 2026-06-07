@@ -45,6 +45,15 @@ const separatorStyle: React.CSSProperties = {
   fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
 };
 
+const CREDENTIALS_ERROR_MESSAGE =
+  "Email ou mot de passe incorrect. Si vous vous êtes inscrit avec Google, utilisez le bouton « Se connecter avec Google » ou définissez un mot de passe dans vos paramètres.";
+
+/** Erreurs credentials / Auth.js : jamais de code technique côté utilisateur. */
+function credentialsErrorMessage(code: string | null | undefined): string {
+  if (!code) return CREDENTIALS_ERROR_MESSAGE;
+  return CREDENTIALS_ERROR_MESSAGE;
+}
+
 /** Messages NextAuth / Auth.js pour ?error= (visibles aussi pour Google OAuth). */
 function oauthErrorMessage(code: string | null): string | null {
   if (!code) return null;
@@ -56,38 +65,23 @@ function oauthErrorMessage(code: string | null): string | null {
     OAuthAccountNotLinked: "Ce compte est déjà lié à une autre méthode de connexion.",
     Callback: "Erreur callback (URL ou secret).",
     Default: "Connexion impossible. Réessayez.",
-    CredentialsSignin: "Email ou mot de passe incorrect.",
+    CredentialsSignin: CREDENTIALS_ERROR_MESSAGE,
   };
-  return map[code] ?? `Erreur : ${code}`;
+  return map[code] ?? "Connexion impossible. Réessayez.";
 }
 
-/** Après redirect depuis dashboard/admin : raison technique (pour support / debug). */
+/** Après redirect depuis dashboard/admin : message utilisateur (sans codes techniques). */
 function signinReasonMessage(code: string | null): string | null {
   if (!code) return null;
   const map: Record<string, string> = {
     "no-session-cookie":
-      "Aucun cookie de session détecté après la redirection. Réessayez Google, ou vérifiez bloqueurs / mode privé. Consultez les logs Vercel filtrés sur [auth] ou ouvrez /api/health pour comparer le SHA de déploiement.",
+      "La session n'a pas pu être établie. Réessayez la connexion, ou utilisez Google si votre compte a été créé avec Google.",
     "jwt-cookie-unreadable":
-      "Cookie de session présent mais non lu (JWT invalide, secret, chunk ou hôte). Consultez les logs Vercel filtrés sur [auth] ou /api/health (authRelease, prefetchRscAuthBypass).",
+      "La session n'a pas pu être lue. Déconnectez-vous, effacez les cookies du site si besoin, puis reconnectez-vous.",
     "user-not-in-db":
-      "Session avec email mais utilisateur introuvable en base. Contact support ou vérifiez la base.",
+      "Compte introuvable. Contactez le support BLOCKTRUST si le problème persiste.",
   };
-  return map[code] ?? `Diagnostic : ${code}`;
-}
-
-/** Résumé des query params pour support / debug (pas de secrets). */
-function urlQueryDiagnostic(sp: ReturnType<typeof useSearchParams>): string | null {
-  const error = sp.get("error");
-  const reason = sp.get("reason");
-  const cb = sp.get("callbackUrl");
-  const parts: string[] = [];
-  if (error) parts.push(`error=${error}`);
-  if (reason) parts.push(`reason=${reason}`);
-  if (cb) {
-    const s = cb.length > 96 ? `${cb.slice(0, 96)}…` : cb;
-    parts.push(`callbackUrl=${s}`);
-  }
-  return parts.length > 0 ? parts.join(" · ") : null;
+  return map[code] ?? "Connexion impossible. Réessayez ou contactez le support.";
 }
 
 /** Chemin relatif same-origin pour assertConfig (évite InvalidCallbackUrl / Configuration). */
@@ -129,11 +123,18 @@ function SignInContent() {
       ? oauthErrorMessage(errorParam)
       : null;
   const reasonHint = signinReasonMessage(reasonParam);
-  const urlDiagnosticLine = urlQueryDiagnostic(searchParams);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => {
+    if (
+      errorParam === "CredentialsSignin" ||
+      errorParam === "no-session-cookie"
+    ) {
+      return CREDENTIALS_ERROR_MESSAGE;
+    }
+    return null;
+  });
   const [loading, setLoading] = useState(false);
 
   const [magicEmail, setMagicEmail] = useState("");
@@ -156,7 +157,7 @@ function SignInContent() {
         router.push(callbackUrl);
         return;
       }
-      setError(result?.error || "Email ou mot de passe incorrect.");
+      setError(credentialsErrorMessage(result?.error));
     } catch {
       setError("Erreur de connexion.");
     } finally {
@@ -319,44 +320,8 @@ function SignInContent() {
             }}
           >
             {reasonHint}
-            {reasonParam ? (
-              <span
-                style={{
-                  display: "block",
-                  marginTop: "8px",
-                  fontFamily: "monospace",
-                  fontSize: "0.75rem",
-                  opacity: 0.9,
-                }}
-              >
-                code&nbsp;: {reasonParam}
-              </span>
-            ) : null}
           </p>
         )}
-
-        {urlDiagnosticLine ? (
-          <p
-            style={{
-              marginBottom: "1rem",
-              padding: "10px 12px",
-              borderRadius: "8px",
-              fontSize: "0.72rem",
-              lineHeight: 1.4,
-              fontFamily:
-                "var(--font-ibm-plex-mono, ui-monospace), monospace",
-              color: "rgba(232,234,240,0.65)",
-              background: "rgba(0,0,0,0.35)",
-              border: "1px solid rgba(0,212,255,0.12)",
-              wordBreak: "break-all",
-            }}
-          >
-            <span style={{ display: "block", marginBottom: "4px", opacity: 0.85 }}>
-              Diagnostic URL (copier pour support)
-            </span>
-            {urlDiagnosticLine}
-          </p>
-        ) : null}
 
         {/* 1. Google */}
         <button
@@ -451,9 +416,9 @@ function SignInContent() {
               </Link>
             </p>
           </div>
-          {(error || errorParam) && (
-            <p style={{ color: "#E05252", marginBottom: "1rem" }}>
-              {error || (errorParam === "CredentialsSignin" && "Email ou mot de passe incorrect.") || errorParam}
+          {error && (
+            <p style={{ color: "#E05252", marginBottom: "1rem", fontSize: "0.9rem", lineHeight: 1.45 }}>
+              {error}
             </p>
           )}
           <button
