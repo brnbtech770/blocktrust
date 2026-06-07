@@ -262,9 +262,19 @@ function addToQueue(email, domain, element) {
 /** Tooltip flottant unique (réutilisé entre badges). */
 let activeTooltip = null;
 
+/** Affiche ou masque la tooltip (inline !important — Gmail ignore les classes seules). */
+function setTooltipVisible(tooltip, visible) {
+  tooltip.style.setProperty("opacity", visible ? "1" : "0", "important");
+  tooltip.style.setProperty(
+    "transform",
+    visible ? "translateY(0)" : "translateY(4px)",
+    "important",
+  );
+}
+
 function hideBadgeTooltip() {
   if (activeTooltip) {
-    activeTooltip.classList.remove("bt-tooltip-visible");
+    setTooltipVisible(activeTooltip, false);
   }
 }
 
@@ -291,10 +301,9 @@ function applyTooltipBaseStyles(tooltip, interactive) {
   tooltip.style.setProperty("font-family", "Inter, Arial, sans-serif", "important");
   tooltip.style.setProperty("font-size", "11px", "important");
   tooltip.style.setProperty("color", "#ffffff", "important");
-  tooltip.style.setProperty("opacity", "0", "important");
-  tooltip.style.setProperty("transform", "translateY(4px)", "important");
   tooltip.style.setProperty("transition", "opacity 0.15s ease, transform 0.15s ease", "important");
   tooltip.style.setProperty("pointer-events", interactive ? "auto" : "none", "important");
+  setTooltipVisible(tooltip, false);
 }
 
 function styleTooltipLink(link) {
@@ -306,10 +315,37 @@ function styleTooltipLink(link) {
   link.style.setProperty("pointer-events", "auto", "important");
 }
 
+function trustScoreBarHtml(score) {
+  if (typeof score !== "number" || !Number.isFinite(score)) return "";
+  const clamped = Math.max(0, Math.min(100, Math.round(score)));
+  const barColor =
+    clamped >= 70 ? "#10b981" : clamped >= 40 ? "#f59e0b" : "#E05252";
+  return `
+    <div style="margin:8px 0 10px !important;">
+      <div style="display:flex !important;justify-content:space-between !important;align-items:center !important;margin-bottom:4px !important;font-size:10px !important;">
+        <span style="color:rgba(255,255,255,0.65) !important;text-transform:uppercase !important;letter-spacing:0.06em !important;">TrustScore</span>
+        <span style="color:#00d4ff !important;font-weight:700 !important;font-family:IBM Plex Mono,monospace !important;">${clamped}/100</span>
+      </div>
+      <div style="height:4px !important;border-radius:999px !important;background:rgba(255,255,255,0.12) !important;overflow:hidden !important;">
+        <div style="height:100% !important;width:${clamped}% !important;background:${barColor} !important;border-radius:999px !important;"></div>
+      </div>
+    </div>`;
+}
+
+function signalRowHtml(label, ok) {
+  const mark = ok ? "OK" : "—";
+  const markColor = ok ? "#10b981" : "#64748b";
+  return `
+    <div class="bt-tooltip-row">
+      <span style="color:${markColor} !important;font-weight:700 !important;font-size:10px !important;min-width:18px !important;">${mark}</span>
+      <span>${label}</span>
+    </div>`;
+}
+
 /**
- * Popup au survol — 3 signaux principaux.
+ * Popup au survol — TrustScore + signaux principaux.
  * @param {HTMLElement} badge
- * @param {{ status: string, trustScore?: number|null, signals?: { kycVerified?: boolean, inNetwork?: boolean, polygonAnchored?: boolean } }} result
+ * @param {{ status: string, entityName?: string|null, trustScore?: number|null, signals?: { kycVerified?: boolean, inNetwork?: boolean, polygonAnchored?: boolean } }} result
  */
 function attachBadgeTooltip(badge, result) {
   if (result.status !== "CERTIFIED") return;
@@ -322,6 +358,10 @@ function attachBadgeTooltip(badge, result) {
     { label: "Dans votre réseau", ok: Boolean(signals.inNetwork) },
     { label: "Ancré Polygon", ok: Boolean(signals.polygonAnchored) },
   ];
+  const entityLine =
+    result.entityName && String(result.entityName).trim()
+      ? `<div style="margin-bottom:6px !important;color:rgba(255,255,255,0.75) !important;font-size:11px !important;">${String(result.entityName).trim()}</div>`
+      : "";
 
   badge.addEventListener("mouseenter", () => {
     if (!activeTooltip) {
@@ -335,21 +375,15 @@ function attachBadgeTooltip(badge, result) {
     applyTooltipBaseStyles(activeTooltip, false);
 
     activeTooltip.innerHTML = `
-      <span class="bt-tooltip-title">BLOCKTRUST™ — Signaux</span>
-      ${rows
-        .map(
-          (row) => `
-        <div class="bt-tooltip-row">
-          <span class="${row.ok ? "bt-tooltip-ok" : "bt-tooltip-ko"}">${row.ok ? "✓" : "—"}</span>
-          <span>${row.label}</span>
-        </div>`,
-        )
-        .join("")}
+      <span class="bt-tooltip-title">BLOCKTRUST™</span>
+      ${entityLine}
+      ${trustScoreBarHtml(result.trustScore)}
+      ${rows.map((row) => signalRowHtml(row.label, row.ok)).join("")}
     `;
 
     positionTooltip(activeTooltip, badge);
     requestAnimationFrame(() => {
-      activeTooltip?.classList.add("bt-tooltip-visible");
+      if (activeTooltip) setTooltipVisible(activeTooltip, true);
     });
   });
 
@@ -389,7 +423,7 @@ function attachUnknownBadgeTooltip(badge) {
 
     positionTooltip(activeTooltip, badge);
     requestAnimationFrame(() => {
-      activeTooltip?.classList.add("bt-tooltip-visible");
+      if (activeTooltip) setTooltipVisible(activeTooltip, true);
     });
   });
 
