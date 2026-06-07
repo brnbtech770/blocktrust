@@ -22,7 +22,7 @@ import CertificateTableSkeleton from "@/app/components/dashboard/CertificateTabl
 import ActivityFeedSkeleton from "@/app/components/dashboard/ActivityFeedSkeleton";
 import { getTrustScoreColor, getTrustScoreLabelFr } from "@/lib/trustscore";
 import { getPlanWording, resolvePlanKeyForWording } from "@/lib/plan-wording";
-import { resolveAccountPlan } from "@/lib/plan-features";
+import { resolveEffectivePlan } from "@/lib/plan-features";
 
 export default async function Dashboard({
   searchParams,
@@ -94,7 +94,7 @@ export default async function Dashboard({
     // Découverte (20/mois). On ne bloque jamais la vérification côté UI.
     let quotaLabel: string | null = null;
     if (!userIsAdmin) {
-      const planForQuota = resolveAccountPlan(subscription?.plan, { isAdmin: false });
+      const planForQuota = resolveEffectivePlan({ subscription, email: user.email });
       const d = await getVerifyQuotaDisplay(user.id, planForQuota);
       quotaLabel = d.unlimited
         ? "Illimité ce mois"

@@ -500,12 +500,13 @@ export async function POST(req: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription
         const customerId = subscription.customer as string
 
-        // Mettre à jour la subscription
+        // Abonnement résilié : statut canceled + retour au plan gratuit Découverte.
+        // (On ne laisse JAMAIS un plan payant résiduel — cf. resolveEffectivePlan.)
         await prisma.subscription.updateMany({
           where: { stripeSubscriptionId: subscription.id },
           data: {
             status: 'canceled',
-            plan: 'ESSENTIEL',
+            plan: 'DISCOVERY',
           },
         })
 

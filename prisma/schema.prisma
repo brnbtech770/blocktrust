@@ -403,7 +403,7 @@ model Subscription {
   stripeCustomerId     String?   @unique
   stripeSubscriptionId String?   @unique
   stripePriceId        String?
-  plan                 String    @default("ESSENTIEL") // ESSENTIEL, PREMIUM, FAMILLE, FAMILLE_PLUS
+  plan                 String    @default("DISCOVERY") // DISCOVERY (gratuit) puis ESSENTIEL, PREMIUM, FAMILLE…
   status               String    @default("inactive") // active, inactive, past_due, canceled
   /// Sièges achetés (B2B Team facturé par utilisateur). Null = quota dérivé du plan.
   seats                Int?

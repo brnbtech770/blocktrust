@@ -14,7 +14,7 @@ import { z } from "zod";
 import authEdgeConfig from "./auth.edge.config";
 import { isSafeCallbackUrl } from "./auth-callback-url";
 import { isAdmin } from "@/lib/admin-utils";
-import { DEFAULT_B2C_PLAN } from "@/lib/plan-features";
+import { DEFAULT_B2C_PLAN, resolveEffectivePlan } from "@/lib/plan-features";
 
 /**
  * Configuration NextAuth avec Google OAuth
@@ -163,7 +163,11 @@ export const authOptions: NextAuthConfig = {
           return null
         }
 
-        const plan = user.subscription?.plan ?? DEFAULT_B2C_PLAN;
+        // Plan effectif : un abonnement non payant actif (inactive/canceled) → Découverte.
+        const plan = resolveEffectivePlan({
+          subscription: user.subscription,
+          email: user.email,
+        });
 
         return {
           id: user.id,
@@ -244,10 +248,11 @@ export const authOptions: NextAuthConfig = {
                 const subscription = await prisma.subscription
                   .findUnique({
                     where: { userId: dbUser.id },
-                    select: { plan: true },
+                    select: { plan: true, status: true },
                   })
                   .catch(() => null);
-                token.plan = subscription?.plan ?? DEFAULT_B2C_PLAN;
+                // Statut Stripe inclus : un abonnement résiduel non actif → Découverte.
+                token.plan = resolveEffectivePlan({ subscription, email: oauthEmail });
                 token.planFetchedAt = Date.now();
               }
             } else {
@@ -286,12 +291,12 @@ export const authOptions: NextAuthConfig = {
               })
               .catch(() => null);
 
-            if (dbUser?.subscription?.plan) {
-              token.plan = dbUser.subscription.plan;
-            } else {
-              // Aucun abonnement → plan gratuit Découverte (corrige aussi un ESSENTIEL périmé).
-              token.plan = DEFAULT_B2C_PLAN;
-            }
+            // Plan effectif : statut Stripe inclus (un abonnement inactif/canceled
+            // avec un plan résiduel ne donne JAMAIS de droits payants → Découverte).
+            token.plan = resolveEffectivePlan({
+              subscription: dbUser?.subscription,
+              email: dbUser?.email ?? email,
+            });
             if (dbUser) {
               if (dbUser.email) {
                 token.email = dbUser.email;

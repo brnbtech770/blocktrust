@@ -55,20 +55,49 @@ export function isDiscoveryExpired(plan?: string | null): boolean {
   return normalizePlan(plan) === DISCOVERY_EXPIRED_PLAN
 }
 
+/** Statut d'abonnement Stripe considéré comme « payant actif ». */
+export function isActiveBillingStatus(status?: string | null): boolean {
+  const s = (status ?? '').trim().toLowerCase()
+  return s === 'active' || s === 'trialing'
+}
+
 /**
- * Résout le plan effectif d'un compte :
- *  - admin (ADMIN_EMAILS) → Enterprise (jamais écrasé) ;
- *  - sinon l'abonnement Stripe s'il existe ;
- *  - sinon le plan gratuit Découverte (compte B2C sans abonnement).
+ * SOURCE DE VÉRITÉ UNIQUE de la résolution du plan effectif d'un compte.
+ * Tient compte du STATUT réel de l'abonnement Stripe (pas seulement de l'existence
+ * d'une ligne Subscription) :
+ *  - comptes internes (admins ADMIN_EMAILS + équipe) → Enterprise complet (jamais écrasé) ;
+ *  - sinon l'abonnement Stripe UNIQUEMENT s'il est payant actif (active / trialing) ;
+ *  - sinon le plan gratuit Découverte (un plan résiduel sur un abonnement
+ *    inactif/canceled/past_due ne donne JAMAIS de droits payants).
  * Fail-soft : ne lève jamais.
+ */
+export function resolveEffectivePlan(params: {
+  subscription?: { plan?: string | null; status?: string | null } | null
+  email?: string | null
+  /** Court-circuit explicite (déjà calculé en amont). Sinon dérivé de `email`. */
+  isAdmin?: boolean
+}): string {
+  if (params.isAdmin || isInternalAccount(params.email)) return 'B2B_ENTERPRISE'
+  const sub = params.subscription
+  const plan = (sub?.plan ?? '').trim()
+  if (plan.length > 0 && isActiveBillingStatus(sub?.status)) return plan
+  return DEFAULT_B2C_PLAN
+}
+
+/**
+ * @deprecated Utiliser {@link resolveEffectivePlan} qui tient compte du statut Stripe.
+ * Conservé pour compatibilité (call sites legacy sans information de statut) :
+ * suppose un abonnement actif lorsque `subscriptionPlan` est renseigné.
  */
 export function resolveAccountPlan(
   subscriptionPlan: string | null | undefined,
   opts?: { isAdmin?: boolean },
 ): string {
-  if (opts?.isAdmin) return 'B2B_ENTERPRISE'
   const p = (subscriptionPlan ?? '').trim()
-  return p.length > 0 ? p : DEFAULT_B2C_PLAN
+  return resolveEffectivePlan({
+    subscription: p.length > 0 ? { plan: p, status: 'active' } : null,
+    isAdmin: opts?.isAdmin,
+  })
 }
 
 /**

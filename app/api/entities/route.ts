@@ -10,8 +10,7 @@ import { z } from 'zod';
 import { checkEntityQuota } from '@/lib/checkQuota';
 import { validateWalletPair } from '@/lib/wallet-validation';
 import { validateCertifiedContactArrays } from '@/lib/certified-contact';
-import { isAdmin } from '@/lib/admin-utils';
-import { resolveAccountPlan } from '@/lib/plan-features';
+import { resolveEffectivePlan } from '@/lib/plan-features';
 import { checkPlanRateLimit } from '@/lib/rate-limit-plan';
 
 // ─────────────────────────────────────────────
@@ -74,7 +73,7 @@ export async function POST(req: NextRequest) {
       include: { 
         entities: true,
         plan: true,
-        subscription: { select: { plan: true } },
+        subscription: { select: { plan: true, status: true } },
       },
     });
 
@@ -84,8 +83,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Rate limit anti-abus par tier : 5 contacts/min (Découverte) vs 30/min (payant).
-    const effectivePlan = resolveAccountPlan(user.subscription?.plan, {
-      isAdmin: isAdmin(user.email),
+    const effectivePlan = resolveEffectivePlan({
+      subscription: user.subscription,
+      email: user.email,
     });
     const contactsRl = await checkPlanRateLimit('contacts', effectivePlan, user.id);
     if (!contactsRl.ok) {

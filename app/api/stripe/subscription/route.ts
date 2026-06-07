@@ -6,8 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUser } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/db'
 import { stripe } from '@/lib/stripe'
-import { getPlanDisplayLabel, resolveAccountPlan } from '@/lib/plan-features'
-import { isAdmin } from '@/lib/admin-utils'
+import { getPlanDisplayLabel, resolveEffectivePlan } from '@/lib/plan-features'
 
 export async function GET(req: NextRequest) {
   try {
@@ -53,10 +52,11 @@ export async function GET(req: NextRequest) {
     // Plan réel résolu (source unique) + libellé affiché (Compte interne pour admins/Johanna).
     const subForLabel = await prisma.subscription.findUnique({
       where: { userId: user.id },
-      select: { plan: true },
+      select: { plan: true, status: true },
     })
-    const planCode = resolveAccountPlan(subForLabel?.plan, {
-      isAdmin: isAdmin(userWithPlan.email),
+    const planCode = resolveEffectivePlan({
+      subscription: subForLabel,
+      email: userWithPlan.email,
     })
     const planLabel = getPlanDisplayLabel(planCode, { email: userWithPlan.email })
 

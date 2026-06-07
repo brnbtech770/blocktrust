@@ -20,7 +20,7 @@ import { getRedis } from '@/lib/rate-limit-redis'
 import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 import { getUserEmailSignature } from '@/lib/email-signature'
 import { isAdmin } from '@/app/lib/admin'
-import { isDiscoveryPlan, resolveAccountPlan, BLOCKCHAIN_STATUS_NOT_ANCHORED } from '@/lib/plan-features'
+import { isDiscoveryPlan, resolveEffectivePlan, BLOCKCHAIN_STATUS_NOT_ANCHORED } from '@/lib/plan-features'
 import {
   checkIsOrgAdmin,
   countActiveCertificatesForSubject,
@@ -233,16 +233,15 @@ export async function POST(req: NextRequest) {
       maxCertificates = planLimits[planName] || 1
     }
 
-    // Plan actif (string) — sert à décider de l'ancrage Polygon (jamais pour DISCOVERY).
-    // Sans abonnement → DISCOVERY ; admin → Enterprise (badge ancré normalement).
-    const subscriptionPlan = (
-      await prisma.subscription.findUnique({
-        where: { userId: user.id },
-        select: { plan: true },
-      })
-    )?.plan ?? null
-    const effectivePlan = resolveAccountPlan(subscriptionPlan, {
-      isAdmin: isAdmin(session.user.email),
+    // Plan effectif (statut Stripe inclus) — décide l'ancrage Polygon (jamais pour DISCOVERY).
+    // Abonnement inactif → DISCOVERY ; admin/interne → Enterprise (badge ancré normalement).
+    const subscriptionForPlan = await prisma.subscription.findUnique({
+      where: { userId: user.id },
+      select: { plan: true, status: true },
+    })
+    const effectivePlan = resolveEffectivePlan({
+      subscription: subscriptionForPlan,
+      email: session.user.email,
     })
     const isDiscovery = isDiscoveryPlan(effectivePlan)
 

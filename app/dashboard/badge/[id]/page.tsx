@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
-import { isDiscoveryExpired, resolveAccountPlan } from '@/lib/plan-features'
+import { isDiscoveryExpired, resolveEffectivePlan } from '@/lib/plan-features'
 import BadgeDashboardClient from './BadgeDashboardClient'
 
 export default async function DashboardBadgePage() {
@@ -19,10 +19,10 @@ export default async function DashboardBadgePage() {
 
   // Plan Découverte expiré → badge preview désactivé (données conservées).
   const subscription = await prisma.subscription
-    .findUnique({ where: { userId: session.user.id }, select: { plan: true } })
+    .findUnique({ where: { userId: session.user.id }, select: { plan: true, status: true } })
     .catch(() => null)
   const planExpired = isDiscoveryExpired(
-    resolveAccountPlan(subscription?.plan, { isAdmin: userIsAdmin }),
+    resolveEffectivePlan({ subscription, email: session.user.email }),
   )
 
   return <BadgeDashboardClient isAdmin={userIsAdmin} planExpired={planExpired} />

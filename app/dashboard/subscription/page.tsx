@@ -9,8 +9,7 @@ import { auth } from '@/app/lib/auth-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import SubscriptionClient from '@/app/components/dashboard/SubscriptionClient'
-import { getPlanDisplayLabel, resolveAccountPlan } from '@/lib/plan-features'
-import { isAdmin } from '@/lib/admin-utils'
+import { getPlanDisplayLabel, resolveEffectivePlan } from '@/lib/plan-features'
 
 export default async function SubscriptionPage() {
   try {
@@ -40,9 +39,10 @@ export default async function SubscriptionPage() {
     }
 
     const subscription = user.subscription
-    // Plan affiché = plan réel résolu (source unique : resolveAccountPlan).
-    const resolvedPlan = resolveAccountPlan(subscription?.plan, {
-      isAdmin: isAdmin(session.user.email),
+    // Plan affiché = plan réel résolu (source unique : resolveEffectivePlan, statut Stripe inclus).
+    const resolvedPlan = resolveEffectivePlan({
+      subscription,
+      email: session.user.email,
     })
     const planName = getPlanDisplayLabel(resolvedPlan, { email: session.user.email })
     const currentPeriodEnd = subscription?.currentPeriodEnd

@@ -14,8 +14,7 @@ import { DiscoveryExpiredWall } from '@/app/components/dashboard/DiscoveryExpire
 import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
 import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
 import { rethrowIfRedirect } from '@/app/lib/is-redirect-error'
-import { isAdmin } from '@/lib/admin-utils'
-import { isDiscoveryExpired, resolveAccountPlan } from '@/lib/plan-features'
+import { isDiscoveryExpired, resolveEffectivePlan } from '@/lib/plan-features'
 
 /** Évite cache / flux RSC sans cookies → auth() null alors que l'utilisateur est connecté */
 export const dynamic = 'force-dynamic'
@@ -69,7 +68,7 @@ export default async function DashboardSegmentLayout({
     const user = await prisma.user
       .findUnique({
         where: { email: session.user.email },
-        include: { plan: true, subscription: { select: { plan: true } } },
+        include: { plan: true, subscription: { select: { plan: true, status: true } } },
       })
       .catch(() => null)
 
@@ -79,8 +78,9 @@ export default async function DashboardSegmentLayout({
       )
     }
 
-    const effectivePlan = resolveAccountPlan(user.subscription?.plan, {
-      isAdmin: isAdmin(user.email),
+    const effectivePlan = resolveEffectivePlan({
+      subscription: user.subscription,
+      email: user.email,
     })
     const discoveryExpired = isDiscoveryExpired(effectivePlan)
 

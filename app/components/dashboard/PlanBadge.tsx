@@ -4,19 +4,25 @@
 // Aucun libellé de plan codé en dur par défaut (jamais de plan "par défaut" trompeur).
 // ============================================================
 
-import { getPlanDisplayLabel, resolveAccountPlan } from '@/lib/plan-features'
-import { isAdmin } from '@/lib/admin-utils'
+import { getPlanDisplayLabel, resolveEffectivePlan } from '@/lib/plan-features'
 
 type PlanBadgeProps = {
   /** Subscription.plan brut (peut être null/undefined → plan gratuit Découverte). */
   subscriptionPlan?: string | null
+  /** Subscription.status (active/trialing → payant). Absent → comportement legacy (supposé actif). */
+  subscriptionStatus?: string | null
   /** Email du compte affiché : admins (ADMIN_EMAILS) + Johanna → "Compte interne". */
   email?: string | null
   className?: string
 }
 
-export default function PlanBadge({ subscriptionPlan, email, className }: PlanBadgeProps) {
-  const code = resolveAccountPlan(subscriptionPlan, { isAdmin: isAdmin(email) })
+export default function PlanBadge({ subscriptionPlan, subscriptionStatus, email, className }: PlanBadgeProps) {
+  // Statut absent → on suppose « active » pour préserver l'affichage existant ;
+  // les appelants disposant du statut le transmettent pour un libellé exact.
+  const code = resolveEffectivePlan({
+    subscription: subscriptionPlan ? { plan: subscriptionPlan, status: subscriptionStatus ?? 'active' } : null,
+    email,
+  })
   const label = getPlanDisplayLabel(code, { email })
 
   return (
