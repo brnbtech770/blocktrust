@@ -12,7 +12,7 @@ const navLinks: NavLink[] = [
   { label: 'Vérifier', href: '/verify', verifyScan: true },
   { label: 'Tarifs', href: '/pricing' },
   { label: 'Actualités', href: '/menaces', newsp: true },
-  { label: 'FAQ', href: '/pricing#faq' },
+  { label: 'FAQ', href: '/faq' },
 ]
 
 export default function Navbar() {

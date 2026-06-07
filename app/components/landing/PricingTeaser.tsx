@@ -45,8 +45,7 @@ export default function PricingTeaser() {
             <span className="text-xs text-white/60 sm:text-sm">TTC/mois</span>
           </div>
           <p className="mt-3 text-xs leading-relaxed text-white/70 sm:text-sm">
-            Vérifications illimitées* pendant la période de lancement. Badge certifié, QR code, signature email, page
-            de vérification publique.
+            Vérifications illimitées†. Badge certifié, QR code, signature email, page de vérification publique.
           </p>
         </Reveal>
 
@@ -83,10 +82,11 @@ export default function PricingTeaser() {
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Link>
         <p className="text-white/30 text-xs text-center mt-3 max-w-lg mx-auto leading-relaxed">
-          * Vérifications illimitées pendant la période de lancement (6 mois).{' '}
-          <Link href="/pricing" className="text-white/45 underline-offset-2 hover:text-bt-cyan">
-            Voir les tarifs
+          † Vérifications illimitées : voir conditions dans les{' '}
+          <Link href="/cgv" className="text-white/45 underline-offset-2 hover:text-bt-cyan">
+            CGV
           </Link>
+          . −20% avec engagement annuel.
         </p>
         <p className="text-white/30 text-xs text-center mt-2">
           Sans engagement · Résiliable à tout moment

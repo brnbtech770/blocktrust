@@ -180,18 +180,6 @@ export default function PricingPage() {
           />
         )}
 
-        {/* Lien vers le tableau comparatif détaillé */}
-        <div className="mt-8 text-center">
-          <a
-            href="#compare"
-            className="inline-flex items-center gap-1.5 rounded-lg border px-5 py-2.5 text-sm font-medium transition-all hover:brightness-110"
-            style={{ borderColor: 'var(--bt-border)', color: 'var(--bt-cyan)' }}
-          >
-            Comparer les offres
-            <ArrowRight className="h-4 w-4" aria-hidden />
-          </a>
-        </div>
-
         <div className="mx-auto mt-8 max-w-2xl rounded-xl border border-white/5 bg-white/[0.02] p-4 text-center">
           <p className="text-xs leading-relaxed text-white/40">
             <span className="font-semibold text-white/60">Contacts</span> = personnes ou entreprises dont vous
@@ -208,14 +196,15 @@ export default function PricingPage() {
             <span className="font-mono">†</span> Vérifications illimitées : usage raisonnable, voir CGV.
           </p>
           <p>
-            <span className="font-mono">*</span> Contacts illimités / vérifications illimitées Team : pendant la
-            période de lancement, quotas appliqués ensuite selon les CGV.
+            <span className="font-mono">*</span> Contacts illimités / vérifications Team : conditions détaillées
+            dans les{' '}
+            <a href="/cgv" className="text-white/45 underline-offset-2 hover:text-bt-cyan">
+              CGV
+            </a>
+            .
           </p>
         </div>
       </section>
-
-      {/* Ancre tableau comparatif (à venir) */}
-      <section id="compare" className="scroll-mt-24" aria-hidden />
 
       {/* FAQ → page dédiée */}
       <section className="mx-auto max-w-3xl px-4 pb-16 text-center sm:px-6 lg:px-8">
