@@ -165,9 +165,12 @@ async function verifySender(email, domain) {
     const url = new URL(`${API_BASE}/api/extension/verify-sender`);
     url.searchParams.set("email", email);
     url.searchParams.set("domain", domain);
-    url.searchParams.set("apiKey", apiKey);
 
-    const response = await fetch(url.toString());
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${apiKey.trim()}`,
+      },
+    });
     const data = await response.json().catch(() => ({}));
     console.log("[BLOCKTRUST] Status API:", response.status);
     console.log("[BLOCKTRUST] Data:", data);

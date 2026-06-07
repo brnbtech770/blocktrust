@@ -5,7 +5,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/db";
 import { hashApiKey } from "@/lib/api-key";
-import { findUserIdByExtensionApiKey, EXTENSION_UNAUTHORIZED_BODY } from "@/lib/extension-auth";
+import { findUserIdByExtensionApiKey, extractExtensionApiKey, EXTENSION_UNAUTHORIZED_BODY } from "@/lib/extension-auth";
 import {
   buildExtensionVerifyResult,
   normalizeSenderDomain,
@@ -31,16 +31,16 @@ export async function OPTIONS(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
-  const apiKey = searchParams.get("apiKey");
+  const apiKey = extractExtensionApiKey(req);
   const emailRaw = searchParams.get("email") ?? "";
   const domainRaw = searchParams.get("domain") ?? "";
 
   const userId = await findUserIdByExtensionApiKey(apiKey);
-  if (!userId) {
+  if (!userId || !apiKey) {
     return extensionJsonResponse(req, EXTENSION_UNAUTHORIZED_BODY, 401);
   }
 
-  const keyHash = hashApiKey(apiKey!);
+  const keyHash = hashApiKey(apiKey);
   // Rate limit par tier : 30/min (Découverte) vs 120/min (payant). Fail-soft.
   const sub = await prisma.subscription
     .findUnique({ where: { userId }, select: { plan: true, status: true } })

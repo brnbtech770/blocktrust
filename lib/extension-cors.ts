@@ -80,7 +80,7 @@ export function getCorsHeaders(request: NextRequest): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": allowed ? origin : FALLBACK_ORIGIN,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-API-Key",
     "Access-Control-Max-Age": "86400",
   };
 }

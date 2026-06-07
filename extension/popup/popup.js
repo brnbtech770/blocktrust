@@ -116,13 +116,25 @@ function looksLikeExtensionKey(key) {
 }
 
 /**
+ * En-têtes d’auth extension (clé jamais dans l’URL).
+ * @param {string} apiKey
+ * @returns {Record<string, string>}
+ */
+function extensionAuthHeaders(apiKey) {
+  return {
+    Authorization: `Bearer ${apiKey.trim()}`,
+  };
+}
+
+/**
  * Appelle GET /api/extension/me
  * @param {string} apiKey
  */
 async function fetchMe(apiKey) {
   const url = new URL(`${API_BASE}/api/extension/me`);
-  url.searchParams.set("apiKey", apiKey.trim());
-  const res = await fetch(url.toString());
+  const res = await fetch(url.toString(), {
+    headers: extensionAuthHeaders(apiKey),
+  });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = data.message || data.error || "Erreur serveur";

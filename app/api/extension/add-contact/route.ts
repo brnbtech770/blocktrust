@@ -5,7 +5,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/db";
 import { hashApiKey } from "@/lib/api-key";
-import { findUserIdByExtensionApiKey, EXTENSION_UNAUTHORIZED_BODY } from "@/lib/extension-auth";
+import { findUserIdByExtensionApiKey, extractExtensionApiKey, EXTENSION_UNAUTHORIZED_BODY } from "@/lib/extension-auth";
 import { getCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
 import { checkPlanRateLimit } from "@/lib/rate-limit-plan";
@@ -16,7 +16,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const bodySchema = z.object({
-  apiKey: z.string().min(1),
   name: z.string().min(1).max(200),
   email: z.string().email(),
   domain: z.string().max(255).optional().default(""),
@@ -50,10 +49,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { apiKey, name, email, domain } = parsed.data;
+  const { name, email, domain } = parsed.data;
 
+  const apiKey = extractExtensionApiKey(req);
   const userId = await findUserIdByExtensionApiKey(apiKey);
-  if (!userId) {
+  if (!userId || !apiKey) {
     return extensionJsonResponse(req, EXTENSION_UNAUTHORIZED_BODY, 401);
   }
 
