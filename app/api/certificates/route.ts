@@ -427,7 +427,7 @@ export async function POST(req: NextRequest) {
           entityName,
           verifyUrl,
           qrCodeDataUrl: qrCodeDataUrl || undefined,
-          embedSnippet: `<a href="${verifyUrl}" target="_blank" rel="noopener">Vérifier ce certificat BlockTrust</a>`,
+          embedSnippet: `<a href="${verifyUrl}" target="_blank" rel="noopener">Vérifier ce certificat BLOCKTRUST™</a>`,
           ownerCertId,
           ownerVerifyUrl: verifyUrl,
           ownerDisplayName,

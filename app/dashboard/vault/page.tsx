@@ -33,7 +33,7 @@ export default async function VaultIndexPage() {
   if (orgIds.length === 0) {
     return (
       <div className="mx-auto max-w-3xl font-sans text-white/80">
-        <h1 className="font-syne text-2xl font-bold text-white">BlockTrust Vault</h1>
+        <h1 className="font-syne text-2xl font-bold text-white">BLOCKTRUST™ Vault</h1>
         <p className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-6 text-sm text-white/50">
           Vous n&apos;êtes membre d&apos;aucune organisation.{' '}
           <Link href="/dashboard/organization" className="text-bt-cyan underline-offset-2 hover:underline">
@@ -58,7 +58,7 @@ export default async function VaultIndexPage() {
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-6 w-6 text-bt-cyan/90" aria-hidden />
-          <h1 className="font-syne text-2xl font-bold tracking-tight text-white">BlockTrust Vault</h1>
+          <h1 className="font-syne text-2xl font-bold tracking-tight text-white">BLOCKTRUST™ Vault</h1>
         </div>
         {canCreateVault ? (
           <Link

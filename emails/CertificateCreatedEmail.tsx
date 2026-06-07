@@ -19,7 +19,7 @@ import * as React from 'react'
 import { EmailSignatureBadge } from './components/EmailSignatureBadge'
 import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
-export const subject = 'Votre certificat BlockTrust est généré ✅'
+export const subject = 'Votre certificat BLOCKTRUST™ est généré ✅'
 
 type CertificateCreatedEmailProps = {
   entityName: string
@@ -46,7 +46,7 @@ export function CertificateCreatedEmail({
       <Preview>Certificat {entityName} — lien de vérification et QR code</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={h1}>Votre certificat BlockTrust est généré ✅</Heading>
+          <Heading style={h1}>Votre certificat BLOCKTRUST™ est généré ✅</Heading>
           <Text style={text}>
             Le certificat pour <strong>{entityName}</strong> a été créé avec succès.
           </Text>
@@ -73,7 +73,7 @@ export function CertificateCreatedEmail({
           ) : (
             <Section style={box}>
               <Text style={label}>Exemple d’intégration</Text>
-              <pre style={code}>{`<a href="${verifyUrl}" target="_blank" rel="noopener">Vérifier ce certificat BlockTrust</a>`}</pre>
+              <pre style={code}>{`<a href="${verifyUrl}" target="_blank" rel="noopener">Vérifier ce certificat BLOCKTRUST™</a>`}</pre>
             </Section>
           )}
 
@@ -104,7 +104,7 @@ export function CertificateCreatedEmail({
 
           <CertifiedEmailFooter certId={ownerCertId} />
 
-          <Text style={footer}>BlockTrust — Certification numérique fiable</Text>
+          <Text style={footer}>BLOCKTRUST™ — Certification numérique fiable</Text>
         </Container>
       </Body>
     </Html>

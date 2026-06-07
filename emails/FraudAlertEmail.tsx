@@ -42,7 +42,7 @@ export function FraudAlertEmail({
   return (
     <Html>
       <Head />
-      <Preview>Alerte sécurité : une tentative de fraude concerne votre certificat BLOCKTRUST</Preview>
+      <Preview>Alerte sécurité : une tentative de fraude concerne votre certificat BLOCKTRUST™</Preview>
       <Body style={main}>
         <Container style={container}>
           <Heading style={h1}>Une tentative de fraude a été détectée</Heading>

@@ -3,7 +3,7 @@
  * Tous droits réservés. Code propriétaire — reproduction interdite.
  */
 // app/api/public/verify/[id]/route.ts
-// API publique White Label de vérification d'un certificat BlockTrust.
+// API publique White Label de vérification d'un certificat BLOCKTRUST™.
 //
 // GET /api/public/verify/:id
 //   Headers: X-API-Key: bt_live_xxxxxxxx

@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
         expiresAt: new Date((now + 86400 * 365) * 1000).toISOString(),
       },
       badge: {
-        embedCode: `<a href="${verifyUrl}" target="_blank" rel="noopener"><img src="${process.env.NEXT_PUBLIC_APP_URL}/api/badge/${publicId}?sig=${jti}" alt="Vérifié par BlockTrust" width="120" height="40" /></a>`,
+        embedCode: `<a href="${verifyUrl}" target="_blank" rel="noopener"><img src="${process.env.NEXT_PUBLIC_APP_URL}/api/badge/${publicId}?sig=${jti}" alt="Vérifié par BLOCKTRUST™" width="120" height="40" /></a>`,
         qrCodeUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/qr/${publicId}?sig=${jti}`,
       },
     })

@@ -43,7 +43,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       (body as { action?: unknown }).action === 'activate'
     ) {
       return NextResponse.json(
-        { error: "L'activation est réservée à l'administration BlockTrust" },
+        { error: "L'activation est réservée à l'administration BLOCKTRUST™" },
         { status: 403 }
       );
     }

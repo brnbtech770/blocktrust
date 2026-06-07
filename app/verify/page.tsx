@@ -198,7 +198,7 @@ function VerifyContent() {
     () => ({
       from: "contact@brnb.fr",
       to: "test@client.com",
-      subject: "Test BlockTrust V2",
+      subject: "Test BLOCKTRUST™ V2",
       date: new Date().toISOString(),
       body: "Hello",
     }),
@@ -822,7 +822,7 @@ function ValidWowView({
           style={{ animationDelay: "200ms" }}
         >
           Cette identité a été <strong>déclarée par son titulaire</strong> mais n&apos;a pas été
-          vérifiée par contrôle d&apos;identité (KYC)
+          vérifiée par contrôle d&apos;identité
           {polygonAnchored ? "" : " ni ancrée sur la blockchain"}. Le nom affiché n&apos;est pas une
           identité certifiée par BLOCKTRUST™.
         </div>
@@ -1050,7 +1050,7 @@ function ValidWowView({
           role="status"
           className="w-full rounded-xl border border-[#10b981]/35 bg-[#10b981]/10 px-4 py-3 text-left text-sm text-[#10b981]/95"
         >
-          Ces coordonnées certifiées correspondent à une référence enregistrée dans le BlockTrust Vault de
+          Ces coordonnées certifiées correspondent à une référence enregistrée dans le BLOCKTRUST™ Vault de
           votre organisation.
         </div>
       ) : null}
@@ -1177,7 +1177,7 @@ function FraudCertificateCard() {
         </div>
 
         <p className="font-syne relative z-10 text-lg font-semibold leading-snug text-[#ef4444]">
-          🚨 Tentative de fraude détectée
+          Tentative de fraude détectée
         </p>
 
         <p className="relative z-10 max-w-[22rem] text-sm leading-relaxed text-white/50">

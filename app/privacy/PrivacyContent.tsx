@@ -112,7 +112,7 @@ export default function PrivacyContent() {
             </Li>
             <Li>
               <strong className="text-white/85">Données biométriques</strong> : uniquement dans le cadre de
-              la vérification d&apos;identité (KYC) via Stripe Identity — voir section 4.
+              la vérification d&apos;identité via Stripe Identity — voir section 4.
             </Li>
             <Li>
               <strong className="text-white/85">Données extension Chrome TrustScan</strong> : adresse
@@ -121,7 +121,7 @@ export default function PrivacyContent() {
             </Li>
             <Li>
               <strong className="text-white/85">Données organisationnelles (B2B)</strong> : nom
-              d&apos;organisation, rôle, entrées de coffre équipe (BlockTrust Vault).
+              d&apos;organisation, rôle, entrées de coffre équipe (BLOCKTRUST™ Vault).
             </Li>
           </ul>
           <p className="rounded-lg border border-[#00d4ff]/20 bg-[#00d4ff]/5 p-4 text-sm text-white/70">
@@ -145,7 +145,7 @@ export default function PrivacyContent() {
                   ["Création et gestion du compte utilisateur", "Exécution du contrat (art. 6.1.b)"],
                   ["Authentification et sécurité du compte", "Exécution du contrat (art. 6.1.b)"],
                   ["Émission, vérification et révocation de certificats", "Exécution du contrat (art. 6.1.b)"],
-                  ["Vérification d'identité (KYC)", "Obligation légale LCB-FT + contrat (art. 6.1.c et b)"],
+                  ["Vérification d'identité", "Obligation légale LCB-FT + contrat (art. 6.1.c et b)"],
                   ["TrustScore et signaux de confiance", "Intérêt légitime — sécurité et prévention de la fraude (art. 6.1.f)"],
                   ["Trust Circle et réseau de confiance", "Exécution du contrat (art. 6.1.b)"],
                   ["Facturation et comptabilité", "Exécution du contrat + obligation légale (art. 6.1.b et c)"],
@@ -248,7 +248,7 @@ export default function PrivacyContent() {
                   ["Magic link et reset mot de passe", "24 h / 1 h respectivement"],
                   ["Historique des vérifications", "12 mois, puis anonymisation"],
                   ["Logs de sécurité et anti-fraude", "6 mois"],
-                  ["Données KYC / biométriques (Stripe Identity)", "5 ans (obligations LCB-FT)"],
+                  ["Données de vérification d'identité / biométriques (Stripe Identity)", "5 ans (obligations LCB-FT)"],
                   ["Données de facturation", "10 ans (obligations comptables)"],
                   ["Ancrage blockchain", "Permanent (empreinte non identifiante, immuable par nature)"],
                   ["Cache extension TrustScan", "5 minutes maximum (local, appareil utilisateur)"],

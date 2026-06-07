@@ -17,7 +17,7 @@ export interface BlockTrustBadgeProps {
   size?: number | "fill";
   /** Optional className to apply to the outer wrapper. */
   className?: string;
-  /** Override the wordmark. Defaults to "BLOCKTRUST". */
+  /** Override the wordmark. Defaults to "BLOCKTRUST™". */
   label?: string;
   /** Préfixe unique pour les IDs SVG (defs, clipPath, gradients, filtre). */
   instanceId?: string;
@@ -79,7 +79,7 @@ const QR_PATTERN = [
 export function BlockTrustBadge({
   size = 320,
   className,
-  label = "BLOCKTRUST",
+  label = "BLOCKTRUST™",
   instanceId,
   showWatermark = true,
 }: BlockTrustBadgeProps) {
@@ -441,7 +441,7 @@ export function BlockTrustBadge({
             className="bt-anim-film"
           />
 
-          {/* === Wordmark BlockTrust (en dessous) === */}
+          {/* === Wordmark BLOCKTRUST™ (en dessous) === */}
           <text
             x="100"
             y="143"

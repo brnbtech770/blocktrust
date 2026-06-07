@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { Check, Clock } from 'lucide-react'
 import { prisma } from '@/app/lib/db'
 import { Logo } from '@/app/components/ui/Logo'
 import { JOIN_BLOCKTRUST_ESSENTIEL_LABEL } from '@/lib/pricing'
@@ -34,7 +35,9 @@ export default async function InvitePage({
     return (
       <div className="min-h-screen bt-circuit-bg flex flex-col items-center justify-center p-6" style={{ background: 'var(--bt-navy)' }}>
         <Logo size="lg" withText={false} href="/" />
-        <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mt-8 text-amber-400 text-4xl">🕐</div>
+        <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mt-8 text-amber-400">
+          <Clock className="h-8 w-8" aria-hidden />
+        </div>
         <h1 className="font-syne mt-6 mb-2 text-xl font-bold tracking-tight text-white">
           Cette invitation a expiré
         </h1>
@@ -62,7 +65,7 @@ export default async function InvitePage({
           {initiales}
         </div>
         <h1 className="font-syne mb-3 text-2xl font-extrabold tracking-tight text-white">
-          {fromName} vous fait confiance sur BLOCKTRUST
+          {fromName} vous fait confiance sur BLOCKTRUST™
         </h1>
         <p className="text-[15px] mb-6" style={{ color: 'var(--bt-muted)' }}>
           {fromName} a certifié son identité numérique et vous invite à rejoindre son cercle de confiance.
@@ -72,10 +75,10 @@ export default async function InvitePage({
 
         <p className="text-sm font-semibold text-white mb-3">Pourquoi rejoindre ?</p>
         <ul className="text-left text-sm space-y-2 mb-6" style={{ color: 'var(--bt-muted)' }}>
-          <li className="flex items-center gap-2"><span className="text-bt-cyan">✓</span> Identité certifiée et infalsifiable</li>
-          <li className="flex items-center gap-2"><span className="text-bt-cyan">✓</span> Badge QR vérifiable partout</li>
-          <li className="flex items-center gap-2"><span className="text-bt-cyan">✓</span> Protection contre l&apos;usurpation d&apos;identité</li>
-          <li className="flex items-center gap-2"><span className="text-bt-cyan">✓</span> Alertes fraude en temps réel</li>
+          <li className="flex items-center gap-2"><Check className="h-5 w-5 shrink-0 text-bt-cyan" aria-hidden /> Identité certifiée et infalsifiable</li>
+          <li className="flex items-center gap-2"><Check className="h-5 w-5 shrink-0 text-bt-cyan" aria-hidden /> Badge QR vérifiable partout</li>
+          <li className="flex items-center gap-2"><Check className="h-5 w-5 shrink-0 text-bt-cyan" aria-hidden /> Protection contre l&apos;usurpation d&apos;identité</li>
+          <li className="flex items-center gap-2"><Check className="h-5 w-5 shrink-0 text-bt-cyan" aria-hidden /> Alertes fraude en temps réel</li>
         </ul>
 
         <Link

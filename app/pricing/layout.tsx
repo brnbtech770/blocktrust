@@ -1,5 +1,5 @@
 // app/pricing/layout.tsx
-// Polices Syne (titres) et IBM Plex Mono (données) pour la charte BlockTrust
+// Polices Syne (titres) et IBM Plex Mono (données) pour la charte BLOCKTRUST™
 // ============================================================
 
 import type { Metadata } from 'next'
@@ -20,7 +20,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Tarifs · BlockTrust',
+  title: 'Tarifs · BLOCKTRUST™',
   description: `Certifiez votre identité numérique dès ${formatPriceFr(ESSENTIEL_MONTHLY_EUR)}€/mois. Badge vérifiable, anti-fraude, blockchain.`,
 }
 

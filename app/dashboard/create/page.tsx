@@ -12,6 +12,7 @@ import {
   CertifiedPhonesTagInput,
   DomainTagInput,
 } from "@/app/components/ui/TagInput";
+import { AlertCircle, Building2, Loader2, Shield, User } from "lucide-react";
 
 type EntityType = "INDIVIDUAL" | "BUSINESS";
 
@@ -496,8 +497,9 @@ export default function CreateCertificate() {
         </div>
 
         {(error || editLoadError) && (
-          <div className="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-lg mb-6">
-            ❌ {error || editLoadError}
+          <div className="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-lg mb-6 flex items-start gap-2">
+            <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" aria-hidden />
+            <span>{error || editLoadError}</span>
           </div>
         )}
 
@@ -612,7 +614,17 @@ export default function CreateCertificate() {
                   disabled={loading || certQuota === null}
                   className="min-w-0 w-full rounded-lg bg-bt-cyan py-4 text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 disabled:opacity-50 sm:flex-1 sm:text-base"
                 >
-                  {loading ? "⏳ Génération en cours..." : "🛡️ Générer mon certificat"}
+                  {loading ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+                      Génération en cours...
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <Shield className="h-5 w-5" aria-hidden />
+                      Générer mon certificat
+                    </span>
+                  )}
                 </button>
               )}
             </div>
@@ -635,7 +647,10 @@ export default function CreateCertificate() {
                       : "border border-white/20 bg-white/5 text-white/70 hover:border-white/40"
                   }`}
                 >
-                  👤 Particulier
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <User className="h-5 w-5" aria-hidden />
+                    Particulier
+                  </span>
                 </button>
                 <button
                   type="button"
@@ -647,7 +662,10 @@ export default function CreateCertificate() {
                       : "border border-white/20 bg-white/5 text-white/70 hover:border-white/40"
                   }`}
                 >
-                  🏢 Entreprise
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <Building2 className="h-5 w-5" aria-hidden />
+                    Entreprise
+                  </span>
                 </button>
               </div>
             </div>
@@ -784,7 +802,7 @@ export default function CreateCertificate() {
                     onChange={(e) =>
                       setBusinessData({ ...businessData, tradeName: e.target.value })
                     }
-                    placeholder="Ex: BlockTrust"
+                    placeholder="Ex: BLOCKTRUST™"
                     className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                 </div>
@@ -974,7 +992,12 @@ export default function CreateCertificate() {
             >
               {editEntityId
                 ? loading
-                  ? "⏳ Enregistrement…"
+                  ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+                      Enregistrement…
+                    </span>
+                  )
                   : "Enregistrer les modifications"
                 : "Continuer →"}
             </button>

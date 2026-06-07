@@ -51,7 +51,7 @@ export function Logo({
       ) : (
         <Image
           src="/logo.png"
-          alt="BlockTrust"
+          alt="BLOCKTRUST™"
           width={isHero ? 380 : px}
           height={isHero ? 380 : px}
           className="h-full w-full object-contain"

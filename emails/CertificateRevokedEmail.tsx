@@ -68,7 +68,7 @@ export function CertificateRevokedEmail({
           </Section>
 
           <Hr style={hr} />
-          <Text style={footer}>BlockTrust — Certification numérique fiable</Text>
+          <Text style={footer}>BLOCKTRUST™ — Certification numérique fiable</Text>
           <CertifiedEmailFooter />
         </Container>
       </Body>

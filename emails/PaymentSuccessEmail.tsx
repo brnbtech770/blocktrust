@@ -69,7 +69,7 @@ export function PaymentSuccessEmail({
 
           <Hr style={hr} />
           <Text style={footer}>
-            BlockTrust — Certification numérique fiable. Gestion de l’abonnement : tableau de bord →
+            BLOCKTRUST™ — Certification numérique fiable. Gestion de l’abonnement : tableau de bord →
             Facturation.
           </Text>
           <CertifiedEmailFooter />

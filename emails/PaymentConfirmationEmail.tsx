@@ -1,5 +1,5 @@
 // emails/PaymentConfirmationEmail.tsx
-// Confirmation d’abonnement / paiement — charte sombre BlockTrust
+// Confirmation d’abonnement / paiement — charte sombre BLOCKTRUST™
 // ============================================================
 
 import {
@@ -46,7 +46,7 @@ export function PaymentConfirmationEmail({
       </Preview>
       <Body style={main}>
         <Container style={container}>
-          <Text style={brand}>BlockTrust</Text>
+          <Text style={brand}>BLOCKTRUST™</Text>
           <Heading style={h1}>Merci pour votre abonnement {planName} ✓</Heading>
           <Text style={text}>Bonjour {userName},</Text>
           <Text style={text}>

@@ -227,7 +227,7 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
       <section className="mb-8 rounded-xl border border-white/10 bg-[#0d1f3c]/60 p-4">
         <div className="flex items-center gap-2 text-bt-cyan/90">
           <ShieldCheck className="h-4 w-4" aria-hidden />
-          <h2 className="text-sm font-semibold uppercase tracking-wider">BlockTrust Vault</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider">BLOCKTRUST™ Vault</h2>
         </div>
 
         {canManageVaults(role) ? (

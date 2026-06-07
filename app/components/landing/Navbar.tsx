@@ -32,7 +32,7 @@ export default function Navbar() {
             href="/"
             className="flex items-center gap-3"
             style={{ textDecoration: 'none' }}
-            aria-label="Retour à l'accueil BlockTrust"
+            aria-label="Retour à l'accueil BLOCKTRUST™"
           >
             <BlockTrustBadge
               size={44}

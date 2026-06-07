@@ -638,7 +638,7 @@ export default function SettingsClient({
 
         <div className="rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-red-500/40">
           <h2 className="font-syne mb-4 text-2xl font-semibold tracking-tight text-white">Session</h2>
-          <p className="mb-4 text-sm text-white/55">Déconnexion sécurisée via votre compte BlockTrust.</p>
+          <p className="mb-4 text-sm text-white/55">Déconnexion sécurisée via votre compte BLOCKTRUST™.</p>
           <SignOutButton />
         </div>
       </div>

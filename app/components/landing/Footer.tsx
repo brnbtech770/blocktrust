@@ -84,7 +84,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 text-white/70 transition-all hover:border-bt-cyan/60 hover:text-bt-cyan"
-                aria-label="LinkedIn BlockTrust"
+                aria-label="LinkedIn BLOCKTRUST™"
               >
                 <Linkedin className="h-4 w-4" />
               </a>
@@ -93,7 +93,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 text-white/70 transition-all hover:border-bt-cyan/60 hover:text-bt-cyan"
-                aria-label="Instagram BlockTrust"
+                aria-label="Instagram BLOCKTRUST™"
               >
                 <Instagram className="h-4 w-4" />
               </a>

@@ -6,6 +6,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Loader2, Settings } from 'lucide-react'
 
 export default function SubscriptionClient() {
   const router = useRouter()
@@ -43,7 +44,17 @@ export default function SubscriptionClient() {
       disabled={loading}
       className="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
     >
-      {loading ? '⏳ Ouverture...' : '⚙️ Gérer mon abonnement'}
+      {loading ? (
+        <span className="inline-flex items-center gap-2">
+          <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+          Ouverture...
+        </span>
+      ) : (
+        <span className="inline-flex items-center gap-2">
+          <Settings className="h-5 w-5" aria-hidden />
+          Gérer mon abonnement
+        </span>
+      )}
     </button>
   )
 }

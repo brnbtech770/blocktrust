@@ -34,7 +34,7 @@ export type TrustCircleExternalInviteEmailProps = {
 }
 
 export function getTrustCircleExternalInviteSubject(inviterName: string) {
-  return `${inviterName} vous fait confiance sur BlockTrust`
+  return `${inviterName} vous fait confiance sur BLOCKTRUST™`
 }
 
 export function TrustCircleExternalInviteEmail({
@@ -55,7 +55,7 @@ export function TrustCircleExternalInviteEmail({
       <Body style={{ margin: 0, fontFamily: 'Inter, sans-serif' }}>
         <Container style={{ maxWidth: 560, margin: '0 auto' }}>
           <Section style={headerSection}>
-            <Text style={logoTitle}>BLOCKTRUST</Text>
+            <Text style={logoTitle}>BLOCKTRUST™</Text>
             <Text style={logoSub}>BRNB TECH SAS</Text>
           </Section>
           <Section style={bodySection}>
@@ -64,7 +64,7 @@ export function TrustCircleExternalInviteEmail({
               {inviterName} a certifié son identité numérique et vous invite à rejoindre son cercle
               de confiance.
             </Text>
-            <Text style={textStyle}>Avec BlockTrust vous bénéficiez de :</Text>
+            <Text style={textStyle}>Avec BLOCKTRUST™ vous bénéficiez de :</Text>
             {benefits.map((b, i) => (
               <Text key={i} style={{ ...textStyle, margin: '4px 0', paddingLeft: 8 }}>
                 ✓ {b}

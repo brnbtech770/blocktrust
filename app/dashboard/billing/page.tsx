@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { AlertTriangle, Check, X } from 'lucide-react'
 
 interface SubscriptionData {
   hasSubscription: boolean
@@ -178,8 +179,9 @@ export default function BillingPage() {
                     </span>
                   </p>
                   {data.subscription.cancelAtPeriodEnd && (
-                    <p className="text-base text-orange-600 font-semibold">
-                      ⚠️ Annulation prévue à la fin de la période
+                    <p className="text-base text-orange-600 font-semibold flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 shrink-0" aria-hidden />
+                      Annulation prévue à la fin de la période
                     </p>
                   )}
                 </div>
@@ -262,13 +264,21 @@ export default function BillingPage() {
             <div className="space-y-2">
               <div className="flex items-center">
                 <span className={`mr-2 ${data.limits.trustCircleEnabled ? 'text-green-600' : 'text-gray-400'}`}>
-                  {data.limits.trustCircleEnabled ? '✓' : '✗'}
+                  {data.limits.trustCircleEnabled ? (
+                    <Check className="h-5 w-5" aria-hidden />
+                  ) : (
+                    <X className="h-5 w-5" aria-hidden />
+                  )}
                 </span>
                 <span className="text-base text-gray-700 font-medium">Trust Circle</span>
               </div>
               <div className="flex items-center">
                 <span className={`mr-2 ${data.limits.blockchainAnchor ? 'text-green-600' : 'text-gray-400'}`}>
-                  {data.limits.blockchainAnchor ? '✓' : '✗'}
+                  {data.limits.blockchainAnchor ? (
+                    <Check className="h-5 w-5" aria-hidden />
+                  ) : (
+                    <X className="h-5 w-5" aria-hidden />
+                  )}
                 </span>
                 <span className="text-base text-gray-700 font-medium">Ancrage blockchain</span>
               </div>

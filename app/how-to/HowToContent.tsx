@@ -77,7 +77,7 @@ function Hero({
           Guide complet
         </p>
         <h1 className="font-syne mx-auto max-w-3xl pb-2 text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
-          Comment utiliser <span className="text-bt-cyan">BLOCKTRUST</span>
+          Comment utiliser <span className="text-bt-cyan">BLOCKTRUST™</span>
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
           Guide complet pour particuliers et entreprises — schéma de vérification,
@@ -129,12 +129,12 @@ type FlowStep = {
 
 const FLOW_STEPS: FlowStep[] = [
   { icon: UserPlus, label: "Émetteur", hint: "Profil + identité", tone: "cyan" },
-  { icon: ShieldCheck, label: "BLOCKTRUST", hint: "Signe ES256 + SHA-256", tone: "cyan" },
+  { icon: ShieldCheck, label: "BLOCKTRUST™", hint: "Signe ES256 + SHA-256", tone: "cyan" },
   { icon: Link2, label: "Polygon", hint: "Ancrage blockchain", tone: "gold" },
   { icon: QrCode, label: "Badge", hint: "QR rotatif généré", tone: "cyan" },
   { icon: Globe, label: "Intégration", hint: "Site / Email / API", tone: "cyan" },
   { icon: ScanLine, label: "Vérificateur", hint: "Scanne le QR", tone: "cyan" },
-  { icon: ShieldCheck, label: "BLOCKTRUST", hint: "Vérifie en temps réel", tone: "cyan" },
+  { icon: ShieldCheck, label: "BLOCKTRUST™", hint: "Vérifie en temps réel", tone: "cyan" },
   { icon: CheckCircle2, label: "Verdict", hint: "VALID ✓ ou FRAUD ✗", tone: "valid" },
 ];
 
@@ -310,7 +310,7 @@ function ParticulierDemoIntegrate() {
             </div>
             {/* Tooltip animé */}
             <div className="howto-tooltip pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-md border border-bt-cyan/40 bg-navy/95 px-3 py-1.5 text-[10px] font-medium text-bt-cyan shadow-glow-cyan">
-              Identité vérifiée par BLOCKTRUST
+              Identité vérifiée par BLOCKTRUST™
             </div>
           </div>
         </div>
@@ -367,7 +367,7 @@ function ParticulierDemoCall() {
             Olivier B. · 14:32
           </div>
           <div className="break-all font-mono text-[11px] text-bt-cyan">
-            Voici mon badge BLOCKTRUST :
+            Voici mon badge BLOCKTRUST™ :
             <br />
             blocktrust.tech/verify/bt-7f3a92
           </div>
@@ -474,11 +474,11 @@ function EntrepriseDemoWhiteLabel() {
           style={{ animationDelay: "0.6s" }}
         >
           <span>Powered by</span>
-          <span className="font-syne font-bold tracking-wider text-bt-cyan">BLOCKTRUST</span>
+          <span className="font-syne font-bold tracking-wider text-bt-cyan">BLOCKTRUST™</span>
         </div>
 
         <p className="howto-line-in text-xs leading-relaxed text-white/65" style={{ animationDelay: "0.9s" }}>
-          Intégrez la confiance <span className="text-bt-cyan">BLOCKTRUST</span> à votre
+          Intégrez la confiance <span className="text-bt-cyan">BLOCKTRUST™</span> à votre
           marque — aux couleurs et au logo de votre entreprise.
         </p>
       </div>

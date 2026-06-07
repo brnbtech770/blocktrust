@@ -186,8 +186,8 @@ export default function CertificatesPage() {
 
   const handleCopyEmbed = (certificate: Certificate) => {
     const badgeId = certificate.publicId || certificate.id;
-    const embedCode = `<a href="${window.location.origin}/verify?certId=${encodeURIComponent(badgeId)}" target="_blank" rel="noopener noreferrer" title="Vérifier sur BlockTrust">
-  <img src="${window.location.origin}/api/badge/${badgeId}" alt="Badge BlockTrust vérifié" width="150" height="200" />
+    const embedCode = `<a href="${window.location.origin}/verify?certId=${encodeURIComponent(badgeId)}" target="_blank" rel="noopener noreferrer" title="Vérifier sur BLOCKTRUST™">
+  <img src="${window.location.origin}/api/badge/${badgeId}" alt="Badge BLOCKTRUST™ vérifié" width="150" height="200" />
 </a>`;
     navigator.clipboard.writeText(embedCode);
     alert("Code embed copié dans le presse-papiers !");

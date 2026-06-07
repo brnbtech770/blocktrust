@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle2, AlertTriangle, Loader2, Building2, MapPin, Briefcase, Hash } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, Loader2, Building2, MapPin, Briefcase, Hash, Check } from 'lucide-react'
 import { Logo } from '@/app/components/ui/Logo'
 import { BiometricConsentModal } from '@/app/components/BiometricConsentModal'
 
@@ -194,9 +194,9 @@ export function OnboardingVerifyClient() {
                 <span className="font-bold text-white">Particulier</span>
               </div>
               <ul className="text-xs space-y-1 mb-2" style={{ color: 'var(--bt-muted)' }}>
-                <li>✓ Pièce d&apos;identité (CNI ou passeport)</li>
-                <li>✓ Justificatif de domicile</li>
-                <li>✓ Selfie avec pièce</li>
+                <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 shrink-0 text-bt-cyan" aria-hidden /> Pièce d&apos;identité (CNI ou passeport)</li>
+                <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 shrink-0 text-bt-cyan" aria-hidden /> Justificatif de domicile</li>
+                <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 shrink-0 text-bt-cyan" aria-hidden /> Selfie avec pièce</li>
               </ul>
               <p className="text-xs" style={{ color: 'var(--bt-muted)' }}>Vérification automatique · 1,50€ unique</p>
             </button>
@@ -215,10 +215,10 @@ export function OnboardingVerifyClient() {
                 <span className="font-bold text-white">Entreprise</span>
               </div>
               <ul className="text-xs space-y-1 mb-2" style={{ color: 'var(--bt-muted)' }}>
-                <li>✓ Kbis (moins de 3 mois)</li>
-                <li>✓ Numéro SIRET</li>
-                <li>✓ CNI du représentant légal</li>
-                <li>✓ Selfie du représentant</li>
+                <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 shrink-0 text-bt-cyan" aria-hidden /> Kbis (moins de 3 mois)</li>
+                <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 shrink-0 text-bt-cyan" aria-hidden /> Numéro SIRET</li>
+                <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 shrink-0 text-bt-cyan" aria-hidden /> CNI du représentant légal</li>
+                <li className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5 shrink-0 text-bt-cyan" aria-hidden /> Selfie du représentant</li>
               </ul>
               <p className="text-xs" style={{ color: 'var(--bt-muted)' }}>Vérification automatique · 1,50€ unique</p>
             </button>

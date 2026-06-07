@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://blocktrust.tech"),
   title: {
     default: SITE_TITLE,
-    template: "%s — BlockTrust",
+    template: "%s — BLOCKTRUST™",
   },
   description: SITE_DESCRIPTION,
   alternates: {
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
       "fr-FR": "https://blocktrust.tech",
     },
   },
-  applicationName: "BlockTrust",
+  applicationName: "BLOCKTRUST™",
   keywords: [
     "certification identité numérique",
     "protection usurpation identité",
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_FR",
     url: SITE_URL,
-    siteName: "BlockTrust",
+    siteName: "BLOCKTRUST™",
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
     images: [{ url: `/opengraph-image.png?${OG_IMAGE_CACHE_QUERY}` }],

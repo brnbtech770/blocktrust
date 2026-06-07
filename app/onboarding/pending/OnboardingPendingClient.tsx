@@ -1,5 +1,7 @@
 'use client'
 
+import { Check, Clock, Loader2 } from 'lucide-react'
+
 export default function OnboardingPendingClient({
   kycStatus,
   verificationUrl,
@@ -10,17 +12,21 @@ export default function OnboardingPendingClient({
   return (
     <div className="mx-auto max-w-[480px] rounded-xl border border-bt-cyan/20 bg-white/5 p-8 backdrop-blur-sm transition-all hover:border-gold/30">
       <div className="flex items-center gap-4 mb-6">
-        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">✓</div>
+        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">
+          <Check className="h-5 w-5" aria-hidden />
+        </div>
         <span className="text-sm" style={{ color: 'var(--bt-muted)' }}>Paiement confirmé</span>
       </div>
       <div className="flex items-center gap-4 mb-6">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-bt-cyan/20">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-bt-cyan border-t-transparent" />
+          <Loader2 className="h-5 w-5 animate-spin text-bt-cyan" aria-hidden />
         </div>
         <span className="text-sm" style={{ color: 'var(--bt-muted)' }}>Vérification identité</span>
       </div>
       <div className="flex items-center gap-4 mb-8">
-        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/40">⏳</div>
+        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/40">
+          <Clock className="h-5 w-5" aria-hidden />
+        </div>
         <span className="text-sm" style={{ color: 'var(--bt-muted)' }}>Activation du compte</span>
       </div>
 

@@ -247,7 +247,7 @@ export default async function Dashboard({
                     }`}
                     aria-hidden
                   >
-                    {item.done ? "✓" : item.step}
+                    {item.done ? <Check className="h-3.5 w-3.5" aria-hidden /> : item.step}
                   </span>
                   <span
                     className={

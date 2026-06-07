@@ -6,6 +6,15 @@
 
 import { useSession } from 'next-auth/react'
 import { useState, useEffect } from 'react'
+import {
+  CreditCard,
+  LayoutDashboard,
+  Link2,
+  Plus,
+  ScrollText,
+  Settings,
+  Shield,
+} from 'lucide-react'
 import SignOutButton from './SignOutButton'
 
 export default function DashboardSidebarClient() {
@@ -26,35 +35,44 @@ export default function DashboardSidebarClient() {
     }
   }, [session])
 
+  const iconClass = 'h-5 w-5 shrink-0'
+
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-gray-900 border-r border-gray-800 p-6">
-      <div className="text-3xl font-bold text-white mb-8 tracking-tight">🛡️ BLOCKTRUST</div>
+      <div className="mb-8 flex items-center gap-2 text-2xl font-bold tracking-tight text-white">
+        <Shield className={iconClass} aria-hidden />
+        BLOCKTRUST™
+      </div>
 
       <nav className="space-y-1">
         <a
           href="/dashboard"
           className="flex items-center gap-3 px-4 py-3 text-base text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors font-medium"
         >
-          <span className="text-lg">📊</span> Dashboard
+          <LayoutDashboard className={iconClass} aria-hidden />
+          Dashboard
         </a>
         <a
           href="/dashboard/certificates"
           className="flex items-center gap-3 px-4 py-3 text-base text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors font-medium"
         >
-          <span className="text-lg">📜</span> Mes certificats
+          <ScrollText className={iconClass} aria-hidden />
+          Mes certificats
         </a>
         <a
           href="/dashboard/create"
           className="flex items-center gap-3 px-4 py-3 text-base text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors font-medium"
         >
-          <span className="text-lg">➕</span> Créer
+          <Plus className={iconClass} aria-hidden />
+          Créer
         </a>
         {trustCircleEnabled ? (
           <a
             href="/dashboard/trust-circle"
             className="flex items-center gap-3 px-4 py-3 text-base text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors font-medium"
           >
-            <span className="text-lg">🔗</span> Trust Circle
+            <Link2 className={iconClass} aria-hidden />
+            Trust Circle
           </a>
         ) : (
           <a
@@ -63,7 +81,7 @@ export default function DashboardSidebarClient() {
             )}`}
             className="flex items-center gap-3 px-4 py-3 text-base text-amber-200/90 hover:bg-gray-800 hover:text-white rounded-lg transition-colors font-medium border border-amber-500/30"
           >
-            <span className="text-lg">🔗</span>
+            <Link2 className={iconClass} aria-hidden />
             <span>
               Trust Circle
               <span className="block text-xs font-normal text-amber-400/90 mt-0.5">
@@ -76,13 +94,15 @@ export default function DashboardSidebarClient() {
           href="/dashboard/settings"
           className="flex items-center gap-3 px-4 py-3 text-base text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors font-medium"
         >
-          <span className="text-lg">⚙️</span> Paramètres
+          <Settings className={iconClass} aria-hidden />
+          Paramètres
         </a>
         <a
           href="/dashboard/billing"
           className="flex items-center gap-3 px-4 py-3 text-base text-gray-400 hover:bg-gray-800 hover:text-white rounded-lg transition-colors font-medium"
         >
-          <span className="text-lg">💳</span> Facturation
+          <CreditCard className={iconClass} aria-hidden />
+          Facturation
         </a>
       </nav>
 

@@ -5,7 +5,7 @@
 
 import { headers } from 'next/headers'
 import Link from 'next/link'
-import { AlertTriangle, ShieldAlert, ShieldCheck } from 'lucide-react'
+import { AlertTriangle, Ban, Clock, Lock, ShieldAlert, ShieldCheck } from 'lucide-react'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
@@ -105,7 +105,7 @@ async function collectTrustedPeerUserIds(viewerId: string): Promise<Set<string>>
   return set
 }
 
-/** Certificats « Portfolio » connus pour l’utilisateur émetteur (aligné KYC BlockTrust). */
+/** Certificats « Portfolio » connus pour l’utilisateur émetteur (aligné KYC BLOCKTRUST™). */
 async function issuerCertificatePortfolioIds(issuerUserId: string): Promise<Set<string>> {
   const rows = await prisma.certificate.findMany({
     where: {
@@ -171,8 +171,8 @@ function entityDisplayName(entity: {
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: 'Vérification — BlockTrust',
-    description: 'Vérifiez un certificat BlockTrust (réservé aux abonnés).',
+    title: 'Vérification — BLOCKTRUST™',
+    description: 'Vérifiez un certificat BLOCKTRUST™ (réservé aux abonnés).',
   }
 }
 
@@ -518,9 +518,9 @@ function SubscriptionRequiredVerifyView() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0a1628] p-4 font-sans">
       <div className="w-full max-w-md rounded-xl border border-[#BDA76B]/40 bg-[#0a1628]/95 p-8 text-center backdrop-blur-md">
-        <p className="mb-4 text-4xl" aria-hidden>
-          🔒
-        </p>
+        <div className="mb-4 flex justify-center" aria-hidden>
+          <Lock className="h-10 w-10 text-[#BDA76B]" strokeWidth={2} />
+        </div>
         <h1 className="font-syne mb-4 text-2xl font-bold text-white">
           Vérification réservée aux abonnés
         </h1>
@@ -549,9 +549,9 @@ function QuotaExceededVerifyView({ limit }: { limit: number }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0a1628] p-4 font-sans">
       <div className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-lg">
-        <p className="mb-4 text-4xl" aria-hidden>
-          ⏱️
-        </p>
+        <div className="mb-4 flex justify-center" aria-hidden>
+          <Clock className="h-10 w-10 text-white/70" strokeWidth={2} />
+        </div>
         <h1 className="font-syne mb-4 text-2xl font-bold text-white">Limite mensuelle atteinte</h1>
         <p className="mb-8 text-sm leading-relaxed text-white/70">
           Vous avez utilisé vos {limit} vérifications ce mois-ci. Passez à un forfait supérieur pour continuer.
@@ -612,9 +612,9 @@ function RevokedView({ revokedAt }: { revokedAt: Date | null }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-navy p-4 font-sans text-white/90">
       <div className="w-full max-w-md rounded-xl border border-orange-500/50 bg-orange-500/10 p-8 text-center backdrop-blur-lg">
-        <p className="mb-2 text-4xl" aria-hidden>
-          ⛔
-        </p>
+        <div className="mb-2 flex justify-center" aria-hidden>
+          <Ban className="h-10 w-10 text-orange-300" strokeWidth={2} />
+        </div>
         <h1 className="font-syne mb-3 text-xl font-bold text-orange-200">Ce certificat a été révoqué</h1>
         {d && (
           <p className="font-mono text-sm text-white/70">
@@ -633,9 +633,9 @@ function QrExpiredView() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-navy p-4 font-sans text-white/90">
       <div className="w-full max-w-md rounded-xl border border-white/20 bg-white/5 p-8 text-center">
-        <p className="mb-2 text-3xl" aria-hidden>
-          ⏱️
-        </p>
+        <div className="mb-2 flex justify-center" aria-hidden>
+          <Clock className="h-9 w-9 text-white/70" strokeWidth={2} />
+        </div>
         <h1 className="font-syne mb-2 text-lg font-bold text-white">Lien ou QR expiré</h1>
         <p className="text-sm text-white/60">Demandez un nouveau lien de vérification à l&apos;émetteur.</p>
         <Link href={BASE_URL} className="mt-6 inline-block text-sm text-bt-cyan hover:underline">
@@ -956,9 +956,9 @@ function FraudAlertView() {
     <div className="min-h-screen bg-[#0d0505] font-sans text-white/80">
       <div className="mx-auto max-w-xl px-4 py-6 sm:px-4 sm:py-10">
         <div className="rounded-xl border border-red-500/50 bg-red-500/10 p-4 sm:p-6 md:p-8">
-          <p className="mb-4 text-center text-4xl" aria-hidden>
-            ⚠️
-          </p>
+          <div className="mb-4 flex justify-center" aria-hidden>
+            <AlertTriangle className="h-10 w-10 text-red-400" strokeWidth={2} />
+          </div>
           <h1 className="font-syne mb-4 text-center text-xl font-bold leading-snug text-red-300 sm:text-2xl">
             Certificat non reconnu ou potentiellement frauduleux
           </h1>
@@ -968,7 +968,7 @@ function FraudAlertView() {
           </p>
           <div className="flex flex-col gap-3">
             <a
-              href="mailto:security@blocktrust.tech?subject=Signalement%20fraude%20BlockTrust"
+              href="mailto:security@blocktrust.tech?subject=Signalement%20fraude%20BLOCKTRUST™"
               className="inline-flex min-h-[48px] w-full items-center justify-center rounded-lg bg-red-600 px-4 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90"
             >
               Signaler une fraude

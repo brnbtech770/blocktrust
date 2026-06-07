@@ -185,7 +185,7 @@ function formatSubscriptionAmount(sub: Stripe.Subscription): string {
 const PAYMENT_CONFIRMATION_DASHBOARD_URL = 'https://blocktrust.tech/dashboard'
 
 function displayPlanLabel(planCode: string): string {
-  if (!planCode?.trim()) return 'BlockTrust'
+  if (!planCode?.trim()) return 'BLOCKTRUST™'
   return planCode
     .split('_')
     .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
@@ -229,7 +229,7 @@ async function hostedInvoiceUrlFromSubscription(
 }
 
 /**
- * Email de confirmation d’abonnement (template sombre BlockTrust).
+ * Email de confirmation d’abonnement (template sombre BLOCKTRUST™).
  * Les erreurs d’envoi sont loguées sans faire échouer le webhook.
  */
 async function sendPaymentConfirmationEmailForSubscription(
@@ -250,7 +250,7 @@ async function sendPaymentConfirmationEmailForSubscription(
 
   const { error: emailErr } = await sendEmail({
     to: user.email,
-    subject: `✓ Votre abonnement BlockTrust ${planName} est activé`,
+    subject: `✓ Votre abonnement BLOCKTRUST™ ${planName} est activé`,
     react: PaymentConfirmationEmail({
       userName: user.name?.trim() || user.email,
       planName,

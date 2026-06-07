@@ -62,7 +62,7 @@ export function CertificateAnchoredEmail({
         <Container style={container}>
           {/* Header */}
           <Section style={headerSection}>
-            <Heading style={brand}>BLOCKTRUST</Heading>
+            <Heading style={brand}>BLOCKTRUST™</Heading>
             <Text style={tagline}>Certification d&apos;identité numérique</Text>
           </Section>
 

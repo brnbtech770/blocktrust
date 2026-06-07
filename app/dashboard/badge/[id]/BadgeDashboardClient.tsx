@@ -117,8 +117,8 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
     if (!badgeData) return ''
     const badgeId = badgeData.publicId || badgeData.id
     const baseUrl = window.location.origin
-    return `<a href="${baseUrl}/verify?certId=${encodeURIComponent(badgeId)}" target="_blank" rel="noopener noreferrer" title="Vérifier sur BlockTrust">
-  <img src="${baseUrl}/api/badge/${badgeId}" alt="Badge BlockTrust vérifié" width="150" height="200" />
+    return `<a href="${baseUrl}/verify?certId=${encodeURIComponent(badgeId)}" target="_blank" rel="noopener noreferrer" title="Vérifier sur BLOCKTRUST™">
+  <img src="${baseUrl}/api/badge/${badgeId}" alt="Badge BLOCKTRUST™ vérifié" width="150" height="200" />
 </a>`
   }
 
@@ -126,7 +126,7 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
     if (!badgeData) return ''
     const widgetCertKey = badgeData.publicId?.trim() || badgeData.id
     const baseUrl = window.location.origin
-    return `<!-- BlockTrust Badge Widget -->
+    return `<!-- BLOCKTRUST™ Badge Widget -->
 <div id="blocktrust-badge"
   data-certificate="${widgetCertKey}"
   data-size="md">

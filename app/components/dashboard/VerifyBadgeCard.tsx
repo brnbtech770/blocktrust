@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Search } from 'lucide-react'
 
 type Props = {
   quotaLabel: string | null
@@ -22,9 +23,7 @@ export default function VerifyBadgeCard({ quotaLabel, isAdmin }: Props) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-bt-cyan/30 sm:p-6">
       <div className="mb-3 flex items-start gap-3">
-        <span className="text-2xl" aria-hidden>
-          🔍
-        </span>
+        <Search className="h-6 w-6 shrink-0 text-bt-cyan" aria-hidden />
         <div className="min-w-0 flex-1">
           <h3 className="font-syne text-lg font-semibold text-white">Vérifier un badge</h3>
           <p className="mt-1 text-sm text-white/65">

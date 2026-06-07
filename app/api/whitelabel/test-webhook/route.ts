@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
   const result = await sendWebhook(config, {
     type: 'webhook.test',
     data: {
-      message: 'BlockTrust webhook test',
+      message: 'BLOCKTRUST™ webhook test',
       whiteLabelConfigId: config.id,
       companyName: config.companyName,
     },

@@ -129,7 +129,7 @@ export default async function DashboardSidebar() {
           ...(showB2BOrgVault
             ? [
                 {
-                  name: 'BlockTrust Vault',
+                  name: 'BLOCKTRUST™ Vault',
                   href: '/dashboard/vault',
                   icon: 'ShieldCheck' as const,
                 },

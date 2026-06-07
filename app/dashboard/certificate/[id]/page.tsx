@@ -105,7 +105,7 @@ export default async function CertificateDetailPage({
       Boolean(certificate.polygonTxHash || certificate.txHash);
 
     const htmlCode = `<a href="${verifyUrl}" target="_blank">
-  <img src="${badgeUrl}" alt="Certifié BlockTrust" width="320" height="100"/>
+  <img src="${badgeUrl}" alt="Certifié BLOCKTRUST™" width="320" height="100"/>
 </a>`;
 
     return (

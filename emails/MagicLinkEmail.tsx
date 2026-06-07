@@ -16,7 +16,7 @@ import {
 import * as React from 'react'
 import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
-export const subject = 'Votre lien de connexion BlockTrust'
+export const subject = 'Votre lien de connexion BLOCKTRUST™'
 
 type MagicLinkEmailProps = {
   url: string
@@ -26,10 +26,10 @@ export function MagicLinkEmail({ url }: MagicLinkEmailProps) {
   return (
     <Html>
       <Head />
-      <Preview>Connectez-vous à BlockTrust en un clic</Preview>
+      <Preview>Connectez-vous à BLOCKTRUST™ en un clic</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={h1}>Connexion BlockTrust</Heading>
+          <Heading style={h1}>Connexion BLOCKTRUST™</Heading>
           <Text style={text}>Cliquez sur le bouton ci-dessous pour vous connecter. Ce lien expire sous 24 h.</Text>
           <Section style={buttonContainer}>
             <Link href={url} style={button}>

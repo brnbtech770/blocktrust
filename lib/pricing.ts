@@ -45,7 +45,7 @@ export const PLANS_B2C = [
       { name: "Période de découverte", included: true, value: "30 jours" },
       { name: "Ancrage Polygon", included: false },
       { name: "Réseau de confiance certifié (Trust Circle)", included: false },
-      { name: "Vérification d'identité (KYC)", included: false },
+      { name: "Vérification d'identité", included: false },
     ],
   },
   {

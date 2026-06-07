@@ -37,17 +37,17 @@ export function KYCApprovedEmail({ userName }: KYCApprovedEmailProps) {
   return (
     <Html>
       <Head />
-      <Preview>Votre identité est vérifiée. Accédez à votre espace BlockTrust.</Preview>
+      <Preview>Votre identité est vérifiée. Accédez à votre espace BLOCKTRUST™.</Preview>
       <Body style={{ margin: 0, fontFamily: 'Inter, sans-serif' }}>
         <Container style={{ maxWidth: 560, margin: '0 auto' }}>
           <Section style={headerSection}>
-            <Text style={logoTitle}>BLOCKTRUST</Text>
+            <Text style={logoTitle}>BLOCKTRUST™</Text>
             <Text style={logoSub}>BRNB TECH SAS</Text>
           </Section>
           <Section style={bodySection}>
             <Text style={titleStyle}>Votre identité est vérifiée</Text>
             <Text style={textStyle}>
-              Bonjour {userName}, votre dossier a été validé. Votre espace BlockTrust est maintenant
+              Bonjour {userName}, votre dossier a été validé. Votre espace BLOCKTRUST™ est maintenant
               accessible.
             </Text>
             <Section style={{ textAlign: 'center', margin: '24px 0' }}>

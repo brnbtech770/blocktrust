@@ -4,7 +4,7 @@
 
 import type { ReactNode } from 'react'
 import type { DashboardStats } from '@/types/dashboard'
-import { Shield, CheckCircle, Link2, AlertTriangle, Users } from 'lucide-react'
+import { Shield, CheckCircle, Link2, AlertTriangle, Users, Check } from 'lucide-react'
 
 export interface KpiGridProps {
   certs: number
@@ -16,7 +16,7 @@ export interface KpiGridProps {
 }
 
 const statusLabel: Record<DashboardStats['blockchainStatus'], string> = {
-  connected: 'Ancré ✓',
+  connected: 'Ancré',
   pending: 'En attente',
   unavailable: 'Indisponible',
 }
@@ -31,7 +31,10 @@ export default function KpiGrid({
 }: KpiGridProps) {
   const blockchainValue: ReactNode =
     blockchainStatus === 'connected' ? (
-      <span className="text-bt-cyan">Ancré ✓</span>
+      <span className="inline-flex items-center gap-1 text-bt-cyan">
+        Ancré
+        <Check className="h-4 w-4" aria-hidden />
+      </span>
     ) : (
       statusLabel[blockchainStatus]
     )

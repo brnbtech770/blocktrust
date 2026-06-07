@@ -5,6 +5,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Check } from 'lucide-react'
 
 import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
 
@@ -47,13 +48,13 @@ export default function CertificateBadgeSection({
   const badgeId = publicId || certificateId
   const widgetCertKey = publicId?.trim() ?? ''
   const scriptCode = widgetCertKey
-    ? `<!-- BlockTrust Badge Widget -->
+    ? `<!-- BLOCKTRUST™ Badge Widget -->
 <div id="blocktrust-badge"
   data-certificate="${widgetCertKey}"
   data-size="${size}">
 </div>
 <script src="${baseUrl}/api/widget.js" async defer><\/script>`
-    : `<!-- BlockTrust : ID de vérification indisponible — le snippet widget sera actif lorsque le publicId sera défini. -->`
+    : `<!-- BLOCKTRUST™ : ID de vérification indisponible — le snippet widget sera actif lorsque le publicId sera défini. -->`
 
   const iframeCode = `<iframe
   src="${baseUrl}/api/badge/${badgeId}?size=${size}"
@@ -210,7 +211,14 @@ export default function CertificateBadgeSection({
               <div style={codeBlockStyle}>
                 <pre className="text-xs whitespace-pre-wrap break-all">{scriptCode}</pre>
                 <button type="button" onClick={copyScript} style={copyBtnStyle}>
-                  {scriptCopied ? '✓ Copié' : 'Copier le code'}
+                  {scriptCopied ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Check className="h-4 w-4" aria-hidden />
+                      Copié
+                    </span>
+                  ) : (
+                    'Copier le code'
+                  )}
                 </button>
               </div>
             )}
@@ -228,7 +236,14 @@ export default function CertificateBadgeSection({
               <div style={codeBlockStyle}>
                 <pre className="text-xs whitespace-pre-wrap break-all">{iframeCode}</pre>
                 <button type="button" onClick={copyIframe} style={copyBtnStyle}>
-                  {iframeCopied ? '✓ Copié' : 'Copier le code'}
+                  {iframeCopied ? (
+                    <span className="inline-flex items-center gap-1">
+                      <Check className="h-4 w-4" aria-hidden />
+                      Copié
+                    </span>
+                  ) : (
+                    'Copier le code'
+                  )}
                 </button>
               </div>
             )}

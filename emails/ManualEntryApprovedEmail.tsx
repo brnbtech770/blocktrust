@@ -1,5 +1,5 @@
 // emails/ManualEntryApprovedEmail.tsx
-// Template : entrée manuelle validée par BlockTrust
+// Template : entrée manuelle validée par BLOCKTRUST™
 // ============================================================
 
 import {
@@ -26,7 +26,7 @@ import {
 } from './blocktrust-charte'
 import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
-export const subject = '✅ Entrée validée par BlockTrust'
+export const subject = '✅ Entrée validée par BLOCKTRUST™'
 
 export type ManualEntryApprovedEmailProps = {
   userName: string
@@ -42,7 +42,7 @@ export function ManualEntryApprovedEmail({ userName, entityName }: ManualEntryAp
       <Body style={{ margin: 0, fontFamily: 'Inter, sans-serif' }}>
         <Container style={{ maxWidth: 560, margin: '0 auto' }}>
           <Section style={headerSection}>
-            <Text style={logoTitle}>BLOCKTRUST</Text>
+            <Text style={logoTitle}>BLOCKTRUST™</Text>
             <Text style={logoSub}>BRNB TECH SAS</Text>
           </Section>
           <Section style={bodySection}>

@@ -35,7 +35,7 @@ export default async function AdminOrganizationsPage() {
         <h1 className="font-syne text-2xl font-bold text-white">Vue globale — organisations</h1>
       </div>
       <p className="mb-6 text-sm text-white/55">
-        Synthèse des équipes, membres et coffres BlockTrust Vault ({rows.length} organisation
+        Synthèse des équipes, membres et coffres BLOCKTRUST™ Vault ({rows.length} organisation
         {rows.length > 1 ? 's' : ''}).
       </p>
 

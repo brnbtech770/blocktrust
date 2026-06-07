@@ -99,7 +99,7 @@ export function getRoleDisplayLabel(role: UserRole): string {
     case 'PERSONAL':
       return 'Compte personnel'
     case 'KYC_VERIFIED':
-      return 'KYC vérifié'
+      return 'Identité vérifiée'
     case 'ORG_ADMIN':
       return 'Administrateur organisation'
     case 'BLOCKTRUST_ADMIN':

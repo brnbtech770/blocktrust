@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     if (!toEntity) {
       return NextResponse.json(
         { 
-          error: 'Aucune entité BlockTrust trouvée avec cet email. Utilisez l\'ajout manuel.',
+          error: 'Aucune entité BLOCKTRUST™ trouvée avec cet email. Utilisez l\'ajout manuel.',
           code: 'NOT_FOUND',
           suggestion: 'manual'
         },

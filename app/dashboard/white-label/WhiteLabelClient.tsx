@@ -201,10 +201,10 @@ export default function WhiteLabelClient() {
     try {
       const res = await fetch('/api/whitelabel/test-webhook', { method: 'POST' })
       const data = await res.json()
-      if (data.ok) setWebhookTestResult(`✓ Webhook livré (HTTP ${data.status ?? 200})`)
-      else setWebhookTestResult(`✗ Échec : ${data.error ?? 'unknown'}`)
+      if (data.ok) setWebhookTestResult(`Webhook livré (HTTP ${data.status ?? 200})`)
+      else setWebhookTestResult(`Échec : ${data.error ?? 'unknown'}`)
     } catch (e: unknown) {
-      setWebhookTestResult(`✗ ${e instanceof Error ? e.message : 'error'}`)
+      setWebhookTestResult(`Échec : ${e instanceof Error ? e.message : 'error'}`)
     } finally {
       setTestingWebhook(false)
     }
@@ -290,14 +290,14 @@ console.log(data.verdict, data.entity.name)`
             </div>
             {!revealedKey && (
               <p className="mt-3 text-xs text-white/50">
-                Pour des raisons de sécurité, BlockTrust ne ré-affiche jamais une clé déjà
+                Pour des raisons de sécurité, BLOCKTRUST™ ne ré-affiche jamais une clé déjà
                 générée. Régénérez la clé pour la lire en clair (l&apos;ancienne sera invalidée).
               </p>
             )}
             {revealedKey && (
-              <p className="mt-3 text-xs text-amber-300/90">
-                ⚠ Cette clé n&apos;est affichée qu&apos;une seule fois. Copiez-la et stockez-la
-                en lieu sûr.
+              <p className="mt-3 flex items-start gap-2 text-xs text-amber-300/90">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" aria-hidden />
+                Cette clé n&apos;est affichée qu&apos;une seule fois. Copiez-la et stockez-la en lieu sûr.
               </p>
             )}
           </div>
@@ -458,7 +458,7 @@ console.log(data.verdict, data.entity.name)`
         <Section
           icon={<Webhook className="h-4 w-4" />}
           title="Webhook sortant"
-          description="BlockTrust pousse les événements signés HMAC-SHA256 vers votre URL."
+          description="BLOCKTRUST™ pousse les événements signés HMAC-SHA256 vers votre URL."
         >
           <div className="space-y-3">
             <div>
@@ -501,7 +501,7 @@ console.log(data.verdict, data.entity.name)`
               {webhookTestResult && (
                 <span
                   className={`text-xs ${
-                    webhookTestResult.startsWith('✓') ? 'text-emerald-300' : 'text-red-300'
+                    webhookTestResult.startsWith('Webhook livré') ? 'text-emerald-300' : 'text-red-300'
                   }`}
                 >
                   {webhookTestResult}

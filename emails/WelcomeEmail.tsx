@@ -1,5 +1,5 @@
 // emails/WelcomeEmail.tsx
-// Template : bienvenue nouvel utilisateur BlockTrust
+// Template : bienvenue nouvel utilisateur BLOCKTRUST™
 // Design sobre, bleu #1e40af, fond blanc
 // ============================================================
 
@@ -18,7 +18,7 @@ import {
 import * as React from 'react'
 import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 
-export const subject = 'Bienvenue sur BlockTrust 🔐'
+export const subject = 'Bienvenue sur BLOCKTRUST™ 🔐'
 
 type WelcomeEmailProps = {
   userName?: string | null
@@ -30,13 +30,13 @@ export function WelcomeEmail({ userName, dashboardUrl }: WelcomeEmailProps) {
   return (
     <Html>
       <Head />
-      <Preview>Bienvenue sur BlockTrust — certification numérique fiable</Preview>
+      <Preview>Bienvenue sur BLOCKTRUST™ — certification numérique fiable</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={h1}>Bienvenue sur BlockTrust 🔐</Heading>
+          <Heading style={h1}>Bienvenue sur BLOCKTRUST™ 🔐</Heading>
           <Text style={text}>Bonjour {displayName},</Text>
           <Text style={text}>
-            Votre compte BlockTrust est prêt. Vous pouvez dès maintenant créer des certificats
+            Votre compte BLOCKTRUST™ est prêt. Vous pouvez dès maintenant créer des certificats
             numériques, les partager et les faire vérifier en toute confiance.
           </Text>
           <Section style={buttonContainer}>
@@ -53,7 +53,7 @@ export function WelcomeEmail({ userName, dashboardUrl }: WelcomeEmailProps) {
           <Text style={list}>• Consulter les statistiques de vérification</Text>
           <Hr style={hr} />
           <Text style={footer}>
-            BlockTrust — Certification numérique fiable. Pour toute question :{' '}
+            BLOCKTRUST™ — Certification numérique fiable. Pour toute question :{' '}
             <Link href="mailto:support@blocktrust.tech" style={linkFooter}>support@blocktrust.tech</Link>
           </Text>
           <CertifiedEmailFooter />

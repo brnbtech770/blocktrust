@@ -108,7 +108,7 @@ export default async function EntitiesPage() {
             Mes Contacts
           </h1>
           <p className="text-base text-gray-400 max-w-2xl mb-1">
-            Personnes ou entreprises que vous certifiez dans votre réseau BlockTrust.
+            Personnes ou entreprises que vous certifiez dans votre réseau BLOCKTRUST™.
           </p>
           <p className="text-gray-400 text-base">
             {entitiesCount}/{maxEntities} utilisées

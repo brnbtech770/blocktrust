@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
     await sendTrustCircleInviteEmail(
       targetUser.id,
       session.user.id,
-      session.user.name ?? 'Un utilisateur BlockTrust',
+      session.user.name ?? 'Un utilisateur BLOCKTRUST™',
       session.user.email ?? '',
       inviteToken
     ).catch(console.error)
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
     await sendTrustCircleExternalInviteEmail(
       email,
       name,
-      session.user.name ?? 'Un utilisateur BlockTrust',
+      session.user.name ?? 'Un utilisateur BLOCKTRUST™',
       inviteToken
     ).catch(console.error)
   }

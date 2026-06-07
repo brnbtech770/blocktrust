@@ -49,17 +49,17 @@ export function TrustCircleInviteEmail({
   return (
     <Html>
       <Head />
-      <Preview>{inviterName} vous a ajouté dans son cercle de confiance sur BlockTrust.</Preview>
+      <Preview>{inviterName} vous a ajouté dans son cercle de confiance sur BLOCKTRUST™.</Preview>
       <Body style={{ margin: 0, fontFamily: 'Inter, sans-serif' }}>
         <Container style={{ maxWidth: 560, margin: '0 auto' }}>
           <Section style={headerSection}>
-            <Text style={logoTitle}>BLOCKTRUST</Text>
+            <Text style={logoTitle}>BLOCKTRUST™</Text>
             <Text style={logoSub}>BRNB TECH SAS</Text>
           </Section>
           <Section style={bodySection}>
             <Text style={titleStyle}>Invitation Trust Circle</Text>
             <Text style={textStyle}>
-              {inviterName} vous a ajouté dans son cercle de confiance sur BlockTrust.
+              {inviterName} vous a ajouté dans son cercle de confiance sur BLOCKTRUST™.
             </Text>
             <Section style={{ textAlign: 'center', margin: '24px 0' }}>
               <Link href={confirmUrl} style={buttonCyan}>

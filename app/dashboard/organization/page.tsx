@@ -45,7 +45,7 @@ export default async function OrganizationIndexPage() {
         <div>
           <h1 className="font-syne text-2xl font-bold tracking-tight text-white">Organisation</h1>
           <p className="mt-1 text-sm text-white/50">
-            Équipe, invitations et coffres BlockTrust Vault pour votre entreprise.
+            Équipe, invitations et coffres BLOCKTRUST™ Vault pour votre entreprise.
           </p>
         </div>
       </div>

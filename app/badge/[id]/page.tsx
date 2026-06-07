@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import QRCodeImage from "@/app/components/QRCode";
 import VerifyBadgeButton from "@/app/components/VerifyBadgeButton";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 export default async function BadgePage({
   params,
@@ -110,14 +111,22 @@ export default async function BadgePage({
 
         <div className="space-y-4 mb-6">
           <div className="text-center">
-            <p className={`text-sm mb-2 ${identityVerified ? 'text-gray-300' : 'text-amber-400'}`}>
-              {identityVerified
-                ? entity.entityType === 'INDIVIDUAL'
-                  ? '✅ Identité vérifiée par BLOCKTRUST'
-                  : `✅ Entreprise certifiée BLOCKTRUST${authenticated && entity.siret ? ` • SIRET ${entity.siret}` : ''}`
-                : entity.entityType === 'INDIVIDUAL'
-                  ? '⚠️ Identité déclarée — non vérifiée'
-                  : `⚠️ Entreprise déclarée — non vérifiée${authenticated && entity.siret ? ` • SIRET ${entity.siret}` : ''}`}
+            <p className={`flex items-center justify-center gap-2 text-sm mb-2 ${identityVerified ? 'text-gray-300' : 'text-amber-400'}`}>
+              {identityVerified ? (
+                <>
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" aria-hidden />
+                  {entity.entityType === 'INDIVIDUAL'
+                    ? 'Identité vérifiée par BLOCKTRUST™'
+                    : `Entreprise certifiée BLOCKTRUST™${authenticated && entity.siret ? ` • SIRET ${entity.siret}` : ''}`}
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-5 w-5 shrink-0" aria-hidden />
+                  {entity.entityType === 'INDIVIDUAL'
+                    ? 'Identité déclarée — non vérifiée'
+                    : `Entreprise déclarée — non vérifiée${authenticated && entity.siret ? ` • SIRET ${entity.siret}` : ''}`}
+                </>
+              )}
             </p>
             <p className="text-white text-xl font-bold">
               {entity.entityType === 'INDIVIDUAL'

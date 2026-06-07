@@ -36,7 +36,7 @@ const emailMagicLinkProvider = {
   id: "email",
   type: "email" as const,
   name: "Email",
-  from: "BlockTrust <noreply@blocktrust.tech>",
+  from: "BLOCKTRUST™ <noreply@blocktrust.tech>",
   maxAge: 24 * 60 * 60,
   async sendVerificationRequest({
     identifier,

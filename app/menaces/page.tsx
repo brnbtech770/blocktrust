@@ -8,7 +8,7 @@ import Footer from "@/app/components/landing/Footer"
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
-  title: "Veille cyber — BlockTrust™",
+  title: "Veille cyber — BLOCKTRUST™",
   description:
     "Actualités courte sécurité numérique (sources CERT-FR, Cybermalveillance, ZATAZ) — résumées pour vous.",
 }

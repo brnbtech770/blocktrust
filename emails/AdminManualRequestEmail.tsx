@@ -51,7 +51,7 @@ export function AdminManualRequestEmail({
       <Body style={{ margin: 0, fontFamily: 'Inter, sans-serif' }}>
         <Container style={{ maxWidth: 560, margin: '0 auto' }}>
           <Section style={headerSection}>
-            <Text style={logoTitle}>BLOCKTRUST</Text>
+            <Text style={logoTitle}>BLOCKTRUST™</Text>
             <Text style={logoSub}>BRNB TECH SAS</Text>
           </Section>
           <Section style={bodySection}>

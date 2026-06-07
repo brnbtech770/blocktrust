@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { CheckCircle2, Sparkles } from 'lucide-react'
 
 export default function TrustConfirmClient({ token }: { token: string }) {
   const router = useRouter()
@@ -59,7 +60,13 @@ export default function TrustConfirmClient({ token }: { token: string }) {
 
   return (
     <div className="mt-12 w-full max-w-md rounded-xl border border-white/10 bg-white/5 p-8 text-center backdrop-blur-sm transition-all hover:border-gold/30">
-      <div className="mb-4 text-4xl">{result?.trustType === 'MUTUAL' ? '🎉' : '✓'}</div>
+      <div className="mb-4 flex justify-center">
+        {result?.trustType === 'MUTUAL' ? (
+          <Sparkles className="h-10 w-10 text-bt-cyan" aria-hidden />
+        ) : (
+          <CheckCircle2 className="h-10 w-10 text-emerald-400" aria-hidden />
+        )}
+      </div>
       <h2 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">
         {result?.trustType === 'MUTUAL' ? 'Confiance mutuelle activée !' : 'Relation confirmée'}
       </h2>

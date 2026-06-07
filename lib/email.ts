@@ -17,7 +17,7 @@ function getResend(): Resend | null {
   return new Resend(key)
 }
 
-const FROM = 'BlockTrust <noreply@blocktrust.tech>'
+const FROM = 'BLOCKTRUST™ <noreply@blocktrust.tech>'
 
 /** Réduit les PII dans les logs (domaine conservé pour le diagnostic). */
 export function redactEmailRecipient(to: string | string[]): string {
