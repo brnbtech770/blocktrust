@@ -14,7 +14,9 @@ import {
   Palette,
   Lock,
   LayoutDashboard,
+  Puzzle,
 } from 'lucide-react'
+import { isChromeExtensionStoreUrlReady } from '@/lib/chrome-extension'
 
 const iconMap = {
   Home,
@@ -28,6 +30,7 @@ const iconMap = {
   Settings,
   Palette,
   Lock,
+  Puzzle,
 } as const
 
 export type SidebarItem = {
@@ -36,11 +39,22 @@ export type SidebarItem = {
   icon: keyof typeof iconMap
   locked?: boolean
   lockTooltip?: string
+  external?: boolean
 }
 
 export type SidebarSection = {
   label?: string
   items: SidebarItem[]
+}
+
+function navLinkClass(isActive: boolean, locked?: boolean) {
+  return `group flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2.5 font-sans text-sm transition-all ${
+    locked ? 'opacity-70' : ''
+  } ${
+    isActive
+      ? 'border border-gold/25 bg-gold/10 text-gold'
+      : 'text-white/50 hover:bg-white/5 hover:text-white'
+  }`
 }
 
 function NavItem({ item }: { item: SidebarItem }) {
@@ -49,22 +63,17 @@ function NavItem({ item }: { item: SidebarItem }) {
   const pathOnly = item.href.split('?')[0]
   const isDashboardRoot = pathOnly === '/dashboard'
   const isActive =
-    pathname === pathOnly ||
-    pathname === item.href ||
-    (!isDashboardRoot && pathname.startsWith(`${pathOnly}/`))
+    !item.external &&
+    (pathname === pathOnly ||
+      pathname === item.href ||
+      (!isDashboardRoot && pathname.startsWith(`${pathOnly}/`)))
 
-  return (
-    <Link
-      href={item.href}
-      title={item.lockTooltip}
-      className={`group flex min-h-[44px] items-center gap-2 rounded-lg px-3 py-2.5 font-sans text-sm transition-all ${
-        item.locked ? 'opacity-70' : ''
-      } ${
-        isActive
-          ? 'border border-gold/25 bg-gold/10 text-gold'
-          : 'text-white/50 hover:bg-white/5 hover:text-white'
-      }`}
-    >
+  const isExternal = Boolean(item.external) || item.href.startsWith('http')
+  const storeReady = isChromeExtensionStoreUrlReady(item.href)
+  const isDisabledExternal = isExternal && !storeReady
+
+  const content = (
+    <>
       <Icon
         size={18}
         strokeWidth={2}
@@ -72,6 +81,42 @@ function NavItem({ item }: { item: SidebarItem }) {
         aria-hidden
       />
       <span>{item.name}</span>
+    </>
+  )
+
+  if (isExternal) {
+    if (isDisabledExternal) {
+      return (
+        <span
+          title="Bientôt disponible sur le Chrome Web Store"
+          className={`${navLinkClass(false)} cursor-not-allowed opacity-55`}
+          aria-disabled="true"
+        >
+          {content}
+        </span>
+      )
+    }
+
+    return (
+      <a
+        href={item.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={item.lockTooltip}
+        className={navLinkClass(false, item.locked)}
+      >
+        {content}
+      </a>
+    )
+  }
+
+  return (
+    <Link
+      href={item.href}
+      title={item.lockTooltip}
+      className={navLinkClass(isActive, item.locked)}
+    >
+      {content}
     </Link>
   )
 }

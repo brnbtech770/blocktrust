@@ -12,6 +12,7 @@ import { getVerifyQuotaDisplay } from "@/lib/verify-quotas";
 import Link from "next/link";
 import { Plus, Shield, ShieldAlert, Sparkles, Check } from "lucide-react";
 import VerifyBadgeCard from "@/app/components/dashboard/VerifyBadgeCard";
+import ChromeExtensionBanner from "@/app/components/dashboard/ChromeExtensionBanner";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 import type { CertificateTableItem, VerificationEvent } from "@/types/dashboard";
 import StatsBlock from "@/app/components/dashboard/StatsBlock";
@@ -366,6 +367,7 @@ export default async function Dashboard({
               isAdmin={userIsAdmin}
             />
           </div>
+          <ChromeExtensionBanner />
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/dashboard/create"
