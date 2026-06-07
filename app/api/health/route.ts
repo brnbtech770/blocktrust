@@ -1,4 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/app/lib/auth-server'
+import { isAdmin } from '@/app/lib/admin'
+import { prisma } from '@/app/lib/db'
+import { secureCompareBearer } from '@/lib/api-key'
 import { getOpsHealth } from '@/lib/ops-health'
 
 export const dynamic = 'force-dynamic'
@@ -12,8 +16,53 @@ const AUTH_RELEASE = 8
 /** Préfixe du commit Git qui introduit le marqueur ci-dessus (à titre de référence humaine). */
 const EXPECTED_SIGNIN_FIX_COMMIT_PREFIX = '780d893'
 
-/** Vérif rapide du déploiement : commit Git exposé par Vercel (sans secrets). */
-export async function GET() {
+const HEALTH_HEADERS = {
+  'Cache-Control': 'private, no-store, max-age=0, must-revalidate',
+} as const
+
+async function pingDatabaseOk(): Promise<boolean> {
+  const databaseUrl = process.env.DATABASE_URL?.trim() ?? ''
+  const valid =
+    databaseUrl.startsWith('postgresql://') || databaseUrl.startsWith('postgres://')
+  if (!valid) return false
+
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** Accès détail ops : admin connecté ou Bearer CRON_SECRET (monitoring interne). */
+async function canAccessDetailedHealth(req: NextRequest): Promise<boolean> {
+  const cronSecret = process.env.CRON_SECRET?.trim()
+  if (cronSecret && secureCompareBearer(req.headers.get('authorization'), cronSecret)) {
+    return true
+  }
+
+  const session = await auth()
+  return Boolean(session?.user?.email && isAdmin(session.user.email))
+}
+
+/** Réponse publique minimale — pas de fingerprinting infra. */
+async function getPublicHealthResponse() {
+  const ok = await pingDatabaseOk()
+  return NextResponse.json(
+    {
+      ok,
+      checkedAt: new Date().toISOString(),
+      uptimeSec: Math.floor(process.uptime()),
+    },
+    {
+      status: ok ? 200 : 503,
+      headers: HEALTH_HEADERS,
+    },
+  )
+}
+
+/** Réponse détaillée réservée admin / Bearer CRON_SECRET. */
+async function getDetailedHealthResponse() {
   const sha = process.env.VERCEL_GIT_COMMIT_SHA ?? ''
   const shaShort = sha ? sha.slice(0, 7) : null
   const looksLikePreSigninFix =
@@ -33,6 +82,7 @@ export async function GET() {
       vercelGitCommitSha: sha || null,
       authRelease: AUTH_RELEASE,
       checkedAt: ops.checkedAt,
+      uptimeSec: Math.floor(process.uptime()),
       database: {
         urlConfigured: Boolean(databaseUrl),
         urlValid:
@@ -62,11 +112,8 @@ export async function GET() {
         all: ops.crons,
       },
       alerts: ops.alerts,
-      /** Présent seulement sur les builds contenant ce fichier ; vérifie que la prod n’est pas figée sur un vieux déploiement. */
       signinGoogleFullPageNav: true,
-      /** Présent à partir du commit qui ajoute ?reason= sur les redirects dashboard/admin. */
       signinRedirectReason: true,
-      /** Build avec bypass redirect signin si préfetch RSC (commit 2e792c9+). */
       prefetchRscAuthBypass: true,
       expectedSigninFixCommitPrefix: EXPECTED_SIGNIN_FIX_COMMIT_PREFIX,
       authReleaseHint:
@@ -77,9 +124,15 @@ export async function GET() {
     },
     {
       status: ops.ok ? 200 : 503,
-      headers: {
-        'Cache-Control': 'private, no-store, max-age=0, must-revalidate',
-      },
+      headers: HEALTH_HEADERS,
     },
   )
+}
+
+/** Health check : réponse publique minimale ; détails ops réservés admin / CRON_SECRET. */
+export async function GET(req: NextRequest) {
+  if (!(await canAccessDetailedHealth(req))) {
+    return getPublicHealthResponse()
+  }
+  return getDetailedHealthResponse()
 }
