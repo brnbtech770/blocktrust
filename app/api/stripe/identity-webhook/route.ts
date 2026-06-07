@@ -12,6 +12,7 @@ import { persistUserTrustScore } from '@/lib/trustscore'
 import {
   stripeWebhookAlreadyHandled,
   stripeWebhookMarkHandled,
+  stripeWebhookReleaseClaim,
 } from '@/lib/stripe-webhook-idempotency'
 
 const identityWebhookSecret = process.env.STRIPE_IDENTITY_WEBHOOK_SECRET!
@@ -47,7 +48,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
-  const duplicate = await stripeWebhookAlreadyHandled(event.id)
+  let duplicate: boolean
+  try {
+    duplicate = await stripeWebhookAlreadyHandled(event.id, event.type)
+  } catch (e) {
+    btErrorDevDetails(e, 'Stripe identity idempotency store unavailable')
+    return NextResponse.json(
+      { error: 'idempotency_unavailable' },
+      { status: 500 }
+    )
+  }
   if (duplicate) {
     btLog(
       `[stripe] Event ${event.id} déjà traité`,
@@ -151,6 +161,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true })
   } catch (error) {
+    await stripeWebhookReleaseClaim(event.id)
     btErrorDevDetails(error, 'Identity webhook handler error')
     return NextResponse.json(
       { error: 'Webhook handler failed' },
