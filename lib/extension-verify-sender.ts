@@ -17,12 +17,15 @@ export type ExtensionVerifySignals = {
 export type ExtensionVerifyPayload = {
   verified: boolean;
   status: ExtensionVerifyStatus;
+  /** Alias explicite pour l’extension (identique à status). */
+  verdict: ExtensionVerifyStatus;
   entityName: string | null;
   trustScore: number | null;
   badgeUrl: string | null;
   certifiedDomains: string[];
   certifiedEmails: string[];
   signals: ExtensionVerifySignals;
+  anchoredOnChain: boolean;
   message: string;
 };
 
@@ -148,13 +151,23 @@ function buildSignals(
   };
 }
 
+function finalizePayload(
+  partial: Omit<ExtensionVerifyPayload, "verdict" | "anchoredOnChain">,
+): ExtensionVerifyPayload {
+  return {
+    ...partial,
+    verdict: partial.status,
+    anchoredOnChain: partial.signals.polygonAnchored,
+  };
+}
+
 function inContactsFallbackPayload(
   emailNorm: string,
   domainNorm: string,
   message: string,
   ctx: ExtensionVerifyContext,
 ): ExtensionVerifyPayload {
-  return {
+  return finalizePayload({
     verified: false,
     status: "IN_CONTACTS",
     entityName: emailNorm || domainNorm || null,
@@ -164,7 +177,7 @@ function inContactsFallbackPayload(
     certifiedEmails: emailNorm ? [emailNorm] : [],
     signals: buildSignals(null, null, emailNorm, domainNorm, ctx, "IN_CONTACTS"),
     message,
-  };
+  });
 }
 
 function certIsFraudish(c: Certificate, now: Date): boolean {
@@ -190,7 +203,7 @@ export function buildExtensionVerifyResult(
   };
 
   if (!emailNorm && !domainNorm) {
-    return {
+    return finalizePayload({
       verified: false,
       status: "UNKNOWN",
       entityName: null,
@@ -200,7 +213,7 @@ export function buildExtensionVerifyResult(
       certifiedEmails: [],
       signals: buildSignals(null, null, emailNorm, domainNorm, ctx, "UNKNOWN"),
       message: "Paramètres email ou domaine requis.",
-    };
+    });
   }
 
   const matches = entities.filter((e) => entityMatchesSender(e, emailNorm, domainNorm));
@@ -221,7 +234,7 @@ export function buildExtensionVerifyResult(
         ctx,
       );
     }
-    return {
+    return finalizePayload({
       verified: false,
       status: "UNKNOWN",
       entityName: null,
@@ -231,7 +244,7 @@ export function buildExtensionVerifyResult(
       certifiedEmails: [],
       signals: buildSignals(null, null, emailNorm, domainNorm, ctx, "UNKNOWN"),
       message: "Aucun contact certifié ne correspond à cet expéditeur.",
-    };
+    });
   }
 
   const pick =
@@ -256,7 +269,7 @@ export function buildExtensionVerifyResult(
   const signals = buildSignals(pick, bestCert, emailNorm, domainNorm, ctx, "CERTIFIED");
 
   if (hasActive) {
-    return {
+    return finalizePayload({
       verified: true,
       status: "CERTIFIED",
       entityName,
@@ -266,11 +279,11 @@ export function buildExtensionVerifyResult(
       certifiedEmails,
       signals,
       message: "Ce contact possède un badge BLOCKTRUST actif.",
-    };
+    });
   }
 
   if (hasFraud || (bestCert && certIsFraudish(bestCert, now))) {
-    return {
+    return finalizePayload({
       verified: false,
       status: "FRAUD",
       entityName,
@@ -280,10 +293,10 @@ export function buildExtensionVerifyResult(
       certifiedEmails,
       signals: buildSignals(pick, bestCert, emailNorm, domainNorm, ctx, "FRAUD"),
       message: "Badge invalide, expiré ou révoqué pour ce contact.",
-    };
+    });
   }
 
-  return {
+  return finalizePayload({
     verified: false,
     status: "IN_CONTACTS",
     entityName,
@@ -293,5 +306,5 @@ export function buildExtensionVerifyResult(
     certifiedEmails,
     signals: buildSignals(pick, bestCert, emailNorm, domainNorm, ctx, "IN_CONTACTS"),
     message: "Contact présent dans votre liste, sans badge actif.",
-  };
+  });
 }

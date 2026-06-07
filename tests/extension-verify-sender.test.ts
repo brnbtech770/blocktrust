@@ -87,7 +87,10 @@ describe('Extension verify-sender', () => {
 
     expect(result.status).toBe('CERTIFIED')
     expect(result.verified).toBe(true)
+    expect(result.verdict).toBe('CERTIFIED')
     expect(result.trustScore).toBe(87)
+    expect(result.anchoredOnChain).toBe(false)
+    expect(result.signals.kycVerified).toBe(true)
     expect(result.badgeUrl).toContain('/badge/')
   })
 
