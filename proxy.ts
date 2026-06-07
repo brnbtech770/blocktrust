@@ -62,17 +62,54 @@ function isProtectedCheckoutPath(pathname: string): boolean {
 }
 
 function isProtectedApi(pathname: string): boolean {
-  const isProtectedStripeApi =
-    pathname.startsWith('/api/stripe') && !pathname.includes('/webhook')
-  return (
-    pathname.startsWith('/api/certificates') ||
-    pathname.startsWith('/api/entities') ||
-    pathname.startsWith('/api/organization') ||
-    pathname.startsWith('/api/vault') ||
-    pathname === '/api/stats' ||
-    pathname === '/api/activity' ||
-    isProtectedStripeApi
-  )
+  if (!pathname.startsWith('/api/')) return false
+
+  // Routes volontairement publiques ou auth alternative (clé API, cron, webhooks).
+  if (pathname.startsWith('/api/public/')) return false
+  if (pathname.startsWith('/api/auth/')) return false
+  if (pathname.startsWith('/api/cron/')) return false
+  if (pathname === '/api/health') return false
+  if (pathname === '/api/pricing') return false
+  if (pathname.startsWith('/api/badge/')) return false
+  if (pathname === '/api/v2/verify' || pathname.startsWith('/api/v2/verify/')) return false
+  if (pathname === '/api/verify/resolve-token') return false
+  if (pathname.includes('/webhook')) return false
+  if (
+    pathname === '/api/extension/me' ||
+    pathname === '/api/extension/verify-sender' ||
+    pathname === '/api/extension/add-contact'
+  ) {
+    return false
+  }
+  // QR image publique /api/qr/[id] — hors generate/settings (session).
+  if (/^\/api\/qr\/[^/]+$/.test(pathname)) return false
+
+  const protectedPrefixes = [
+    '/api/certificates',
+    '/api/entities',
+    '/api/organization',
+    '/api/vault',
+    '/api/kyc',
+    '/api/trust-circle',
+    '/api/upload',
+    '/api/whitelabel',
+    '/api/user',
+    '/api/quota',
+    '/api/qr/generate',
+    '/api/qr/settings',
+    '/api/verify/',
+    '/api/v2/issue',
+    '/api/v2/sign',
+    '/api/extension/api-key',
+    '/api/stats',
+    '/api/activity',
+  ]
+
+  if (protectedPrefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return true
+  }
+
+  return pathname.startsWith('/api/stripe') && !pathname.includes('/webhook')
 }
 
 export async function proxy(request: NextRequest) {
@@ -185,32 +222,20 @@ export async function proxy(request: NextRequest) {
     const isProtectedStripeApi =
       pathname.startsWith('/api/stripe') && !pathname.includes('/webhook')
 
-    if (
-      isProtectedStripeApi &&
-      pathname === '/api/stripe/create-checkout' &&
-      request.method === 'GET' &&
-      !email
-    ) {
-      const signInUrl = new URL('/auth/signin', request.url)
-      signInUrl.searchParams.set(
-        'callbackUrl',
-        `${request.nextUrl.pathname}${request.nextUrl.search}`
-      )
-      return NextResponse.redirect(signInUrl)
-    }
-
-    if (
-      pathname.startsWith('/api/certificates') ||
-      pathname.startsWith('/api/entities') ||
-      pathname.startsWith('/api/organization') ||
-      pathname.startsWith('/api/vault') ||
-      pathname === '/api/stats' ||
-      pathname === '/api/activity' ||
-      isProtectedStripeApi
-    ) {
-      if (!email) {
-        return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    if (!email && isProtectedApi(pathname)) {
+      if (
+        isProtectedStripeApi &&
+        pathname === '/api/stripe/create-checkout' &&
+        request.method === 'GET'
+      ) {
+        const signInUrl = new URL('/auth/signin', request.url)
+        signInUrl.searchParams.set(
+          'callbackUrl',
+          `${request.nextUrl.pathname}${request.nextUrl.search}`
+        )
+        return NextResponse.redirect(signInUrl)
       }
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
     return NextResponse.next()
@@ -240,6 +265,18 @@ export const config = {
     '/api/entities/:path*',
     '/api/organization/:path*',
     '/api/vault/:path*',
+    '/api/kyc/:path*',
+    '/api/trust-circle/:path*',
+    '/api/upload',
+    '/api/whitelabel/:path*',
+    '/api/user/:path*',
+    '/api/quota/:path*',
+    '/api/qr/generate/:path*',
+    '/api/qr/settings/:path*',
+    '/api/verify/:path*',
+    '/api/v2/issue',
+    '/api/v2/sign',
+    '/api/extension/api-key',
     '/api/stripe/:path*',
     '/api/stats',
     '/api/activity',
