@@ -106,8 +106,19 @@ describe('plan-features — capacités blockchain / Trust Circle', () => {
     expect(planAllowsTrustCircle('DISCOVERY')).toBe(false)
   })
 
-  it('autorisés sur tout plan payant', () => {
+  it('Trust Circle réservé à Premium et plus (pas Essentiel)', () => {
+    expect(planAllowsTrustCircle('ESSENTIEL')).toBe(false)
+    expect(planAllowsTrustCircle('B2C_ESSENTIEL')).toBe(false)
+    expect(planAllowsTrustCircle('PREMIUM')).toBe(true)
+    expect(planAllowsTrustCircle('B2C_PREMIUM')).toBe(true)
+    expect(planAllowsTrustCircle('FAMILLE')).toBe(true)
+    expect(planAllowsTrustCircle('B2B_STARTER')).toBe(true)
+    expect(planAllowsTrustCircle('ENTERPRISE')).toBe(true)
+  })
+
+  it('Polygon autorisé sur tout plan payant ; Trust Circle sur B2B', () => {
     expect(planAllowsPolygonAnchoring('PREMIUM')).toBe(true)
+    expect(planAllowsPolygonAnchoring('ESSENTIEL')).toBe(true)
     expect(planAllowsTrustCircle('B2B_TEAM')).toBe(true)
   })
 

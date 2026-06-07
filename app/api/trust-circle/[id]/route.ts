@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getAuthUser, checkPlanFeature } from '@/app/lib/auth'
+import { getAuthUser } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/db'
 
 const deleteBodySchema = z
@@ -64,18 +64,8 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Legacy: Entity-based
-    const subscription = await prisma.subscription.findUnique({
-      where: { userId: user.id },
-      select: { plan: true },
-    })
-    const userPlan = user.plan ?? subscription?.plan ?? 'ESSENTIEL'
-    if (!checkPlanFeature(userPlan, 'trustCircle')) {
-      return NextResponse.json(
-        { error: 'Trust Circle non disponible avec votre plan', code: 'PLAN_LIMIT' },
-        { status: 403 }
-      )
-    }
+    // Legacy: Entity-based. La SUPPRESSION d'une relation reste toujours autorisée
+    // (nettoyage possible même après passage à un plan sans Trust Circle).
     const userEntities = await prisma.entity.findMany({
       where: { userId: user.id },
       select: { id: true },

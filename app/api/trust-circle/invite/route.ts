@@ -3,8 +3,9 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthUser, checkPlanFeature } from '@/app/lib/auth'
+import { getAuthUser } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/db'
+import { resolveEffectivePlan, planAllowsTrustCircle } from '@/lib/plan-features'
 import { z } from 'zod'
 
 const inviteSchema = z.object({
@@ -36,13 +37,13 @@ export async function POST(req: NextRequest) {
 
     const { fromEntityId, toEmail, relationshipType, message } = parsed.data
 
-    // Vérifier si Trust Circle est activé pour ce plan
+    // Trust Circle réservé à Premium et plus (plan effectif, statut Stripe inclus).
     const subscription = await prisma.subscription.findUnique({
       where: { userId: user.id },
-      select: { plan: true },
+      select: { plan: true, status: true },
     })
-    const userPlan = user.plan ?? subscription?.plan ?? 'ESSENTIEL'
-    if (!checkPlanFeature(userPlan, 'trustCircle')) {
+    const userPlan = resolveEffectivePlan({ subscription, email: user.email })
+    if (!planAllowsTrustCircle(userPlan)) {
       return NextResponse.json(
         { error: 'Trust Circle non disponible avec votre plan', code: 'PLAN_LIMIT' },
         { status: 403 }

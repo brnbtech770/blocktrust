@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
+import { resolveEffectivePlan, planAllowsTrustCircle } from '@/lib/plan-features'
 import { z } from 'zod'
 import { createAdminAlert } from '@/lib/admin-alerts'
 
@@ -29,10 +30,24 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const quota = await checkTrustCircleQuota(
-    session.user.id,
-    (session.user as { plan?: string }).plan ?? 'ESSENTIEL'
-  )
+  // Plan effectif (statut Stripe inclus) — Trust Circle réservé à Premium et plus.
+  const subscription = await prisma.subscription.findUnique({
+    where: { userId: session.user.id },
+    select: { plan: true, status: true },
+  })
+  const plan = resolveEffectivePlan({ subscription, email: session.user.email })
+  if (!planAllowsTrustCircle(plan)) {
+    return NextResponse.json(
+      {
+        error: 'PLAN_LIMIT',
+        message: 'Le Réseau de confiance (Trust Circle) est disponible à partir du plan Premium.',
+        upgradeUrl: '/pricing',
+      },
+      { status: 403 },
+    )
+  }
+
+  const quota = await checkTrustCircleQuota(session.user.id, plan)
   if (!quota.allowed) {
     return NextResponse.json(
       { error: 'QUOTA_EXCEEDED', upgradeUrl: '/pricing' },

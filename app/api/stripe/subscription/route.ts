@@ -76,13 +76,15 @@ export async function GET(req: NextRequest) {
     } else {
       // Fallback: ancien système avec planLimits
       const planLimits: Record<string, { maxEntities: number; maxCertificates: number; trustCircleEnabled: boolean; blockchainAnchor: boolean }> = {
-        ESSENTIEL: { maxEntities: 1, maxCertificates: 1, trustCircleEnabled: false, blockchainAnchor: false },
-        PREMIUM: { maxEntities: 5, maxCertificates: 5, trustCircleEnabled: false, blockchainAnchor: false },
-        FAMILLE: { maxEntities: 10, maxCertificates: 10, trustCircleEnabled: true, blockchainAnchor: false },
+        // trustCircleEnabled / blockchainAnchor alignés sur lib/pricing.ts :
+        // Trust Circle à partir de Premium ; ancrage Polygon sur tout plan payant.
+        ESSENTIEL: { maxEntities: 1, maxCertificates: 1, trustCircleEnabled: false, blockchainAnchor: true },
+        PREMIUM: { maxEntities: 5, maxCertificates: 5, trustCircleEnabled: true, blockchainAnchor: true },
+        FAMILLE: { maxEntities: 10, maxCertificates: 10, trustCircleEnabled: true, blockchainAnchor: true },
         "FAMILLE_PLUS": { maxEntities: 999999, maxCertificates: 999999, trustCircleEnabled: true, blockchainAnchor: true },
         SOLO_PRO: { maxEntities: 100, maxCertificates: 100, trustCircleEnabled: true, blockchainAnchor: true },
-        STARTER: { maxEntities: 10, maxCertificates: 10, trustCircleEnabled: false, blockchainAnchor: false },
-        TEAM: { maxEntities: 50, maxCertificates: 50, trustCircleEnabled: true, blockchainAnchor: false },
+        STARTER: { maxEntities: 10, maxCertificates: 10, trustCircleEnabled: true, blockchainAnchor: true },
+        TEAM: { maxEntities: 50, maxCertificates: 50, trustCircleEnabled: true, blockchainAnchor: true },
         BUSINESS: { maxEntities: 999999, maxCertificates: 999999, trustCircleEnabled: true, blockchainAnchor: true },
         ENTERPRISE: { maxEntities: 999999, maxCertificates: 999999, trustCircleEnabled: true, blockchainAnchor: true },
       }

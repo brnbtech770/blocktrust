@@ -148,9 +148,29 @@ export function planAllowsPolygonAnchoring(plan?: string | null): boolean {
   return !isDiscoveryPlan(plan)
 }
 
-/** Trust Circle indisponible sur le plan gratuit Découverte. */
+/**
+ * Plans (hors préfixe B2C_/B2B_) autorisant le Réseau de confiance (Trust Circle).
+ * Aligné sur la grille de vente lib/pricing.ts : réservé à partir de Premium côté B2C
+ * (donc PAS Découverte ni Essentiel) et à tous les plans professionnels.
+ */
+const TRUST_CIRCLE_PLANS = new Set<string>([
+  'PREMIUM',
+  'FAMILLE',
+  'FAMILLE_PLUS',
+  'SOLO_PRO',
+  'STARTER',
+  'TEAM',
+  'BUSINESS',
+  'ENTERPRISE',
+])
+
+/**
+ * Trust Circle disponible à partir de Premium (B2C) et sur tous les plans B2B.
+ * Indisponible sur Découverte (gratuit) et Essentiel.
+ */
 export function planAllowsTrustCircle(plan?: string | null): boolean {
-  return !isDiscoveryPlan(plan)
+  const key = normalizePlan(plan).replace(/^B2[CB]_/, '')
+  return TRUST_CIRCLE_PLANS.has(key)
 }
 
 /** True si le certificat n'est volontairement pas ancré (badge preview gratuit). */
