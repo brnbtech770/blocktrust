@@ -5,9 +5,9 @@ import Reveal from "./Reveal";
 
 const proofs: { icon: LucideIcon; text: string }[] = [
   { icon: Award, text: "BLOCKTRUST™ — INPI n°5253718" },
-  { icon: Anchor, text: "Ancrage Bitcoin — OpenTimestamp 29 mai 2026" },
+  { icon: Anchor, text: "Badges ancrés sur Polygon Mainnet" },
   { icon: ShieldCheck, text: "Données hébergées en Europe · RGPD" },
-  { icon: KeyRound, text: "Cryptographie ES256 · Polygon Mainnet" },
+  { icon: KeyRound, text: "Code horodaté · OpenTimestamps (Bitcoin)" },
 ];
 
 export default function Proofs() {

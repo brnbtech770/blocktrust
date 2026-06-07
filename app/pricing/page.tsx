@@ -9,6 +9,14 @@ import PricingToggle from '@/app/components/pricing/PricingToggle'
 import PricingGridB2C from '@/app/components/pricing/PricingGridB2C'
 import PricingGridB2B from '@/app/components/pricing/PricingGridB2B'
 import type { PlanB2C, PlanB2B } from '@/lib/pricing'
+import {
+  formatPriceFr,
+  getPlanB2BById,
+  STARTER_YEARLY_PER_USER_HT_EUR,
+} from '@/lib/pricing'
+
+const teamYearlyPerUserHt =
+  getPlanB2BById('TEAM')?.prices?.yearly?.perMonth ?? 6.99
 
 function PricingContextMessage() {
   const searchParams = useSearchParams()
@@ -102,9 +110,15 @@ export default function PricingPage() {
         <PricingToggle mode={mode} setMode={setMode} />
 
         {/* Toggle Mensuel / Annuel */}
-        <div className="mb-4 flex max-w-full flex-wrap items-center justify-center gap-2 px-1 sm:gap-3">
+        <div
+          role="tablist"
+          aria-label="Fréquence de facturation"
+          className="mb-4 flex max-w-full flex-wrap items-center justify-center gap-2 px-1 sm:gap-3"
+        >
           <button
             type="button"
+            role="tab"
+            aria-selected={interval === 'monthly'}
             onClick={() => setInterval('monthly')}
             className="min-w-0 shrink rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:px-5 sm:text-base"
             style={{
@@ -117,6 +131,8 @@ export default function PricingPage() {
           </button>
           <button
             type="button"
+            role="tab"
+            aria-selected={interval === 'yearly'}
             onClick={() => setInterval('yearly')}
             className="min-w-0 shrink rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:px-5 sm:text-base"
             style={{
@@ -227,7 +243,7 @@ export default function PricingPage() {
         }}
       >
         <p className="mb-4" style={{ color: 'var(--bt-text)' }}>
-          Vous êtes une entreprise ? Offres B2B dès 6,99€ HT/user/mois (Team, engagement annuel) — Starter dès 9,99€ HT/user/mois.
+          Vous êtes une entreprise ? Offres B2B dès {formatPriceFr(teamYearlyPerUserHt)}€ HT/user/mois (Team, engagement annuel) — Starter dès {formatPriceFr(STARTER_YEARLY_PER_USER_HT_EUR)}€ HT/user/mois.
         </p>
         <a
           href="mailto:commercial@blocktrust.tech"

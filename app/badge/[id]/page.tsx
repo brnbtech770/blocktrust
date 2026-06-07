@@ -188,7 +188,7 @@ export default async function BadgePage({
           {authenticated && entity.entityType === 'BUSINESS' && entity.siret && (
             <p className="text-gray-300 text-xs">SIRET: {entity.siret}</p>
           )}
-          <p className="text-cyan-400 text-xs mt-1">blocktrust.io</p>
+          <p className="text-cyan-400 text-xs mt-1">blocktrust.tech</p>
         </div>
       </div>
     </div>

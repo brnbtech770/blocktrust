@@ -10,6 +10,8 @@ type Props = {
 export default function PricingToggle({ mode, setMode }: Props) {
   return (
     <div
+      role="tablist"
+      aria-label="Type de clientèle"
       className="mx-auto mb-10 flex w-full max-w-md flex-wrap justify-center gap-1 rounded-[10px] p-1 sm:w-fit sm:max-w-none sm:flex-nowrap"
       style={{
         background: 'rgba(255,255,255,0.05)',
@@ -18,6 +20,8 @@ export default function PricingToggle({ mode, setMode }: Props) {
     >
       <button
         type="button"
+        role="tab"
+        aria-selected={mode === 'B2B'}
         onClick={() => setMode('B2B')}
         className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition sm:flex-initial sm:px-6 sm:text-base"
         style={
@@ -41,6 +45,8 @@ export default function PricingToggle({ mode, setMode }: Props) {
       </button>
       <button
         type="button"
+        role="tab"
+        aria-selected={mode === 'B2C'}
         onClick={() => setMode('B2C')}
         className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition sm:flex-initial sm:px-6 sm:text-base"
         style={

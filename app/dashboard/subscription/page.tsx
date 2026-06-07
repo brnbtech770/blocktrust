@@ -10,6 +10,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import SubscriptionClient from '@/app/components/dashboard/SubscriptionClient'
 import { getPlanDisplayLabel, resolveEffectivePlan } from '@/lib/plan-features'
+import { btErrorDevDetails } from '@/lib/prodLog'
 
 export default async function SubscriptionPage() {
   try {
@@ -146,7 +147,7 @@ export default async function SubscriptionPage() {
       </div>
     )
   } catch (error: unknown) {
-    console.error('❌ Erreur dans SubscriptionPage:', error)
+    btErrorDevDetails(error, 'Erreur lors du chargement de la page abonnement')
     const message = error instanceof Error ? error.message : 'Une erreur inattendue s\'est produite'
     return (
       <div className="p-8">

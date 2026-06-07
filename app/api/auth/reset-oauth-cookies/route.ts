@@ -1,7 +1,21 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { auth } from '@/app/lib/auth-server'
+import { isAdmin } from '@/app/lib/admin'
+import { secureCompareBearer } from '@/lib/api-key'
 
 export const dynamic = 'force-dynamic'
+
+/** Accès : admin connecté ou Bearer CRON_SECRET (ops interne). */
+async function canResetOAuthCookies(req: NextRequest): Promise<boolean> {
+  const cronSecret = process.env.CRON_SECRET?.trim()
+  if (cronSecret && secureCompareBearer(req.headers.get('authorization'), cronSecret)) {
+    return true
+  }
+
+  const session = await auth()
+  return Boolean(session?.user?.email && isAdmin(session.user.email))
+}
 
 /**
  * Efface les cookies Auth.js du flux OAuth (callback-url, state, PKCE).
@@ -9,6 +23,10 @@ export const dynamic = 'force-dynamic'
  * Ne supprime pas le cookie de session JWT.
  */
 export async function GET(req: NextRequest) {
+  if (!(await canResetOAuthCookies(req))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const forwardedHost = req.headers.get('x-forwarded-host')
   const host = forwardedHost ?? req.headers.get('host') ?? req.nextUrl.host
   const rawProto = req.headers.get('x-forwarded-proto')
