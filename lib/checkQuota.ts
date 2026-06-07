@@ -4,6 +4,7 @@
 
 import { prisma } from '@/app/lib/db'
 import { resolveEffectivePlan } from '@/lib/plan-features'
+import { getMaxContacts } from '@/lib/pricing'
 
 export type QuotaCheckResult = {
   allowed: boolean
@@ -100,24 +101,11 @@ export async function checkCertificateQuota(userId: string): Promise<QuotaCheckR
 }
 
 /**
- * Retourne le nombre maximum d'entités selon le plan
+ * Nombre maximum d'entités/contacts selon le plan.
+ * Dérivé de la source unique lib/pricing.ts (PLAN_QUOTAS).
  */
 function getMaxEntities(plan: string): number {
-  const limits: Record<string, number> = {
-    DISCOVERY: 5,
-    DISCOVERY_EXPIRED: 0,
-    ESSENTIEL: 20,
-    PREMIUM: 100,
-    FAMILLE: 100,
-    FAMILLE_PLUS: 300,
-    SOLO_PRO: 100,
-    STARTER: 500,
-    TEAM: 3000,
-    BUSINESS: 25000,
-    ENTERPRISE: 999999,
-  }
-
-  return limits[plan] ?? 1
+  return getMaxContacts(plan)
 }
 
 /**

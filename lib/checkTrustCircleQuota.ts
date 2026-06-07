@@ -50,8 +50,10 @@ export async function checkTrustCircleQuota(
 
   const total      = trustCount + manualCount
   const limit      = quota.poolTotal
-  const percentage = total / limit
-  const allowed    = total < limit
+  // Pool 0 (plan sans Trust Circle, ex. Découverte/Essentiel) : rien d'autorisé,
+  // pas de division par zéro pour le pourcentage.
+  const percentage = limit > 0 ? total / limit : 1
+  const allowed    = limit > 0 && total < limit
 
   const upgradePlan    = getUpgradePlan(plan)
   const upgradeMessage = percentage >= UPGRADE_THRESHOLD

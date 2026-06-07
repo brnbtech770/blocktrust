@@ -139,7 +139,7 @@ describe('Stripe webhook', () => {
       where: { stripeSubscriptionId: 'sub_123' },
       data: {
         status: 'canceled',
-        plan: 'ESSENTIEL',
+        plan: 'DISCOVERY',
       },
     })
   })

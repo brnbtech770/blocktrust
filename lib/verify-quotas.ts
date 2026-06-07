@@ -3,24 +3,15 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import { getMaxVerifications } from '@/lib/pricing'
 
-export const VERIFY_QUOTAS: Record<string, number> = {
-  DISCOVERY: 20,
-  DISCOVERY_EXPIRED: 0,
-  ESSENTIEL: Number.POSITIVE_INFINITY,
-  PREMIUM: Number.POSITIVE_INFINITY,
-  FAMILLE: Number.POSITIVE_INFINITY,
-  FAMILLE_PLUS: Number.POSITIVE_INFINITY,
-  SOLO_PRO: Number.POSITIVE_INFINITY,
-  STARTER: Number.POSITIVE_INFINITY,
-  TEAM: Number.POSITIVE_INFINITY,
-  BUSINESS: Number.POSITIVE_INFINITY,
-  ENTERPRISE: Number.POSITIVE_INFINITY,
-}
-
-function normalizePlanKey(plan: string): string {
-  const p = plan.trim().toUpperCase().replace(/-/g, '_')
-  return p in VERIFY_QUOTAS ? p : 'ESSENTIEL'
+/**
+ * Limite de vérifications mensuelles pour un plan.
+ * Source unique : lib/pricing.ts (PLAN_QUOTAS). Plan inconnu → quota Découverte
+ * (jamais un fallback « illimité » accidentel — cf. SYS-3 / SYS-4).
+ */
+function verifyLimitForPlan(plan: string): number {
+  return getMaxVerifications(plan)
 }
 
 function monthYearChanged(a: Date, b: Date): boolean {
@@ -48,7 +39,7 @@ export async function peekVerifyQuota(
     return { allowed: true, remaining: Number.POSITIVE_INFINITY, limit: Number.POSITIVE_INFINITY }
   }
 
-  const limit = VERIFY_QUOTAS[normalizePlanKey(plan)] ?? VERIFY_QUOTAS.ESSENTIEL
+  const limit = verifyLimitForPlan(plan)
   if (limit === Number.POSITIVE_INFINITY) {
     return { allowed: true, remaining: Number.POSITIVE_INFINITY, limit: Number.POSITIVE_INFINITY }
   }
@@ -77,7 +68,7 @@ export async function checkAndIncrementVerifyQuota(
     return { allowed: true, remaining: Number.POSITIVE_INFINITY, limit: Number.POSITIVE_INFINITY }
   }
 
-  const limit = VERIFY_QUOTAS[normalizePlanKey(plan)] ?? VERIFY_QUOTAS.ESSENTIEL
+  const limit = verifyLimitForPlan(plan)
   if (limit === Number.POSITIVE_INFINITY) {
     return { allowed: true, remaining: Number.POSITIVE_INFINITY, limit: Number.POSITIVE_INFINITY }
   }
@@ -117,7 +108,7 @@ export async function getVerifyQuotaDisplay(
   userId: string,
   plan: string
 ): Promise<{ used: number; limit: number; remaining: number; unlimited: boolean }> {
-  const limitRaw = VERIFY_QUOTAS[normalizePlanKey(plan)] ?? VERIFY_QUOTAS.ESSENTIEL
+  const limitRaw = verifyLimitForPlan(plan)
   if (limitRaw === Number.POSITIVE_INFINITY) {
     return { used: 0, limit: 0, remaining: 0, unlimited: true }
   }

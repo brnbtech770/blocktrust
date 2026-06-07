@@ -1,21 +1,7 @@
-// Quotas par plan — source de vérité unique
-// Logique : friction naturelle à 80% pour
-// inciter l'upgrade sans être agressif
+// Quotas Trust Circle dérivés de la SOURCE UNIQUE lib/pricing.ts (SYS-3).
+// Logique : friction naturelle à 80% pour inciter l'upgrade sans être agressif.
 
-export const TRUST_CIRCLE_QUOTAS = {
-  // B2C — quota = pool total flexible entre profils
-  ESSENTIEL:    { poolTotal: 10,   perProfile: 10   },
-  PREMIUM:      { poolTotal: 40,   perProfile: 40   },
-  FAMILLE:      { poolTotal: 80,   perProfile: null },
-  FAMILLE_PLUS: { poolTotal: 200,  perProfile: null },
-
-  // B2B — quota par poste + pool entreprise
-  SOLO_PRO:     { poolTotal: 100,  perUser: 100 },
-  STARTER:      { poolTotal: 500,  perUser: 100 },
-  TEAM:         { poolTotal: 3000, perUser: 200 },
-  BUSINESS:     { poolTotal: 25000, perUser: 500 },
-  ENTERPRISE:   { poolTotal: null, perUser: null },
-} as const
+import { getMaxTrustCircle } from '@/lib/pricing'
 
 // Seuil déclenchant la bannière upgrade
 export const UPGRADE_THRESHOLD = 0.8
@@ -28,19 +14,9 @@ export const QUOTA_STATUSES = [
   'UNVERIFIED',
 ]
 
-export function getQuotaForPlan(plan: string) {
-  const map: Record<string, { poolTotal: number | null; perProfile?: number | null; perUser?: number | null }> = {
-    'ESSENTIEL':    TRUST_CIRCLE_QUOTAS.ESSENTIEL,
-    'PREMIUM':      TRUST_CIRCLE_QUOTAS.PREMIUM,
-    'FAMILLE':      TRUST_CIRCLE_QUOTAS.FAMILLE,
-    'FAMILLE_PLUS': TRUST_CIRCLE_QUOTAS.FAMILLE_PLUS,
-    'SOLO_PRO':     TRUST_CIRCLE_QUOTAS.SOLO_PRO,
-    'STARTER':      TRUST_CIRCLE_QUOTAS.STARTER,
-    'TEAM':         TRUST_CIRCLE_QUOTAS.TEAM,
-    'BUSINESS':     TRUST_CIRCLE_QUOTAS.BUSINESS,
-    'ENTERPRISE':   TRUST_CIRCLE_QUOTAS.ENTERPRISE,
-  }
-  return map[plan] ?? TRUST_CIRCLE_QUOTAS.ESSENTIEL
+/** Pool Trust Circle du plan (null = illimité, 0 = indisponible). Source : pricing.ts. */
+export function getQuotaForPlan(plan: string): { poolTotal: number | null } {
+  return { poolTotal: getMaxTrustCircle(plan) }
 }
 
 export function getUpgradePlan(plan: string): string | null {

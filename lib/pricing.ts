@@ -414,3 +414,69 @@ export function getPlanIdFromPriceId(priceId: string): string | null {
 export function isValidPriceId(priceId: string): boolean {
   return getAllValidPriceIds().includes(priceId);
 }
+
+// ============================================================
+// QUOTAS — SOURCE DE VÉRITÉ UNIQUE (SYS-3)
+// Toutes les limites (contacts, vérifications, Trust Circle) dérivent de cette
+// table. checkQuota / verify-quotas / trustCircleQuota la consomment : aucune
+// valeur de quota ne doit être codée en dur ailleurs.
+//   - contacts            : nombre d'entités/contacts enregistrables.
+//   - verificationsPerMonth : vérifications mensuelles (Infinity = illimité).
+//   - trustCirclePool     : pool de relations Trust Circle (null = illimité, 0 = indisponible).
+// ============================================================
+
+export const INFINITE_QUOTA = Number.POSITIVE_INFINITY;
+
+export type PlanQuota = {
+  contacts: number;
+  verificationsPerMonth: number;
+  trustCirclePool: number | null;
+};
+
+/** Clé courte normalisée (sans préfixe B2C_/B2B_, majuscules). */
+export function normalizePlanQuotaKey(plan?: string | null): string {
+  return (plan ?? "")
+    .trim()
+    .toUpperCase()
+    .replace(/-/g, "_")
+    .replace(/\s+/g, "_")
+    .replace(/^B2[CB]_/, "");
+}
+
+/**
+ * Table canonique des quotas par plan. Valeurs alignées sur la grille de vente
+ * ci-dessus ; Trust Circle indisponible (pool 0) sous Premium (cf. SYS-2).
+ */
+export const PLAN_QUOTAS: Record<string, PlanQuota> = {
+  DISCOVERY: { contacts: 5, verificationsPerMonth: 20, trustCirclePool: 0 },
+  DISCOVERY_EXPIRED: { contacts: 0, verificationsPerMonth: 0, trustCirclePool: 0 },
+  ESSENTIEL: { contacts: 20, verificationsPerMonth: INFINITE_QUOTA, trustCirclePool: 0 },
+  PREMIUM: { contacts: 100, verificationsPerMonth: INFINITE_QUOTA, trustCirclePool: 40 },
+  FAMILLE: { contacts: 200, verificationsPerMonth: INFINITE_QUOTA, trustCirclePool: 80 },
+  FAMILLE_PLUS: { contacts: 300, verificationsPerMonth: INFINITE_QUOTA, trustCirclePool: 200 },
+  SOLO_PRO: { contacts: 100, verificationsPerMonth: INFINITE_QUOTA, trustCirclePool: 100 },
+  STARTER: { contacts: 500, verificationsPerMonth: INFINITE_QUOTA, trustCirclePool: 500 },
+  TEAM: { contacts: 3000, verificationsPerMonth: INFINITE_QUOTA, trustCirclePool: 3000 },
+  BUSINESS: { contacts: 25000, verificationsPerMonth: INFINITE_QUOTA, trustCirclePool: 25000 },
+  ENTERPRISE: { contacts: 999999, verificationsPerMonth: INFINITE_QUOTA, trustCirclePool: null },
+};
+
+/** Plan inconnu → Découverte (fail-safe : jamais de droits payants par défaut). */
+function planQuotaOrDiscovery(plan?: string | null): PlanQuota {
+  return PLAN_QUOTAS[normalizePlanQuotaKey(plan)] ?? PLAN_QUOTAS.DISCOVERY;
+}
+
+/** Nombre maximum de contacts/entités enregistrables pour le plan. */
+export function getMaxContacts(plan?: string | null): number {
+  return planQuotaOrDiscovery(plan).contacts;
+}
+
+/** Vérifications mensuelles autorisées (Infinity = illimité). */
+export function getMaxVerifications(plan?: string | null): number {
+  return planQuotaOrDiscovery(plan).verificationsPerMonth;
+}
+
+/** Pool Trust Circle (null = illimité, 0 = indisponible). */
+export function getMaxTrustCircle(plan?: string | null): number | null {
+  return planQuotaOrDiscovery(plan).trustCirclePool;
+}
