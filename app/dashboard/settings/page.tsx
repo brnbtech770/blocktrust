@@ -14,6 +14,7 @@ import {
   getUserRole,
 } from '@/lib/trust-delegation'
 import SettingsClient from './SettingsClient'
+import { userHasExtensionApiKey } from '@/lib/extension-api-key'
 
 export const dynamic = 'force-dynamic'
 
@@ -104,7 +105,7 @@ export default async function SettingsPage() {
     <SettingsClient
       user={{ email: user.email, name: user.name, image: user.image }}
       extensionKeyInitial={{
-        hasKey: Boolean(user.extensionApiKeyHash),
+        hasKey: userHasExtensionApiKey(user.extensionApiKeyHash),
         masked: user.extensionApiKey ?? null,
       }}
       certifiedContacts={{

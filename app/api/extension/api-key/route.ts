@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
       apiKey: null,
       masked: existing.extensionApiKey ?? null,
       message:
-        "Une clé existe déjà pour ce compte. Elle ne peut être réaffichée. Utilisez « Régénérer la clé » dans Paramètres si vous devez en créer une nouvelle.",
+        "Une clé existe déjà pour ce compte. Elle ne peut être réaffichée. Utilisez « Régénérer la clé » sur la page Extension Chrome si vous devez en créer une nouvelle.",
     });
   }
 

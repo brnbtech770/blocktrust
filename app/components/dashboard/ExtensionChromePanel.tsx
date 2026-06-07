@@ -8,8 +8,10 @@ import {
   Copy,
   Download,
   ExternalLink,
+  KeyRound,
   Loader2,
   Puzzle,
+  RefreshCw,
 } from "lucide-react";
 import {
   CHROME_EXTENSION_STORE_URL,
@@ -32,6 +34,9 @@ type ApiKeyResponse = {
 type Props = {
   extensionKeyInitial: ExtensionKeyInitial;
 };
+
+const primaryBtnClass =
+  "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-bt-cyan/40 bg-bt-cyan/20 px-5 py-2.5 text-sm font-semibold text-bt-cyan transition hover:bg-bt-cyan/30 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
 
 export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
   const [hasExtensionKey, setHasExtensionKey] = useState(extensionKeyInitial.hasKey);
@@ -77,7 +82,7 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
         setMaskedKey(data.masked ?? null);
         setKeyError(
           data.message ??
-            "Une clé existe déjà pour ce compte. Utilisez « Régénérer la clé » si vous devez en créer une nouvelle."
+            "Une clé existe déjà pour ce compte. Utilisez « Régénérer la clé » si vous ne l'avez plus."
         );
       }
     } finally {
@@ -155,11 +160,34 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
       </section>
 
       <section className="rounded-xl border border-white/10 bg-[#0d1f3c] p-4 sm:p-6">
-        <h2 className="font-syne mb-1 text-lg font-semibold text-white">Clé API extension</h2>
-        <p className="mb-5 text-sm text-white/50">
-          Cette clé lie l&apos;extension Chrome à votre compte BLOCKTRUST™. Elle est stockée de
-          façon sécurisée côté serveur — affichée en clair une seule fois à la génération.
-        </p>
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="font-syne text-lg font-semibold text-white">Clé API extension</h2>
+            <p className="mt-1 text-sm text-white/50">
+              Cette clé lie l&apos;extension Chrome à votre compte BLOCKTRUST™. Affichée en clair
+              une seule fois à la génération — tous les forfaits, y compris Découverte.
+            </p>
+          </div>
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
+              hasExtensionKey
+                ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                : "border border-white/15 bg-white/5 text-white/55"
+            }`}
+          >
+            {hasExtensionKey ? (
+              <>
+                <Check className="h-3.5 w-3.5" aria-hidden />
+                Clé active
+              </>
+            ) : (
+              <>
+                <KeyRound className="h-3.5 w-3.5" aria-hidden />
+                Aucune clé
+              </>
+            )}
+          </span>
+        </div>
 
         {keyError ? (
           <p className="mb-4 text-sm text-[#E05252]" role="alert">
@@ -167,26 +195,8 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
           </p>
         ) : null}
 
-        {!hasExtensionKey ? (
-          <button
-            type="button"
-            onClick={() => void handleGenerateKey()}
-            disabled={keyLoading}
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-bt-cyan/40 bg-bt-cyan/20 px-5 py-2.5 text-sm font-semibold text-bt-cyan transition hover:bg-bt-cyan/30 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {keyLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                Génération…
-              </>
-            ) : (
-              "Générer ma clé API"
-            )}
-          </button>
-        ) : null}
-
         {newApiKey ? (
-          <div className="rounded-lg border border-amber-500/30 bg-black/25 p-4">
+          <div className="mb-5 rounded-lg border border-amber-500/30 bg-black/25 p-4">
             <p className="mb-3 flex items-start gap-2 text-xs text-amber-300">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
               Copiez cette clé maintenant — elle ne sera plus affichée intégralement.
@@ -198,7 +208,7 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
               <button
                 type="button"
                 onClick={() => void copyToClipboard(newApiKey)}
-                className="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 px-4 py-2 text-sm font-semibold text-bt-cyan transition hover:bg-bt-cyan/25"
+                className={primaryBtnClass}
               >
                 {copyDone ? (
                   <>
@@ -217,26 +227,58 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
         ) : null}
 
         {hasExtensionKey && !newApiKey ? (
-          <div>
-            <div className="mb-4 flex flex-col gap-2 rounded-lg border border-white/10 bg-black/20 p-3 sm:flex-row sm:items-center">
-              <code className="min-w-0 flex-1 font-mono text-xs text-white/45">
-                {maskedKey ?? "Clé active (masquée)"}
-              </code>
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400">
-                <Check className="h-3.5 w-3.5" aria-hidden />
-                Active
-              </span>
-            </div>
+          <div className="mb-5 rounded-lg border border-white/10 bg-black/20 p-3">
+            <code className="block break-all font-mono text-xs text-white/55">
+              {maskedKey ?? "Clé active (masquée)"}
+            </code>
+            <p className="mt-2 text-xs text-white/45">
+              Vous ne retrouvez plus la clé complète ? Régénérez-en une nouvelle — l&apos;ancienne
+              sera révoquée.
+            </p>
+          </div>
+        ) : null}
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          {!hasExtensionKey ? (
+            <button
+              type="button"
+              onClick={() => void handleGenerateKey()}
+              disabled={keyLoading}
+              className={primaryBtnClass}
+            >
+              {keyLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  Génération…
+                </>
+              ) : (
+                <>
+                  <KeyRound className="h-4 w-4" aria-hidden />
+                  Générer ma clé API
+                </>
+              )}
+            </button>
+          ) : (
             <button
               type="button"
               onClick={() => void handleRegenerateKey()}
               disabled={keyLoading}
-              className="text-sm text-white/45 transition hover:text-white/70 disabled:opacity-50"
+              className={primaryBtnClass}
             >
-              {keyLoading ? "Régénération…" : "Régénérer la clé (révoque l'ancienne)"}
+              {keyLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  Régénération…
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4" aria-hidden />
+                  Régénérer la clé
+                </>
+              )}
             </button>
-          </div>
-        ) : null}
+          )}
+        </div>
       </section>
 
       <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4 sm:p-6">
@@ -253,9 +295,7 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
           </li>
           <li className="flex gap-3">
             <span className="font-mono text-xs font-semibold text-bt-cyan">2</span>
-            <span>
-              Générez votre clé API ci-dessus et copiez-la.
-            </span>
+            <span>Générez votre clé API ci-dessus et copiez-la.</span>
           </li>
           <li className="flex gap-3">
             <span className="font-mono text-xs font-semibold text-bt-cyan">3</span>

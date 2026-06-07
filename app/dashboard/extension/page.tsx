@@ -8,22 +8,24 @@ import { redirect } from "next/navigation";
 import { auth } from "@/app/lib/auth-server";
 import { prisma } from "@/app/lib/db";
 import ExtensionChromePanel from "@/app/components/dashboard/ExtensionChromePanel";
+import { userHasExtensionApiKey } from "@/lib/extension-api-key";
 
 export default async function ExtensionDashboardPage() {
   const session = await auth();
-  if (!session?.user?.id) {
+  if (!session?.user?.id || !session.user.email) {
     redirect(`/auth/signin?callbackUrl=${encodeURIComponent("/dashboard/extension")}`);
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { email: session.user.email },
     select: {
+      id: true,
       extensionApiKeyHash: true,
       extensionApiKey: true,
     },
   });
 
-  if (!user) {
+  if (!user || user.id !== session.user.id) {
     redirect(`/auth/signin?callbackUrl=${encodeURIComponent("/dashboard/extension")}`);
   }
 
@@ -32,7 +34,7 @@ export default async function ExtensionDashboardPage() {
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <ExtensionChromePanel
           extensionKeyInitial={{
-            hasKey: Boolean(user.extensionApiKeyHash),
+            hasKey: userHasExtensionApiKey(user.extensionApiKeyHash),
             masked: user.extensionApiKey ?? null,
           }}
         />
