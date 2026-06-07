@@ -13,7 +13,6 @@ import DashboardSidebarNav, { type SidebarSection } from './DashboardSidebarNav'
 import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
 import { hasOrgAccess } from '@/lib/vault-utils'
 import { getPlanWording, resolvePlanKeyForWording } from '@/lib/plan-wording'
-import { CHROME_EXTENSION_STORE_URL } from '@/lib/chrome-extension'
 
 function shellClass() {
   return 'flex h-full min-h-0 flex-col p-4 md:p-6'
@@ -150,9 +149,8 @@ export default async function DashboardSidebar() {
           { name: 'Paramètres', href: '/dashboard/settings', icon: 'Settings' },
           {
             name: 'Extension Chrome',
-            href: CHROME_EXTENSION_STORE_URL,
+            href: '/dashboard/extension',
             icon: 'Puzzle' as const,
-            external: true,
           },
           ...(showWhiteLabel
             ? [
