@@ -5,6 +5,7 @@
 import crypto from 'crypto'
 import { prisma } from '@/app/lib/db'
 import { isAdmin, getAdminEmailList } from '@/lib/admin-utils'
+import { syncInternalAccountKycByUserId } from '@/lib/internal-kyc-verified'
 
 async function upsertMutualAdminEdge(fromUserId: string, toUserId: string): Promise<void> {
   await prisma.userTrustRelation
@@ -174,7 +175,7 @@ export async function ensureAdminCertificate(
             email: userEmail,
             certifiedEmails: [userEmail],
             kycStatus: 'VERIFIED',
-            validationLevel: 'BRONZE',
+            validationLevel: 'GOLD',
             emailVerified: true,
           },
         })
@@ -232,17 +233,12 @@ export async function ensureAdminCapabilities(
     })
     .catch(() => null)
 
-  await prisma.user
-    .update({
-      where: { id: userId },
-      data: {
-        kycStatus: 'VERIFIED',
-        kycVerifiedAt: new Date(),
-      },
-    })
-    .catch(() => null)
+  await syncInternalAccountKycByUserId(userId).catch(() => null)
 
   await ensureAdminCertificate(userId, userName?.trim() || email, email)
+
+  // Re-sync après création éventuelle d'Entity (certificat admin).
+  await syncInternalAccountKycByUserId(userId).catch(() => null)
 
   await prisma.subscription
     .upsert({

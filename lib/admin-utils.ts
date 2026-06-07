@@ -19,10 +19,12 @@ export function isAdmin(email: string | null | undefined): boolean {
  * Usage purement COSMÉTIQUE (libellé « Compte interne »). N'affecte AUCUN droit :
  * les droits restent ceux résolus par resolveAccountPlan (Enterprise complet).
  */
-const INTERNAL_EXTRA_EMAILS = [
+export const JOHANNA_INTERNAL_EMAILS = [
   'johannabernabe3@gmail.com',
   'johannafartoukh@yahoo.fr',
 ] as const
+
+const INTERNAL_EXTRA_EMAILS = JOHANNA_INTERNAL_EMAILS
 
 export function isInternalAccount(email: string | null | undefined): boolean {
   if (!email) return false

@@ -8,6 +8,7 @@ dotenv.config({ path: '.env.local' })
 dotenv.config()
 
 import { prisma } from '../app/lib/db'
+import { syncInternalAccountKycByEmail } from '../lib/internal-kyc-verified'
 
 const JOHANNA_EMAILS = ['johannabernabe3@gmail.com', 'johannafartoukh@yahoo.fr'] as const
 
@@ -58,6 +59,13 @@ async function bootstrapJohanna() {
         status: 'active',
       },
     })
+
+    const kyc = await syncInternalAccountKycByEmail(email)
+    if (kyc.result === 'updated') {
+      console.log(`   KYC : User VERIFIED + Entity GOLD`)
+    } else if (kyc.result === 'already_verified') {
+      console.log(`   KYC : déjà VERIFIED`)
+    }
 
     console.log(`✅ ${email}`)
     console.log(`   Plan : B2B_ENTERPRISE`)
