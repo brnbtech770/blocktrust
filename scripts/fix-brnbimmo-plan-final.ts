@@ -2,12 +2,12 @@
 // Met à jour le plan Famille avec le bon Price ID et associe l'utilisateur
 // ============================================================
 
-import { PrismaClient } from '@prisma/client'
 import * as dotenv from 'dotenv'
 
 dotenv.config({ path: '.env.local' })
+dotenv.config()
 
-const prisma = new PrismaClient()
+import { prisma } from '@/app/lib/db'
 
 async function main() {
   const userEmail = 'brnbimmo@gmail.com'

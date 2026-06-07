@@ -1,12 +1,11 @@
-import { PrismaClient } from '@prisma/client'
 import Stripe from 'stripe'
 import { config } from 'dotenv'
 import { resolve } from 'path'
+import { prisma } from '@/app/lib/db'
 
 // Charger les variables d'environnement depuis .env.local
 config({ path: resolve(process.cwd(), '.env.local') })
-
-const prisma = new PrismaClient()
+config()
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY
 if (!stripeSecretKey) {

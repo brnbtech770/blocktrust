@@ -75,6 +75,7 @@ process.env.DIRECT_URL = sanitizeDbUrl(process.env.DIRECT_URL) ?? databaseUrl;
 const hostMatch = databaseUrl.match(/@([^/]+)/);
 console.log("🔗 Vérification schema — host:", hostMatch?.[1] ?? "(inconnu)");
 
+// Standalone : PrismaClient dédié (DATABASE_URL explicite CLI / ops — hors singleton app).
 const prisma = new PrismaClient({
   datasources: { db: { url: databaseUrl } },
 });

@@ -2,9 +2,12 @@
 // Script pour associer manuellement un plan à un utilisateur
 // ============================================================
 
-import { PrismaClient } from '@prisma/client'
+import * as dotenv from 'dotenv'
 
-const prisma = new PrismaClient()
+dotenv.config({ path: '.env.local' })
+dotenv.config()
+
+import { prisma } from '@/app/lib/db'
 
 async function main() {
   const email = 'brnbimmo@gmail.com'

@@ -5,10 +5,10 @@
 
 import * as dotenv from 'dotenv'
 dotenv.config({ path: '.env.local' })
+dotenv.config()
 
-import { PrismaClient, PlanType, BillingInterval } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { PlanType, BillingInterval } from '@prisma/client'
+import { prisma } from '@/app/lib/db'
 
 async function main() {
   console.log('🔄 Création des Plans dans la base de données...\n')

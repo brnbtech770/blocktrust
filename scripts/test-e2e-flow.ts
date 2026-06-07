@@ -18,6 +18,7 @@ import crypto from 'node:crypto'
 import { PrismaClient, Prisma } from '@prisma/client'
 import { generateQrDynamicToken } from '../lib/qr-dynamic-token'
 
+// Standalone : PrismaClient dédié (test E2E isolé — nettoyage en fin de run).
 const prisma = new PrismaClient()
 
 const TEST_EMAIL = `e2e+${Date.now()}@blocktrust-test.local`

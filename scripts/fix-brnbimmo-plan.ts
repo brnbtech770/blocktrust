@@ -2,13 +2,13 @@
 // Vérifie l'abonnement Stripe et met à jour le planId
 // ============================================================
 
-import { PrismaClient } from '@prisma/client'
-import Stripe from 'stripe'
 import * as dotenv from 'dotenv'
 
 dotenv.config({ path: '.env.local' })
+dotenv.config()
 
-const prisma = new PrismaClient()
+import Stripe from 'stripe'
+import { prisma } from '@/app/lib/db'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-02-25.clover',
 })

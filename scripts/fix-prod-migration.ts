@@ -17,6 +17,7 @@ console.log(
   hostMatch?.[1] ?? "(host inconnu)",
 );
 
+// Standalone : PrismaClient dédié (DATABASE_URL_PROD explicite — hors singleton app).
 const prisma = new PrismaClient({
   datasources: {
     db: { url: prodUrl },

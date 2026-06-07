@@ -174,6 +174,36 @@ export function formatPriceFr(amount: number): string {
   });
 }
 
+/** Id plan catalogue (B2C_/B2B_ retirés, majuscules). */
+function resolveCatalogPlanId(planId: string): string {
+  return planId
+    .trim()
+    .toUpperCase()
+    .replace(/-/g, "_")
+    .replace(/\s+/g, "_")
+    .replace(/^B2[CB]_/, "");
+}
+
+/** Prix mensuel catalogue (EUR) ; null si plan gratuit ou Enterprise sur devis. */
+export function getPlanMonthlyAmountEur(planId: string): number | null {
+  const key = resolveCatalogPlanId(planId);
+  const b2c = getPlanB2CById(key);
+  if (b2c?.prices?.monthly?.amount != null) return b2c.prices.monthly.amount;
+  const b2b = getPlanB2BById(key);
+  if (b2b?.prices?.monthly?.amount != null) return b2b.prices.monthly.amount;
+  return null;
+}
+
+/** Libellé prix mensuel depuis la grille — ex. « 6,99€/mois », « 12,99€ HT/mois ». */
+export function formatPlanMonthlyPriceLabel(planId: string): string | null {
+  const key = resolveCatalogPlanId(planId);
+  if (key === "ENTERPRISE") return "Sur devis";
+  const amount = getPlanMonthlyAmountEur(key);
+  if (amount == null) return null;
+  const isB2b = getPlanB2BById(key) != null;
+  return `${formatPriceFr(amount)}€${isB2b ? " HT" : ""}/mois`;
+}
+
 export type PlanB2C = (typeof PLANS_B2C)[number];
 export type PlanB2B = (typeof PLANS_B2B)[number];
 

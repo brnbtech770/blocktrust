@@ -2,12 +2,12 @@
 // Vérifie les données de l'utilisateur brnbimmo@gmail.com
 // ============================================================
 
-import { PrismaClient } from '@prisma/client'
 import * as dotenv from 'dotenv'
 
 dotenv.config({ path: '.env.local' })
+dotenv.config()
 
-const prisma = new PrismaClient()
+import { prisma } from '@/app/lib/db'
 
 async function main() {
   console.log('🔍 Recherche de l\'utilisateur brnbimmo@gmail.com...\n')

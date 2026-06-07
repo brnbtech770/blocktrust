@@ -2,11 +2,14 @@
 // Script pour corriger le planId de tous les utilisateurs avec subscription Stripe active
 // ============================================================
 
-import { PrismaClient } from '@prisma/client'
+import * as dotenv from 'dotenv'
+
+dotenv.config({ path: '.env.local' })
+dotenv.config()
+
 import Stripe from 'stripe'
 import { findPlanFromPriceId } from '../app/lib/auth'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/app/lib/db'
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2026-02-25.clover',
 })
