@@ -41,6 +41,7 @@ export default async function SettingsPage() {
       certifiedPhones: true,
       certifiedDomains: true,
       kycStatus: true,
+      password: true,
       plan: { select: { type: true } },
     },
   })
@@ -104,6 +105,7 @@ export default async function SettingsPage() {
   return (
     <SettingsClient
       user={{ email: user.email, name: user.name, image: user.image }}
+      hasPassword={Boolean(user.password && user.password.length > 0)}
       extensionKeyInitial={{
         hasKey: userHasExtensionApiKey(user.extensionApiKeyHash),
         masked: user.extensionApiKey ?? null,

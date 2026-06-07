@@ -6,6 +6,7 @@ import {
   Check,
   Chrome,
   Globe,
+  KeyRound,
   Loader2,
   Mail,
   Phone,
@@ -165,14 +166,218 @@ function ProCertifiedSection({
   )
 }
 
+function PasswordSection({ initialHasPassword }: { initialHasPassword: boolean }) {
+  const [hasPassword, setHasPassword] = useState(initialHasPassword)
+  const [expanded, setExpanded] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
+  function resetForm() {
+    setCurrentPassword('')
+    setNewPassword('')
+    setConfirmPassword('')
+    setError(null)
+  }
+
+  function openForm() {
+    resetForm()
+    setSuccess(null)
+    setExpanded(true)
+  }
+
+  function closeForm() {
+    resetForm()
+    setExpanded(false)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setSuccess(null)
+
+    if (newPassword.length < 8) {
+      setError('Minimum 8 caractères.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setError('Les mots de passe ne correspondent pas.')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const body: Record<string, string> = {
+        newPassword,
+        confirmPassword,
+      }
+      if (hasPassword) {
+        body.currentPassword = currentPassword
+      }
+
+      const res = await fetch('/api/user/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      })
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string
+        mode?: 'set' | 'changed'
+      }
+
+      if (!res.ok) {
+        setError(data.error ?? 'Impossible de mettre à jour le mot de passe.')
+        return
+      }
+
+      if (data.mode === 'set') {
+        setSuccess(
+          'Mot de passe défini. Vous pouvez maintenant vous connecter avec votre email et ce mot de passe.'
+        )
+        setHasPassword(true)
+      } else {
+        setSuccess('Mot de passe mis à jour.')
+      }
+      resetForm()
+      setExpanded(false)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <section className="mb-6 rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-gold/30">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#00d4ff]/20 bg-[#00d4ff]/10">
+            <KeyRound className="h-4 w-4 text-[#00d4ff]" aria-hidden />
+          </div>
+          <div>
+            <h2 className="font-syne text-2xl font-semibold tracking-tight text-white">Mot de passe</h2>
+            <p className="mt-1 text-sm text-white/50">
+              {hasPassword
+                ? 'Modifiez votre mot de passe de connexion email.'
+                : 'Compte créé avec Google — définissez un mot de passe pour vous connecter aussi par email.'}
+            </p>
+          </div>
+        </div>
+        {!expanded ? (
+          <button
+            type="button"
+            onClick={openForm}
+            className="inline-flex min-h-[44px] items-center rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/15 px-4 py-2 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/25"
+          >
+            {hasPassword ? 'Modifier le mot de passe' : 'Définir un mot de passe'}
+          </button>
+        ) : null}
+      </div>
+
+      {success ? (
+        <p className="mb-4 flex items-center gap-1 text-sm text-emerald-400" role="status">
+          <Check className="h-4 w-4 shrink-0" aria-hidden />
+          {success}
+        </p>
+      ) : null}
+
+      {expanded ? (
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+          {hasPassword ? (
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-white/90">
+                Mot de passe actuel
+              </label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white focus:border-[#00d4ff]/50 focus:outline-none"
+              />
+            </div>
+          ) : null}
+
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-white/90">
+              {hasPassword ? 'Nouveau mot de passe' : 'Mot de passe'}
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              minLength={8}
+              autoComplete="new-password"
+              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white focus:border-[#00d4ff]/50 focus:outline-none"
+            />
+            <p className="mt-1 text-xs text-white/45">Minimum 8 caractères.</p>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-white/90">
+              Confirmer le mot de passe
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              minLength={8}
+              autoComplete="new-password"
+              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white focus:border-[#00d4ff]/50 focus:outline-none"
+            />
+          </div>
+
+          {error ? (
+            <p className="text-sm text-[#E05252]" role="alert">
+              {error}
+            </p>
+          ) : null}
+
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#00d4ff]/40 bg-[#00d4ff]/20 px-5 py-2.5 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/30 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  Enregistrement…
+                </>
+              ) : (
+                'Enregistrer'
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={closeForm}
+              disabled={loading}
+              className="rounded-xl border border-white/15 px-5 py-2.5 text-sm text-white/70 transition hover:bg-white/5 disabled:opacity-50"
+            >
+              Annuler
+            </button>
+          </div>
+        </form>
+      ) : null}
+    </section>
+  )
+}
+
 export default function SettingsClient({
   user,
+  hasPassword,
   extensionKeyInitial,
   certifiedContacts,
   planWording,
   delegationRights,
 }: {
   user: SettingsClientUser
+  hasPassword: boolean
   extensionKeyInitial: ExtensionKeyInitial
   certifiedContacts: CertifiedContactsInitial
   planWording: PlanWording
@@ -303,6 +508,8 @@ export default function SettingsClient({
             </div>
           </div>
         </div>
+
+        <PasswordSection initialHasPassword={hasPassword} />
 
         <section className="mb-6 rounded-xl border border-white/10 bg-[#0d1f3c] p-6">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">

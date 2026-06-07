@@ -31,8 +31,9 @@ export async function POST(req: NextRequest) {
     }
 
     void (async () => {
+      const emailNorm = email.trim().toLowerCase();
       const user = await prisma.user.findUnique({
-        where: { email },
+        where: { email: emailNorm },
       });
       if (!user || !user.password) return;
 
@@ -43,10 +44,10 @@ export async function POST(req: NextRequest) {
       const expiresAt = new Date(Date.now() + 3600_000);
 
       await prisma.passwordReset.deleteMany({
-        where: { email, used: false },
+        where: { email: emailNorm, used: false },
       });
       await prisma.passwordReset.create({
-        data: { email, tokenHash, expiresAt, used: false },
+        data: { email: emailNorm, tokenHash, expiresAt, used: false },
       });
 
       const baseUrl =
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
       const { PasswordResetEmail, subject } = await import("@/emails/PasswordResetEmail");
 
       const { error } = await sendEmail({
-        to: email,
+        to: emailNorm,
         subject,
         react: ReactImport.createElement(PasswordResetEmail, {
           resetUrl,
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
       if (error) {
         console.error(
           "[FORGOT-PASSWORD] Échec envoi email:",
-          redactEmailRecipient(email),
+          redactEmailRecipient(emailNorm),
           error
         );
       }
