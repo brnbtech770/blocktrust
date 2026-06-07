@@ -451,6 +451,7 @@ function checkPlanFeatureByType(planType: string, feature: string): boolean {
     PREMIUM: ["basic", "advanced", "trustCircle"],
     B2C_FAMILLE: ["basic", "advanced", "trustCircle"],
     FAMILLE: ["basic", "advanced", "trustCircle"],
+    // legacy — rétro-compat uniquement, non souscriptible (webhook / abonnés existants)
     B2C_FAMILLE_PLUS: ["basic", "advanced", "trustCircle", "unlimited"],
     "FAMILLE_PLUS": ["basic", "advanced", "trustCircle", "unlimited"],
     B2B_SOLO_PRO: ["basic", "advanced", "trustCircle"],
@@ -516,6 +517,7 @@ export function mapPriceIdToPlanType(priceId: string): string | null {
     [process.env.STRIPE_PRICE_PREMIUM_YEARLY || '']: 'B2C_PREMIUM',
     [process.env.STRIPE_PRICE_FAMILLE_MONTHLY || '']: 'B2C_FAMILLE',
     [process.env.STRIPE_PRICE_FAMILLE_YEARLY || '']: 'B2C_FAMILLE',
+    // legacy — rétro-compat uniquement, non souscriptible (voir lib/pricing.ts isLegacyPriceId)
     [process.env.STRIPE_PRICE_FAMILLE_PLUS_MONTHLY || '']: 'B2C_FAMILLE_PLUS',
     [process.env.STRIPE_PRICE_FAMILLE_PLUS_YEARLY || '']: 'B2C_FAMILLE_PLUS',
     [process.env.STRIPE_PRICE_SOLO_PRO_MONTHLY || '']: 'B2B_SOLO_PRO',

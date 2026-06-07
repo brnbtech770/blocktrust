@@ -10,6 +10,7 @@ import { prisma } from '@/app/lib/db'
 import { stripe } from '@/lib/stripe'
 import {
   isValidPriceId,
+  isLegacyPriceId,
   getPlanIdFromPriceId,
   getIntervalFromPriceId,
   getFamilleAddonPriceId,
@@ -87,6 +88,13 @@ async function createStripeCheckoutUrlForSessionUser(
 
   if (!user) {
     throw Object.assign(new Error('Utilisateur non trouvé'), { status: 404 })
+  }
+
+  if (isLegacyPriceId(priceId)) {
+    throw Object.assign(
+      new Error('Ce plan n\'est plus disponible à la souscription'),
+      { status: 410 },
+    )
   }
 
   if (!isValidPriceId(priceId)) {

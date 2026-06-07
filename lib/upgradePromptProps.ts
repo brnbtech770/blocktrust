@@ -48,7 +48,7 @@ export function buildUpgradePromptProps(
   const currentLimit = maxCertificates;
   const core = p.replace(/^B2C_/, "").replace(/^B2B_/, "");
 
-  if (core === "FAMILLE_PLUS" || isB2BPlan(p)) {
+  if (core === "FAMILLE" || core === "FAMILLE_PLUS" || isB2BPlan(p)) {
     return {
       planName,
       currentLimit,
@@ -59,24 +59,13 @@ export function buildUpgradePromptProps(
     };
   }
 
-  if (core === "FAMILLE") {
-    return {
-      planName,
-      currentLimit,
-      nextPlanName: "Famille+",
-      nextPlanLimit: 300,
-      nextPlanPrice: "24,99€/mois",
-      upgradeHref: "/pricing",
-    };
-  }
-
   if (core === "PREMIUM") {
     return {
       planName,
       currentLimit,
       nextPlanName: "Famille",
-      nextPlanLimit: 100,
-      nextPlanPrice: "14,99€/mois",
+      nextPlanLimit: 200,
+      nextPlanPrice: "17,99€/mois",
       upgradeHref: "/pricing",
     };
   }
@@ -87,7 +76,7 @@ export function buildUpgradePromptProps(
     currentLimit,
     nextPlanName: "Premium",
     nextPlanLimit: 100,
-    nextPlanPrice: "9,99€/mois",
+    nextPlanPrice: "6,99€/mois",
     upgradeHref: "/pricing",
   };
 }

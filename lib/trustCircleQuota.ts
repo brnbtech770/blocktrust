@@ -23,7 +23,7 @@ export function getUpgradePlan(plan: string): string | null {
   const upgrades: Record<string, string | null> = {
     'ESSENTIEL':    'PREMIUM',
     'PREMIUM':      'FAMILLE',
-    'FAMILLE':      'FAMILLE_PLUS',
+    'FAMILLE':      null, // Famille = palier B2C max (Famille+ legacy, non vendu)
     'FAMILLE_PLUS': null,
     'SOLO_PRO':     'STARTER',
     'STARTER':      'TEAM',
@@ -46,9 +46,7 @@ export function buildUpgradeMessage(
     'ESSENTIEL_PREMIUM':
       `Plus que ${remaining} contact${remaining > 1 ? 's' : ''} disponible${remaining > 1 ? 's' : ''}. Passez à Premium pour 40 contacts.`,
     'PREMIUM_FAMILLE':
-      `Quota presque atteint (${current}/${limit}). Plan Famille : 80 contacts partagés dès 14,99€/mois.`,
-    'FAMILLE_FAMILLE_PLUS':
-      `Pool familial presque plein (${current}/${limit}). Famille+ : 200 contacts dès 24,99€/mois.`,
+      `Quota presque atteint (${current}/${limit}). Plan Famille : 80 contacts partagés dès 17,99€/mois.`,
     'STARTER_TEAM':
       `Quota presque atteint (${current}/${limit}). Passez à Team : pool élargi et 200 contacts par utilisateur.`,
     'TEAM_BUSINESS':

@@ -1,6 +1,9 @@
 import Stripe from "stripe";
 import * as dotenv from "dotenv";
 
+// Seed Stripe dev/test — grille courante lib/pricing.ts (juin 2026).
+// Ne crée PAS Famille+, Solo Pro, Business (legacy, non souscriptibles).
+
 dotenv.config({ path: ".env.local" });
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
@@ -34,13 +37,13 @@ async function main() {
     });
     console.log(`✅ STRIPE_PRICE_ESSENTIEL_MONTHLY=${essentielPrice.id}`);
 
-    // Premium - 9,99€/mois
+    // Premium - 6,99€/mois (aligné lib/pricing.ts)
     const premiumProduct = await stripe.products.create({
       name: "BlockTrust Premium",
       description: "Plan Premium - Certificats avancés pour particuliers",
     });
     const premiumPrice = await stripe.prices.create({
-      unit_amount: 999, // 9,99€
+      unit_amount: 699, // 6,99€
       currency: "eur",
       recurring: {
         interval: "month",
@@ -49,13 +52,13 @@ async function main() {
     });
     console.log(`✅ STRIPE_PRICE_PREMIUM_MONTHLY=${premiumPrice.id}`);
 
-    // Famille - 14,99€/mois
+    // Famille - 17,99€/mois
     const familleProduct = await stripe.products.create({
       name: "BlockTrust Famille",
       description: "Plan Famille - Pour plusieurs membres",
     });
     const famillePrice = await stripe.prices.create({
-      unit_amount: 1499, // 14,99€
+      unit_amount: 1799, // 17,99€
       currency: "eur",
       recurring: {
         interval: "month",
@@ -68,7 +71,7 @@ async function main() {
     console.log("\n📦 Création des plans B2C (Annuel)...\n");
 
     const essentielYearly = await stripe.prices.create({
-      unit_amount: 3830, // 38,30€ / an (-20% vs 12×3,99), aligné lib/pricing
+      unit_amount: 3588, // 35,88€ / an (-20%), aligné lib/pricing.ts
       currency: "eur",
       recurring: {
         interval: "year",
@@ -78,7 +81,7 @@ async function main() {
     console.log(`✅ STRIPE_PRICE_ESSENTIEL_YEARLY=${essentielYearly.id}`);
 
     const premiumYearly = await stripe.prices.create({
-      unit_amount: 9590, // 95,90€ (annuel)
+      unit_amount: 5988, // 59,88€ (annuel)
       currency: "eur",
       recurring: {
         interval: "year",
@@ -88,7 +91,7 @@ async function main() {
     console.log(`✅ STRIPE_PRICE_PREMIUM_YEARLY=${premiumYearly.id}`);
 
     const familleYearly = await stripe.prices.create({
-      unit_amount: 14390, // 143,90€ (annuel)
+      unit_amount: 17988, // 179,88€ (annuel)
       currency: "eur",
       recurring: {
         interval: "year",
@@ -100,13 +103,13 @@ async function main() {
     // Plans B2B - Mensuel
     console.log("\n📦 Création des plans B2B (Mensuel)...\n");
 
-    // Starter B2B — legacy seed (forfait plate mensuel) ; grille live = HT/user dans lib/pricing.ts
+    // Starter B2B — 12,99€ HT/user/mois (aligné lib/pricing.ts)
     const starterProduct = await stripe.products.create({
       name: "BlockTrust Starter",
       description: "Plan Starter - Pour petites entreprises",
     });
     const starterPrice = await stripe.prices.create({
-      unit_amount: 2900, // 29€
+      unit_amount: 1299, // 12,99€ HT/user
       currency: "eur",
       recurring: {
         interval: "month",
@@ -115,13 +118,13 @@ async function main() {
     });
     console.log(`✅ STRIPE_PRICE_STARTER_MONTHLY=${starterPrice.id}`);
 
-    // Team - 59€/mois
+    // Team - 8,99€ HT/user/mois
     const teamProduct = await stripe.products.create({
       name: "BlockTrust Team",
       description: "Plan Team - Pour équipes",
     });
     const teamPrice = await stripe.prices.create({
-      unit_amount: 5900, // 59€
+      unit_amount: 899, // 8,99€ HT/user
       currency: "eur",
       recurring: {
         interval: "month",
@@ -134,7 +137,7 @@ async function main() {
     console.log("\n📦 Création des plans B2B (Annuel)...\n");
 
     const starterYearly = await stripe.prices.create({
-      unit_amount: 27840, // 278,40€ (annuel)
+      unit_amount: 11988, // 119,88€ HT/user (annuel)
       currency: "eur",
       recurring: {
         interval: "year",
@@ -144,7 +147,7 @@ async function main() {
     console.log(`✅ STRIPE_PRICE_STARTER_YEARLY=${starterYearly.id}`);
 
     const teamYearly = await stripe.prices.create({
-      unit_amount: 56640, // 566,40€ (annuel)
+      unit_amount: 8388, // 83,88€ HT/user (annuel)
       currency: "eur",
       recurring: {
         interval: "year",

@@ -60,9 +60,10 @@ const prisma = new PrismaClient() // memory leak
 // AccountType enum
 type AccountType = 'PERSONAL' | 'BUSINESS' // pas INDIVIDUAL
 
-// Plan IDs
-type Plan = 'ESSENTIEL' | 'PREMIUM' | 'FAMILLE' | 'FAMILLE_PLUS' 
-          | 'STARTER' | 'TEAM' | 'BUSINESS' | 'ENTERPRISE'
+// Plan IDs (grille courante — source lib/pricing.ts)
+type Plan = 'DISCOVERY' | 'ESSENTIEL' | 'PREMIUM' | 'FAMILLE'
+          | 'STARTER' | 'TEAM' | 'ENTERPRISE'
+// Legacy (rétro-compat, non souscriptible) : FAMILLE_PLUS | SOLO_PRO | BUSINESS
 
 // Status certificat
 type CertificateStatus = 'PENDING' | 'ACTIVE' | 'REVOKED' | 'EXPIRED'
@@ -206,21 +207,22 @@ const userId = session.user.id
 
 ## 💰 PRICING
 
-### B2C
+### B2C (source : lib/pricing.ts — juin 2026)
 ```
-Essentiel  3,99€/mois  — 1 profil,  20 contacts,  vérifs illimitées*
-Premium    9,99€/mois  — 1 profil, 100 contacts,  50 vérifs
-Famille   14,99€/mois  — 5 profils, 100 contacts, 100 vérifs
-Famille+  24,99€/mois  — 10 profils, 300 contacts, 300 vérifs
+Découverte  gratuit   — 1 profil,  5 contacts,  20 vérifs/mois
+Essentiel   3,99€/mois — 1 profil, 20 contacts,  vérifs illimitées*
+Premium     6,99€/mois — 1 profil, 100 contacts, Trust Circle
+Famille    17,99€/mois — 5 profils, 200 contacts, Trust Circle
 ```
 
 ### B2B
 ```
-Starter    29€/mois  —  3 users, 200 vérifs, White Label ✅
-Team       79€/mois  — 10 users, 500 vérifs, White Label ✅
-Business  199€/mois  — 50 users, illimité,   White Label ✅
-Enterprise sur devis — illimité, illimité,   White Label ✅
+Starter    12,99€ HT/user/mois — 1 user, 100 contacts, 500 vérifs/mois
+Team        8,99€ HT/user/mois — jusqu'à 10 users, 2500 vérifs/mois
+Enterprise sur devis — illimité, White Label sur devis
 ```
+
+Legacy (rétro-compat abonnés, non souscriptible) : Famille+, Solo Pro, Business
 
 **Toggle annuel : -20% engagement annuel (jamais "offre de lancement")**
 

@@ -85,12 +85,13 @@ Liste alignée sur la doc produit historique ; le dossier `emails/` peut conteni
 
 ### Variables d’environnement (Price IDs)
 
-Les prix B2C/B2B sont mappés dans `app/api/stripe/webhook/route.ts` (et assimilés) via préfixes du type :
+Les prix B2C/B2B sont mappés dans `app/api/stripe/webhook/route.ts` via `lib/pricing.ts` :
 
-- `STRIPE_PRICE_ESSENTIEL_MONTHLY` / `_YEARLY`, `PREMIUM`, `FAMILLE`, `FAMILLE_PLUS`
-- B2B : `STRIPE_PRICE_SOLO_PRO_*`, `STARTER`, `TEAM`, `BUSINESS` (ENTERPRISE souvent sur devis)
+- **Souscriptibles** : `ESSENTIEL`, `PREMIUM`, `FAMILLE`, `STARTER`, `TEAM` (+ add-on Famille)
+- **Legacy (rétro-compat, non checkout)** : `FAMILLE_PLUS`, `SOLO_PRO`, `BUSINESS`
+- **Enterprise** : sur devis (pas de Price ID checkout)
 
-**Audit :** chaque plan actif en base (`prisma.plan` / `stripePriceId`) a une variable d’env ; les checkout sessions utilisent les bons `price_id`.
+**Audit :** chaque plan actif en vente a une variable d'env ; checkout refuse les legacy (`isLegacyPriceId`) ; priceId inconnu → `DISCOVERY`.
 
 ### Taxe
 

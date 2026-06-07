@@ -63,29 +63,39 @@ async function syncUserPlanFromPriceId(userId: string, priceId: string | null | 
 
 function mapPriceIdToPlan(priceId: string): string {
   const priceMap: Record<string, string> = {
-    // B2C
+    // B2C — grille courante (lib/pricing.ts PLANS_B2C)
     [process.env.STRIPE_PRICE_ESSENTIEL_MONTHLY || '']: 'ESSENTIEL',
     [process.env.STRIPE_PRICE_ESSENTIEL_YEARLY || '']: 'ESSENTIEL',
     [process.env.STRIPE_PRICE_PREMIUM_MONTHLY || '']: 'PREMIUM',
     [process.env.STRIPE_PRICE_PREMIUM_YEARLY || '']: 'PREMIUM',
     [process.env.STRIPE_PRICE_FAMILLE_MONTHLY || '']: 'FAMILLE',
     [process.env.STRIPE_PRICE_FAMILLE_YEARLY || '']: 'FAMILLE',
+    // legacy — rétro-compat uniquement, non souscriptible (isLegacyPriceId bloque le checkout)
     [process.env.STRIPE_PRICE_FAMILLE_PLUS_MONTHLY || '']: 'FAMILLE_PLUS',
     [process.env.STRIPE_PRICE_FAMILLE_PLUS_YEARLY || '']: 'FAMILLE_PLUS',
-    // B2B
-    [process.env.STRIPE_PRICE_SOLO_PRO_MONTHLY || '']: 'SOLO_PRO',
-    [process.env.STRIPE_PRICE_SOLO_PRO_YEARLY || '']: 'SOLO_PRO',
+    // B2B — grille courante
     [process.env.STRIPE_PRICE_STARTER_MONTHLY || '']: 'STARTER',
     [process.env.STRIPE_PRICE_STARTER_YEARLY || '']: 'STARTER',
     [process.env.STRIPE_PRICE_TEAM_MONTHLY || '']: 'TEAM',
     [process.env.STRIPE_PRICE_TEAM_YEARLY || '']: 'TEAM',
+    // legacy — rétro-compat uniquement, non souscriptible
+    [process.env.STRIPE_PRICE_SOLO_PRO_MONTHLY || '']: 'SOLO_PRO',
+    [process.env.STRIPE_PRICE_SOLO_PRO_YEARLY || '']: 'SOLO_PRO',
     [process.env.STRIPE_PRICE_BUSINESS_MONTHLY || '']: 'BUSINESS',
     [process.env.STRIPE_PRICE_BUSINESS_YEARLY || '']: 'BUSINESS',
   }
   // Remove empty key from fallback env vars
   delete priceMap['']
 
-  return priceMap[priceId] || 'ESSENTIEL'
+  const mapped = priceMap[priceId]
+  if (mapped) return mapped
+
+  // SYS-6 : priceId inconnu → pas de droits payants (jamais ESSENTIEL par défaut)
+  btLog(
+    `⚠️ priceId inconnu webhook mapPriceIdToPlan (${priceId ? `${priceId.slice(0, 12)}…` : 'vide'}) → DISCOVERY`,
+    'Unknown Stripe priceId — fallback DISCOVERY',
+  )
+  return 'DISCOVERY'
 }
 
 /**

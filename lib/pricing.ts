@@ -392,6 +392,7 @@ export function getAllValidPriceIds(): string[] {
 
 /** Retourne le planId (B2C ou B2B) associé à un priceId, ou null. */
 export function getPlanIdFromPriceId(priceId: string): string | null {
+  if (isLegacyPriceId(priceId)) return null;
   for (const plan of PLANS_B2C) {
     if (!plan.prices) continue;
     if (
@@ -411,7 +412,35 @@ export function getPlanIdFromPriceId(priceId: string): string | null {
   return null;
 }
 
+// ============================================================
+// LEGACY — plans retirés de la vente (juin 2026)
+// Rétro-compat abonnés existants uniquement (webhook, auth, MRR admin).
+// Jamais acceptés au checkout — voir isValidPriceId / create-checkout.
+// ============================================================
+
+/** IDs de plans retirés de la grille de vente (enum Prisma inchangé). */
+export const LEGACY_PLAN_IDS = ["FAMILLE_PLUS", "SOLO_PRO", "BUSINESS"] as const;
+
+/** Price IDs Stripe legacy (env) — Famille+, Solo Pro, Business. Non souscriptibles. */
+export function getLegacyStripePriceIds(): string[] {
+  const ids = [
+    process.env.STRIPE_PRICE_FAMILLE_PLUS_MONTHLY,
+    process.env.STRIPE_PRICE_FAMILLE_PLUS_YEARLY,
+    process.env.STRIPE_PRICE_SOLO_PRO_MONTHLY,
+    process.env.STRIPE_PRICE_SOLO_PRO_YEARLY,
+    process.env.STRIPE_PRICE_BUSINESS_MONTHLY,
+    process.env.STRIPE_PRICE_BUSINESS_YEARLY,
+  ];
+  return ids.filter((id): id is string => Boolean(id && id.length > 0));
+}
+
+/** True si le priceId correspond à un plan legacy (checkout interdit). */
+export function isLegacyPriceId(priceId: string): boolean {
+  return getLegacyStripePriceIds().includes(priceId);
+}
+
 export function isValidPriceId(priceId: string): boolean {
+  if (isLegacyPriceId(priceId)) return false;
   return getAllValidPriceIds().includes(priceId);
 }
 

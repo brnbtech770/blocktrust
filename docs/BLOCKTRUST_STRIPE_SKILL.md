@@ -27,28 +27,28 @@ export function getStripe(): Stripe {
 
 ## 2. PRICE IDS BLOCKTRUST
 
-### Variables d'environnement requises
+### Variables d'environnement (grille courante — source `lib/pricing.ts`)
+
 ```bash
-# B2C
+# B2C — souscriptibles
 STRIPE_PRICE_ESSENTIEL_MONTHLY=price_xxx
 STRIPE_PRICE_ESSENTIEL_YEARLY=price_xxx
 STRIPE_PRICE_PREMIUM_MONTHLY=price_xxx
 STRIPE_PRICE_PREMIUM_YEARLY=price_xxx
 STRIPE_PRICE_FAMILLE_MONTHLY=price_xxx
 STRIPE_PRICE_FAMILLE_YEARLY=price_xxx
-STRIPE_PRICE_FAMILLE_PLUS_MONTHLY=price_xxx
-STRIPE_PRICE_FAMILLE_PLUS_YEARLY=price_xxx
+STRIPE_PRICE_FAMILLE_ADDON_MONTHLY=price_xxx
+STRIPE_PRICE_FAMILLE_ADDON_YEARLY=price_xxx
 
-# B2B
-STRIPE_PRICE_SOLO_PRO_MONTHLY=price_xxx
-STRIPE_PRICE_SOLO_PRO_YEARLY=price_xxx
+# B2B — souscriptibles
 STRIPE_PRICE_STARTER_MONTHLY=price_xxx
 STRIPE_PRICE_STARTER_YEARLY=price_xxx
 STRIPE_PRICE_TEAM_MONTHLY=price_xxx
 STRIPE_PRICE_TEAM_YEARLY=price_xxx
-STRIPE_PRICE_BUSINESS_MONTHLY=price_xxx
-STRIPE_PRICE_BUSINESS_YEARLY=price_xxx
 ```
+
+**Legacy (optionnel — rétro-compat webhook/MRR, non souscriptible)** :  
+`STRIPE_PRICE_FAMILLE_PLUS_*`, `STRIPE_PRICE_SOLO_PRO_*`, `STRIPE_PRICE_BUSINESS_*`
 
 ### Créer un Price ID dans Stripe Dashboard
 ```
@@ -63,18 +63,21 @@ Products → Add product
 
 ---
 
-## 3. PRICING DÉGRESSIF PAR USER (B2B)
+## 3. GRILLE TARIFAIRE (juin 2026)
 
-### Prix dégressifs par tranche
-```typescript
-export function getPricePerUser(userCount: number): number {
-  if (userCount === 1) return 9.99      // Solo Pro
-  if (userCount <= 5) return 8.99       // Starter
-  if (userCount <= 15) return 7.99      // Team
-  if (userCount <= 50) return 5.99      // Business
-  return 0 // Enterprise sur devis
-}
-```
+Source unique : **`lib/pricing.ts`**.
+
+| Plan | Mensuel | Annuel (−20 %) |
+|------|---------|----------------|
+| Essentiel | 3,99 € TTC | 35,88 € |
+| Premium | 6,99 € TTC | 59,88 € |
+| Famille | 17,99 € TTC | 179,88 € |
+| Starter | 12,99 € HT/user | 119,88 € HT/user |
+| Team | 8,99 € HT/user | 83,88 € HT/user |
+
+Team : facturé par siège (`quantity` checkout, 2–10 users).
+
+Legacy non souscriptible : Famille+, Solo Pro, Business.
 
 ### Toggle annuel (-20%)
 ```typescript
@@ -150,13 +153,14 @@ export function getPlanFromPriceId(priceId: string): string {
   const mapping: Record<string, string> = {
     [process.env.STRIPE_PRICE_ESSENTIEL_MONTHLY!]: 'ESSENTIEL',
     [process.env.STRIPE_PRICE_ESSENTIEL_YEARLY!]: 'ESSENTIEL',
+    // legacy — rétro-compat uniquement (non souscriptible)
     [process.env.STRIPE_PRICE_SOLO_PRO_MONTHLY!]: 'SOLO_PRO',
     [process.env.STRIPE_PRICE_SOLO_PRO_YEARLY!]: 'SOLO_PRO',
     [process.env.STRIPE_PRICE_STARTER_MONTHLY!]: 'STARTER',
     [process.env.STRIPE_PRICE_STARTER_YEARLY!]: 'STARTER',
     // etc.
   }
-  return mapping[priceId] ?? 'ESSENTIEL'
+  return mapping[priceId] ?? 'DISCOVERY' // priceId inconnu → pas de droits payants
 }
 ```
 

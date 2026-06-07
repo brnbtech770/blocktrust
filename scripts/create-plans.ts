@@ -1,5 +1,6 @@
 // scripts/create-plans.ts
 // Crée les Plans dans Prisma et les lie aux priceIds Stripe
+// Grille alignée sur lib/pricing.ts (juin 2026) — pas de Famille+/Solo Pro/Business
 // ============================================================
 
 import * as dotenv from 'dotenv'
@@ -57,7 +58,7 @@ async function main() {
     {
       name: 'Essentiel (Annuel)',
       type: PlanType.B2C_ESSENTIEL,
-      price: 38.3,
+      price: 35.88,
       interval: BillingInterval.YEARLY,
       maxProfiles: 1,
       maxEntities: 1,
@@ -75,10 +76,10 @@ async function main() {
     {
       name: 'Premium',
       type: PlanType.B2C_PREMIUM,
-      price: 9.99,
+      price: 6.99,
       interval: BillingInterval.MONTHLY,
       maxProfiles: 1,
-      maxEntities: 5,
+      maxEntities: 100,
       maxSeats: 1,
       maxCertificates: 5,
       apiRequestsPerMonth: 2000,
@@ -92,10 +93,10 @@ async function main() {
     {
       name: 'Premium (Annuel)',
       type: PlanType.B2C_PREMIUM,
-      price: 95.90,
+      price: 59.88,
       interval: BillingInterval.YEARLY,
       maxProfiles: 1,
-      maxEntities: 5,
+      maxEntities: 100,
       maxSeats: 1,
       maxCertificates: 5,
       apiRequestsPerMonth: 2000,
@@ -110,10 +111,10 @@ async function main() {
     {
       name: 'Famille',
       type: PlanType.B2C_FAMILLE,
-      price: 14.99,
+      price: 17.99,
       interval: BillingInterval.MONTHLY,
       maxProfiles: 5,
-      maxEntities: 10,
+      maxEntities: 200,
       maxSeats: 5,
       maxCertificates: 10,
       apiRequestsPerMonth: 5000,
@@ -127,10 +128,10 @@ async function main() {
     {
       name: 'Famille (Annuel)',
       type: PlanType.B2C_FAMILLE,
-      price: 143.90,
+      price: 179.88,
       interval: BillingInterval.YEARLY,
       maxProfiles: 5,
-      maxEntities: 10,
+      maxEntities: 200,
       maxSeats: 5,
       maxCertificates: 10,
       apiRequestsPerMonth: 5000,
@@ -145,11 +146,11 @@ async function main() {
     {
       name: 'Starter',
       type: PlanType.B2B_STARTER,
-      price: 29,
+      price: 12.99,
       interval: BillingInterval.MONTHLY,
       maxProfiles: 1,
-      maxEntities: 10,
-      maxSeats: 3,
+      maxEntities: 100,
+      maxSeats: 1,
       maxCertificates: 10,
       apiRequestsPerMonth: 1000,
       trustCircleEnabled: false,
@@ -162,11 +163,11 @@ async function main() {
     {
       name: 'Starter (Annuel)',
       type: PlanType.B2B_STARTER,
-      price: 278.40,
+      price: 119.88,
       interval: BillingInterval.YEARLY,
       maxProfiles: 1,
-      maxEntities: 10,
-      maxSeats: 3,
+      maxEntities: 100,
+      maxSeats: 1,
       maxCertificates: 10,
       apiRequestsPerMonth: 1000,
       trustCircleEnabled: false,
@@ -180,10 +181,10 @@ async function main() {
     {
       name: 'Team',
       type: PlanType.B2B_TEAM,
-      price: 59,
+      price: 8.99,
       interval: BillingInterval.MONTHLY,
       maxProfiles: 1,
-      maxEntities: 50,
+      maxEntities: 3000,
       maxSeats: 10,
       maxCertificates: 50,
       apiRequestsPerMonth: 10000,
@@ -197,10 +198,10 @@ async function main() {
     {
       name: 'Team (Annuel)',
       type: PlanType.B2B_TEAM,
-      price: 566.40,
+      price: 83.88,
       interval: BillingInterval.YEARLY,
       maxProfiles: 1,
-      maxEntities: 50,
+      maxEntities: 3000,
       maxSeats: 10,
       maxCertificates: 50,
       apiRequestsPerMonth: 10000,

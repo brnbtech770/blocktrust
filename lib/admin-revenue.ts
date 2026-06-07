@@ -12,22 +12,23 @@ export const ADMIN_PLAN_PRICES_MONTHLY: Record<string, number> = {
   STARTER: 12.99,
   TEAM: 8.99,
   ENTERPRISE: 0,
-  // Plans retirés de la vente — conservés pour les abonnés existants (MRR)
+  // legacy — rétro-compat uniquement, non souscriptible (MRR abonnés existants)
   FAMILLE_PLUS: 24.99,
   SOLO_PRO: 9.99,
   BUSINESS: 5.99,
 }
 
-/** IDs Stripe « yearly » connus (env). */
+/** IDs Stripe « yearly » connus (env). Inclut les legacy pour MRR abonnés existants. */
 export function getYearlyStripePriceIdSet(): Set<string> {
   const ids = [
     process.env.STRIPE_PRICE_ESSENTIEL_YEARLY,
     process.env.STRIPE_PRICE_PREMIUM_YEARLY,
     process.env.STRIPE_PRICE_FAMILLE_YEARLY,
-    process.env.STRIPE_PRICE_FAMILLE_PLUS_YEARLY,
-    process.env.STRIPE_PRICE_SOLO_PRO_YEARLY,
     process.env.STRIPE_PRICE_STARTER_YEARLY,
     process.env.STRIPE_PRICE_TEAM_YEARLY,
+    // legacy — rétro-compat MRR uniquement
+    process.env.STRIPE_PRICE_FAMILLE_PLUS_YEARLY,
+    process.env.STRIPE_PRICE_SOLO_PRO_YEARLY,
     process.env.STRIPE_PRICE_BUSINESS_YEARLY,
   ].filter((x): x is string => Boolean(x && x.length > 0))
   return new Set(ids)

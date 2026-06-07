@@ -324,7 +324,7 @@ Score               9.9/10
 □ Emails OVH (contact/privacy/security/commercial @blocktrust.tech)
 □ Réseaux sociaux @blocktrust (Instagram/LinkedIn/X/YouTube)
 □ Tests coverage 75→80%+
-□ Nettoyer variables legacy Stripe (Solo Pro/Business/Famille+)
+□ Variables legacy Stripe conservées (Famille+/Solo Pro/Business — rétro-compat SYS-5)
 ```
 
 ### C. EXTENSION CHROME

@@ -1,8 +1,8 @@
-# Configuration Stripe pour BlockTrust
+# Configuration Stripe pour BLOCKTRUST
+
+Grille de vente courante : **`lib/pricing.ts`** (juin 2026).
 
 ## Variables d'environnement requises
-
-Ajoutez ces variables dans votre fichier `.env.local` :
 
 ```env
 # Clés Stripe
@@ -10,81 +10,86 @@ STRIPE_SECRET_KEY="sk_live_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_live_..."
 
-# Price IDs Stripe (à créer dans le dashboard Stripe)
-STRIPE_PRICE_ESSENTIEL="price_..."
-STRIPE_PRICE_PREMIUM="price_..."
-STRIPE_PRICE_FAMILLE="price_..."
-STRIPE_PRICE_FAMILLE_PLUS="price_..."
+# B2C — mensuel + annuel
+STRIPE_PRICE_ESSENTIEL_MONTHLY="price_..."
+STRIPE_PRICE_ESSENTIEL_YEARLY="price_..."
+STRIPE_PRICE_PREMIUM_MONTHLY="price_..."
+STRIPE_PRICE_PREMIUM_YEARLY="price_..."
+STRIPE_PRICE_FAMILLE_MONTHLY="price_..."
+STRIPE_PRICE_FAMILLE_YEARLY="price_..."
+
+# Add-on Famille (profils supplémentaires)
+STRIPE_PRICE_FAMILLE_ADDON_MONTHLY="price_..."
+STRIPE_PRICE_FAMILLE_ADDON_YEARLY="price_..."
+
+# B2B — mensuel + annuel (Team facturé par siège)
+STRIPE_PRICE_STARTER_MONTHLY="price_..."
+STRIPE_PRICE_STARTER_YEARLY="price_..."
+STRIPE_PRICE_TEAM_MONTHLY="price_..."
+STRIPE_PRICE_TEAM_YEARLY="price_..."
 
 # URL de l'application
 NEXT_PUBLIC_APP_URL="https://blocktrust.tech"
 ```
 
-## Création des Price IDs dans Stripe
+### Variables legacy (optionnelles — rétro-compat uniquement)
 
-1. Connectez-vous à votre [dashboard Stripe](https://dashboard.stripe.com)
-2. Allez dans **Produits** → **Créer un produit**
-3. Créez 4 produits avec leurs prix :
+Conservées pour webhook / MRR admin des **abonnés existants**.  
+**Non souscriptibles** (`isLegacyPriceId` bloque le checkout).
 
-### Plan Essentiel
-- **Nom** : BlockTrust Essentiel
-- **Prix** : 3,99€ / mois (recurring)
-- **Copiez le Price ID** → `STRIPE_PRICE_ESSENTIEL`
+```env
+STRIPE_PRICE_FAMILLE_PLUS_MONTHLY="price_..."
+STRIPE_PRICE_FAMILLE_PLUS_YEARLY="price_..."
+STRIPE_PRICE_SOLO_PRO_MONTHLY="price_..."
+STRIPE_PRICE_SOLO_PRO_YEARLY="price_..."
+STRIPE_PRICE_BUSINESS_MONTHLY="price_..."
+STRIPE_PRICE_BUSINESS_YEARLY="price_..."
+```
 
-### Plan Premium
-- **Nom** : BlockTrust Premium
-- **Prix** : 9,99€ / mois (recurring)
-- **Copiez le Price ID** → `STRIPE_PRICE_PREMIUM`
+## Grille à créer dans Stripe Dashboard
 
-### Plan Famille
-- **Nom** : BlockTrust Famille
-- **Prix** : 14,99€ / mois (recurring)
-- **Copiez le Price ID** → `STRIPE_PRICE_FAMILLE`
+| Plan | Mensuel | Annuel (−20 %) |
+|------|---------|----------------|
+| Essentiel | 3,99 € TTC | 35,88 € TTC |
+| Premium | 6,99 € TTC | 59,88 € TTC |
+| Famille | 17,99 € TTC | 179,88 € TTC |
+| Starter (B2B) | 12,99 € HT/user | 119,88 € HT/user |
+| Team (B2B) | 8,99 € HT/user | 83,88 € HT/user |
 
-### Plan Famille+
-- **Nom** : BlockTrust Famille+
-- **Prix** : 24,99€ / mois (recurring)
-- **Copiez le Price ID** → `STRIPE_PRICE_FAMILLE_PLUS`
+Enterprise : sur devis (pas de Price ID checkout).
 
 ## Configuration du Webhook Stripe
 
-1. Allez dans **Développeurs** → **Webhooks** → **Ajouter un endpoint**
+1. **Développeurs** → **Webhooks** → **Ajouter un endpoint**
 2. **URL** : `https://blocktrust.tech/api/stripe/webhook`
-3. **Événements à écouter** :
+3. **Événements** :
    - `checkout.session.completed`
+   - `customer.subscription.created`
    - `invoice.payment_succeeded`
    - `customer.subscription.deleted`
    - `customer.subscription.updated`
-4. **Copiez le Webhook Secret** → `STRIPE_WEBHOOK_SECRET`
+4. **Webhook Secret** → `STRIPE_WEBHOOK_SECRET`
 
-## Test en mode développement
-
-Pour tester en local avec Stripe CLI :
+## Test en local (Stripe CLI)
 
 ```bash
-# Installer Stripe CLI
 brew install stripe/stripe-cli/stripe
-
-# Se connecter
 stripe login
-
-# Forwarder les webhooks vers localhost
 stripe listen --forward-to localhost:3004/api/stripe/webhook
-
-# Copier le webhook secret affiché dans .env.local
 ```
 
-## Migration Prisma
-
-Après avoir configuré les variables d'environnement, exécutez :
+## Scripts utiles
 
 ```bash
-npx prisma migrate dev --name add_subscription
-npx prisma generate
+# Seed Stripe (dev/test) — aligné lib/pricing.ts
+npx tsx scripts/stripe-seed.ts
+
+# Seed table Prisma Plan
+npx tsx scripts/create-plans.ts
 ```
 
 ## Vérification
 
-1. Testez le checkout : `/pricing` → Choisir un plan
-2. Vérifiez que la subscription est créée en DB après le paiement
-3. Testez le portail client : `/dashboard/subscription` → "Gérer mon abonnement"
+1. `/pricing` → checkout d'un plan courant (Essentiel, Premium, Team…)
+2. Vérifier que les Price IDs legacy **refusent** le checkout (410)
+3. Webhook : subscription active en DB après paiement test
