@@ -10,6 +10,7 @@ import { useState, useTransition } from 'react'
 import { CheckCircle2, Clock, XCircle, Eye, CreditCard, Mail, ExternalLink } from 'lucide-react'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 import { VALID_PLAN_CODES, type AdminPlanCode } from '@/lib/admin-update-user-plan'
+import { getPlanDisplayLabel } from '@/lib/plan-features'
 
 export type AdminClientRow = {
   id: string
@@ -246,7 +247,7 @@ export default function AdminClientsTable({ rows }: { rows: AdminClientRow[] }) 
               Gérer le plan
             </h2>
             <p className="mt-2 text-sm" style={{ color: 'var(--bt-muted)' }}>
-              Plan actuel : {planUser.planCode}
+              Plan actuel : {getPlanDisplayLabel(planUser.planCode)}
             </p>
             <select
               value={selectedPlan}
@@ -255,7 +256,7 @@ export default function AdminClientsTable({ rows }: { rows: AdminClientRow[] }) 
             >
               {PLAN_OPTIONS.map((p) => (
                 <option key={p} value={p} className="bg-[#0d1f3c]">
-                  {p}
+                  {getPlanDisplayLabel(p)}
                 </option>
               ))}
             </select>

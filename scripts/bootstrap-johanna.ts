@@ -62,7 +62,7 @@ async function bootstrapJohanna() {
 
     const kyc = await syncInternalAccountKycByEmail(email)
     if (kyc.result === 'updated') {
-      console.log(`   KYC : User VERIFIED + Entity GOLD`)
+      console.log(`   KYC : User VERIFIED + Entity Enterprise`)
     } else if (kyc.result === 'already_verified') {
       console.log(`   KYC : déjà VERIFIED`)
     }

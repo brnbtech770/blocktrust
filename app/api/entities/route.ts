@@ -15,6 +15,7 @@ import {
   isDiscoveryPlan,
   resolveEffectivePlan,
 } from '@/lib/plan-features';
+import { deriveCertificateLevelFromPlan } from '@/lib/certificate-plan-level';
 import { checkPlanRateLimit } from '@/lib/rate-limit-plan';
 
 // ─────────────────────────────────────────────
@@ -91,6 +92,7 @@ export async function POST(req: NextRequest) {
       subscription: user.subscription,
       email: user.email,
     });
+    const certLevel = deriveCertificateLevelFromPlan(effectivePlan);
     const contactsRl = await checkPlanRateLimit('contacts', effectivePlan, user.id);
     if (!contactsRl.ok) {
       return NextResponse.json(
@@ -203,7 +205,7 @@ export async function POST(req: NextRequest) {
         certifiedEmails: certified.value.emails,
         certifiedPhones: certified.value.phones,
         kycStatus: 'PENDING',
-        validationLevel: 'BRONZE',
+        validationLevel: certLevel,
       };
     } else {
       // Vérifier si une entreprise avec ce SIRET existe déjà
@@ -258,7 +260,7 @@ export async function POST(req: NextRequest) {
         certifiedEmails: certified.value.emails,
         certifiedPhones: certified.value.phones,
         kycStatus: 'PENDING',
-        validationLevel: 'BRONZE',
+        validationLevel: certLevel,
       };
     }
 
@@ -288,7 +290,7 @@ export async function POST(req: NextRequest) {
       data: {
         entityId: entity.id,
         status: 'PENDING', // PAS 'ACTIVE' - seul l'admin peut activer
-        level: 'BRONZE',
+        level: certLevel,
         ...(isDiscovery ? { blockchainStatus: BLOCKCHAIN_STATUS_NOT_ANCHORED } : {}),
       },
     });

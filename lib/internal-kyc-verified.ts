@@ -1,9 +1,13 @@
 // lib/internal-kyc-verified.ts
-// KYC VERIFIED + Entity GOLD pour comptes internes (admins + Johanna) — idempotent
+// KYC VERIFIED + niveau Enterprise pour comptes internes (admins + Johanna) — idempotent
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
 import { getAdminEmailList, JOHANNA_INTERNAL_EMAILS } from '@/lib/admin-utils'
+import type { ValidationLevel } from '@prisma/client'
+
+/** Niveau certificat des comptes internes (Enterprise). */
+export const INTERNAL_ACCOUNT_VALIDATION_LEVEL: ValidationLevel = 'ENTERPRISE'
 
 /** Liste canonique admins — alignée avec ADMIN_EMAILS (Vercel) et scripts/bootstrap-all-admins.ts */
 export const CANONICAL_ADMIN_KYC_EMAILS = [
@@ -32,7 +36,7 @@ export function getInternalKycEmailList(): string[] {
 }
 
 /**
- * Met User.kycStatus = VERIFIED et toutes les Entity en VERIFIED + GOLD.
+ * Met User.kycStatus = VERIFIED et toutes les Entity en VERIFIED + Enterprise.
  * Idempotent : ne modifie que ce qui n'est pas déjà conforme.
  */
 export async function syncInternalAccountKycByUserId(
@@ -56,7 +60,9 @@ export async function syncInternalAccountKycByUserId(
 
   const userNeedsUpdate = user.kycStatus !== 'VERIFIED'
   const entitiesToUpdate = user.entities.filter(
-    (e) => e.kycStatus !== 'VERIFIED' || e.validationLevel !== 'GOLD'
+    (e) =>
+      e.kycStatus !== 'VERIFIED' ||
+      e.validationLevel !== INTERNAL_ACCOUNT_VALIDATION_LEVEL
   )
 
   if (!userNeedsUpdate && entitiesToUpdate.length === 0) {
@@ -79,11 +85,14 @@ export async function syncInternalAccountKycByUserId(
     await prisma.entity.updateMany({
       where: {
         userId: user.id,
-        OR: [{ kycStatus: { not: 'VERIFIED' } }, { validationLevel: { not: 'GOLD' } }],
+        OR: [
+          { kycStatus: { not: 'VERIFIED' } },
+          { validationLevel: { not: INTERNAL_ACCOUNT_VALIDATION_LEVEL } },
+        ],
       },
       data: {
         kycStatus: 'VERIFIED',
-        validationLevel: 'GOLD',
+        validationLevel: INTERNAL_ACCOUNT_VALIDATION_LEVEL,
         emailVerified: true,
       },
     })

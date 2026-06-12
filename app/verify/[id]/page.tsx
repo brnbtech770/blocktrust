@@ -33,6 +33,7 @@ import {
   trustedCircleShouldWarnUncertifiedDomainContext,
 } from '@/lib/certified-contact'
 import { formatPriceFr, ESSENTIEL_MONTHLY_EUR } from '@/lib/pricing'
+import { getValidationLevelLabel } from '@/lib/validationLevelDisplay'
 
 export const dynamic = 'force-dynamic'
 
@@ -760,7 +761,7 @@ function ValidView({
   trustedCircleUncertDomainWarn?: boolean
 }) {
   const name = entityDisplayName(entity)
-  const level = certificate.level
+  const level = getValidationLevelLabel(certificate.level)
   const issued = new Date(certificate.issuedAt).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'long',

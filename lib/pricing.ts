@@ -451,6 +451,14 @@ export function getPlanIdFromPriceId(priceId: string): string | null {
 /** IDs de plans retirés de la grille de vente (enum Prisma inchangé). */
 export const LEGACY_PLAN_IDS = ["FAMILLE_PLUS", "SOLO_PRO", "BUSINESS"] as const;
 
+/** Plans assignables manuellement par l’admin (grille juin 2026 — hors legacy). */
+export const ADMIN_ASSIGNABLE_PLAN_CODES = [
+  ...PLANS_B2C.filter((p) => !p.isFree).map((p) => p.id),
+  ...PLANS_B2B.map((p) => p.id),
+] as const;
+
+export type AdminAssignablePlanCode = (typeof ADMIN_ASSIGNABLE_PLAN_CODES)[number];
+
 /** Price IDs Stripe legacy (env) — Famille+, Solo Pro, Business. Non souscriptibles. */
 export function getLegacyStripePriceIds(): string[] {
   const ids = [

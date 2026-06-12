@@ -3,9 +3,10 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
+import { getPlanDisplayLabel } from '@/lib/plan-features'
 import { Users, Vault } from 'lucide-react'
 
-const TIERS = ['STARTER', 'TEAM', 'BUSINESS', 'ENTERPRISE'] as const
+const TIERS = ['STARTER', 'TEAM', 'ENTERPRISE'] as const
 
 type MemberRow = {
   id: string
@@ -106,7 +107,7 @@ export default function AdminOrganizationsActions({
         >
           {TIERS.map((t) => (
             <option key={t} value={t} className="bg-[#0a1628]">
-              {t}
+              {getPlanDisplayLabel(t)}
             </option>
           ))}
         </select>

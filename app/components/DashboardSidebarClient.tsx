@@ -77,7 +77,7 @@ export default function DashboardSidebarClient() {
         ) : (
           <a
             href={`/pricing?feature=trustCircle&message=${encodeURIComponent(
-              'Abonnez-vous pour accéder au Trust Circle — disponible à partir des offres Famille et équivalents B2B.'
+              'Abonnez-vous pour accéder au Trust Circle — disponible à partir de Premium et des plans professionnels.'
             )}`}
             className="flex items-center gap-3 px-4 py-3 text-base text-amber-200/90 hover:bg-gray-800 hover:text-white rounded-lg transition-colors font-medium border border-amber-500/30"
           >

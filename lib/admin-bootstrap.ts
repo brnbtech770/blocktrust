@@ -175,7 +175,7 @@ export async function ensureAdminCertificate(
             email: userEmail,
             certifiedEmails: [userEmail],
             kycStatus: 'VERIFIED',
-            validationLevel: 'GOLD',
+            validationLevel: 'ENTERPRISE',
             emailVerified: true,
           },
         })

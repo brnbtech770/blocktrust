@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 import QRCodeImage from "@/app/components/QRCode";
 import VerifyBadgeButton from "@/app/components/VerifyBadgeButton";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
+import {
+  getValidationLevelBadgeClass,
+  getValidationLevelLabel,
+} from "@/lib/validationLevelDisplay";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 
 export default async function BadgePage({
@@ -140,15 +144,9 @@ export default async function BadgePage({
             <div className="text-center">
               <p className="text-gray-300 text-xs">Niveau</p>
               <span
-                className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                  entity.validationLevel === "GOLD"
-                    ? "bg-yellow-500/20 text-yellow-400"
-                    : entity.validationLevel === "SILVER"
-                    ? "bg-gray-500/20 text-gray-300"
-                    : "bg-orange-500/20 text-orange-400"
-                }`}
+                className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${getValidationLevelBadgeClass(entity.validationLevel)}`}
               >
-                {entity.validationLevel}
+                {getValidationLevelLabel(entity.validationLevel)}
               </span>
             </div>
             <div className="text-center">

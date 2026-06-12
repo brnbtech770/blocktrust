@@ -131,7 +131,7 @@ async function main() {
         legalName: 'E2E Test SAS',
         email: TEST_EMAIL,
         kycStatus: 'VERIFIED',
-        validationLevel: 'BRONZE',
+        validationLevel: 'DISCOVERY',
       },
     })
     entityId = entity.id
@@ -139,7 +139,7 @@ async function main() {
     const cert = await prisma.certificate.create({
       data: {
         entityId: entity.id,
-        level: 'BRONZE',
+        level: 'DISCOVERY',
         status: 'PENDING',
       },
     })

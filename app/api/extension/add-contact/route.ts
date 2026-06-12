@@ -10,6 +10,8 @@ import { getCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
 import { checkPlanRateLimit } from "@/lib/rate-limit-plan";
 import { checkEntityQuota } from "@/lib/checkQuota";
+import { deriveCertificateLevelFromPlan } from "@/lib/certificate-plan-level";
+import { resolveEffectivePlan } from "@/lib/plan-features";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -69,8 +71,11 @@ export async function POST(req: NextRequest) {
   // Anti-Sybil (plan Découverte) : limite d'ajouts de contacts par tier.
   const sub = await prisma.subscription.findUnique({
     where: { userId },
-    select: { plan: true },
+    select: { plan: true, status: true },
   });
+  const certLevel = deriveCertificateLevelFromPlan(
+    resolveEffectivePlan({ subscription: sub }),
+  );
   const planRate = await checkPlanRateLimit("contacts", sub?.plan, userId);
   if (!planRate.ok) {
     return extensionJsonResponse(
@@ -119,7 +124,7 @@ export async function POST(req: NextRequest) {
       email: emailLower,
       website,
       kycStatus: "PENDING",
-      validationLevel: "BRONZE",
+      validationLevel: certLevel,
     },
     select: { id: true },
   });

@@ -467,7 +467,7 @@ model Entity {
 
   // Vérification
   kycStatus       KycStatus       @default(PENDING)
-  validationLevel ValidationLevel @default(BRONZE)
+  validationLevel ValidationLevel @default(DISCOVERY)
   emailVerified   Boolean         @default(false)
   phoneVerified   Boolean         @default(false)
   domainVerified  Boolean         @default(false)
@@ -512,10 +512,13 @@ enum KycStatus {
 }
 
 enum ValidationLevel {
-  BRONZE
-  SILVER
-  GOLD
-  PLATINUM
+  DISCOVERY
+  ESSENTIEL
+  PREMIUM
+  FAMILLE
+  STARTER
+  TEAM
+  ENTERPRISE
 }
 
 model Certificate {
@@ -542,7 +545,7 @@ model Certificate {
   blockchainStatus   String    @default("PENDING") // PENDING | ANCHORED | FAILED
 
   // Métadonnées
-  level  ValidationLevel   @default(BRONZE)
+  level  ValidationLevel   @default(DISCOVERY)
   status CertificateStatus @default(PENDING)
 
   issuedAt         DateTime  @default(now())

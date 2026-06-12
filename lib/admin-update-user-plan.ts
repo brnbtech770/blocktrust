@@ -4,22 +4,15 @@
 
 import { prisma } from '@/app/lib/db'
 import { normalizePlanKey } from '@/lib/plan-wording'
+import {
+  ADMIN_ASSIGNABLE_PLAN_CODES,
+  type AdminAssignablePlanCode,
+} from '@/lib/pricing'
 import type { PlanType } from '@prisma/client'
 
-const VALID_PLAN_CODES = [
-  'ESSENTIEL',
-  'PREMIUM',
-  'FAMILLE',
-  'FAMILLE_PLUS',
-  'STARTER',
-  'TEAM',
-  'BUSINESS',
-  'ENTERPRISE',
-] as const
+export const VALID_PLAN_CODES = ADMIN_ASSIGNABLE_PLAN_CODES
 
-export { VALID_PLAN_CODES }
-
-export type AdminPlanCode = (typeof VALID_PLAN_CODES)[number]
+export type AdminPlanCode = AdminAssignablePlanCode
 
 export function isValidAdminPlanCode(code: string): code is AdminPlanCode {
   return (VALID_PLAN_CODES as readonly string[]).includes(code)

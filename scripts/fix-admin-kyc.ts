@@ -1,5 +1,5 @@
 /**
- * One-shot : KYC VERIFIED + Entity GOLD pour tous les comptes admin + Johanna.
+ * One-shot : KYC VERIFIED + Entity Enterprise pour tous les comptes admin + Johanna.
  * Idempotent — safe à relancer.
  * Exécution : npx tsx scripts/fix-admin-kyc.ts
  */
@@ -32,7 +32,7 @@ async function fixAdminKyc() {
     }
 
     if (detail.result === 'already_verified') {
-      console.log(`✓  ${email} → déjà VERIFIED (User + Entity GOLD)`)
+      console.log(`✓  ${email} → déjà VERIFIED (User + Entity Enterprise)`)
       already += 1
       continue
     }
@@ -40,7 +40,7 @@ async function fixAdminKyc() {
     const parts: string[] = []
     if (detail.userUpdated) parts.push('User.kycStatus=VERIFIED')
     if (detail.entitiesUpdated > 0) {
-      parts.push(`${detail.entitiesUpdated} Entity → VERIFIED/GOLD`)
+      parts.push(`${detail.entitiesUpdated} Entity → VERIFIED/Enterprise`)
     }
     console.log(`✅ ${email} → mis à jour (${parts.join(', ') || 'sync'})`)
     updated += 1

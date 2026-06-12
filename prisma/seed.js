@@ -23,7 +23,7 @@ async function main() {
       website: "https://demo.test",
       description: "Seed entity",
       kycStatus: "APPROVED",
-      validationLevel: "GOLD",
+      validationLevel: "ENTERPRISE",
     },
   });
 
@@ -31,7 +31,7 @@ async function main() {
     data: {
       entityId: entity.id,
       status: "APPROVED",
-      level: "GOLD",
+      level: "ENTERPRISE",
     },
   });
 

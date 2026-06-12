@@ -39,7 +39,7 @@ async function bootstrapAdmin() {
   console.log('  planId (Prisma) :', enterprisePlan.id, `(${enterprisePlan.name})`)
   console.log('  Subscription.plan : B2B_ENTERPRISE, status: active')
   console.log('  TrustScore : 100')
-  console.log('  KYC : User VERIFIED + Entity GOLD')
+  console.log('  KYC : User VERIFIED + Entity Enterprise')
 }
 
 bootstrapAdmin()

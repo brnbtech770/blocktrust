@@ -109,7 +109,7 @@ export default async function DashboardSidebar() {
       : {
           name: 'Trust Circle',
           href: `/pricing?feature=trustCircle&message=${encodeURIComponent(
-            'Abonnez-vous pour accéder au Trust Circle — disponible à partir des offres Famille et équivalents B2B.'
+            'Abonnez-vous pour accéder au Trust Circle — disponible à partir de Premium et des plans professionnels.'
           )}`,
           icon: 'Users' as const,
         }
