@@ -14,6 +14,7 @@ import { prisma } from '@/app/lib/db'
 import { createAdminAlert } from '@/lib/admin-alerts'
 import { sendCertificateAnchoredEmail } from '@/lib/email'
 import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
+import { planAllowsPolygonAnchoring, resolveEffectivePlan } from '@/lib/plan-features'
 
 const RPC_URL = process.env.POLYGON_RPC_URL?.trim() || ''
 const PRIVATE_KEY = process.env.POLYGON_PRIVATE_KEY?.trim() || ''
@@ -200,6 +201,26 @@ export interface RetryAnchorsResult {
   noHash: number
 }
 
+async function certificateOwnerAllowsPolygonAnchor(entityId: string): Promise<boolean> {
+  const entity = await prisma.entity.findUnique({
+    where: { id: entityId },
+    select: {
+      user: {
+        select: {
+          email: true,
+          subscription: { select: { plan: true, status: true } },
+        },
+      },
+    },
+  })
+  if (!entity?.user) return false
+  const plan = resolveEffectivePlan({
+    subscription: entity.user.subscription,
+    email: entity.user.email,
+  })
+  return planAllowsPolygonAnchoring(plan)
+}
+
 /**
  * Reprend en lot les ancrages Polygon en échec ou en attente pour les
  * certificats ACTIVE. Limité à `max` (défaut 25) par exécution.
@@ -235,6 +256,7 @@ export async function retryFailedAnchors(max = 25): Promise<RetryAnchorsResult> 
   const noHash = 0
 
   for (const cert of candidates) {
+    if (!(await certificateOwnerAllowsPolygonAnchor(cert.entityId))) continue
     const hash = computeCertificateAnchorHash(cert)
     try {
       const anchor = await anchorToPolygon(cert.id, hash)
@@ -324,6 +346,7 @@ export async function retryStalePendingAnchors(
   const noHash = 0
 
   for (const cert of candidates) {
+    if (!(await certificateOwnerAllowsPolygonAnchor(cert.entityId))) continue
     const hash = computeCertificateAnchorHash(cert)
     try {
       const anchor = await anchorToPolygon(cert.id, hash)

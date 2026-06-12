@@ -2,6 +2,8 @@
 // Libellés UI pour ValidationLevel (évite bronze / argent / or côté client)
 // ============================================================
 
+import { isDiscoveryPlan } from "@/lib/plan-features";
+
 export function getValidationLevelLabel(level: string): string {
   switch (level) {
     case "BRONZE":
@@ -31,4 +33,15 @@ export function getValidationLevelAccentClass(level: string): string {
     default:
       return "text-white/70";
   }
+}
+
+/** Libellé niveau certificat — plan Découverte + BRONZE → « Découverte » (jamais le métal brut). */
+export function getCertificateLevelDisplayLabel(
+  level: string,
+  effectivePlan?: string | null,
+): string {
+  if (isDiscoveryPlan(effectivePlan) && level === "BRONZE") {
+    return "Découverte";
+  }
+  return getValidationLevelLabel(level);
 }

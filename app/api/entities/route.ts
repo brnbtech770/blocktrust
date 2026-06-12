@@ -10,7 +10,11 @@ import { z } from 'zod';
 import { checkEntityQuota } from '@/lib/checkQuota';
 import { validateWalletPair } from '@/lib/wallet-validation';
 import { validateCertifiedContactArrays } from '@/lib/certified-contact';
-import { resolveEffectivePlan } from '@/lib/plan-features';
+import {
+  BLOCKCHAIN_STATUS_NOT_ANCHORED,
+  isDiscoveryPlan,
+  resolveEffectivePlan,
+} from '@/lib/plan-features';
 import { checkPlanRateLimit } from '@/lib/rate-limit-plan';
 
 // ─────────────────────────────────────────────
@@ -279,11 +283,13 @@ export async function POST(req: NextRequest) {
 
     // Créer un certificat automatiquement avec status PENDING
     // Seul l'admin peut passer en ACTIVE via /api/admin/certificates/[id]
+    const isDiscovery = isDiscoveryPlan(effectivePlan);
     const certificate = await prisma.certificate.create({
       data: {
         entityId: entity.id,
         status: 'PENDING', // PAS 'ACTIVE' - seul l'admin peut activer
         level: 'BRONZE',
+        ...(isDiscovery ? { blockchainStatus: BLOCKCHAIN_STATUS_NOT_ANCHORED } : {}),
       },
     });
 

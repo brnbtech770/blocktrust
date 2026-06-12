@@ -6,6 +6,8 @@ import { prisma } from '@/app/lib/db'
 import { requireAdminPage } from '@/app/lib/require-admin-page'
 import { notFound } from 'next/navigation'
 import CertificateActions from '@/app/components/admin/CertificateActions'
+import { getCertificateLevelDisplayLabel } from '@/lib/validationLevelDisplay'
+import { resolveEffectivePlan } from '@/lib/plan-features'
 
 export default async function AdminCertificateDetailPage({
   params,
@@ -34,6 +36,12 @@ export default async function AdminCertificateDetailPage({
           description: true,
           kycStatus: true,
           validationLevel: true,
+          user: {
+            select: {
+              email: true,
+              subscription: { select: { plan: true, status: true } },
+            },
+          },
         },
       },
       verifications: {
@@ -58,6 +66,12 @@ export default async function AdminCertificateDetailPage({
     'rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-gold/30'
   const labelCls = 'text-sm'
   const labelStyle = { color: 'var(--bt-muted)' }
+
+  const ownerPlan = resolveEffectivePlan({
+    subscription: certificate.entity.user?.subscription,
+    email: certificate.entity.user?.email,
+  })
+  const levelLabel = getCertificateLevelDisplayLabel(certificate.level, ownerPlan)
 
   return (
     <div>
@@ -97,7 +111,7 @@ export default async function AdminCertificateDetailPage({
                 {certificate.status}
               </span>
             </div>
-            <div><p className={labelCls} style={labelStyle}>Niveau</p><p className="text-white">{certificate.level}</p></div>
+            <div><p className={labelCls} style={labelStyle}>Niveau</p><p className="text-white">{levelLabel}</p></div>
             <div><p className={labelCls} style={labelStyle}>Date d'émission</p><p className="text-white">{new Date(certificate.issuedAt).toLocaleDateString('fr-FR')}</p></div>
             {certificate.revokedAt && <div><p className={labelCls} style={labelStyle}>Date de révocation</p><p className="text-white">{new Date(certificate.revokedAt).toLocaleDateString('fr-FR')}</p></div>}
             {certificate.revocationReason && <div><p className={labelCls} style={labelStyle}>Raison de révocation</p><p className="text-white">{certificate.revocationReason}</p></div>}

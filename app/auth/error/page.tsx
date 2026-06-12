@@ -15,7 +15,8 @@ function shortMessage(code: string | null): string {
     Verification: "Lien expiré ou déjà utilisé.",
     OAuthSignin: "Impossible de démarrer OAuth.",
     OAuthCallback: "Erreur au retour Google.",
-    OAuthAccountNotLinked: "Compte déjà lié à une autre méthode.",
+    OAuthAccountNotLinked:
+      "Cet email est déjà enregistré avec une autre méthode (lien magique ou mot de passe). Utilisez le lien magique ou connectez-vous avec Google après avoir défini un mot de passe dans vos paramètres.",
     Callback: "Erreur callback.",
     CredentialsSignin: "Identifiants incorrects.",
     Default: "Connexion impossible.",

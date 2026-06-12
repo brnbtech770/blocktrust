@@ -11,7 +11,13 @@ const clientSecret = process.env.GOOGLE_CLIENT_SECRET ?? "";
 
 export const googleProvider =
   clientId && clientSecret
-    ? GoogleProvider({ clientId, clientSecret })
+    ? GoogleProvider({
+        clientId,
+        clientSecret,
+        // Même email (magic link / credentials puis Google) : lier le compte au lieu de OAuthAccountNotLinked.
+        allowDangerousEmailAccountLinking:
+          process.env.ALLOW_DANGEROUS_EMAIL_LINKING !== "false",
+      })
     : null;
 
 console.log(

@@ -26,6 +26,11 @@ export interface BlockTrustBadgeProps {
    * pour éviter doublons et texte quasi invisible.
    */
   showWatermark?: boolean;
+  /**
+   * Baseline sous le bouclier : « on-chain » uniquement si réellement ancré ;
+   * plan Découverte / preview → pas de mention blockchain on-chain.
+   */
+  tagline?: "on-chain" | "preview";
 }
 
 const COLORS = {
@@ -82,6 +87,7 @@ export function BlockTrustBadge({
   label = "BLOCKTRUST™",
   instanceId,
   showWatermark = true,
+  tagline = "on-chain",
 }: BlockTrustBadgeProps) {
   const fillParent = size === "fill";
   // useId fournit un id stable côté serveur et client (Next.js SSR safe).
@@ -119,6 +125,9 @@ export function BlockTrustBadge({
       }),
     );
   }, [showWatermark]);
+
+  const baselineText =
+    tagline === "preview" ? "SIGNÉ · PROTÉGÉ" : "VERIFIED · SECURE · ON-CHAIN";
 
   return (
     <div className={`relative flex w-fit flex-col items-center select-none ${className ?? ""}`}>
@@ -428,7 +437,7 @@ export function BlockTrustBadge({
               letterSpacing: "0.5em",
             }}
           >
-            VERIFIED · SECURE · ON-CHAIN
+            {baselineText}
           </text>
 
           {/* Film lumineux animé qui balaie la baseline */}

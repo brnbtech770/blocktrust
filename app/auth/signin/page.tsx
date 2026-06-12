@@ -62,7 +62,8 @@ function oauthErrorMessage(code: string | null): string | null {
     Verification: "Le lien de vérification a expiré ou a déjà été utilisé.",
     OAuthSignin: "Impossible de démarrer la connexion OAuth.",
     OAuthCallback: "Erreur lors du retour OAuth (callback).",
-    OAuthAccountNotLinked: "Ce compte est déjà lié à une autre méthode de connexion.",
+    OAuthAccountNotLinked:
+      "Cet email est déjà enregistré avec une autre méthode. Utilisez le lien magique ou définissez un mot de passe dans vos paramètres pour vous connecter aussi par email.",
     Callback: "Erreur callback (URL ou secret).",
     Default: "Connexion impossible. Réessayez.",
     CredentialsSignin: CREDENTIALS_ERROR_MESSAGE,

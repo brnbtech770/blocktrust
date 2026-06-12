@@ -155,9 +155,9 @@ describe('/verify public flow (GET /api/public/certificate/:id)', () => {
     expect(data.authenticated).toBe(false)
     // Anonyme : score de confiance masqué (defense-in-depth serveur)
     expect(data.trustEngine).toBeUndefined()
-    // Mais l'ancrage blockchain reste visible (rassurant)
-    expect(data.polygonAnchored).toBe(true)
-    expect(data.polygonExplorerUrl).toContain('0xabc')
+    // Ancrage Polygon : réservé dashboard — pas exposé sur /verify public
+    expect(data.polygonAnchored).toBe(false)
+    expect(data.polygonExplorerUrl).toBeUndefined()
   })
 
   it('expose le score complet pour un utilisateur connecté', async () => {

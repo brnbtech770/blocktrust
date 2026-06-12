@@ -238,9 +238,7 @@ export async function GET(
     fill="rgba(255,255,255,0.2)" text-anchor="middle">${escapeXml(publicIdDiscrete)}</text>
 
   <text x="160" y="394" font-family="Inter, Arial, sans-serif" font-size="8"
-    fill="rgba(255,255,255,0.2)" text-anchor="middle">
-    <tspan>Powered by </tspan><tspan fill="#8247E5">Polygon</tspan>
-  </text>
+    fill="rgba(255,255,255,0.2)" text-anchor="middle">${isAnchored ? `<tspan>Powered by </tspan><tspan fill="#8247E5">Polygon</tspan>` : `BLOCKTRUST™`}</text>
 
   </g>
 

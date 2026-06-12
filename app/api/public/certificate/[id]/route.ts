@@ -284,9 +284,8 @@ export async function GET(
     })
     .catch(() => {});
 
-  // Visiteur ANONYME = badge + nom + ancrage uniquement. Wallet, contacts certifiés
-  // et score détaillé sont RÉSERVÉS aux utilisateurs connectés (gating SERVEUR :
-  // les données ne quittent jamais le serveur pour un anonyme).
+  // Visiteur ANONYME = badge + nom uniquement. Wallet, contacts certifiés,
+  // score détaillé et ancrage Polygon sont réservés au dashboard (gating SERVEUR).
   const session = await auth().catch(() => null);
   const authenticated = Boolean(session?.user?.id);
 
@@ -321,20 +320,12 @@ export async function GET(
   // Le badge gratuit Découverte n'est PAS KYC → on n'affiche jamais « certifiée ».
   const identityVerified = verdict === "VALID" && owner?.kycStatus === "VERIFIED";
 
-  // Ancrage Polygon — information publique rassurante (visible même anonyme).
-  const polygonAnchored =
-    verdict === "VALID" &&
-    certificate.blockchainStatus === "ANCHORED" &&
-    Boolean(certificate.polygonTxHash);
-  const polygonExplorerUrl = polygonAnchored
-    ? certificate.polygonExplorerUrl ??
-      (certificate.polygonTxHash
-        ? `https://polygonscan.com/tx/${certificate.polygonTxHash}`
-        : null)
-    : null;
+  // Ancrage Polygon : réservé au dashboard admin / utilisateur — pas exposé sur /verify public.
+  const polygonAnchored = false;
+  const polygonExplorerUrl = null;
 
   // Score de confiance détaillé (TrustEngine) : réservé aux utilisateurs CONNECTÉS.
-  // Anonyme → badge + ancrage visibles, mais score/sous-scores/signaux masqués (defense-in-depth serveur).
+  // Anonyme → badge visible ; score/sous-scores/signaux masqués (defense-in-depth serveur).
   let trustEngine = null;
   if (verdict === "VALID" && authenticated) {
     trustEngine = await computeTrustEngineScore(
