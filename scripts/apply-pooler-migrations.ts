@@ -18,6 +18,7 @@ if (!DATABASE_URL) {
   console.error('DATABASE_URL absent')
   process.exit(1)
 }
+const dbUrl: string = DATABASE_URL
 
 const PENDING = [
   '20260601180000_subscription_seats_extra_profiles',
@@ -29,7 +30,7 @@ const PENDING = [
 ] as const
 
 const prisma = new PrismaClient({
-  datasources: { db: { url: DATABASE_URL } },
+  datasources: { db: { url: dbUrl } },
 })
 
 function migrationChecksum(name: string): string {
@@ -41,7 +42,7 @@ function migrationChecksum(name: string): string {
 function runSqlFile(name: string): void {
   const file = resolve(`prisma/migrations/${name}/migration.sql`)
   execSync(
-    `npx prisma db execute --url "${DATABASE_URL.replace(/"/g, '\\"')}" --file "${file}"`,
+    `npx prisma db execute --url "${dbUrl.replace(/"/g, '\\"')}" --file "${file}"`,
     { stdio: 'inherit', cwd: resolve('.') },
   )
 }

@@ -1,0 +1,2 @@
+-- Dernière connexion utilisateur (suivi équipe interne — super admin)
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "lastLoginAt" TIMESTAMP(3);

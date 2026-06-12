@@ -15,6 +15,9 @@ import {
 import { formatPriceFr } from '@/lib/pricing'
 import { getPlanDisplayLabel } from '@/lib/plan-features'
 import { AlertTriangle, BadgeCheck, Euro, TrendingUp, Users } from 'lucide-react'
+import { auth } from '@/app/lib/auth-server'
+import { isSuperAdmin } from '@/app/lib/admin'
+import AdminInternalTeamSection from '@/app/admin/dashboard/AdminInternalTeamSection'
 
 function KpiCard({
   label,
@@ -50,6 +53,8 @@ type RevenueRow = {
 
 export default async function AdminDashboard() {
   await requireAdminPage()
+  const session = await auth()
+  const showInternalTeam = isSuperAdmin(session?.user?.email)
 
   const yearlyIds = getYearlyStripePriceIdSet()
 
@@ -296,6 +301,10 @@ export default async function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {showInternalTeam ? (
+        <AdminInternalTeamSection />
+      ) : null}
 
       {/* Actions rapides */}
       <div className="rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-gold/30">

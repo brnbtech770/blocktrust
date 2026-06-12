@@ -16,6 +16,15 @@ import { isSafeCallbackUrl } from "./auth-callback-url";
 import { isInternalAccount } from "@/lib/admin-utils";
 import { DEFAULT_B2C_PLAN, resolveEffectivePlan } from "@/lib/plan-features";
 
+async function touchLastLogin(userId: string): Promise<void> {
+  await prisma.user
+    .update({
+      where: { id: userId },
+      data: { lastLoginAt: new Date() },
+    })
+    .catch((e) => console.error("[lastLoginAt]", e));
+}
+
 /**
  * Configuration NextAuth avec Google OAuth
  */
@@ -214,6 +223,12 @@ export const authOptions: NextAuthConfig = {
     },
     async jwt({ token, user, account }) {
       if (user) {
+        const loginUserId =
+          typeof user.id === "string" ? user.id : typeof token.sub === "string" ? token.sub : null;
+        if (loginUserId) {
+          void touchLastLogin(loginUserId);
+        }
+
         if (account?.provider === "credentials") {
           token.sub = user.id ?? token.sub;
           token.email = user.email ?? undefined;
