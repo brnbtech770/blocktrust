@@ -8,7 +8,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
-import { isAdmin } from '@/app/lib/admin'
+import { isDashboardAdmin } from '@/app/lib/admin'
 
 function inferSecureCookie(req: NextRequest): boolean {
   const proto = (req.headers.get('x-forwarded-proto') ?? '')
@@ -152,7 +152,7 @@ export async function proxy(request: NextRequest) {
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     try {
       const email = await getEmailFromSession(request)
-      if (!email || !isAdmin(email)) {
+      if (!email || !isDashboardAdmin(email)) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     } catch (error) {
@@ -165,7 +165,7 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith('/api/admin')) {
     try {
       const email = await getEmailFromSession(request)
-      if (!email || !isAdmin(email)) {
+      if (!email || !isDashboardAdmin(email)) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
     } catch (error) {
@@ -202,7 +202,7 @@ export async function proxy(request: NextRequest) {
     if (hasAuthJsSessionCookieOnRequest(request)) {
       try {
         const email = await getEmailFromSession(request)
-        if (email && isAdmin(email)) {
+        if (email && isDashboardAdmin(email)) {
           return NextResponse.redirect(new URL('/admin/dashboard', request.url))
         }
       } catch (error) {

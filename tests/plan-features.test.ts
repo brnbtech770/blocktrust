@@ -80,16 +80,11 @@ describe('plan-features — getPlanDisplayLabel', () => {
   })
 
   describe('comptes internes (cosmétique)', () => {
-    const previous = process.env.ADMIN_EMAILS
-    beforeEach(() => {
-      process.env.ADMIN_EMAILS = 'admin@blocktrust.tech'
-    })
-    afterEach(() => {
-      process.env.ADMIN_EMAILS = previous
-    })
-
-    it('admin → « Compte interne » (libellé prioritaire, droits inchangés)', () => {
-      expect(getPlanDisplayLabel('B2B_ENTERPRISE', { email: 'admin@blocktrust.tech' })).toBe(
+    it('compte interne → « Compte interne » (libellé prioritaire, droits inchangés)', () => {
+      expect(getPlanDisplayLabel('B2B_ENTERPRISE', { email: 'brnbtech@gmail.com' })).toBe(
+        'Compte interne',
+      )
+      expect(getPlanDisplayLabel('B2B_ENTERPRISE', { email: 'brnbimmo@gmail.com' })).toBe(
         'Compte interne',
       )
     })

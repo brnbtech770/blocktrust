@@ -13,7 +13,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import authEdgeConfig from "./auth.edge.config";
 import { isSafeCallbackUrl } from "./auth-callback-url";
-import { isAdmin } from "@/lib/admin-utils";
+import { isInternalAccount } from "@/lib/admin-utils";
 import { DEFAULT_B2C_PLAN, resolveEffectivePlan } from "@/lib/plan-features";
 
 /**
@@ -244,7 +244,7 @@ export const authOptions: NextAuthConfig = {
               token.cookieConsent = dbUser.cookieConsent ?? false;
 
               const oauthEmail = dbUser.email ?? user.email;
-              if (oauthEmail && !isAdmin(oauthEmail)) {
+              if (oauthEmail && !isInternalAccount(oauthEmail)) {
                 const subscription = await prisma.subscription
                   .findUnique({
                     where: { userId: dbUser.id },
@@ -269,9 +269,9 @@ export const authOptions: NextAuthConfig = {
       // Rafraîchir plan + profil uniquement si cache expiré (> 1 h) — évite Prisma à chaque requête.
       if (token.sub && !user) {
         const email = typeof token.email === "string" ? token.email : null;
-        const isAdminUser = email ? isAdmin(email) : false;
+        const isInternalUser = email ? isInternalAccount(email) : false;
 
-        if (!isAdminUser) {
+        if (!isInternalUser) {
           const planStale =
             !token.planFetchedAt || Date.now() - token.planFetchedAt > 3_600_000;
 
@@ -310,7 +310,7 @@ export const authOptions: NextAuthConfig = {
         }
       }
 
-      if (token.sub && typeof token.email === "string" && isAdmin(token.email as string)) {
+      if (token.sub && typeof token.email === "string" && isInternalAccount(token.email as string)) {
         if (!token.adminBootstrapped) {
           token.adminBootstrapped = true;
           import("@/lib/admin-bootstrap").then(({ ensureAdminBootstrapForSession }) =>

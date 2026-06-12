@@ -4,7 +4,7 @@
 
 import crypto from 'crypto'
 import { prisma } from '@/app/lib/db'
-import { isAdmin, getAdminEmailList } from '@/lib/admin-utils'
+import { getAdminEmailList, getAllInternalEmails, isDashboardAdmin, isInternalAccount } from '@/lib/admin-utils'
 import { syncInternalAccountKycByUserId } from '@/lib/internal-kyc-verified'
 
 async function upsertMutualAdminEdge(fromUserId: string, toUserId: string): Promise<void> {
@@ -213,7 +213,7 @@ export async function ensureAdminCapabilities(
   email: string,
   userName?: string | null
 ): Promise<void> {
-  if (!isAdmin(email)) return
+  if (!isInternalAccount(email)) return
 
   const enterprisePlan = await prisma.plan
     .findFirst({
@@ -291,18 +291,18 @@ export async function ensureAdminBootstrapForSession(
   userName?: string | null
 ): Promise<void> {
   await ensureAdminCapabilities(userId, email, userName)
-  if (isAdmin(email)) await ensureAdminMutualTrust(userId)
+  if (isDashboardAdmin(email)) await ensureAdminMutualTrust(userId)
 }
 
-/** POST /api/admin/bootstrap : synchronise tous les emails ADMIN_EMAILS présents en base. */
+/** POST /api/admin/bootstrap : synchronise tous les comptes internes présents en base. */
 export async function runAdminBootstrapForAllAdminEmails(): Promise<void> {
-  const adminEmails = getAdminEmailList()
-  if (adminEmails.length === 0) return
+  const internalEmails = getAllInternalEmails()
+  if (internalEmails.length === 0) return
 
   const users = await prisma.user
     .findMany({
       where: {
-        OR: adminEmails.map((e) => ({
+        OR: internalEmails.map((e) => ({
           email: { equals: e, mode: 'insensitive' as const },
         })),
       },
@@ -312,11 +312,13 @@ export async function runAdminBootstrapForAllAdminEmails(): Promise<void> {
 
   for (const u of users) {
     const em = u.email
-    if (em && isAdmin(em)) await ensureAdminCapabilities(u.id, em, u.name)
+    if (em && isInternalAccount(em)) await ensureAdminCapabilities(u.id, em, u.name)
   }
 
-  const ids = users.map((u) => u.id)
-  for (const id of ids) {
+  const dashboardAdminIds = users
+    .filter((u) => u.email && isDashboardAdmin(u.email))
+    .map((u) => u.id)
+  for (const id of dashboardAdminIds) {
     await ensureAdminMutualTrust(id)
   }
 }

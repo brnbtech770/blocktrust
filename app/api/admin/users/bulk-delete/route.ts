@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
-import { isAdmin } from '@/app/lib/admin'
+import { isAdmin, isInternalAccount } from '@/lib/admin-utils'
 import { prisma } from '@/app/lib/db'
 import { deleteUserAdmin } from '@/lib/admin-delete-user'
 import { z } from 'zod'
@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
         errors.push(`${target.email}: impossible de supprimer votre compte`)
         continue
       }
-      if (isAdmin(target.email)) {
-        errors.push(`${target.email}: compte admin`)
+      if (isInternalAccount(target.email)) {
+        errors.push(`${target.email}: compte interne`)
         continue
       }
       try {

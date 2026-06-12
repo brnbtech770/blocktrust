@@ -29,7 +29,7 @@ vi.mock('@/app/lib/auth', () => ({
 }))
 
 vi.mock('@/lib/admin', () => ({
-  isAdmin: (email: string | null | undefined) => email === 'admin@blocktrust.tech',
+  isAdmin: (email: string | null | undefined) => email === 'brnbtech@gmail.com',
 }))
 
 vi.mock('@/lib/v2/jwt', () => ({
@@ -91,7 +91,7 @@ describe('IDOR protection', () => {
 
   it('autorise /admin/stats pour un admin', async () => {
     authMock.mockResolvedValue({
-      user: { email: 'admin@blocktrust.tech', id: 'admin-1' },
+      user: { email: 'brnbtech@gmail.com', id: 'admin-1' },
     })
     prismaMock.certificate.count.mockResolvedValue(0)
     prismaMock.user.count.mockResolvedValue(0)

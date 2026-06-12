@@ -3,7 +3,7 @@
 // ============================================================
 
 import { auth } from '@/app/lib/auth-server'
-import { isAdmin } from '@/app/lib/admin'
+import { isDashboardAdmin } from '@/app/lib/admin'
 import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
 import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
 import { rethrowIfRedirect } from '@/app/lib/is-redirect-error'
@@ -97,7 +97,7 @@ export default async function AdminLayout({
     )
   }
 
-  if (!isAdmin(session.user.email)) {
+  if (!isDashboardAdmin(session.user.email)) {
     redirect('/dashboard')
   }
 

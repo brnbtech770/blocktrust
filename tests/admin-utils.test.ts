@@ -1,5 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { getAdminEmailList, isAdmin, isInternalAccount } from '@/lib/admin-utils'
+import { describe, it, expect, afterEach } from 'vitest'
+import {
+  getAdminEmailList,
+  getAllInternalEmails,
+  isAdmin,
+  isDashboardAdmin,
+  isInternalAccount,
+  isSuperAdmin,
+  DASHBOARD_ADMIN_EMAILS,
+  INTERNAL_EMAILS,
+} from '@/lib/admin-utils'
 
 const ORIGINAL_ADMIN_EMAILS = process.env.ADMIN_EMAILS
 
@@ -16,52 +25,56 @@ describe('admin-utils — getAdminEmailList', () => {
     ])
   })
 
-  it('retourne [] si ADMIN_EMAILS absent', () => {
+  it('retourne DASHBOARD_ADMIN_EMAILS si ADMIN_EMAILS absent', () => {
     delete process.env.ADMIN_EMAILS
-    expect(getAdminEmailList()).toEqual([])
+    expect(getAdminEmailList()).toEqual([...DASHBOARD_ADMIN_EMAILS])
   })
 })
 
-describe('admin-utils — isAdmin', () => {
-  beforeEach(() => {
-    process.env.ADMIN_EMAILS = 'admin@blocktrust.tech'
-  })
-  afterEach(() => {
-    process.env.ADMIN_EMAILS = ORIGINAL_ADMIN_EMAILS
-  })
-
-  it('match insensible à la casse', () => {
-    expect(isAdmin('ADMIN@blocktrust.tech')).toBe(true)
-    expect(isAdmin('admin@blocktrust.tech')).toBe(true)
+describe('admin-utils — isDashboardAdmin / isAdmin', () => {
+  it('true pour les 4 emails dashboard admin', () => {
+    for (const email of DASHBOARD_ADMIN_EMAILS) {
+      expect(isDashboardAdmin(email)).toBe(true)
+      expect(isAdmin(email)).toBe(true)
+    }
   })
 
-  it('refuse un email non admin / null / undefined', () => {
-    expect(isAdmin('client@example.com')).toBe(false)
-    expect(isAdmin(null)).toBe(false)
-    expect(isAdmin(undefined)).toBe(false)
+  it('false pour les comptes internes secondaires', () => {
+    expect(isDashboardAdmin('brnbimmo@gmail.com')).toBe(false)
+    expect(isDashboardAdmin('johannabernabe3@gmail.com')).toBe(false)
+    expect(isAdmin('contact@brnb.fr')).toBe(false)
+  })
+
+  it('refuse email externe / null', () => {
+    expect(isDashboardAdmin('client@example.com')).toBe(false)
+    expect(isDashboardAdmin(null)).toBe(false)
+  })
+})
+
+describe('admin-utils — isSuperAdmin', () => {
+  it('true uniquement pour brnbtech@gmail.com', () => {
+    expect(isSuperAdmin('brnbtech@gmail.com')).toBe(true)
+    expect(isSuperAdmin('BRNBTECH@gmail.com')).toBe(true)
+    expect(isSuperAdmin('laurianne@winter-keys.com')).toBe(false)
   })
 })
 
 describe('admin-utils — isInternalAccount', () => {
-  beforeEach(() => {
-    process.env.ADMIN_EMAILS = 'admin@blocktrust.tech'
-  })
-  afterEach(() => {
-    process.env.ADMIN_EMAILS = ORIGINAL_ADMIN_EMAILS
-  })
-
-  it('true pour un admin', () => {
-    expect(isInternalAccount('admin@blocktrust.tech')).toBe(true)
-  })
-
-  it('true pour les emails internes additionnels (Johanna), insensible à la casse', () => {
-    expect(isInternalAccount('johannabernabe3@gmail.com')).toBe(true)
+  it('true pour les 9 comptes internes', () => {
+    for (const email of getAllInternalEmails()) {
+      expect(isInternalAccount(email)).toBe(true)
+    }
     expect(isInternalAccount('JohannaFartoukh@Yahoo.fr')).toBe(true)
   })
 
   it('false pour un email externe / null', () => {
     expect(isInternalAccount('client@example.com')).toBe(false)
     expect(isInternalAccount(null)).toBe(false)
-    expect(isInternalAccount(undefined)).toBe(false)
+  })
+
+  it('couvre bien DASHBOARD_ADMIN + INTERNAL sans doublon', () => {
+    expect(getAllInternalEmails()).toHaveLength(
+      DASHBOARD_ADMIN_EMAILS.length + INTERNAL_EMAILS.length,
+    )
   })
 })

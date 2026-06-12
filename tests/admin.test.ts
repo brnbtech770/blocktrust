@@ -43,11 +43,11 @@ import { GET as getAdminUsers, POST as createTestUser } from '@/app/api/admin/us
 import { PATCH as approveKyc } from '@/app/api/admin/kyc/[userId]/approve/route'
 import { PATCH as rejectKyc } from '@/app/api/admin/kyc/[userId]/reject/route'
 
-const ADMIN_EMAIL = 'admin@blocktrust.tech'
+const ADMIN_EMAIL = 'brnbtech@gmail.com'
 
 beforeEach(() => {
   vi.clearAllMocks()
-  process.env.ADMIN_EMAILS = ADMIN_EMAIL
+  delete process.env.ADMIN_EMAILS
   redirectMock.mockImplementation((url: string) => {
     const err = Object.assign(new Error('NEXT_REDIRECT'), {
       digest: `NEXT_REDIRECT;replace;${url};303;`,
@@ -85,6 +85,14 @@ describe('Admin — accès', () => {
 
     expect(session.user.email).toBe(ADMIN_EMAIL)
     expect(redirectMock).not.toHaveBeenCalled()
+  })
+
+  it('requireAdminPage → refus compte interne secondaire (Enterprise, pas /admin)', async () => {
+    authMock.mockResolvedValue({ user: { email: 'brnbimmo@gmail.com', id: 'u2' } })
+
+    await expect(requireAdminPage()).rejects.toMatchObject({
+      digest: expect.stringContaining('/dashboard'),
+    })
   })
 })
 

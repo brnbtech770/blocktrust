@@ -3,7 +3,7 @@
 
 import { redirect } from 'next/navigation'
 import { auth } from '@/app/lib/auth-server'
-import { isAdmin } from '@/app/lib/admin'
+import { isDashboardAdmin } from '@/app/lib/admin'
 import { rethrowIfRedirect } from '@/app/lib/is-redirect-error'
 
 /** À appeler en tête de chaque page admin qui interroge la base. */
@@ -13,7 +13,7 @@ export async function requireAdminPage() {
     if (!session?.user?.email) {
       redirect('/auth/signin')
     }
-    if (!isAdmin(session.user.email)) {
+    if (!isDashboardAdmin(session.user.email)) {
       redirect('/dashboard')
     }
     return session

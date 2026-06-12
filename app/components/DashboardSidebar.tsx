@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { Crown } from 'lucide-react'
 import { prisma } from '@/app/lib/db'
 import { auth } from '@/app/lib/auth-server'
-import { isAdmin } from '@/app/lib/admin'
+import { isDashboardAdmin } from '@/app/lib/admin'
 import SignOutButton from './SignOutButton'
 import DashboardSidebarNav, { type SidebarSection } from './DashboardSidebarNav'
 
@@ -36,7 +36,7 @@ export default async function DashboardSidebar() {
     })
 
     const plan = user?.plan || null
-    const userIsAdmin = isAdmin(session.user.email)
+    const userIsAdmin = isDashboardAdmin(session.user.email)
 
     const subscription = user
       ? await prisma.subscription.findUnique({

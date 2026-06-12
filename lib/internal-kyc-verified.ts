@@ -3,7 +3,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
-import { getAdminEmailList, JOHANNA_INTERNAL_EMAILS } from '@/lib/admin-utils'
+import { getAllInternalEmails, getAdminEmailList } from '@/lib/admin-utils'
 import type { ValidationLevel } from '@prisma/client'
 
 /** Niveau certificat des comptes internes (Enterprise). */
@@ -28,11 +28,13 @@ export type InternalKycSyncDetail = {
   entitiesUpdated: number
 }
 
-/** Emails cibles : ADMIN_EMAILS (env) si défini, sinon liste canonique + Johanna. */
+/** Emails cibles : tous les comptes internes (9 emails canoniques). */
 export function getInternalKycEmailList(): string[] {
   const fromEnv = getAdminEmailList()
-  const admins = fromEnv.length > 0 ? fromEnv : [...CANONICAL_ADMIN_KYC_EMAILS]
-  return [...new Set([...admins, ...JOHANNA_INTERNAL_EMAILS])]
+  if (fromEnv.length > 0) {
+    return [...new Set([...fromEnv, ...getAllInternalEmails()])]
+  }
+  return [...getAllInternalEmails()]
 }
 
 /**

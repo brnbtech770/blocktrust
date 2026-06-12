@@ -4,7 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
-import { isAdmin } from '@/app/lib/admin'
+import { isAdmin, isInternalAccount } from '@/lib/admin-utils'
 import { prisma } from '@/app/lib/db'
 import { deleteAdminUserTransaction } from '@/lib/admin-delete-user'
 import { isValidAdminPlanCode, updateUserPlanAdmin } from '@/lib/admin-update-user-plan'
@@ -42,9 +42,9 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
       )
     }
 
-    if (isAdmin(target.email)) {
+    if (isInternalAccount(target.email)) {
       return NextResponse.json(
-        { error: 'Impossible de supprimer un compte administrateur.' },
+        { error: 'Impossible de supprimer un compte interne BLOCKTRUST.' },
         { status: 403 }
       )
     }
