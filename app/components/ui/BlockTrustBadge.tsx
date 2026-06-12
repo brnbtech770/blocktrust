@@ -121,7 +121,7 @@ export function BlockTrustBadge({
   }, [showWatermark]);
 
   return (
-    <div className={`relative inline-flex flex-col items-center select-none ${className ?? ""}`}>
+    <div className={`relative flex w-fit flex-col items-center select-none ${className ?? ""}`}>
       <div
         className={
           fillParent

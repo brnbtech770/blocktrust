@@ -779,7 +779,7 @@ function ValidWowView({
 
   return (
     <div className="mx-auto mt-8 flex w-full max-w-lg flex-col items-center gap-7 px-2 sm:max-w-xl">
-      <div className="relative mx-auto w-full max-w-[300px] animate-badge-pop opacity-0">
+      <div className="relative mx-auto flex w-full max-w-[300px] flex-col items-center animate-badge-pop opacity-0">
         <div
           className="absolute inset-0 scale-125 rounded-full blur-3xl"
           style={{ backgroundColor: `${C.valid}40` }}
@@ -788,7 +788,7 @@ function ValidWowView({
         <BlockTrustBadge
           size={140}
           instanceId="verify-public"
-          className="relative z-10 mx-auto [&_svg]:drop-shadow-[0_0_28px_rgba(16,185,129,0.45)]"
+          className="relative z-10 [&_svg]:drop-shadow-[0_0_28px_rgba(16,185,129,0.45)]"
         />
       </div>
 

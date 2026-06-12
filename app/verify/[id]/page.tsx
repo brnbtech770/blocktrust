@@ -786,7 +786,7 @@ function ValidView({
       <div className="mx-auto max-w-xl px-4 py-6 sm:px-4 sm:py-10">
         <div className="rounded-xl border border-bt-cyan/40 bg-bt-cyan/10 p-4 backdrop-blur-sm sm:p-6 md:p-8">
           <div className="mb-4 flex justify-center sm:mb-6">
-            <div className="mx-auto w-full max-w-[280px]">
+            <div className="flex w-full max-w-[280px] flex-col items-center">
               <BlockTrustBadge size={120} instanceId="verify-id" />
             </div>
             <span className="sr-only">Certificat vérifié</span>
