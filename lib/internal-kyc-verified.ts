@@ -1,24 +1,28 @@
 // lib/internal-kyc-verified.ts
-// KYC VERIFIED + niveau Enterprise pour comptes internes (admins + Johanna) — idempotent
+// KYC VERIFIED + niveau Enterprise pour comptes internes (9 emails) — idempotent
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
-import { getAllInternalEmails, getAdminEmailList } from '@/lib/admin-utils'
+import { getAllInternalEmails } from '@/lib/admin-utils'
 import type { ValidationLevel } from '@prisma/client'
 
 /** Niveau certificat des comptes internes (Enterprise). */
 export const INTERNAL_ACCOUNT_VALIDATION_LEVEL: ValidationLevel = 'ENTERPRISE'
 
-/** Liste canonique admins — alignée avec ADMIN_EMAILS (Vercel) et scripts/bootstrap-all-admins.ts */
-export const CANONICAL_ADMIN_KYC_EMAILS = [
-  'brnbtech@gmail.com',
-  'laurianne@winter-keys.com',
-  'deborahbernabe@gmail.com',
-  'shai270202@gmail.com',
-  'brnbimmo@gmail.com',
-  'contact@brnb.fr',
-  'bernabeshai56@gmail.com',
-] as const
+let cachedInternalValidationLevel: string | null = null
+
+/** ENTERPRISE si enum migré, sinon GOLD (legacy BRONZE/SILVER/GOLD/PLATINUM). */
+async function resolveInternalValidationLevel(): Promise<string> {
+  if (cachedInternalValidationLevel) return cachedInternalValidationLevel
+  const rows = await prisma.$queryRaw<{ enumlabel: string }[]>`
+    SELECT enumlabel FROM pg_enum e
+    JOIN pg_type t ON e.enumtypid = t.oid
+    WHERE t.typname = 'ValidationLevel'
+  `
+  const labels = new Set(rows.map((r) => r.enumlabel))
+  cachedInternalValidationLevel = labels.has('ENTERPRISE') ? 'ENTERPRISE' : 'GOLD'
+  return cachedInternalValidationLevel
+}
 
 export type InternalKycSyncResult = 'updated' | 'already_verified' | 'not_found'
 
@@ -28,12 +32,8 @@ export type InternalKycSyncDetail = {
   entitiesUpdated: number
 }
 
-/** Emails cibles : tous les comptes internes (9 emails canoniques). */
+/** Les 9 comptes internes BLOCKTRUST (admins dashboard + internes + Johanna). */
 export function getInternalKycEmailList(): string[] {
-  const fromEnv = getAdminEmailList()
-  if (fromEnv.length > 0) {
-    return [...new Set([...fromEnv, ...getAllInternalEmails()])]
-  }
   return [...getAllInternalEmails()]
 }
 
@@ -50,9 +50,6 @@ export async function syncInternalAccountKycByUserId(
       id: true,
       kycStatus: true,
       kycVerifiedAt: true,
-      entities: {
-        select: { id: true, kycStatus: true, validationLevel: true },
-      },
     },
   })
 
@@ -61,49 +58,41 @@ export async function syncInternalAccountKycByUserId(
   }
 
   const userNeedsUpdate = user.kycStatus !== 'VERIFIED'
-  const entitiesToUpdate = user.entities.filter(
-    (e) =>
-      e.kycStatus !== 'VERIFIED' ||
-      e.validationLevel !== INTERNAL_ACCOUNT_VALIDATION_LEVEL
-  )
+  const validationLevel = await resolveInternalValidationLevel()
 
-  if (!userNeedsUpdate && entitiesToUpdate.length === 0) {
+  const entitiesUpdated = await prisma.$executeRaw`
+    UPDATE "Entity"
+    SET
+      "kycStatus" = 'VERIFIED',
+      "emailVerified" = true,
+      "validationLevel" = ${validationLevel}::"ValidationLevel"
+    WHERE "userId" = ${user.id}
+      AND (
+        "kycStatus" IS DISTINCT FROM 'VERIFIED'
+        OR "validationLevel"::text IS DISTINCT FROM ${validationLevel}
+      )
+  `
+
+  if (!userNeedsUpdate && entitiesUpdated === 0) {
     return { result: 'already_verified', userUpdated: false, entitiesUpdated: 0 }
   }
 
   if (userNeedsUpdate) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        kycStatus: 'VERIFIED',
-        kycVerifiedAt: user.kycVerifiedAt ?? new Date(),
-        kycRejectedAt: null,
-        kycRejectedReason: null,
-      },
-    })
-  }
-
-  if (entitiesToUpdate.length > 0) {
-    await prisma.entity.updateMany({
-      where: {
-        userId: user.id,
-        OR: [
-          { kycStatus: { not: 'VERIFIED' } },
-          { validationLevel: { not: INTERNAL_ACCOUNT_VALIDATION_LEVEL } },
-        ],
-      },
-      data: {
-        kycStatus: 'VERIFIED',
-        validationLevel: INTERNAL_ACCOUNT_VALIDATION_LEVEL,
-        emailVerified: true,
-      },
-    })
+    await prisma.$executeRaw`
+      UPDATE "User"
+      SET
+        "kycStatus" = 'VERIFIED',
+        "kycVerifiedAt" = COALESCE("kycVerifiedAt", NOW()),
+        "kycRejectedAt" = NULL,
+        "kycRejectedReason" = NULL
+      WHERE "id" = ${user.id}
+    `
   }
 
   return {
     result: 'updated',
     userUpdated: userNeedsUpdate,
-    entitiesUpdated: entitiesToUpdate.length,
+    entitiesUpdated,
   }
 }
 
@@ -121,4 +110,13 @@ export async function syncInternalAccountKycByEmail(
   }
 
   return syncInternalAccountKycByUserId(user.id)
+}
+
+/** Sync KYC pour tous les comptes internes inscrits (9 emails canoniques). */
+export async function syncAllInternalAccountsKyc(): Promise<InternalKycSyncDetail[]> {
+  const results: InternalKycSyncDetail[] = []
+  for (const email of getInternalKycEmailList()) {
+    results.push(await syncInternalAccountKycByEmail(email))
+  }
+  return results
 }

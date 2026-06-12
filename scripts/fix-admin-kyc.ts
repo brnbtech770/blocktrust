@@ -1,5 +1,5 @@
 /**
- * One-shot : KYC VERIFIED + Entity Enterprise pour tous les comptes admin + Johanna.
+ * One-shot : KYC VERIFIED + Entity Enterprise pour tous les comptes admin + Johanna (9 emails).
  * Idempotent — safe à relancer.
  * Exécution : npx tsx scripts/fix-admin-kyc.ts
  */
@@ -8,11 +8,11 @@ import * as dotenv from 'dotenv'
 dotenv.config({ path: '.env.local' })
 dotenv.config()
 
+import { prisma } from '@/app/lib/db'
 import {
   getInternalKycEmailList,
   syncInternalAccountKycByEmail,
-} from '../lib/internal-kyc-verified'
-import { prisma } from '../app/lib/db'
+} from '@/lib/internal-kyc-verified'
 
 async function fixAdminKyc() {
   const emails = getInternalKycEmailList()
@@ -26,13 +26,13 @@ async function fixAdminKyc() {
     const detail = await syncInternalAccountKycByEmail(email)
 
     if (detail.result === 'not_found') {
-      console.log(`⏭️  ${email} → utilisateur non trouvé`)
+      console.log(`${email} → utilisateur non trouvé`)
       missing += 1
       continue
     }
 
     if (detail.result === 'already_verified') {
-      console.log(`✓  ${email} → déjà VERIFIED (User + Entity Enterprise)`)
+      console.log(`${email} → déjà VERIFIED`)
       already += 1
       continue
     }
@@ -42,12 +42,12 @@ async function fixAdminKyc() {
     if (detail.entitiesUpdated > 0) {
       parts.push(`${detail.entitiesUpdated} Entity → VERIFIED/Enterprise`)
     }
-    console.log(`✅ ${email} → mis à jour (${parts.join(', ') || 'sync'})`)
+    console.log(`${email} → mis à jour (${parts.join(', ') || 'sync'})`)
     updated += 1
   }
 
   console.log(
-    `\nTerminé — ${updated} mis à jour, ${already} déjà OK, ${missing} absent(s)\n`
+    `\nTerminé — ${updated} mis à jour, ${already} déjà VERIFIED, ${missing} utilisateur(s) non trouvé(s)\n`
   )
 }
 

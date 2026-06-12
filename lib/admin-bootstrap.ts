@@ -206,7 +206,8 @@ export async function ensureAdminCertificate(
 }
 
 /**
- * Met à jour plan Prisma (B2B Enterprise actif) + abonnement code ENTERPRISE + TrustScore 100.
+ * Met à jour plan Prisma (B2B Enterprise actif) + abonnement ENTERPRISE + TrustScore 100
+ * + KYC VERIFIED (User + Entity Enterprise) pour tous les comptes internes.
  */
 export async function ensureAdminCapabilities(
   userId: string,
