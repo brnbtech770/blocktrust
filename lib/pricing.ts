@@ -221,7 +221,7 @@ export function getPlanB2BById(id: string): PlanB2B | undefined {
 export const ESSENTIEL_MONTHLY_EUR = 3.99;
 
 /** CTA landing section particuliers → /pricing */
-export const LANDING_CTA_B2C_LABEL = `Démarrer à partir de ${formatPriceFr(ESSENTIEL_MONTHLY_EUR)}€ TTC/mois`;
+export const LANDING_CTA_B2C_LABEL = "Voir les tarifs";
 
 /** Invitations / renvois forfait entrée B2C */
 export const JOIN_BLOCKTRUST_ESSENTIEL_LABEL = `Rejoindre BLOCKTRUST — ${formatPriceFr(ESSENTIEL_MONTHLY_EUR)}€ TTC/mois`;

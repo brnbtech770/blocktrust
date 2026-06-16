@@ -10,12 +10,12 @@ type UseCase = { icon: LucideIcon; title: string; text: string };
 const cases: UseCase[] = [
   {
     icon: Building2,
-    title: "Agences immo",
+    title: "Agences immobilières",
     text: "Mandats authentifiés, agents vérifiés.",
   },
   {
     icon: Rocket,
-    title: "Startups & tech",
+    title: "Startups & Entreprises Tech",
     text: "Due diligence simplifiée, crédibilité investisseurs.",
   },
   {
@@ -26,12 +26,12 @@ const cases: UseCase[] = [
   {
     icon: ShoppingCart,
     title: "E-commerce",
-    text: "Réduisez les abandons panier, augmentez la confiance.",
+    text: "Augmentez la confiance de vos clients et réduisez le taux d'abandon panier.",
   },
   {
     icon: Network,
-    title: "Votre réseau de partenaires certifiés",
-    text: "Fournisseurs, clients, sous-traitants — constituez votre écosystème de confiance certifié. Si quelqu'un usurpe l'identité d'un partenaire certifié pour modifier un RIB ou détourner un virement, BLOCKTRUST le détecte immédiatement.",
+    title: "Votre réseau de partenaires",
+    text: "Fournisseurs, clients, sous-traitants — constituez votre écosystème de confiance certifié. Ex : votre partenaire certifié se fait usurper son identité — BLOCKTRUST le détecte immédiatement et vous alerte.",
   },
 ];
 
@@ -46,7 +46,7 @@ export default function Entreprises() {
           Pour les entreprises
         </p>
         <h2 className="font-syne mx-auto max-w-2xl pb-2 text-2xl font-semibold leading-snug text-white sm:text-3xl">
-          Sécurisez chaque interaction <span className="text-gold">B2B</span>
+          Sécurisez chaque interaction <span className="text-gold">B2B et B2C</span>
         </h2>
       </Reveal>
 
@@ -77,7 +77,7 @@ export default function Entreprises() {
       <Reveal delay={300} className="mt-10 flex justify-center">
         <Link
           href="/pricing?tab=entreprises"
-          className="inline-flex min-h-[52px] w-full max-w-sm items-center justify-center rounded-xl border border-gold/60 bg-gold/10 px-8 py-3.5 text-sm font-bold text-gold transition-all hover:scale-[1.04] hover:bg-gold/20 sm:w-auto sm:text-base"
+          className="inline-flex min-h-[52px] w-full max-w-sm cursor-pointer items-center justify-center rounded-xl border border-gold/60 bg-gold/10 px-8 py-3.5 text-sm font-bold text-gold transition-all hover:scale-[1.04] hover:bg-gold/20 sm:w-auto sm:text-base"
         >
           {LANDING_CTA_B2B_LABEL}
         </Link>

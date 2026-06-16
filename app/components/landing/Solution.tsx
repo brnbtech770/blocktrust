@@ -2,14 +2,16 @@
 
 import { UserPlus, ShieldCheck, CheckCircle2, type LucideIcon } from "lucide-react";
 import Reveal from "./Reveal";
+import TechTermTooltip from "@/app/components/ui/TechTermTooltip";
+import type { ReactNode } from "react";
 
 type Step = {
   icon: LucideIcon;
   iconColor: string;
   ringColor: string;
   step: string;
-  title: string;
-  text: string;
+  title: ReactNode;
+  text: ReactNode;
 };
 
 const steps: Step[] = [
@@ -26,8 +28,18 @@ const steps: Step[] = [
     iconColor: "#BDA76B",
     ringColor: "rgba(189,167,107,0.4)",
     step: "Étape 2",
-    title: "Obtenez votre badge certifié blockchain",
-    text: "Un QR code unique, ancré sur Polygon, impossible à copier ou falsifier.",
+    title: (
+      <>
+        Obtenez votre badge certifié{" "}
+        <TechTermTooltip term="blockchain">blockchain</TechTermTooltip>
+      </>
+    ),
+    text: (
+      <>
+        Un <TechTermTooltip term="qr-rotatif">QR rotatif</TechTermTooltip> unique, ancré sur{" "}
+        <TechTermTooltip term="polygon">Polygon</TechTermTooltip>, impossible à copier ou falsifier.
+      </>
+    ),
   },
   {
     icon: CheckCircle2,
@@ -62,7 +74,7 @@ export default function Solution() {
             return (
               <Reveal
                 as="li"
-                key={step.title}
+                key={step.step}
                 delay={200 * i}
                 className="relative pl-16 sm:pl-20"
               >

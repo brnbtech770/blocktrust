@@ -33,7 +33,7 @@ const cards: Card[] = [
   {
     icon: MailWarning,
     iconColor: "#E05252",
-    title: "Un faux vous circule déjà",
+    title: "Une fausse version de vous circule déjà",
     text: "Une lettre change dans l'adresse email, le nom de domaine, le numéro de téléphone. Vos contacts se font arnaquer en croyant vous contacter. Sans BLOCKTRUST, vous ne le saurez jamais.",
     featured: true,
   },

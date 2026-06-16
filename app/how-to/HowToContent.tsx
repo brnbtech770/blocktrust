@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import Reveal from "@/app/components/landing/Reveal";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
+import TechTermTooltip from "@/app/components/ui/TechTermTooltip";
 
 type Audience = "particuliers" | "entreprises";
 
@@ -123,15 +124,42 @@ function Hero({
 type FlowStep = {
   icon: typeof UserPlus;
   label: string;
-  hint: string;
+  hint: ReactNode;
   tone: "cyan" | "gold" | "danger" | "valid";
 };
 
 const FLOW_STEPS: FlowStep[] = [
   { icon: UserPlus, label: "Émetteur", hint: "Profil + identité", tone: "cyan" },
-  { icon: ShieldCheck, label: "BLOCKTRUST™", hint: "Signe ES256 + SHA-256", tone: "cyan" },
-  { icon: Link2, label: "Polygon", hint: "Ancrage blockchain", tone: "gold" },
-  { icon: QrCode, label: "Badge", hint: "QR rotatif généré", tone: "cyan" },
+  {
+    icon: ShieldCheck,
+    label: "BLOCKTRUST™",
+    hint: (
+      <>
+        Signe <TechTermTooltip term="signature-es256-sha256">ES256 + SHA-256</TechTermTooltip>
+      </>
+    ),
+    tone: "cyan",
+  },
+  {
+    icon: Link2,
+    label: "Polygon",
+    hint: (
+      <>
+        Ancrage <TechTermTooltip term="blockchain">blockchain</TechTermTooltip>
+      </>
+    ),
+    tone: "gold",
+  },
+  {
+    icon: QrCode,
+    label: "Badge",
+    hint: (
+      <>
+        <TechTermTooltip term="qr-rotatif">QR rotatif</TechTermTooltip> généré
+      </>
+    ),
+    tone: "cyan",
+  },
   { icon: Globe, label: "Intégration", hint: "Site / Email / API", tone: "cyan" },
   { icon: ScanLine, label: "Vérificateur", hint: "Scanne le QR", tone: "cyan" },
   { icon: ShieldCheck, label: "BLOCKTRUST™", hint: "Vérifie en temps réel", tone: "cyan" },
@@ -182,7 +210,8 @@ function VerificationFlow() {
           Comment fonctionne la <span className="text-bt-cyan">vérification</span> ?
         </h2>
         <p className="mx-auto mt-4 text-sm leading-relaxed text-gold sm:text-base lg:whitespace-nowrap">
-          De l&apos;émetteur au verdict — chaque étape est cryptographique, traçable et ancrée sur Polygon.
+          De l&apos;émetteur au verdict — chaque étape est cryptographique, traçable et ancrée sur{" "}
+          <TechTermTooltip term="polygon">Polygon</TechTermTooltip>.
         </p>
       </Reveal>
 

@@ -6,11 +6,13 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import Reveal from "./Reveal";
+import TechTermTooltip from "@/app/components/ui/TechTermTooltip";
 
 type Bullet = {
   ok: boolean;
-  text: string;
+  text: ReactNode;
 };
 
 type Category = {
@@ -61,9 +63,17 @@ const categories: Category[] = [
       { ok: true, text: "Certification cryptographique de votre identité" },
       { ok: true, text: "Tous vos documents signés et infalsifiables" },
       { ok: true, text: "Vérifiable par n'importe qui en 1 scan QR" },
-      { ok: true, text: "Ancré sur blockchain Polygon — preuve permanente" },
+      {
+        ok: true,
+        text: (
+          <>
+            Ancré sur <TechTermTooltip term="blockchain">blockchain</TechTermTooltip>{" "}
+            <TechTermTooltip term="polygon">Polygon</TechTermTooltip> — preuve permanente
+          </>
+        ),
+      },
     ],
-    footer: "La 4ᵉ couche que personne d'autre ne couvre",
+    footer: "La 3ᵉ couche que personne d'autre ne couvre",
     highlight: true,
   },
 ];
@@ -91,7 +101,7 @@ export default function Categories() {
         <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
           L&apos;usurpation d&apos;identité ne se traite pas avec un antivirus,
           ni avec une appli d&apos;État, ni avec un code SMS. C&apos;est une
-          4ᵉ couche de protection — celle que{" "}
+          3ᵉ couche de protection — celle que{" "}
           <span className="font-bold tracking-wider text-bt-cyan">
             BLOCKTRUST
           </span>{" "}
@@ -161,9 +171,9 @@ function CategoryCard({
         </p>
 
         <ul role="list" className="mt-5 space-y-2.5">
-          {category.bullets.map((b) => (
+          {category.bullets.map((b, i) => (
             <li
-              key={b.text}
+              key={i}
               className="flex items-start gap-2.5 text-sm leading-relaxed text-white/85"
             >
               {b.ok ? (
@@ -220,9 +230,9 @@ function CategoryCard({
       </p>
 
       <ul role="list" className="mt-5 space-y-2.5">
-        {category.bullets.map((b) => (
+        {category.bullets.map((b, i) => (
           <li
-            key={b.text}
+            key={i}
             className={`flex items-start gap-2.5 text-sm leading-relaxed ${
               b.ok ? "text-white/55" : "text-white/30"
             }`}

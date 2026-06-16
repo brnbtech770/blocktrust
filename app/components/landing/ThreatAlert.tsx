@@ -14,7 +14,7 @@ const stats: Stat[] = [
     Icon: TrendingUp,
   },
   {
-    value: "20+",
+    value: "Plus de 20",
     label:
       "pays touchés par les campagnes d'usurpation d'identité automatisées",
     Icon: Globe,
@@ -69,7 +69,7 @@ export default function ThreatAlert() {
 
         <div className="mb-8 rounded-2xl border border-[#E05252]/20 bg-[#0d1f3c] p-6">
           <p className="mb-4 text-xs uppercase tracking-widest text-white/70">
-            Ce que ces outils permettent à n&apos;importe qui
+            Ce que ces outils permettent de faire
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {[
@@ -99,7 +99,7 @@ export default function ThreatAlert() {
           </div>
           <p className="mx-auto max-w-lg text-sm leading-relaxed text-white/70 sm:text-base">
             BLOCKTRUST certifie votre identité et celle de vos interlocuteurs — toute tentative
-            d&apos;usurpation est détectée immédiatement, avant que le mal soit fait.
+            d&apos;usurpation est détectée immédiatement avant que le mal soit fait.
           </p>
         </div>
       </div>

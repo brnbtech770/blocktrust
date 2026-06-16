@@ -11,25 +11,26 @@ const cases: UseCase[] = [
   {
     icon: Briefcase,
     title: "Freelances & consultants",
-    text: "Prouvez votre sérieux à chaque nouveau client.",
-    example: "Ex : votre nouveau client vérifie votre badge avant de signer.",
+    text: "Prouvez votre sérieux auprès de chacun de vos nouveaux clients.",
+    example: "Ex : votre nouveau client vérifie votre badge avant de signer un devis ou un contrat.",
   },
   {
     icon: ShoppingBag,
     title: "Vendeurs en ligne",
-    text: "Rassurez vos acheteurs sur votre authenticité.",
-    example: "Ex : votre acheteur LeBonCoin scanne votre QR avant le virement.",
+    text: "Rassurez vos acheteurs sur votre existence et votre identité.",
+    example:
+      "Ex : votre acheteur LeBonCoin scanne votre QR code avant d'effectuer son virement.",
   },
   {
     icon: User,
     title: "Particuliers actifs",
     text: "Protégez vos échanges : location, covoiturage, petites annonces.",
-    example: "Ex : votre propriétaire vérifie que vous êtes bien vous avant la visite.",
+    example: "Ex : le propriétaire d'un bien vérifie votre identité avant d'effectuer une visite.",
   },
   {
     icon: ShieldAlert,
-    title: "Protégez-vous des menaces que vous recevez",
-    text: "Vos contacts de confiance certifiés : banque, mutuelle, Ameli, médecin, employeur — toute tentative d'usurpation déclenche une alerte immédiate.",
+    title: "Protégez-vous des menaces par mail",
+    text: "Certifiez vos contacts principaux : banque, mutuelle, sécurité sociale, médecin, employeur — toute tentative d'usurpation déclenche une alerte immédiate.",
     example: "Ex : vous recevez un email de \"votre banque\" — BLOCKTRUST signale instantanément qu'il n'est pas certifié.",
   },
 ];
@@ -42,7 +43,7 @@ export default function Particuliers() {
     >
       <Reveal className="mx-auto max-w-3xl text-center overflow-visible">
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
-          Pour les particuliers &amp; professionnels
+          Pour les particuliers &amp; professionnels indépendants
         </p>
         <h2 className="font-syne mx-auto max-w-2xl pb-2 text-2xl font-semibold leading-snug text-white sm:text-3xl">
           Protégez votre <span className="text-bt-cyan">réputation personnelle</span> en ligne
@@ -82,7 +83,7 @@ export default function Particuliers() {
       <Reveal delay={300} className="mt-10 flex justify-center">
         <Link
           href="/pricing"
-          className="inline-flex min-h-[52px] w-full max-w-sm items-center justify-center rounded-xl bg-bt-cyan px-8 py-3.5 text-sm font-bold text-navy transition-all hover:scale-[1.04] hover:bg-[#21dfff] sm:w-auto sm:text-base"
+          className="inline-flex min-h-[52px] w-full max-w-sm cursor-pointer items-center justify-center rounded-xl bg-bt-cyan px-8 py-3.5 text-sm font-bold text-navy transition-all hover:scale-[1.04] hover:bg-[#21dfff] sm:w-auto sm:text-base"
         >
           {LANDING_CTA_B2C_LABEL}
         </Link>

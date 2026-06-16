@@ -28,10 +28,10 @@ export default function LandingPageClient({ threatAlert }: { threatAlert: ReactN
       <main>
         <Hero />
         <Problem />
-        <QuickUnderstand />
-        <Categories />
         {threatAlert}
         <Solution />
+        <QuickUnderstand />
+        <Categories />
         <Particuliers />
         <Entreprises />
         <Integration />

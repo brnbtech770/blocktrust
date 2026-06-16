@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { ShieldCheck, UserCheck, Link2 } from "lucide-react";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
-import { ESSENTIEL_MONTHLY_EUR, formatPriceFr } from "@/lib/pricing";
+import TechTermTooltip from "@/app/components/ui/TechTermTooltip";
 
 export default function Hero() {
-  const essentielTtc = formatPriceFr(ESSENTIEL_MONTHLY_EUR);
   return (
     <section
       id="hero"
@@ -40,7 +39,7 @@ export default function Hero() {
           </p>
           <p className="opacity-0 animate-fade-up [animation-delay:360ms] mt-2 max-w-2xl text-sm leading-relaxed text-white/40">
             Certifiez ce que vous envoyez. Vérifiez ce que vous recevez. Faux RIB, faux conseiller, faux
-            fournisseur — détectés en 1 scan, avant que le mal soit fait.
+            fournisseur — détectés en 1 scan avant que le mal soit fait.
           </p>
 
           {/* CTAs + micro-copy */}
@@ -59,9 +58,12 @@ export default function Hero() {
                 Voir comment ça marche
               </Link>
             </div>
-            <p className="text-xs font-light leading-relaxed text-white/60 sm:text-sm sm:whitespace-nowrap">
-              Vérification gratuite pour tous · Certifiez votre identité dès {essentielTtc}€ TTC/mois · Sans
-              engagement
+            <p className="text-xs font-light leading-relaxed text-white/60 sm:text-sm">
+              Vérification gratuite pour tous ·{" "}
+              <Link href="/pricing" className="cursor-pointer text-bt-cyan/90 hover:text-bt-cyan">
+                Voir nos tarifs
+              </Link>{" "}
+              · Sans engagement
             </p>
           </div>
 
@@ -89,9 +91,11 @@ export default function Hero() {
               <Link2 className="mt-0.5 h-5 w-5 shrink-0 text-bt-cyan" />
               <div>
                 <div className="font-syne text-base font-bold text-gold">
-                  Ancré blockchain
+                  Ancré <TechTermTooltip term="blockchain">blockchain</TechTermTooltip>
                 </div>
-                <div className="text-xs text-white/60">Preuve immuable Polygon</div>
+                <div className="text-xs text-white/60">
+                  Preuve immuable <TechTermTooltip term="polygon">Polygon</TechTermTooltip>
+                </div>
               </div>
             </li>
           </ul>
