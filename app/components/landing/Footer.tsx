@@ -29,7 +29,7 @@ export default function Footer() {
       <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div className="flex flex-col items-start gap-4">
-            <Link href="/" className="flex items-center gap-3" style={{ textDecoration: "none" }}>
+            <Link href="/" className="flex cursor-pointer items-center gap-3" style={{ textDecoration: "none" }}>
               <BlockTrustBadge size={40} instanceId="footer" showWatermark={false} className="shrink-0" />
               <span className="font-syne text-lg font-bold leading-none tracking-wider text-bt-cyan">
                 BLOCKTRUST<span className="text-[10px] align-super">™</span>
@@ -57,7 +57,7 @@ export default function Footer() {
                 <li key={l.href} className="whitespace-nowrap">
                   <Link
                     href={l.href}
-                    className="inline-flex min-h-[44px] items-center text-sm text-white/65 transition-colors hover:text-bt-cyan"
+                    className="inline-flex min-h-[44px] cursor-pointer items-center text-sm text-white/65 transition-colors hover:text-bt-cyan"
                   >
                     {l.label}
                   </Link>
@@ -67,7 +67,7 @@ export default function Footer() {
                 <button
                   type="button"
                   onClick={openCookieSettings}
-                  className="inline-flex min-h-[44px] items-center text-sm text-white/65 transition-colors hover:text-bt-cyan"
+                  className="inline-flex min-h-[44px] cursor-pointer items-center text-sm text-white/65 transition-colors hover:text-bt-cyan"
                 >
                   Gestion des cookies
                 </button>
@@ -84,7 +84,7 @@ export default function Footer() {
                 href="https://www.linkedin.com/company/blocktrust"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 text-white/70 transition-all hover:border-bt-cyan/60 hover:text-bt-cyan"
+                className="inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-lg border border-white/15 text-white/70 transition-all hover:border-bt-cyan/60 hover:text-bt-cyan"
                 aria-label="LinkedIn BLOCKTRUST™"
               >
                 <Linkedin className="h-4 w-4" />
@@ -93,7 +93,7 @@ export default function Footer() {
                 href="https://www.instagram.com/blocktrust.tech/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 text-white/70 transition-all hover:border-bt-cyan/60 hover:text-bt-cyan"
+                className="inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-lg border border-white/15 text-white/70 transition-all hover:border-bt-cyan/60 hover:text-bt-cyan"
                 aria-label="Instagram BLOCKTRUST™"
               >
                 <Instagram className="h-4 w-4" />
@@ -103,14 +103,39 @@ export default function Footer() {
         </div>
 
         <div
-          className="mt-10 flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"
+          className="mt-10 space-y-4 border-t pt-6 text-xs leading-relaxed text-white/55"
+          style={{ borderColor: "var(--bt-border)" }}
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <p className="font-semibold text-white/70">Éditeur du site</p>
+              <p>BRNB TECH SAS (en cours d&apos;immatriculation)</p>
+              <p>20 rue du Donjon, 94300 Vincennes, France</p>
+              <p>
+                Email :{" "}
+                <a href="mailto:contact@blocktrust.tech" className="cursor-pointer text-bt-cyan/80 hover:text-bt-cyan">
+                  contact@blocktrust.tech
+                </a>
+              </p>
+              <p>Téléphone : à venir</p>
+              <p>RCS en cours</p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-semibold text-white/70">Publication & hébergement</p>
+              <p>Directeur de la publication : Olivier Bernabé</p>
+              <p>Hébergeur : Vercel Inc., San Francisco, USA</p>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="mt-6 flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"
           style={{ borderColor: "var(--bt-border)" }}
         >
           <p className="text-xs text-white/55">
             © 2026 BRNB TECH SAS — BLOCKTRUST<span className="text-[10px] align-super">™</span>
           </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-            <p className="text-xs text-white/55">RCS Paris — Hébergé par Vercel</p>
             <FooterSiteCertBadge />
           </div>
         </div>
