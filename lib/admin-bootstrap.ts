@@ -39,7 +39,7 @@ function splitDisplayName(userName: string): { firstName: string; lastName: stri
   return { firstName: parts[0], lastName: parts.slice(1).join(' ') }
 }
 
-async function ensureBadgeSignature(
+export async function ensureBadgeSignature(
   certificateId: string,
   userId: string
 ): Promise<void> {
