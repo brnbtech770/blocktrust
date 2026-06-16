@@ -74,6 +74,7 @@ function isProtectedApi(pathname: string): boolean {
   if (pathname.startsWith('/api/badge/')) return false
   if (pathname === '/api/v2/verify' || pathname.startsWith('/api/v2/verify/')) return false
   if (pathname === '/api/verify/resolve-token') return false
+  if (pathname === '/api/verify/link-qr') return false
   if (pathname.startsWith('/api/bis/verify')) return false
   if (pathname.includes('/webhook')) return false
   if (

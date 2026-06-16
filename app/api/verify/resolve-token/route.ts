@@ -1,8 +1,8 @@
-// GET ?vt= — résout un token rotatif 24h → certId public (Redis)
+// GET ?vt= — résout un token rotatif → certId public (Prisma + fallback Redis)
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getRedis } from '@/lib/rate-limit-redis'
+import { resolveCertificateVerifyToken } from '@/lib/certificate-verify-token'
 import { checkResolveTokenRateLimit } from '@/lib/rate-limit-cost'
 
 export const dynamic = 'force-dynamic'
@@ -14,10 +14,9 @@ function clientIp(req: NextRequest): string {
 export async function GET(req: NextRequest) {
   const vt = req.nextUrl.searchParams.get('vt')?.trim()
   if (!vt) {
-    return NextResponse.json({ error: 'expired' }, { status: 400 })
+    return NextResponse.json({ error: 'not_found' }, { status: 400 })
   }
 
-  // Anti brute-force de token : 30 résolutions / min par IP.
   const rate = await checkResolveTokenRateLimit(clientIp(req))
   if (!rate.ok) {
     return NextResponse.json(
@@ -29,20 +28,18 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  const redis = getRedis()
-  if (!redis) {
-    console.warn('[resolve-token] Redis non configuré')
-    return NextResponse.json({ error: 'expired' }, { status: 503 })
+  const result = await resolveCertificateVerifyToken(vt, clientIp(req))
+
+  if (result.status === 'expired') {
+    return NextResponse.json({ error: 'expired' }, { status: 410 })
   }
 
-  try {
-    const certId = await redis.get(`vt:${vt}`)
-    if (!certId || typeof certId !== 'string') {
-      return NextResponse.json({ error: 'expired' }, { status: 404 })
-    }
-    return NextResponse.json({ certId })
-  } catch (err) {
-    console.warn('[resolve-token] Redis get KO (fail-soft)', err)
-    return NextResponse.json({ error: 'expired' }, { status: 503 })
+  if (result.status === 'not_found') {
+    return NextResponse.json({ error: 'not_found' }, { status: 404 })
   }
+
+  return NextResponse.json({
+    certId: result.certId,
+    used: result.used,
+  })
 }

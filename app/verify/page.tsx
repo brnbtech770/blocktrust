@@ -148,6 +148,10 @@ function VerifyContent() {
   const [vtResolveStatus, setVtResolveStatus] = useState<
     "idle" | "loading" | "ok" | "error"
   >("idle");
+  const [vtResolveError, setVtResolveError] = useState<"expired" | "invalid" | null>(
+    null,
+  );
+  const [vtWasUsed, setVtWasUsed] = useState(false);
   const [token, setToken] = useState("");
   const [tokenFixApplied, setTokenFixApplied] = useState(false);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
@@ -266,6 +270,8 @@ function VerifyContent() {
     if (!activeVt) {
       setResolvedVtCertId(null);
       setVtResolveStatus("idle");
+      setVtResolveError(null);
+      setVtWasUsed(false);
       return;
     }
 
@@ -275,6 +281,8 @@ function VerifyContent() {
 
     setVtResolveStatus("loading");
     setResolvedVtCertId(null);
+    setVtResolveError(null);
+    setVtWasUsed(false);
 
     void (async () => {
       try {
@@ -283,17 +291,27 @@ function VerifyContent() {
           { signal: ac.signal },
         );
         clearTimeout(timeoutId);
-        const data = (await res.json()) as { certId?: string; error?: string };
+        const data = (await res.json()) as {
+          certId?: string;
+          error?: string;
+          used?: boolean;
+        };
         if (cancelled) return;
         if (typeof data.certId === "string" && data.certId.length > 0) {
           setResolvedVtCertId(data.certId);
+          setVtWasUsed(Boolean(data.used));
           setVtResolveStatus("ok");
+        } else if (data.error === "expired") {
+          setVtResolveError("expired");
+          setVtResolveStatus("error");
         } else {
+          setVtResolveError("invalid");
           setVtResolveStatus("error");
         }
       } catch (e: unknown) {
         clearTimeout(timeoutId);
         if (cancelled) return;
+        setVtResolveError("invalid");
         setVtResolveStatus("error");
       }
     })();
@@ -520,6 +538,8 @@ function VerifyContent() {
     setSubmittedVt("");
     setResolvedVtCertId(null);
     setVtResolveStatus("idle");
+    setVtResolveError(null);
+    setVtWasUsed(false);
     setEntityName(null);
     setCertifiedAt(null);
     setWalletAddress(null);
@@ -592,12 +612,24 @@ function VerifyContent() {
           <div className="mx-auto mt-10 max-w-md text-center">
             <Clock className="mx-auto mb-4 h-10 w-10 text-[#f59e0b]/70" aria-hidden />
             <p className="font-syne text-lg text-[#f59e0b]">
-              Lien expiré ou invalide
+              {vtResolveError === "expired"
+                ? "Lien expiré"
+                : "Lien invalide"}
             </p>
             <p className="mt-2 text-sm leading-relaxed text-white/45">
-              Ce lien sécurisé n&apos;est plus valide ou a déjà été utilisé. Demandez un nouveau lien à l&apos;émetteur du
-              badge.
+              {vtResolveError === "expired"
+                ? "Ce lien de vérification a expiré. Demandez un nouveau lien."
+                : "Ce lien de vérification est invalide. Vérifiez l'URL ou demandez un nouveau lien à l'émetteur du badge."}
             </p>
+          </div>
+        ) : null}
+
+        {activeVt && vtWasUsed && vtResolveStatus === "ok" && verdict && showSuccess ? (
+          <div
+            role="status"
+            className="mx-auto mt-6 w-full max-w-md rounded-xl border border-[#00d4ff]/25 bg-[#00d4ff]/10 px-4 py-3 text-center text-sm text-[#00d4ff]/90"
+          >
+            Ce lien a déjà été consulté — la vérification reste valide.
           </div>
         ) : null}
 

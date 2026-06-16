@@ -14,7 +14,8 @@ import { copyToClipboard } from '@/lib/copy-to-clipboard'
 import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 import { isNotAnchored } from '@/lib/plan-features'
 import { BlockchainUpgradePrompt } from '@/app/components/ui/BlockchainUpgradePrompt'
-import { Copy, Download, ExternalLink, Check, Link2, Clock, Mail, Lock } from 'lucide-react'
+import { Copy, Download, ExternalLink, Check, Link2, Clock, Mail, Lock, History } from 'lucide-react'
+import { TTL_PRESETS, type VerifyTokenListItem } from '@/lib/certificate-verify-token-constants'
 
 interface BadgeData {
   id: string
@@ -57,8 +58,11 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
   const [scriptCopied, setScriptCopied] = useState(false)
   const [secureLinkCopied, setSecureLinkCopied] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
-  const [verifyLink, setVerifyLink] = useState<{ url: string; expiresAt: string } | null>(null)
+  const [verifyLink, setVerifyLink] = useState<{ url: string; expiresAt: string; token: string } | null>(null)
   const [generating, setGenerating] = useState(false)
+  const [ttlHours, setTtlHours] = useState<number>(24)
+  const [tokenHistory, setTokenHistory] = useState<VerifyTokenListItem[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   useEffect(() => {
     if (sessionStatus === 'loading') return
@@ -70,6 +74,23 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
       fetchBadge()
     }
   }, [sessionStatus, router, params.id])
+
+  const fetchTokenHistory = async (certificateId: string) => {
+    setHistoryLoading(true)
+    try {
+      const res = await fetch(
+        `/api/verify/tokens?certificateId=${encodeURIComponent(certificateId)}`,
+        { credentials: 'include' },
+      )
+      if (!res.ok) return
+      const data = (await res.json()) as { tokens?: VerifyTokenListItem[] }
+      setTokenHistory(Array.isArray(data.tokens) ? data.tokens : [])
+    } catch {
+      /* fail-soft */
+    } finally {
+      setHistoryLoading(false)
+    }
+  }
 
   const fetchBadge = async () => {
     try {
@@ -106,6 +127,7 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
       }
 
       setBadgeData(certificate)
+      void fetchTokenHistory(certificate.id)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erreur')
     } finally {
@@ -176,13 +198,19 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
     setGenerating(true)
     setVerifyLink(null)
     try {
-      const res = await fetch(
-        `/api/certificates/${encodeURIComponent(badgeData.id)}/verify-link`,
-        { credentials: 'include' },
-      )
+      const res = await fetch('/api/verify/generate-link', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          certificateId: badgeData.id,
+          ttlHours,
+        }),
+      })
       const data = (await res.json()) as {
         verifyUrl?: string
         expiresAt?: string
+        token?: string
         message?: string
         error?: string
       }
@@ -190,19 +218,36 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
         alert(
           typeof data.message === 'string'
             ? data.message
-            : 'Impossible de générer le lien sécurisé.',
+            : 'Impossible de générer le lien de vérification temporaire.',
         )
         return
       }
-      if (data.verifyUrl && data.expiresAt) {
-        setVerifyLink({ url: data.verifyUrl, expiresAt: data.expiresAt })
+      if (data.verifyUrl && data.expiresAt && data.token) {
+        setVerifyLink({
+          url: data.verifyUrl,
+          expiresAt: data.expiresAt,
+          token: data.token,
+        })
         await handleCopy(data.verifyUrl, 'secure')
+        void fetchTokenHistory(badgeData.id)
       }
     } catch {
       alert('Erreur réseau.')
     } finally {
       setGenerating(false)
     }
+  }
+
+  const formatTokenStatus = (status: VerifyTokenListItem['status']): string => {
+    if (status === 'active') return 'Actif'
+    if (status === 'used') return 'Consulté'
+    return 'Expiré'
+  }
+
+  const statusBadgeClass = (status: VerifyTokenListItem['status']): string => {
+    if (status === 'active') return 'border-[#10b981]/40 bg-[#10b981]/10 text-[#10b981]'
+    if (status === 'used') return 'border-[#00d4ff]/30 bg-[#00d4ff]/10 text-[#00d4ff]'
+    return 'border-white/10 bg-white/5 text-white/40'
   }
 
   if (planExpired) {
@@ -467,15 +512,43 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
           <div className="w-full flex-1 space-y-3">
             <VerifyBadgeButton certId={badgeId} behavior="copy" />
 
-            <button
-              type="button"
-              onClick={handleGenerateSecureLink}
-              disabled={generating}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#BDA76B]/30 bg-[#BDA76B]/10 py-3 text-sm font-semibold text-[#BDA76B] transition hover:bg-[#BDA76B]/20 disabled:opacity-50"
-            >
-              <Link2 className="h-4 w-4 shrink-0" aria-hidden />
-              {generating ? 'Génération...' : secureLinkCopied ? 'Lien copié !' : 'Lien sécurisé 24h'}
-            </button>
+            <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+              <p className="mb-3 text-sm font-medium text-white">
+                Lien de vérification temporaire
+              </p>
+              <p className="mb-3 text-xs leading-relaxed text-white/40">
+                Générez un lien unique qui expire automatiquement — idéal pour un email ou un échange ponctuel.
+              </p>
+              <div className="mb-3 flex flex-wrap gap-2">
+                {TTL_PRESETS.map((preset) => (
+                  <button
+                    key={preset.hours}
+                    type="button"
+                    onClick={() => setTtlHours(preset.hours)}
+                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                      ttlHours === preset.hours
+                        ? 'border-[#BDA76B]/50 bg-[#BDA76B]/15 text-[#BDA76B]'
+                        : 'border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white/70'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={handleGenerateSecureLink}
+                disabled={generating}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#BDA76B]/30 bg-[#BDA76B]/10 py-3 text-sm font-semibold text-[#BDA76B] transition hover:bg-[#BDA76B]/20 disabled:opacity-50"
+              >
+                <Link2 className="h-4 w-4 shrink-0" aria-hidden />
+                {generating
+                  ? 'Génération...'
+                  : secureLinkCopied
+                    ? 'Lien copié !'
+                    : 'Générer un lien de vérification temporaire'}
+              </button>
+            </div>
 
             {verifyLink ? (
               <div className="rounded-xl border border-white/10 bg-black/20 p-4">
@@ -490,31 +563,89 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
                     minute: '2-digit',
                   })}
                 </p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 break-all font-mono text-xs text-white/60">
-                    {verifyLink.url}
-                  </code>
-                  <button
-                    type="button"
-                    onClick={() => void handleCopy(verifyLink.url, 'secure')}
-                    className="shrink-0 text-[#00d4ff] transition hover:text-white"
-                    aria-label="Copier le lien"
-                  >
-                    {secureLinkCopied ? (
-                      <Check className="h-4 w-4" aria-hidden />
-                    ) : (
-                      <Copy className="h-4 w-4" aria-hidden />
-                    )}
-                  </button>
+                <div className="mb-4 flex flex-col items-center gap-3 sm:flex-row">
+                  <div className="h-[120px] w-[120px] shrink-0 rounded-lg bg-white p-2">
+                    <img
+                      src={`/api/verify/link-qr?url=${encodeURIComponent(verifyLink.url)}`}
+                      alt="QR code du lien temporaire"
+                      width={104}
+                      height={104}
+                      className="h-full w-full"
+                    />
+                  </div>
+                  <div className="flex w-full min-w-0 flex-1 items-center gap-2">
+                    <code className="flex-1 break-all font-mono text-xs text-white/60">
+                      {verifyLink.url}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => void handleCopy(verifyLink.url, 'secure')}
+                      className="shrink-0 text-[#00d4ff] transition hover:text-white"
+                      aria-label="Copier le lien"
+                    >
+                      {secureLinkCopied ? (
+                        <Check className="h-4 w-4" aria-hidden />
+                      ) : (
+                        <Copy className="h-4 w-4" aria-hidden />
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <p className="mt-2 text-xs italic text-white/20">
+                <p className="text-xs italic text-white/20">
                   Lien unique — générez-en un nouveau pour chaque envoi
                 </p>
               </div>
             ) : null}
 
+            <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <History className="h-4 w-4 text-white/40" aria-hidden />
+                <p className="text-sm font-medium text-white">Historique des liens</p>
+              </div>
+              {historyLoading ? (
+                <p className="text-xs text-white/40">Chargement…</p>
+              ) : tokenHistory.length === 0 ? (
+                <p className="text-xs text-white/30">Aucun lien temporaire généré.</p>
+              ) : (
+                <ul className="max-h-48 space-y-2 overflow-y-auto">
+                  {tokenHistory.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-mono text-xs text-white/50">{item.tokenPreview}</p>
+                        <p className="text-[10px] text-white/30">
+                          Créé le{' '}
+                          {new Date(item.createdAt).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                          {' · '}
+                          expire le{' '}
+                          {new Date(item.expiresAt).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${statusBadgeClass(item.status)}`}
+                      >
+                        {formatTokenStatus(item.status)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
             <p className="text-xs leading-relaxed text-white/30">
-              Le QR code change après chaque scan — impossible à copier. Le lien sécurisé expire après 24h.
+              Le QR permanent pointe vers votre lien public. Le lien temporaire expire selon la durée choisie.
             </p>
 
             <div className="flex flex-wrap gap-3 pt-1">
