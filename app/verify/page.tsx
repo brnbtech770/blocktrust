@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Logo } from "@/app/components/ui/Logo";
+import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 import type { TrustEngineResult } from "@/lib/trust-engine";
 
@@ -543,18 +543,7 @@ function VerifyContent() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0a1628] text-white antialiased">
-      <header className="flex shrink-0 justify-center px-4 pt-8 pb-4">
-        <Link
-          href="https://blocktrust.tech"
-          className="inline-flex items-center gap-2 opacity-80 transition hover:opacity-100"
-        >
-          <Logo size="sm" withText={false} href="" />
-          <span className="font-syne text-sm font-bold leading-none tracking-wider text-bt-cyan">
-            BLOCKTRUST
-            <span className="text-[10px] align-super">™</span>
-          </span>
-        </Link>
-      </header>
+      <AuthMinimalHeader backHref="/" />
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center px-4 pb-16 pt-2 sm:max-w-lg sm:pt-4">
         {!hasValidToken ? (

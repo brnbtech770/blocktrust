@@ -4,8 +4,8 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { Logo } from "@/app/components/ui/Logo";
 import { sanitizeCallbackUrl } from "@/app/lib/auth-callback-url";
+import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
 
 const pageBg = "#0a1628";
 
@@ -39,7 +39,7 @@ const separatorStyle: React.CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: "12px",
-  margin: "20px 0",
+  margin: "14px 0",
   color: "rgba(232,234,240,0.45)",
   fontSize: "13px",
   fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
@@ -203,19 +203,16 @@ function SignInContent() {
 
   return (
     <div
-      className="min-h-screen overflow-x-hidden px-4 py-8 sm:px-4 sm:py-12"
+      className="flex min-h-screen flex-col overflow-x-hidden"
       style={{
         background: pageBg,
         fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
       }}
     >
-      <div className="mx-auto mb-6 flex justify-center sm:mb-8">
-        <div className="origin-center scale-[0.88] sm:scale-100">
-          <Logo size="lg" withText href="/" className="drop-shadow-[0_0_14px_rgba(0,212,255,0.45)]" />
-        </div>
-      </div>
-      <div className="mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-8">
-        <h1 className="font-syne mb-4 text-2xl font-bold text-white sm:mb-6 sm:text-3xl">
+      <AuthMinimalHeader />
+      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 pb-6 sm:px-4">
+        <div className="w-full rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-6">
+        <h1 className="font-syne mb-4 text-2xl font-bold text-white sm:text-3xl">
           Connexion
         </h1>
 
@@ -248,62 +245,12 @@ function SignInContent() {
         )}
 
         {errorParam === "Configuration" && (
-          <div
+          <p
             role="alert"
-            style={{
-              color: "rgba(232,234,240,0.92)",
-              marginBottom: "1.25rem",
-              fontSize: "0.88rem",
-              lineHeight: 1.5,
-              padding: "14px 16px",
-              borderRadius: "10px",
-              background: "rgba(224,82,82,0.14)",
-              border: "1px solid rgba(224,82,82,0.4)",
-            }}
+            className="mb-4 rounded-lg border border-[#E05252]/35 bg-[#E05252]/12 px-3 py-2 text-sm text-[#ffb4b4]"
           >
-            <p style={{ fontWeight: 700, marginBottom: "10px", color: "#ffb4b4" }}>
-              Erreur « Configuration » (Auth.js)
-            </p>
-            <p style={{ marginBottom: "10px", opacity: 0.95 }}>
-              La cause réelle est souvent dans les <strong>logs Vercel</strong> (filtrer{" "}
-              <code style={{ fontSize: "0.8rem" }}>[auth]</code> au moment où vous cliquez sur Google).
-            </p>
-            <ol style={{ margin: 0, paddingLeft: "1.2rem" }}>
-              <li style={{ marginBottom: "8px" }}>
-                Utiliser le bouton « Continuer avec Google » (flux POST Auth.js) — pas de lien direct
-                vers <code style={{ fontSize: "0.78rem" }}>/api/auth/signin/google</code> en GET.
-              </li>
-              <li style={{ marginBottom: "8px" }}>
-                <a
-                  href="/api/auth/reset-oauth-cookies"
-                  className="font-semibold text-[#00d4ff] underline hover:brightness-110"
-                >
-                  Réinitialiser les cookies du flux OAuth
-                </a>{" "}
-                (callback, état, PKCE) — recommandé en premier.
-              </li>
-              <li style={{ marginBottom: "8px" }}>
-                Google Cloud Console → identifiants OAuth : URI de redirection{" "}
-                <strong>exacte</strong> :{" "}
-                <code style={{ fontSize: "0.78rem", wordBreak: "break-all", display: "block", marginTop: "4px" }}>
-                  https://blocktrust.tech/api/auth/callback/google
-                </code>
-              </li>
-              <li style={{ marginBottom: "8px" }}>
-                Vercel : <code>NEXTAUTH_URL</code> = <code>AUTH_URL</code> ={" "}
-                <code>https://blocktrust.tech</code> (sans chemin, sans slash final obligatoire).
-              </li>
-              <li>
-                <a
-                  href="/api/health"
-                  className="text-[#00d4ff] underline hover:brightness-110"
-                >
-                  /api/health
-                </a>{" "}
-                — vérif déploiement (SHA Git, authRelease) sans exposer la session.
-              </li>
-            </ol>
-          </div>
+            Connexion temporairement indisponible. Réessayez plus tard ou contactez le support.
+          </p>
         )}
 
         {reasonHint && (
@@ -432,12 +379,13 @@ function SignInContent() {
           </button>
         </form>
 
-        <p style={{ color: "rgba(232,234,240,0.55)", marginTop: "1.5rem", fontSize: "0.875rem" }}>
+        <p style={{ color: "rgba(232,234,240,0.55)", marginTop: "1.25rem", fontSize: "0.875rem" }}>
           Pas encore de compte ?{" "}
-          <Link href="/auth/register" className="text-[#00d4ff] hover:underline">
+          <Link href="/auth/register" className="cursor-pointer text-[#00d4ff] hover:underline">
             Créer un compte
           </Link>
         </p>
+        </div>
       </div>
     </div>
   );
