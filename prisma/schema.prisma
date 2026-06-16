@@ -163,6 +163,8 @@ model User {
   certifiedPhones  String[] @default([])
   certifiedDomains String[] @default([])
 
+  sentBisSignatures InteractionSignature[] @relation("SentSignatures")
+
   @@index([trustScore])
 }
 
@@ -562,6 +564,7 @@ model Certificate {
 
   signatures    Signature[]
   verifications Verification[]
+  bisSignatures InteractionSignature[] @relation("CertSignatures")
 
   // Badge Interactions
   interactionsAsA BadgeInteraction[] @relation("CertificateA")
@@ -1025,6 +1028,39 @@ model WhiteLabelConfig {
 
   @@index([apiKey])
   @@index([apiKeyHash])
+}
+
+// ============================================================
+// BIS — BlockTrust Interaction Signature (Phase 1 : signature sortante)
+// ============================================================
+
+model InteractionSignature {
+  id               String   @id @default(cuid())
+  senderId         String
+  senderCertId     String
+  senderEmail      String
+  recipientEmail   String
+  recipientCertId  String?
+  interactionType  String
+  contextLabel     String?
+  contentHash      String
+  signature        String   @db.Text
+  signaturePayload String   @db.Text
+  bisLevel         Int      @default(3)
+  verified         Boolean  @default(false)
+  verifiedAt       DateTime?
+  polygonTxHash    String?
+  createdAt        DateTime @default(now())
+  expiresAt        DateTime
+
+  sender     User        @relation("SentSignatures", fields: [senderId], references: [id], onDelete: Cascade)
+  senderCert Certificate @relation("CertSignatures", fields: [senderCertId], references: [id], onDelete: Cascade)
+
+  @@index([senderEmail])
+  @@index([recipientEmail])
+  @@index([senderCertId])
+  @@index([contentHash])
+  @@index([senderId])
 }
 
 // ============================================================
