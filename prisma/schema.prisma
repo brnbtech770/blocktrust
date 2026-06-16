@@ -564,6 +564,7 @@ model Certificate {
 
   signatures    Signature[]
   verifications Verification[]
+  verifyTokens  CertificateVerifyToken[]
   bisSignatures InteractionSignature[] @relation("CertSignatures")
 
   // Badge Interactions
@@ -584,6 +585,24 @@ enum CertificateStatus {
   SUSPENDED
   REVOKED
   EXPIRED
+}
+
+/// Lien de vérification rotatif (badge) — token opaque à durée limitée.
+/// Distinct du model NextAuth `VerificationToken` (magic link).
+model CertificateVerifyToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  certId    String
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  used      Boolean   @default(false)
+  usedAt    DateTime?
+  usedByIp  String?
+
+  certificate Certificate @relation(fields: [certId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([certId])
 }
 
 // ============================================================

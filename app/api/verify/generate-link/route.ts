@@ -1,30 +1,40 @@
-// GET — génère un lien /verify?vt=… (rétro-compat — délègue à Prisma, 24h)
+// POST — génère un lien /verify?vt=… (token Prisma, TTL configurable)
 // ============================================================
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import {
   assertCertificateOwnedByUser,
   createCertificateVerifyToken,
-  DEFAULT_TTL_HOURS,
 } from '@/lib/certificate-verify-token'
 
 export const dynamic = 'force-dynamic'
 
-interface RouteParams {
-  params: Promise<{ id: string }>
+type GenerateLinkBody = {
+  certificateId?: string
+  ttlHours?: number
 }
 
-export async function GET(_req: Request, { params }: RouteParams) {
+export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
-  const { id: paramId } = await params
+  let body: GenerateLinkBody
+  try {
+    body = (await req.json()) as GenerateLinkBody
+  } catch {
+    return NextResponse.json({ error: 'Corps JSON invalide' }, { status: 400 })
+  }
+
+  const certificateId = body.certificateId?.trim()
+  if (!certificateId) {
+    return NextResponse.json({ error: 'certificateId requis' }, { status: 400 })
+  }
 
   const certificate = await assertCertificateOwnedByUser(
-    paramId,
+    certificateId,
     session.user.id,
   )
   if (!certificate) {
@@ -33,10 +43,11 @@ export async function GET(_req: Request, { params }: RouteParams) {
 
   const result = await createCertificateVerifyToken({
     certId: certificate.id,
-    ttlHours: DEFAULT_TTL_HOURS,
+    ttlHours: body.ttlHours,
   })
 
   return NextResponse.json({
+    token: result.token,
     verifyUrl: result.verifyUrl,
     expiresAt: result.expiresAt,
   })
