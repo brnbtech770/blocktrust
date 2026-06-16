@@ -12,6 +12,7 @@ import {
   normalizeSenderEmail,
   type ExtensionVerifyContext,
 } from "@/lib/extension-verify-sender";
+import { enrichExtensionPayloadWithBis } from "@/lib/extension-bis-enrichment";
 import { getCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
 import { checkPlanRateLimit } from "@/lib/rate-limit-plan";
 import { resolveEffectivePlan } from "@/lib/plan-features";
@@ -34,11 +35,17 @@ export async function GET(req: NextRequest) {
   const apiKey = extractExtensionApiKey(req);
   const emailRaw = searchParams.get("email") ?? "";
   const domainRaw = searchParams.get("domain") ?? "";
+  const bisIdRaw = searchParams.get("bisId")?.trim() ?? "";
 
   const userId = await findUserIdByExtensionApiKey(apiKey);
   if (!userId || !apiKey) {
     return extensionJsonResponse(req, EXTENSION_UNAUTHORIZED_BODY, 401);
   }
+
+  const userEmail = await prisma.user
+    .findUnique({ where: { id: userId }, select: { email: true } })
+    .then((u) => u?.email ?? null)
+    .catch(() => null);
 
   const keyHash = hashApiKey(apiKey);
   // Rate limit par tier : 30/min (Découverte) vs 120/min (payant). Fail-soft.
@@ -69,7 +76,7 @@ export async function GET(req: NextRequest) {
   const domainNorm = normalizeSenderDomain(domainRaw);
   const cacheKey =
     emailNorm || domainNorm
-      ? `bt:ext:verify:v4:${userId}:${emailNorm}:${domainNorm}`
+      ? `bt:ext:verify:v5:${userId}:${emailNorm}:${domainNorm}:${bisIdRaw || "-"}`
       : null;
 
   const redis = getRedis();
@@ -142,17 +149,22 @@ export async function GET(req: NextRequest) {
       .filter((e): e is string => Boolean(e?.trim())),
   };
 
-  const payload = buildExtensionVerifyResult(
-    entities,
-    emailRaw,
-    domainRaw,
-    BASE_URL,
-    verifyContext,
-  );
+  const payload = await enrichExtensionPayloadWithBis({
+    payload: buildExtensionVerifyResult(
+      entities,
+      emailRaw,
+      domainRaw,
+      BASE_URL,
+      verifyContext,
+    ),
+    bisId: bisIdRaw || null,
+    recipientEmail: userEmail,
+    senderEmail: emailRaw,
+  });
 
   if (redis && cacheKey) {
     try {
-      await redis.set(cacheKey, JSON.stringify(payload), { ex: 3600 });
+      await redis.set(cacheKey, JSON.stringify(payload), { ex: 300 });
     } catch {
       /* fail-soft */
     }

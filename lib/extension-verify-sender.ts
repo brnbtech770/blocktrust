@@ -14,6 +14,16 @@ export type ExtensionVerifySignals = {
   polygonAnchored: boolean;
 };
 
+export type ExtensionBisVerification = {
+  valid: boolean;
+  bisLevel: number;
+  interactionType: string;
+  contextLabel: string | null;
+  signedAt: string;
+  expiresAt: string;
+  reason?: string;
+};
+
 export type ExtensionVerifyPayload = {
   verified: boolean;
   status: ExtensionVerifyStatus;
@@ -27,6 +37,15 @@ export type ExtensionVerifyPayload = {
   signals: ExtensionVerifySignals;
   anchoredOnChain: boolean;
   message: string;
+  /** Lien BIS détecté dans le corps de l'email (Phase 2a). */
+  bisSignatureDetected: boolean;
+  /** Résultat vérification BIS si bisId fourni. */
+  bisVerification: ExtensionBisVerification | null;
+  /** L'expéditeur a déjà signé des interactions BIS reçues par l'utilisateur. */
+  senderUsuallySignsBis: boolean;
+  /** Alerte : contact certifié habitué à signer, email sans BIS. */
+  bisMissingAlert: boolean;
+  bisMissingAlertMessage: string | null;
 };
 
 type EntityWithCerts = Entity & {
@@ -152,12 +171,26 @@ function buildSignals(
 }
 
 function finalizePayload(
-  partial: Omit<ExtensionVerifyPayload, "verdict" | "anchoredOnChain">,
+  partial: Omit<
+    ExtensionVerifyPayload,
+    | "verdict"
+    | "anchoredOnChain"
+    | "bisSignatureDetected"
+    | "bisVerification"
+    | "senderUsuallySignsBis"
+    | "bisMissingAlert"
+    | "bisMissingAlertMessage"
+  >,
 ): ExtensionVerifyPayload {
   return {
     ...partial,
     verdict: partial.status,
     anchoredOnChain: partial.signals.polygonAnchored,
+    bisSignatureDetected: false,
+    bisVerification: null,
+    senderUsuallySignsBis: false,
+    bisMissingAlert: false,
+    bisMissingAlertMessage: null,
   };
 }
 

@@ -92,6 +92,9 @@ describe('Extension verify-sender', () => {
     expect(result.anchoredOnChain).toBe(false)
     expect(result.signals.kycVerified).toBe(true)
     expect(result.badgeUrl).toContain('/badge/')
+    expect(result.bisSignatureDetected).toBe(false)
+    expect(result.bisVerification).toBeNull()
+    expect(result.bisMissingAlert).toBe(false)
   })
 
   it('email dans Trust Circle → IN_CONTACTS', () => {
