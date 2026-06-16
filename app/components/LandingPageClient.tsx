@@ -6,6 +6,7 @@ import Hero from "./landing/Hero";
 import QuickUnderstand from "./landing/QuickUnderstand";
 import Problem from "./landing/Problem";
 import Categories from "./landing/Categories";
+import BlocktrustAmbassadorBadge from "./landing/BlocktrustAmbassadorBadge";
 import Solution from "./landing/Solution";
 import Particuliers from "./landing/Particuliers";
 import Entreprises from "./landing/Entreprises";
@@ -18,7 +19,13 @@ import Proofs from "./landing/Proofs";
 import Footer from "./landing/Footer";
 
 /** Passé depuis `app/page.tsx` (RSC) pour conserver `ThreatAlert` en Server Component. */
-export default function LandingPageClient({ threatAlert }: { threatAlert: ReactNode }) {
+export default function LandingPageClient({
+  threatAlert,
+  siteCertId,
+}: {
+  threatAlert: ReactNode;
+  siteCertId?: string | null;
+}) {
   return (
     <div
       className="min-h-screen overflow-x-hidden"
@@ -30,6 +37,7 @@ export default function LandingPageClient({ threatAlert }: { threatAlert: ReactN
         <Problem />
         <QuickUnderstand />
         <Categories />
+        {siteCertId ? <BlocktrustAmbassadorBadge certId={siteCertId} /> : null}
         {threatAlert}
         <Solution />
         <Particuliers />

@@ -4,6 +4,7 @@
 
 import { Column, Hr, Link, Row, Section, Text } from '@react-email/components'
 import * as React from 'react'
+import { getBlocktrustSiteCertPublicIdSync } from '@/lib/blocktrust-site-cert'
 import { getBlocktrustBaseUrl } from '@/lib/public-verify-url'
 
 export type CertifiedEmailFooterProps = {
@@ -12,8 +13,9 @@ export type CertifiedEmailFooterProps = {
 
 export function CertifiedEmailFooter({ certId }: CertifiedEmailFooterProps) {
   const base = getBlocktrustBaseUrl()
-  const verifyHref = certId?.trim()
-    ? `${base}/verify?certId=${encodeURIComponent(certId.trim())}`
+  const resolvedCertId = certId?.trim() || getBlocktrustSiteCertPublicIdSync()
+  const verifyHref = resolvedCertId
+    ? `${base}/verify?certId=${encodeURIComponent(resolvedCertId)}`
     : null
 
   return (

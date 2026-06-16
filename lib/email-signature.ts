@@ -3,6 +3,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import { getBlocktrustSiteCertPublicId } from '@/lib/blocktrust-site-cert'
 import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 
 export async function getUserEmailSignature(userId: string): Promise<{
@@ -47,5 +48,17 @@ export async function getUserEmailSignature(userId: string): Promise<{
       certId: null,
       verifyUrl: null,
     }
+  }
+}
+
+/** Certificat ambassadeur BLOCKTRUST™ (emails plateforme / contact@blocktrust.tech). */
+export async function getBlocktrustPlatformEmailSignature(): Promise<{
+  certId: string | null
+  verifyUrl: string | null
+}> {
+  const certId = await getBlocktrustSiteCertPublicId()
+  return {
+    certId,
+    verifyUrl: certId ? buildPublicVerifyUrl(certId) : null,
   }
 }
