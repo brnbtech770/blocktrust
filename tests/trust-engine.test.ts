@@ -7,6 +7,9 @@ const prismaMock = vi.hoisted(() => ({
   verification: {
     count: vi.fn(),
   },
+  interactionSignature: {
+    count: vi.fn(),
+  },
   userTrustRelation: {
     findFirst: vi.fn(),
   },
@@ -73,6 +76,7 @@ describe('Trust Engine scoring', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     prismaMock.userTrustRelation.findFirst.mockResolvedValue(null)
+    prismaMock.interactionSignature.count.mockResolvedValue(0)
   })
 
   it('score KYC vérifié > score sans KYC', async () => {

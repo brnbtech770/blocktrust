@@ -6,6 +6,7 @@ import { checkIpReputation } from '@/lib/signals/ip-reputation'
 const prismaMock = vi.hoisted(() => ({
   certificate: { findFirst: vi.fn() },
   verification: { count: vi.fn() },
+  interactionSignature: { count: vi.fn() },
   userTrustRelation: { findFirst: vi.fn() },
 }))
 
@@ -67,6 +68,7 @@ describe('Trust Engine — signaux enrichis', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     prismaMock.verification.count.mockResolvedValue(0)
+    prismaMock.interactionSignature.count.mockResolvedValue(0)
     vi.mocked(getDomainAge).mockResolvedValue({ agedays: 400, suspicious: false })
     vi.mocked(isDisposableEmail).mockReturnValue(false)
     vi.mocked(checkIpReputation).mockResolvedValue({ score: 0, abusive: false, isp: '' })
