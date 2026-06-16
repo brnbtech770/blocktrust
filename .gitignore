@@ -33,6 +33,7 @@ agent-debug-467f2c.ndjson
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
