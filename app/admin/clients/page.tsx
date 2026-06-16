@@ -14,6 +14,12 @@ import {
 } from '@/lib/admin-revenue'
 import { Users } from 'lucide-react'
 import AdminClientsTable, { type AdminClientRow } from '@/app/admin/clients/AdminClientsTable'
+import {
+  isDiscoveryPlan,
+  isNotAnchored,
+  planAllowsPolygonAnchoring,
+  resolveEffectivePlan,
+} from '@/lib/plan-features'
 
 export const dynamic = 'force-dynamic'
 
@@ -103,7 +109,10 @@ function hasActiveBadge(cert: FlatCert | null): boolean {
   return cert.status === 'ACTIVE' || cert.status === 'ANCHORED'
 }
 
-function anchorUi(cert: FlatCert | null): {
+function anchorUi(
+  cert: FlatCert | null,
+  effectivePlan: string,
+): {
   label: string
   className: string
   icon: AdminClientRow['anchorIcon']
@@ -112,6 +121,10 @@ function anchorUi(cert: FlatCert | null): {
     return { label: 'Non', className: 'text-white/40', icon: 'x' }
   }
   const bs = cert.blockchainStatus
+  // Plan Découverte (gratuit) : jamais ancré — même si un hash legacy subsiste en base.
+  if (!planAllowsPolygonAnchoring(effectivePlan) || isNotAnchored(bs)) {
+    return { label: 'Non ancré', className: 'text-white/45', icon: 'x' }
+  }
   const anchored = bs === 'ANCHORED' || Boolean(cert.polygonTxHash || cert.txHash)
   if (anchored) {
     return { label: 'Ancré', className: 'text-emerald-400', icon: 'check' }
@@ -187,11 +200,18 @@ export default async function AdminClientsPage({
       const subActive = u.subscription?.status === 'active'
       const period = getBillingPeriodFromStripePriceId(u.subscription?.stripePriceId ?? null, yearlyIds)
       const isYearly = period === 'YEARLY'
-      const planCode = u.subscription?.plan ?? '—'
-      const billingLabel =
-        planCode !== '—' && u.subscription ? formatPlanBillingLabel(planCode, isYearly) : '—'
+      const effectivePlan = resolveEffectivePlan({
+        subscription: u.subscription,
+        email: u.email,
+      })
+      const planCode = effectivePlan
+      const billingLabel = isDiscoveryPlan(effectivePlan)
+        ? 'Gratuit'
+        : u.subscription?.plan
+          ? formatPlanBillingLabel(planCode, isYearly)
+          : '—'
       const b = badgeUi(cert)
-      const a = anchorUi(cert)
+      const a = anchorUi(cert, effectivePlan)
       const k = kycLabel(u.kycStatus)
       const displayName = u.name?.trim() || u.email?.split('@')[0] || '—'
       const initials = (() => {
