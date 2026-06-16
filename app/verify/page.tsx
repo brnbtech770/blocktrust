@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   Check,
@@ -159,6 +159,11 @@ function VerifyContent() {
   const [certifiedEmails, setCertifiedEmails] = useState<string[]>([]);
   const [certifiedPhones, setCertifiedPhones] = useState<string[]>([]);
   const [manualIdInput, setManualIdInput] = useState("");
+  /** ID soumis pour vérification (local — reset immédiat sans attendre router.replace). */
+  const [submittedCertId, setSubmittedCertId] = useState("");
+  /** Token rotatif vt= soumis (local). */
+  const [submittedVt, setSubmittedVt] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const [verifyErrorMessage, setVerifyErrorMessage] = useState<string | null>(null);
   const [vaultMatchBanner, setVaultMatchBanner] = useState<{
     inOrganization: boolean;
@@ -177,16 +182,28 @@ function VerifyContent() {
     const raw = manualIdInput.trim();
     if (!raw) return;
 
+    setVerdict(null);
+    setVerifyErrorMessage(null);
+    setVaultMatchBanner(null);
+    setTrustEngine(null);
+    setIdentityVerified(false);
+    setContactAddState("idle");
+    setContactAddMessage(null);
+
     const vt = extractVtFromUrl(raw);
     if (vt) {
-      window.location.href = `/verify?vt=${encodeURIComponent(vt)}`;
+      setSubmittedCertId("");
+      setSubmittedVt(vt);
+      router.replace(`/verify?vt=${encodeURIComponent(vt)}`);
       return;
     }
 
     const id = extractCertId(raw);
     if (!id) return;
 
-    window.location.href = `/verify?certId=${encodeURIComponent(id)}`;
+    setSubmittedVt("");
+    setSubmittedCertId(id);
+    router.replace(`/verify?certId=${encodeURIComponent(id)}`);
   };
 
   const context = useMemo(
@@ -199,6 +216,20 @@ function VerifyContent() {
     }),
     []
   );
+
+  useEffect(() => {
+    if (certIdQuery) {
+      setManualIdInput(certIdQuery);
+      setSubmittedCertId(certIdQuery);
+      setSubmittedVt("");
+    } else if (vtQuery) {
+      setSubmittedVt(vtQuery);
+      setSubmittedCertId("");
+    } else if (!certIdQuery && !vtQuery) {
+      setSubmittedCertId("");
+      setSubmittedVt("");
+    }
+  }, [certIdQuery, vtQuery]);
 
   useEffect(() => {
     const directRaw = sp.get("token")?.trim() ?? "";
@@ -229,8 +260,10 @@ function VerifyContent() {
     }
   }, [sp, certIdQuery, vtQuery]);
 
+  const activeVt = submittedVt || vtQuery;
+
   useEffect(() => {
-    if (!vtQuery) {
+    if (!activeVt) {
       setResolvedVtCertId(null);
       setVtResolveStatus("idle");
       return;
@@ -246,7 +279,7 @@ function VerifyContent() {
     void (async () => {
       try {
         const res = await fetch(
-          `/api/verify/resolve-token?vt=${encodeURIComponent(vtQuery)}`,
+          `/api/verify/resolve-token?vt=${encodeURIComponent(activeVt)}`,
           { signal: ac.signal },
         );
         clearTimeout(timeoutId);
@@ -270,13 +303,13 @@ function VerifyContent() {
       clearTimeout(timeoutId);
       ac.abort();
     };
-  }, [vtQuery]);
+  }, [activeVt]);
 
-  const certIdForVerify = vtQuery
+  const certIdForVerify = activeVt
     ? vtResolveStatus === "ok" && resolvedVtCertId
       ? resolvedVtCertId
       : ""
-    : certIdQuery;
+    : submittedCertId;
 
   useEffect(() => {
     const trimmed = token.trim();
@@ -466,16 +499,27 @@ function VerifyContent() {
   const activeQuery = Boolean(
     hasValidToken ||
       certIdForVerify ||
-      (vtQuery && (vtResolveStatus === "loading" || vtResolveStatus === "ok")),
+      (activeVt && (vtResolveStatus === "loading" || vtResolveStatus === "ok")),
   );
-  const showManualVerifier =
+
+  const tokenFromUrl = sp.get("token")?.trim() ?? "";
+  const showIncompleteTokenError =
     !hasValidToken &&
-    !certIdForVerify &&
-    !(vtQuery && vtResolveStatus === "loading");
+    !certIdQuery &&
+    !vtQuery &&
+    !submittedCertId &&
+    !submittedVt &&
+    !verdict &&
+    tokenFromUrl.length > 0 &&
+    tokenFromUrl.length <= 10;
 
   const resetVerification = () => {
     setVerdict(null);
     setManualIdInput("");
+    setSubmittedCertId("");
+    setSubmittedVt("");
+    setResolvedVtCertId(null);
+    setVtResolveStatus("idle");
     setEntityName(null);
     setCertifiedAt(null);
     setWalletAddress(null);
@@ -492,6 +536,9 @@ function VerifyContent() {
     setVerifyErrorMessage(null);
     setVaultMatchBanner(null);
     router.replace("/verify");
+    window.requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
   };
 
   return (
@@ -510,13 +557,14 @@ function VerifyContent() {
       </header>
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col items-center px-4 pb-16 pt-2 sm:max-w-lg sm:pt-4">
-        {showManualVerifier ? (
+        {!hasValidToken ? (
           <div className="w-full shrink-0">
             <p className="mb-3 text-center text-xs text-white/45">
-              Vérifier un badge manuellement
+              Vérifier un badge
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
               <input
+                ref={inputRef}
                 type="text"
                 placeholder="URL ou ID du badge…"
                 aria-label="URL ou identifiant du badge à vérifier"
@@ -538,20 +586,20 @@ function VerifyContent() {
           </div>
         ) : null}
 
-        {!hasValidToken && !certIdQuery && !vtQuery && (
+        {showIncompleteTokenError ? (
           <div className="mx-auto mt-10 max-w-md text-center">
             <ShieldAlert className="mx-auto mb-4 h-10 w-10 text-[#00d4ff]/50" aria-hidden />
             <p className="font-syne text-lg text-[#00d4ff]/90">
               INVALIDE — Lien incomplet
             </p>
             <p className="mt-2 text-sm leading-relaxed text-white/45">
-              Aucun jeton sécurisé n&apos;a été fourni dans l&apos;URL. Scannez le QR code officiel depuis un message
-              certifié BLOCKTRUST™ ou ouvrez le lien reçu de votre interlocuteur.
+              Le jeton de vérification dans l&apos;URL est invalide ou tronqué. Scannez le QR code officiel depuis un
+              message certifié BLOCKTRUST™ ou saisissez l&apos;URL / l&apos;identifiant du badge ci-dessus.
             </p>
           </div>
-        )}
+        ) : null}
 
-        {vtQuery && vtResolveStatus === "error" ? (
+        {activeVt && vtResolveStatus === "error" ? (
           <div className="mx-auto mt-10 max-w-md text-center">
             <Clock className="mx-auto mb-4 h-10 w-10 text-[#f59e0b]/70" aria-hidden />
             <p className="font-syne text-lg text-[#f59e0b]">
@@ -575,7 +623,7 @@ function VerifyContent() {
 
         {(hasValidToken ||
           certIdForVerify ||
-          (vtQuery && vtResolveStatus === "loading")) &&
+          (activeVt && vtResolveStatus === "loading")) &&
         !verdict ? (
           <div className="mt-12 flex flex-col items-center gap-4">
             <div
