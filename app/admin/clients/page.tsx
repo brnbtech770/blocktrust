@@ -60,6 +60,7 @@ function formatPlanBillingLabel(planCode: string, isYearly: boolean): string {
 }
 
 type FlatCert = {
+  id: string
   status: string
   blockchainStatus: string
   polygonTxHash: string | null
@@ -70,6 +71,7 @@ type FlatCert = {
 function flattenCerts(
   entities: {
     certificates: {
+      id: string
       status: string
       blockchainStatus: string
       polygonTxHash: string | null
@@ -182,6 +184,7 @@ export default async function AdminClientsPage({
             take: 1,
             orderBy: { issuedAt: 'desc' },
             select: {
+              id: true,
               status: true,
               blockchainStatus: true,
               polygonTxHash: true,
@@ -212,6 +215,12 @@ export default async function AdminClientsPage({
           : '—'
       const b = badgeUi(cert)
       const a = anchorUi(cert, effectivePlan)
+      const canAnchorCertificate =
+        cert !== null &&
+        (cert.status === 'ACTIVE' || cert.status === 'ANCHORED') &&
+        cert.blockchainStatus !== 'ANCHORED' &&
+        !isNotAnchored(cert.blockchainStatus) &&
+        planAllowsPolygonAnchoring(effectivePlan)
       const k = kycLabel(u.kycStatus)
       const displayName = u.name?.trim() || u.email?.split('@')[0] || '—'
       const initials = (() => {
@@ -235,6 +244,8 @@ export default async function AdminClientsPage({
         anchorLabel: a.label,
         anchorClassName: a.className,
         anchorIcon: a.icon,
+        certificateId: cert?.id ?? null,
+        canAnchorCertificate,
         planCode,
         billingLabel,
         periodLabel: period === 'YEARLY' ? 'Annuel' : period === 'MONTHLY' ? 'Mensuel' : '—',

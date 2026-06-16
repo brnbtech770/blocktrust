@@ -7,7 +7,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
-import { CheckCircle2, Clock, XCircle, Eye, CreditCard, Mail, ExternalLink } from 'lucide-react'
+import { CheckCircle2, Clock, Link2, XCircle, Eye, CreditCard, Mail, ExternalLink } from 'lucide-react'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 import { VALID_PLAN_CODES, type AdminPlanCode } from '@/lib/admin-update-user-plan'
 import { getPlanDisplayLabel } from '@/lib/plan-features'
@@ -23,6 +23,8 @@ export type AdminClientRow = {
   anchorLabel: string
   anchorClassName: string
   anchorIcon: 'check' | 'clock' | 'x'
+  certificateId: string | null
+  canAnchorCertificate: boolean
   planCode: string
   billingLabel: string
   periodLabel: string
@@ -48,6 +50,38 @@ export default function AdminClientsTable({ rows }: { rows: AdminClientRow[] }) 
   const [selectedPlan, setSelectedPlan] = useState<AdminPlanCode>('ESSENTIEL')
   const [planError, setPlanError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [anchoringCertId, setAnchoringCertId] = useState<string | null>(null)
+
+  async function anchorCertificate(certificateId: string) {
+    setAnchoringCertId(certificateId)
+    try {
+      const res = await fetch('/api/admin/anchor-certificate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ certificateId }),
+      })
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string
+        txHash?: string
+        polygonScanUrl?: string
+        alreadyAnchored?: boolean
+      }
+      if (!res.ok) {
+        setToast(typeof data.error === 'string' ? data.error : 'Ancrage impossible')
+        window.setTimeout(() => setToast(null), 5000)
+        return
+      }
+      setToast(
+        data.alreadyAnchored
+          ? 'Certificat déjà ancré.'
+          : `Ancré sur Polygon — TX ${data.txHash?.slice(0, 10) ?? ''}…`,
+      )
+      startTransition(() => router.refresh())
+      window.setTimeout(() => setToast(null), 5000)
+    } finally {
+      setAnchoringCertId(null)
+    }
+  }
 
   async function updatePlan() {
     if (!planUser) return
@@ -134,10 +168,24 @@ export default function AdminClientsTable({ rows }: { rows: AdminClientRow[] }) 
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${r.anchorClassName}`}>
-                    <AnchorIcon kind={r.anchorIcon} />
-                    {r.anchorLabel}
-                  </span>
+                  <div className="flex flex-col items-start gap-1.5">
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${r.anchorClassName}`}>
+                      <AnchorIcon kind={r.anchorIcon} />
+                      {r.anchorLabel}
+                    </span>
+                    {r.canAnchorCertificate && r.certificateId ? (
+                      <button
+                        type="button"
+                        onClick={() => void anchorCertificate(r.certificateId!)}
+                        disabled={pending || anchoringCertId === r.certificateId}
+                        className="inline-flex items-center gap-1 rounded-md border border-[#00d4ff]/35 bg-[#00d4ff]/10 px-2 py-0.5 text-[10px] font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/20 disabled:pointer-events-none disabled:opacity-50"
+                        title="Ancrer sur Polygon Mainnet"
+                      >
+                        <Link2 className="h-3 w-3 shrink-0" aria-hidden />
+                        {anchoringCertId === r.certificateId ? 'Ancrage…' : 'Ancrer'}
+                      </button>
+                    ) : null}
+                  </div>
                 </td>
                 <td className="px-4 py-3 font-mono text-xs text-white/90">{r.planCode}</td>
                 <td className="px-4 py-3">
