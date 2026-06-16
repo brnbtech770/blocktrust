@@ -4,6 +4,7 @@ import { ExternalLink, Pin } from "lucide-react"
 import { prisma } from "@/app/lib/db"
 import Navbar from "@/app/components/landing/Navbar"
 import Footer from "@/app/components/landing/Footer"
+import { ThreatRelevanceBadge, ThreatSourceBadge } from "@/app/components/menaces/ThreatArticleBadges"
 
 export const dynamic = "force-dynamic"
 
@@ -13,11 +14,12 @@ export const metadata: Metadata = {
     "Actualités courte sécurité numérique (sources CERT-FR, Cybermalveillance, ZATAZ) — résumées pour vous.",
 }
 
-function sourceBadgeLabel(source: string): string {
-  if (source === "CERT_FR") return "CERT-FR"
-  if (source === "CYBERMALVEILLANCE") return "Cybermalveillance.gouv"
-  if (source === "ZATAZ") return "ZATAZ"
-  return source
+function formatArticleDate(date: Date): string {
+  return date.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
 }
 
 const featuredArticles = [
@@ -111,6 +113,9 @@ export default async function MenacesPage() {
                     Épinglé
                   </span>
                   <span className="text-xs text-white/30">{article.source}</span>
+                  <time dateTime={article.fetchedAt.toISOString()} className="text-[11px] text-white/40">
+                    {formatArticleDate(article.fetchedAt)}
+                  </time>
                 </div>
 
                 <h3 className="font-syne mb-2 text-sm font-semibold text-white transition group-hover:text-[#00d4ff]">
@@ -150,14 +155,8 @@ export default async function MenacesPage() {
                 className="rounded-2xl border border-[#00d4ff]/18 bg-[#0d1f3c]/95 p-5 sm:p-6"
               >
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded-md border border-[#BDA76B]/35 bg-[#BDA76B]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#BDA76B]">
-                    {sourceBadgeLabel(a.source)}
-                  </span>
-                  {a.relevanceScore > 0 && (
-                    <span className="rounded-md border border-[#00d4ff]/35 bg-[#00d4ff]/10 px-2 py-0.5 font-mono text-[10px] text-[#00d4ff]">
-                      Pertinence {a.relevanceScore}/100
-                    </span>
-                  )}
+                  <ThreatSourceBadge source={a.source} />
+                  <ThreatRelevanceBadge relevanceScore={a.relevanceScore} />
                   {a.publishedAt && (
                     <time dateTime={a.publishedAt.toISOString()} className="text-[11px] text-white/40">
                       {a.publishedAt.toLocaleDateString("fr-FR", {
