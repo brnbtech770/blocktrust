@@ -15,6 +15,7 @@ import {
   Lock,
   LayoutDashboard,
   Puzzle,
+  FileSignature,
 } from 'lucide-react'
 import { isChromeExtensionStoreUrlReady } from '@/lib/chrome-extension'
 
@@ -31,6 +32,7 @@ const iconMap = {
   Palette,
   Lock,
   Puzzle,
+  FileSignature,
 } as const
 
 export type SidebarItem = {

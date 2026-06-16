@@ -126,6 +126,7 @@ export default async function DashboardSidebar() {
         items: [
           { name: wording.contactsLabel, href: '/dashboard/entities', icon: 'Building' },
           trustCircleItem,
+          { name: 'Signatures BIS', href: '/dashboard/bis', icon: 'FileSignature' as const },
           ...(showB2BOrgVault
             ? [
                 {
