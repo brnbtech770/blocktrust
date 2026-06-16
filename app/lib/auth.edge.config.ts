@@ -14,9 +14,9 @@ export const googleProvider =
     ? GoogleProvider({
         clientId,
         clientSecret,
-        // Même email (magic link / credentials puis Google) : lier le compte au lieu de OAuthAccountNotLinked.
+        // Opt-in explicite uniquement — false par défaut (sécurité account takeover).
         allowDangerousEmailAccountLinking:
-          process.env.ALLOW_DANGEROUS_EMAIL_LINKING !== "false",
+          process.env.ALLOW_DANGEROUS_EMAIL_LINKING === "true",
       })
     : null;
 
