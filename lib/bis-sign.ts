@@ -6,8 +6,8 @@ import { randomBytes } from 'crypto'
 import { SignJWT, jwtVerify } from 'jose'
 import { prisma } from '@/app/lib/db'
 import {
-  importEs256PrivateKeyFromEnv,
-  importEs256PublicKeyFromEnv,
+  importJwtPrivateKeyFromEnv,
+  importJwtPublicKeyFromEnv,
 } from '@/lib/jwt-pem'
 import {
   BIS_DEFAULT_TTL_SECONDS,
@@ -21,7 +21,6 @@ import { resolveEffectivePlan } from '@/lib/plan-features'
 import { isInternalAccount } from '@/lib/admin-utils'
 
 const BIS_ISSUER = 'blocktrust.tech'
-const ES256 = 'ES256' as const
 
 export interface BisPayload {
   iss: string
@@ -193,6 +192,24 @@ export class BisSignError extends Error {
   }
 }
 
+function mapPrismaSignError(error: unknown): BisSignError | null {
+  if (
+    error &&
+    typeof error === 'object' &&
+    'code' in error &&
+    typeof (error as { code: unknown }).code === 'string'
+  ) {
+    const code = (error as { code: string }).code
+    if (code === 'P2021') {
+      return new BisSignError(
+        'Table BIS absente — exécutez prisma migrate deploy sur la base de production',
+        503,
+      )
+    }
+  }
+  return null
+}
+
 export async function createBisSignature(
   input: CreateBisSignatureInput,
 ): Promise<CreateBisSignatureResult> {
@@ -219,18 +236,30 @@ export async function createBisSignature(
     jti,
   }
 
-  const privateKey = await importEs256PrivateKeyFromEnv(
-    process.env.BLOCKTRUST_JWT_PRIVATE_KEY,
-  )
+  let privateKeyMaterial: Awaited<ReturnType<typeof importJwtPrivateKeyFromEnv>>
+  try {
+    privateKeyMaterial = await importJwtPrivateKeyFromEnv(
+      process.env.BLOCKTRUST_JWT_PRIVATE_KEY,
+    )
+  } catch (keyErr) {
+    const msg =
+      keyErr instanceof Error ? keyErr.message : 'Clé JWT invalide'
+    throw new BisSignError(
+      msg.includes('absente')
+        ? 'Configuration serveur : BLOCKTRUST_JWT_PRIVATE_KEY absente'
+        : `Configuration serveur : clé JWT invalide (${msg})`,
+      500,
+    )
+  }
 
   const signature = await new SignJWT({ ...payload })
-    .setProtectedHeader({ alg: ES256, typ: 'JWT' })
+    .setProtectedHeader({ alg: privateKeyMaterial.alg, typ: 'JWT' })
     .setIssuer(BIS_ISSUER)
     .setSubject(input.senderCertId)
     .setIssuedAt(now)
     .setExpirationTime(exp)
     .setJti(jti)
-    .sign(privateKey)
+    .sign(privateKeyMaterial.key)
 
   const expiresAt = new Date(exp * 1000)
   const bisLevel = BIS_SENSITIVE_TYPES.has(input.interactionType) ? 4 : 3
@@ -261,23 +290,30 @@ export async function createBisSignature(
     }
   }
 
-  const record = await prisma.interactionSignature.create({
-    data: {
-      senderId: input.senderId,
-      senderCertId: input.senderCertId,
-      senderEmail,
-      recipientEmail,
-      recipientCertId,
-      interactionType: input.interactionType,
-      contextLabel: input.contextLabel?.trim() || null,
-      contentHash,
-      signature,
-      signaturePayload: JSON.stringify(payload),
-      bisLevel,
-      expiresAt,
-      polygonTxHash: cert.polygonTxHash,
-    },
-  })
+  let record
+  try {
+    record = await prisma.interactionSignature.create({
+      data: {
+        senderId: input.senderId,
+        senderCertId: input.senderCertId,
+        senderEmail,
+        recipientEmail,
+        recipientCertId,
+        interactionType: input.interactionType,
+        contextLabel: input.contextLabel?.trim() || null,
+        contentHash,
+        signature,
+        signaturePayload: JSON.stringify(payload),
+        bisLevel,
+        expiresAt,
+        polygonTxHash: cert.polygonTxHash,
+      },
+    })
+  } catch (dbErr) {
+    const mapped = mapPrismaSignError(dbErr)
+    if (mapped) throw mapped
+    throw dbErr
+  }
 
   const verifyUrl = `${appBaseUrl()}/verify/bis/${record.id}`
 
@@ -296,11 +332,12 @@ export async function verifyBisSignature(
 ): Promise<VerifyBisSignatureResult> {
   let payload: Record<string, unknown>
   try {
-    const publicKey = await importEs256PublicKeyFromEnv(
+    const { key: publicKey } = await importJwtPublicKeyFromEnv(
       process.env.BLOCKTRUST_JWT_PUBLIC_KEY,
     )
     const verified = await jwtVerify(signatureJws, publicKey, {
       issuer: BIS_ISSUER,
+      algorithms: ['ES256', 'RS256'],
     })
     payload = verified.payload as Record<string, unknown>
   } catch {

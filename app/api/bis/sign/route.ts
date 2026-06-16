@@ -15,7 +15,6 @@ import {
   isValidContentHash,
   normalizeEmail,
 } from '@/lib/bis-access'
-import { btErrorDevDetails } from '@/lib/prodLog'
 
 const signBodySchema = z.object({
   recipientEmail: z.string().email(),
@@ -23,6 +22,20 @@ const signBodySchema = z.object({
   contextLabel: z.string().max(200).optional(),
   contentHash: z.string().min(64).max(64),
 })
+
+function safeSignErrorMessage(error: unknown): string {
+  if (error instanceof BisSignError) return error.message
+  if (error instanceof Error) {
+    if (error.message.includes('Invalid key type')) {
+      return 'Configuration serveur : BLOCKTRUST_JWT_PRIVATE_KEY incompatible (RSA attendu RS256, EC attendu ES256 — vérifiez le format PEM sur Vercel)'
+    }
+    if (error.message.includes('PEM attendu') || error.message.includes('absente')) {
+      return `Configuration serveur : ${error.message}`
+    }
+    return error.message
+  }
+  return 'Erreur inconnue'
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -88,13 +101,11 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (error) {
+    console.error('[BIS] Sign error:', error)
     if (error instanceof BisSignError) {
       return NextResponse.json({ error: error.message }, { status: error.status })
     }
-    btErrorDevDetails(error, 'BIS sign error')
-    return NextResponse.json(
-      { error: 'Erreur lors de la signature BIS' },
-      { status: 500 },
-    )
+    const message = safeSignErrorMessage(error)
+    return NextResponse.json({ error: message || 'Erreur inconnue' }, { status: 500 })
   }
 }
