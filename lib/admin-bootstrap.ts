@@ -3,9 +3,11 @@
 // ============================================================
 
 import crypto from 'crypto'
+import { SignJWT } from 'jose'
 import { prisma } from '@/app/lib/db'
 import { getAdminEmailList, getAllInternalEmails, isDashboardAdmin, isInternalAccount } from '@/lib/admin-utils'
 import { syncInternalAccountKycByUserId } from '@/lib/internal-kyc-verified'
+import { importEs256PrivateKeyFromEnv } from '@/lib/jwt-pem'
 
 async function upsertMutualAdminEdge(fromUserId: string, toUserId: string): Promise<void> {
   await prisma.userTrustRelation
@@ -39,10 +41,37 @@ function splitDisplayName(userName: string): { firstName: string; lastName: stri
   return { firstName: parts[0], lastName: parts.slice(1).join(' ') }
 }
 
+async function signBadgeJwt(params: {
+  publicId: string
+  entityId: string
+  userId: string
+  jti: string
+}): Promise<string | null> {
+  try {
+    const privateKey = await importEs256PrivateKeyFromEnv(process.env.BLOCKTRUST_JWT_PRIVATE_KEY)
+    return await new SignJWT({
+      sub: params.publicId,
+      entityId: params.entityId,
+      userId: params.userId,
+      purpose: 'badge',
+    })
+      .setProtectedHeader({ alg: 'ES256', typ: 'JWT' })
+      .setIssuedAt()
+      .setJti(params.jti)
+      .setIssuer('blocktrust')
+      .setAudience('blocktrust.verify')
+      .setExpirationTime(Math.floor(Date.now() / 1000) + 10 * 365 * 24 * 3600)
+      .sign(privateKey)
+  } catch (e) {
+    console.error('ensureBadgeSignature JWT skipped:', e)
+    return null
+  }
+}
+
 export async function ensureBadgeSignature(
   certificateId: string,
   userId: string
-): Promise<void> {
+): Promise<{ jwtStored: boolean }> {
   const existing = await prisma.signature
     .findFirst({
       where: {
@@ -52,7 +81,9 @@ export async function ensureBadgeSignature(
     })
     .catch(() => null)
 
-  if (existing) return
+  if (existing?.signature) {
+    return { jwtStored: true }
+  }
 
   const cert = await prisma.certificate
     .findUnique({
@@ -61,43 +92,37 @@ export async function ensureBadgeSignature(
     })
     .catch(() => null)
 
-  if (!cert) return
+  if (!cert) return { jwtStored: false }
 
   const publicId = cert.publicId ?? cert.id
   const contextHash = crypto.createHash('sha256').update(`badge:${certificateId}`).digest('hex')
-  let jti: string = crypto.randomUUID()
-  let signatureJwt: string | undefined
+  const jti = existing?.jti ?? crypto.randomUUID()
+  const signatureJwt = await signBadgeJwt({
+    publicId,
+    entityId: cert.entityId,
+    userId,
+    jti,
+  })
+  const effectiveJti = signatureJwt ? jti : publicId
 
-  try {
-    const privateKeyPem = (process.env.BLOCKTRUST_JWT_PRIVATE_KEY ?? '').replace(/\\n/g, '\n')
-    if (privateKeyPem.includes('BEGIN PRIVATE KEY') || privateKeyPem.includes('BEGIN EC PRIVATE KEY')) {
-      const { SignJWT, importPKCS8 } = await import('jose')
-      const alg = privateKeyPem.includes('BEGIN RSA PRIVATE KEY') ? 'RS256' : 'ES256'
-      const privateKey = await importPKCS8(privateKeyPem, alg)
-
-      signatureJwt = await new SignJWT({
-        sub: publicId,
-        entityId: cert.entityId,
-        userId,
-        purpose: 'badge',
+  if (existing) {
+    await prisma.signature
+      .update({
+        where: { id: existing.id },
+        data: {
+          signature: signatureJwt,
+          jti: effectiveJti,
+          contextHash,
+        },
       })
-        .setProtectedHeader({ alg, typ: 'JWT' })
-        .setIssuedAt()
-        .setJti(jti)
-        .setIssuer('blocktrust')
-        .setAudience('blocktrust.verify')
-        .setExpirationTime(Math.floor(Date.now() / 1000) + 10 * 365 * 24 * 3600)
-        .sign(privateKey)
-    }
-  } catch (e) {
-    console.error('ensureBadgeSignature JWT skipped:', e)
-    jti = publicId
+      .catch(() => null)
+    return { jwtStored: Boolean(signatureJwt) }
   }
 
   await prisma.signature
     .create({
       data: {
-        jti,
+        jti: effectiveJti,
         certificateId,
         entityId: cert.entityId,
         purpose: 'badge',
@@ -109,6 +134,7 @@ export async function ensureBadgeSignature(
     .catch(() => null)
 
   console.log(`  Signature badge créée pour cert ${certificateId}`)
+  return { jwtStored: Boolean(signatureJwt) }
 }
 
 /**

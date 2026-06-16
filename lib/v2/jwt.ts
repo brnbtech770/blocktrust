@@ -2,17 +2,14 @@
  * © 2026 BRNB TECH — BLOCKTRUST™ (marque déposée INPI n°5253718).
  * Tous droits réservés. Code propriétaire — reproduction interdite.
  */
-import { SignJWT, jwtVerify, importPKCS8, importSPKI } from "jose";
+import { SignJWT, jwtVerify } from "jose";
+import {
+  importEs256PrivateKeyFromEnv,
+  importEs256PublicKeyFromEnv,
+  normalizeJwtPemFromEnv,
+} from "@/lib/jwt-pem";
 
 const ALG = "ES256"; // Simple default. You can switch to Ed25519 later.
-
-function requiredEnv(name: string) {
-  const v = process.env[name];
-  if (!v) {
-    throw new Error(`Missing required environment variable: ${name}. Please configure it in your .env file.`);
-  }
-  return v;
-}
 
 /**
  * Requires:
@@ -21,8 +18,7 @@ function requiredEnv(name: string) {
  */
 export async function signToken(payload: Record<string, unknown>, expiresInSeconds: number) {
   try {
-    const privateKeyPem = requiredEnv("BLOCKTRUST_JWT_PRIVATE_KEY").replace(/\\n/g, "\n");
-    const privateKey = await importPKCS8(privateKeyPem, ALG);
+    const privateKey = await importEs256PrivateKeyFromEnv(process.env.BLOCKTRUST_JWT_PRIVATE_KEY);
 
     const now = Math.floor(Date.now() / 1000);
     return await new SignJWT(payload)
@@ -43,8 +39,7 @@ export async function signToken(payload: Record<string, unknown>, expiresInSecon
 
 export async function verifyToken(token: string) {
   try {
-    const publicKeyPem = requiredEnv("BLOCKTRUST_JWT_PUBLIC_KEY").replace(/\\n/g, "\n");
-    const publicKey = await importSPKI(publicKeyPem, ALG);
+    const publicKey = await importEs256PublicKeyFromEnv(process.env.BLOCKTRUST_JWT_PUBLIC_KEY);
     const { payload } = await jwtVerify(token, publicKey, {
       issuer: "blocktrust",
       audience: "blocktrust.verify",
@@ -57,4 +52,9 @@ export async function verifyToken(token: string) {
     const message = error instanceof Error ? error.message : "Unknown error";
     throw new Error(`Failed to verify token: ${message}`);
   }
+}
+
+/** @internal tests — lecture PEM normalisée sans logger la clé. */
+export function normalizeJwtPrivateKeyPemForTests(raw: string | undefined): string {
+  return normalizeJwtPemFromEnv(raw);
 }

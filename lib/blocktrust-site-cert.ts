@@ -274,3 +274,33 @@ export async function anchorBlocktrustSiteCertificate(
     explorerUrl: anchor.explorerUrl,
   }
 }
+
+export type RepairBlocktrustSiteAmbassadorResult = EnsureBlocktrustSiteResult & {
+  signatureJwtStored: boolean
+  anchor: AnchorBlocktrustSiteResult | null
+  anchorSkipped: boolean
+}
+
+/**
+ * Réparation complète ambassadeur (entity + cert + signature + ancrage).
+ * À exécuter sur l'environnement cible (ex. POST admin sur Vercel prod).
+ */
+export async function repairBlocktrustSiteAmbassador(options?: {
+  skipAnchor?: boolean
+}): Promise<RepairBlocktrustSiteAmbassadorResult> {
+  const ensured = await ensureBlocktrustSiteEntityAndCertificate()
+  const sig = await ensureBadgeSignature(ensured.certificateId, ensured.ownerUserId)
+
+  let anchor: AnchorBlocktrustSiteResult | null = null
+  const skipAnchor = options?.skipAnchor === true
+  if (!skipAnchor) {
+    anchor = await anchorBlocktrustSiteCertificate(ensured.certificateId)
+  }
+
+  return {
+    ...ensured,
+    signatureJwtStored: sig.jwtStored,
+    anchor,
+    anchorSkipped: skipAnchor,
+  }
+}
