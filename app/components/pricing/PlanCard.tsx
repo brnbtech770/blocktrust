@@ -249,7 +249,7 @@ export default function PlanCard({
       {ctaHref ? (
         <a
           href={ctaHref}
-          className="w-full rounded-[10px] px-4 py-3.5 text-center text-sm font-bold transition-all duration-200 hover:-translate-y-px hover:brightness-110"
+          className="w-full cursor-pointer rounded-[10px] px-4 py-3.5 text-center text-sm font-bold transition-all duration-200 hover:-translate-y-px hover:brightness-110"
           style={{
             background: ctaStyle.background,
             border: ctaStyle.border ?? "none",
@@ -263,7 +263,7 @@ export default function PlanCard({
           type="button"
           onClick={ctaOnClick}
           disabled={ctaDisabled || ctaLoading}
-          className="flex w-full items-center justify-center gap-2 rounded-[10px] px-4 py-3.5 text-sm font-bold transition-all duration-200 hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-[10px] px-4 py-3.5 text-sm font-bold transition-all duration-200 hover:-translate-y-px hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
           style={{
             background: ctaStyle.background,
             border: ctaStyle.border ?? "none",
@@ -298,7 +298,7 @@ export default function PlanCard({
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-expanded={open}
-            className="mt-3 flex w-full items-center justify-center gap-2 text-xs text-white/40 transition-all duration-200 hover:text-white/70"
+            className="mt-3 flex w-full cursor-pointer items-center justify-center gap-2 text-xs text-white/40 transition-all duration-200 hover:text-white/70"
           >
             <ChevronDown
               className={`h-3 w-3 shrink-0 transition-transform duration-200 ${open ? "rotate-180" : ""}`}

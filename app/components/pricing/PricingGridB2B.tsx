@@ -31,6 +31,9 @@ const ICONS: Record<string, 'person' | 'shield' | 'group' | 'building' | 'crown'
   ENTERPRISE: 'crown',
 }
 
+const ENTERPRISE_MAILTO =
+  'mailto:commercial@blocktrust.tech?subject=Demande%20d%27information%20Enterprise'
+
 function mapFeatures(plan: PlanB2B): PlanCardFeature[] {
   return plan.features.map((f) => ({ label: f.label, included: f.included }))
 }
@@ -94,7 +97,7 @@ function SeatSelector({
       </p>
       <p className="mt-1 text-center text-[11px] text-white/35">
         Plus de {TEAM_SEATS_MAX} utilisateurs ?{' '}
-        <a href="mailto:commercial@blocktrust.tech" className="text-bt-cyan underline-offset-2 hover:underline">
+        <a href={ENTERPRISE_MAILTO} className="text-bt-cyan underline-offset-2 hover:underline">
           Parler à un expert
         </a>
       </p>
@@ -129,7 +132,7 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
           : perSeat
           ? `À partir de ${formatPriceFr(perUnit * TEAM_SEATS_MIN)}€`
           : perUnit
-        const priceUnit = !priceInfo ? undefined : perSeat ? '/mois' : ' HT/mois'
+        const priceUnit = !priceInfo ? undefined : perSeat ? '/mois (HT)' : '/mois (HT)'
 
         const savingBadge =
           isYearly && priceInfo && 'saving' in priceInfo && priceInfo.saving
@@ -169,13 +172,13 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
                 <SeatSelector seats={teamSeats} setSeats={setTeamSeats} perUnit={perUnit} />
               ) : undefined
             }
-            cta={isEnterprise ? 'Parler à un expert' : isCurrent ? 'Plan actuel' : 'Démarrer'}
+            cta={isEnterprise ? 'Contactez-nous' : isCurrent ? 'Plan actuel' : 'Démarrer'}
             ctaStyle={CTA_STYLES[plan.id] ?? { background: '#00d4ff', color: '#0a1628' }}
             isPopular={plan.highlighted}
             icon={ICONS[plan.id] ?? 'person'}
             ctaDisabled={isCurrent}
             ctaLoading={hasPrices && loadingPlan === priceId}
-            ctaHref={isEnterprise ? 'mailto:commercial@blocktrust.tech' : undefined}
+            ctaHref={isEnterprise ? ENTERPRISE_MAILTO : undefined}
             ctaOnClick={
               isEnterprise || isCurrent
                 ? undefined

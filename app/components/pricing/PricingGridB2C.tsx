@@ -63,7 +63,6 @@ export default function PricingGridB2C({ plans, interval, currentPlan, isAuthent
       {plans.map((plan) => {
         const isCurrent = isAuthenticated && currentPlan === plan.id
 
-        // ── Plan gratuit (Découverte) — JAMAIS de checkout Stripe ──────────
         if (plan.isFree || !plan.prices) {
           return (
             <PlanCard
@@ -95,7 +94,6 @@ export default function PricingGridB2C({ plans, interval, currentPlan, isAuthent
           )
         }
 
-        // ── Plans payants ──────────────────────────────────────────────────
         const priceInfo = plan.prices[interval]
         const priceId = priceInfo?.priceId ?? ''
         const isYearly = interval === 'yearly'
@@ -107,15 +105,19 @@ export default function PricingGridB2C({ plans, interval, currentPlan, isAuthent
           isYearly && 'savingEur' in priceInfo && typeof priceInfo.savingEur === 'number'
             ? priceInfo.savingEur
             : null
-        const billedNote = isYearly ? `Paiement annuel ${formatPriceFr(priceInfo.amount)}€` : undefined
+        const billedNote = isYearly ? `Paiement annuel ${formatPriceFr(priceInfo.amount)}€ (TTC)` : undefined
         const pricePerProfile = plan.profiles > 0 ? perMonth / plan.profiles : perMonth
 
-        // Mention sous la CTA : invite vers l'autre cycle de facturation.
         const monthlyAmount = plan.prices.monthly.amount
         const yearly = plan.prices.yearly
         const ctaMention = isYearly
-          ? `Ou démarrer à ${formatPriceFr(monthlyAmount)}€/mois sans engagement`
-          : `Ou ${formatPriceFr(yearly.perMonth)}€/mois · paiement annuel · Économisez ${yearly.savingEur}€/an`
+          ? `Ou démarrer à ${formatPriceFr(monthlyAmount)}€/mois (TTC) sans engagement`
+          : `Ou ${formatPriceFr(yearly.perMonth)}€/mois (TTC) · paiement annuel · Économisez ${yearly.savingEur}€/an`
+
+        const profileBadge =
+          plan.profiles > 1
+            ? `${formatPriceFr(pricePerProfile)}€/mois (TTC) par profil`
+            : `${formatPriceFr(pricePerProfile)}€/mois (TTC)`
 
         return (
           <PlanCard
@@ -124,13 +126,13 @@ export default function PricingGridB2C({ plans, interval, currentPlan, isAuthent
             name={plan.name}
             description={DESCRIPTIONS[plan.id] ?? ''}
             price={perMonth}
-            priceUnit="/mois TTC"
+            priceUnit="/mois (TTC)"
             savingBadge={savingEur ? `Économisez ${savingEur}€/an` : undefined}
             billedNote={billedNote}
             subtitle={`${plan.profiles} profil(s)`}
             badges={[
               { label: `${plan.entities} contacts enregistrables`, style: 'gold' },
-              { label: `${formatPriceFr(pricePerProfile)}€/profil`, style: 'muted' },
+              { label: profileBadge, style: 'muted' },
             ]}
             features={mapFeatures(plan)}
             accordionFeatures={plan.accordionFeatures}

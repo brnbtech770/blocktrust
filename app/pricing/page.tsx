@@ -3,21 +3,12 @@
 import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { ArrowRight } from 'lucide-react'
 import Navbar from '@/app/components/landing/Navbar'
 import Footer from '@/app/components/landing/Footer'
 import PricingToggle from '@/app/components/pricing/PricingToggle'
 import PricingGridB2C from '@/app/components/pricing/PricingGridB2C'
 import PricingGridB2B from '@/app/components/pricing/PricingGridB2B'
 import type { PlanB2C, PlanB2B } from '@/lib/pricing'
-import {
-  formatPriceFr,
-  getPlanB2BById,
-  STARTER_YEARLY_PER_USER_HT_EUR,
-} from '@/lib/pricing'
-
-const teamYearlyPerUserHt =
-  getPlanB2BById('TEAM')?.prices?.yearly?.perMonth ?? 6.99
 
 function PricingContextMessage() {
   const searchParams = useSearchParams()
@@ -223,37 +214,6 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* FAQ → page dédiée */}
-      <section className="mx-auto max-w-3xl px-4 pb-16 text-center sm:px-6 lg:px-8">
-        <a
-          href="/faq"
-          className="inline-flex items-center gap-1.5 text-sm font-medium transition-colors hover:brightness-110"
-          style={{ color: 'var(--bt-cyan)' }}
-        >
-          Des questions ? Consulter notre FAQ
-          <ArrowRight className="h-4 w-4" aria-hidden />
-        </a>
-      </section>
-
-      {/* B2B CTA */}
-      <section
-        className="mx-auto mb-16 max-w-7xl rounded-xl border px-4 py-6 text-center sm:px-6 lg:px-8"
-        style={{
-          background: 'rgba(13,31,60,0.8)',
-          borderColor: 'var(--bt-border)',
-        }}
-      >
-        <p className="mb-4" style={{ color: 'var(--bt-text)' }}>
-          Vous êtes une entreprise ? Offres B2B dès {formatPriceFr(teamYearlyPerUserHt)}€ HT/user/mois (Team, engagement annuel) — Starter dès {formatPriceFr(STARTER_YEARLY_PER_USER_HT_EUR)}€ HT/user/mois.
-        </p>
-        <a
-          href="mailto:commercial@blocktrust.tech"
-          className="inline-block py-2 px-5 rounded-lg font-medium hover:brightness-110 transition-all"
-          style={{ background: '#00d4ff', color: '#0a1628' }}
-        >
-          Nous contacter
-        </a>
-      </section>
       <Footer />
     </div>
   )
