@@ -10,6 +10,9 @@ const API_BASE = "https://blocktrust.tech";
 const verifyCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 
+/** Détection lien BIS dans le corps de l'email (Phase 2a). */
+const BIS_LINK_REGEX = /blocktrust\.tech\/verify\/bis\/([a-z0-9]+)/gi;
+
 /** Queue séquentielle avec délai entre requêtes API. */
 const scanQueue = [];
 let isProcessing = false;
@@ -134,6 +137,28 @@ function injectGlobalStyles() {
     .bt-tooltip-highlight {
       color: #00d4ff !important;
     }
+    .bt-bis-invalid {
+      background: #f59e0b !important;
+      color: #0a1628 !important;
+      border: none !important;
+    }
+    .bt-bis-sub {
+      display: block !important;
+      font-size: 9px !important;
+      font-weight: 600 !important;
+      opacity: 0.95 !important;
+      margin-top: 1px !important;
+      letter-spacing: 0.02em !important;
+    }
+    .bt-tooltip-section {
+      margin-top: 10px !important;
+      padding-top: 8px !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+    }
+    .bt-tooltip-warn {
+      color: #f59e0b !important;
+      line-height: 1.45 !important;
+    }
   `;
 
   const target = document.head || document.documentElement;
@@ -157,7 +182,7 @@ function getApiKey() {
  * @param {string} domain
  * @returns {Promise<object|null>}
  */
-async function verifySender(email, domain) {
+async function verifySender(email, domain, bisId) {
   const apiKey = await getApiKey();
   if (!apiKey) return null;
 
@@ -165,6 +190,7 @@ async function verifySender(email, domain) {
     const url = new URL(`${API_BASE}/api/extension/verify-sender`);
     url.searchParams.set("email", email);
     url.searchParams.set("domain", domain);
+    if (bisId) url.searchParams.set("bisId", bisId);
 
     const response = await fetch(url.toString(), {
       headers: {
@@ -189,8 +215,8 @@ async function verifySender(email, domain) {
  * @param {string} email
  * @param {string} domain
  */
-async function verifySenderCached(email, domain) {
-  const cacheKey = email.toLowerCase();
+async function verifySenderCached(email, domain, bisId) {
+  const cacheKey = `${email.toLowerCase()}:${bisId || "-"}`;
   const cached = verifyCache.get(cacheKey);
 
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -198,7 +224,7 @@ async function verifySenderCached(email, domain) {
     return cached.result;
   }
 
-  const result = await verifySender(email, domain);
+  const result = await verifySender(email, domain, bisId);
 
   if (result) {
     verifyCache.set(cacheKey, {
@@ -218,9 +244,9 @@ async function processQueue() {
   isProcessing = true;
 
   while (scanQueue.length > 0) {
-    const { email, domain, element } = scanQueue.shift();
+    const { email, domain, bisId, element } = scanQueue.shift();
 
-    const result = await verifySenderCached(email, domain);
+    const result = await verifySenderCached(email, domain, bisId);
     console.log("[BLOCKTRUST] Résultat API:", result);
 
     if (result) {
@@ -240,13 +266,15 @@ async function processQueue() {
  * @param {string} domain
  * @param {Element} element
  */
-function addToQueue(email, domain, element) {
-  const emailKey = email.toLowerCase();
+function addToQueue(email, domain, element, bisId) {
+  const queueKey = `${email.toLowerCase()}:${bisId || "-"}`;
 
-  const alreadyQueued = scanQueue.some((item) => item.email.toLowerCase() === emailKey);
+  const alreadyQueued = scanQueue.some(
+    (item) => `${item.email.toLowerCase()}:${item.bisId || "-"}` === queueKey,
+  );
   if (alreadyQueued) return;
 
-  const cached = verifyCache.get(emailKey);
+  const cached = verifyCache.get(queueKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     if (cached.result) {
       const badge = createVerifyBadge(cached.result);
@@ -255,7 +283,7 @@ function addToQueue(email, domain, element) {
     return;
   }
 
-  scanQueue.push({ email, domain, element });
+  scanQueue.push({ email, domain, bisId, element });
   void processQueue();
 }
 
@@ -342,13 +370,104 @@ function signalRowHtml(label, ok) {
     </div>`;
 }
 
+function fileCheckIconSvg(size = 12) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m9 15 2 2 4-4"/></svg>`;
+}
+
+function formatInteractionType(type) {
+  const map = {
+    EMAIL: "Email",
+    DOCUMENT: "Document",
+    PAYMENT_REQUEST: "Demande de paiement",
+    CONTRACT: "Contrat",
+    MARKETPLACE: "Marketplace",
+  };
+  return map[type] || type || "—";
+}
+
+function formatDateFr(iso) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "—";
+  }
+}
+
+function bisTooltipSectionHtml(result) {
+  const bis = result.bisVerification;
+  if (!result.bisSignatureDetected || !bis) return "";
+
+  if (bis.valid) {
+    return `
+      <div class="bt-tooltip-section">
+        <span class="bt-tooltip-title">Interaction signée</span>
+        <div class="bt-tooltip-row"><span>Niveau BIS : ${bis.bisLevel}</span></div>
+        <div class="bt-tooltip-row"><span>Type : ${formatInteractionType(bis.interactionType)}</span></div>
+        ${
+          bis.contextLabel
+            ? `<div class="bt-tooltip-row"><span>Contexte : ${String(bis.contextLabel).trim()}</span></div>`
+            : ""
+        }
+        <div class="bt-tooltip-row"><span>Signé le : ${formatDateFr(bis.signedAt)}</span></div>
+        <div class="bt-tooltip-row"><span>Expire le : ${formatDateFr(bis.expiresAt)}</span></div>
+        <div class="bt-tooltip-row bt-tooltip-ok" style="margin-top:6px !important;font-weight:700 !important;">
+          Signature valide ✓
+        </div>
+      </div>`;
+  }
+
+  return `
+    <div class="bt-tooltip-section">
+      <span class="bt-tooltip-title" style="color:#f59e0b !important;">Signature BIS</span>
+      <div class="bt-tooltip-row bt-tooltip-warn">
+        Signature invalide ou expirée
+        ${bis.reason ? `<br><span style="font-size:10px !important;">${bis.reason}</span>` : ""}
+      </div>
+    </div>`;
+}
+
+function bisMissingAlertHtml(result) {
+  if (!result.bisMissingAlert || !result.bisMissingAlertMessage) return "";
+  return `
+    <div class="bt-tooltip-section">
+      <span class="bt-tooltip-title" style="color:#f59e0b !important;">Alerte BIS</span>
+      <div class="bt-tooltip-row bt-tooltip-warn">${result.bisMissingAlertMessage}</div>
+    </div>`;
+}
+
+/**
+ * Extrait l'ID BIS du corps de l'email ouvert.
+ * @returns {string | null}
+ */
+function extractBisIdFromOpenEmail() {
+  const root = getOpenMessageRoot();
+  if (!root) return null;
+
+  const body = root.querySelector(".a3s.aiL");
+  if (!body) return null;
+
+  const haystack = `${body.innerHTML || ""}\n${body.textContent || ""}`;
+  BIS_LINK_REGEX.lastIndex = 0;
+  const match = BIS_LINK_REGEX.exec(haystack);
+  return match?.[1] ? match[1].toLowerCase() : null;
+}
+
 /**
  * Popup au survol — TrustScore + signaux principaux.
  * @param {HTMLElement} badge
  * @param {{ status: string, entityName?: string|null, trustScore?: number|null, signals?: { kycVerified?: boolean, inNetwork?: boolean, polygonAnchored?: boolean } }} result
  */
 function attachBadgeTooltip(badge, result) {
-  if (result.status !== "CERTIFIED") return;
+  if (result.status !== "CERTIFIED" && !(result.bisSignatureDetected && result.bisVerification)) {
+    return;
+  }
 
   badge.style.cursor = "help";
 
@@ -377,8 +496,10 @@ function attachBadgeTooltip(badge, result) {
     activeTooltip.innerHTML = `
       <span class="bt-tooltip-title">BLOCKTRUST™</span>
       ${entityLine}
-      ${trustScoreBarHtml(result.trustScore)}
-      ${rows.map((row) => signalRowHtml(row.label, row.ok)).join("")}
+      ${result.status === "CERTIFIED" ? trustScoreBarHtml(result.trustScore) : ""}
+      ${result.status === "CERTIFIED" ? rows.map((row) => signalRowHtml(row.label, row.ok)).join("") : ""}
+      ${bisTooltipSectionHtml(result)}
+      ${bisMissingAlertHtml(result)}
     `;
 
     positionTooltip(activeTooltip, badge);
@@ -464,23 +585,44 @@ function createVerifyBadge(result) {
 
   let colorStyles = "";
   let statusClass = "bt-unknown";
-  let text = "";
+  let innerHtml = "";
 
-  if (result.status === "CERTIFIED") {
+  const bis = result.bisVerification;
+  const hasValidBis = Boolean(result.bisSignatureDetected && bis?.valid);
+  const hasInvalidBis = Boolean(result.bisSignatureDetected && bis && !bis.valid);
+
+  if (hasInvalidBis) {
+    statusClass = "bt-bis-invalid";
+    colorStyles = `
+      background: #f59e0b !important;
+      color: #0a1628 !important;
+      border: none !important;
+    `;
+    innerHtml = `<span>⚠ Signature BIS invalide ou expirée</span>`;
+  } else if (result.status === "CERTIFIED") {
     statusClass = "bt-certified";
     colorStyles = `
       background: #10b981 !important;
       color: #ffffff !important;
       border: none !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      padding: 3px 8px !important;
     `;
     const score =
       typeof result.trustScore === "number" && Number.isFinite(result.trustScore)
         ? Math.round(result.trustScore)
         : null;
-    text =
+    const mainLine =
       score != null
         ? `✓ Certifié • Score ${score}/100`
         : "✓ Certifié BLOCKTRUST™";
+    const bisLine = hasValidBis
+      ? `<span class="bt-bis-sub">${fileCheckIconSvg(10)} BIS Niveau ${bis.bisLevel} — Signé</span>`
+      : result.bisMissingAlert
+        ? `<span class="bt-bis-sub" style="color:#fef3c7 !important;">⚠ Sans signature BIS</span>`
+        : "";
+    innerHtml = `<span style="display:inline-flex !important;align-items:center !important;gap:4px !important;">${mainLine}</span>${bisLine}`;
   } else if (result.status === "IN_CONTACTS") {
     statusClass = "bt-contacts";
     colorStyles = `
@@ -488,7 +630,7 @@ function createVerifyBadge(result) {
       color: #ffffff !important;
       border: none !important;
     `;
-    text = "◎ Dans vos contacts";
+    innerHtml = "◎ Dans vos contacts";
   } else if (result.status === "FRAUD") {
     statusClass = "bt-fraud";
     colorStyles = `
@@ -496,7 +638,7 @@ function createVerifyBadge(result) {
       color: #ffffff !important;
       border: none !important;
     `;
-    text = "⚠ FRAUDE";
+    innerHtml = "⚠ FRAUDE";
   } else if (result.status === "UNKNOWN") {
     statusClass = "bt-unknown";
     colorStyles = `
@@ -504,7 +646,7 @@ function createVerifyBadge(result) {
       border: 1px solid rgba(100,116,139,0.3) !important;
       color: #94a3b8 !important;
     `;
-    text = "? Non vérifié BLOCKTRUST™";
+    innerHtml = "? Non vérifié BLOCKTRUST™";
   } else {
     statusClass = "bt-unknown";
     colorStyles = `
@@ -512,14 +654,14 @@ function createVerifyBadge(result) {
       border: 1px solid rgba(100,116,139,0.3) !important;
       color: #94a3b8 !important;
     `;
-    text = "? Non certifié";
+    innerHtml = "? Non certifié";
   }
 
   badge.className = `bt-trust-badge bt-badge ${statusClass}`;
   badge.setAttribute("style", baseStyles + colorStyles);
-  badge.textContent = text;
+  badge.innerHTML = innerHtml;
 
-  if (result.status === "CERTIFIED") {
+  if (result.status === "CERTIFIED" || hasInvalidBis || hasValidBis) {
     attachBadgeTooltip(badge, result);
   } else if (result.status === "UNKNOWN") {
     attachUnknownBadgeTooltip(badge);
@@ -639,35 +781,42 @@ function hasTrustBadgeNear(el) {
   return false;
 }
 
-/** Dernier email traité (évite re-queue sur mutations DOM identiques). */
-let lastProcessedEmail = null;
+/** Dernière clé traitée (email + BIS) — évite re-queue sur mutations DOM identiques. */
+let lastProcessedKey = null;
 
 /**
  * Scan uniquement l’email ouvert — ajout à la queue si nécessaire.
  */
 function processOpenEmailSender() {
   if (!isOpenEmailView()) {
-    lastProcessedEmail = null;
+    lastProcessedKey = null;
     return;
   }
 
   const sender = extractSenderFromOpenEmail();
   if (!sender) return;
 
-  if (hasTrustBadgeNear(sender.element)) {
-    lastProcessedEmail = sender.email;
+  const bisId = extractBisIdFromOpenEmail();
+  const processKey = `${sender.email}:${bisId || ""}`;
+
+  if (hasTrustBadgeNear(sender.element) && lastProcessedKey === processKey) {
     return;
   }
 
-  if (lastProcessedEmail === sender.email && scanQueue.some((i) => i.email === sender.email)) {
+  if (
+    lastProcessedKey === processKey &&
+    scanQueue.some(
+      (i) => `${i.email}:${i.bisId || ""}` === processKey,
+    )
+  ) {
     return;
   }
 
-  console.log("[BLOCKTRUST] Sender détecté:", sender.email);
-  lastProcessedEmail = sender.email;
+  console.log("[BLOCKTRUST] Sender détecté:", sender.email, bisId ? `(BIS: ${bisId})` : "");
+  lastProcessedKey = processKey;
 
   const domain = sender.email.split("@")[1] || "";
-  addToQueue(sender.email, domain, sender.element);
+  addToQueue(sender.email, domain, sender.element, bisId);
 }
 
 /** Debounce : Gmail émet énormément de mutations */
