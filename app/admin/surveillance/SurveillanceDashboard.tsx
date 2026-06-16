@@ -36,6 +36,7 @@ type SurveillancePayload = {
     type: string
     title: string
     description: string
+    contactLabel?: string | null
     read: boolean
     createdAt: string
   }[]
@@ -457,6 +458,9 @@ export default function SurveillanceDashboard() {
                   </span>
                 </div>
                 <p className="mt-1 font-medium text-white">{a.title}</p>
+                {a.contactLabel ? (
+                  <p className="mt-0.5 text-sm font-medium text-bt-cyan/90">{a.contactLabel}</p>
+                ) : null}
                 <p className="mt-1 text-sm" style={{ color: 'var(--bt-muted)' }}>
                   {a.description}
                 </p>

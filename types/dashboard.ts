@@ -43,6 +43,10 @@ export interface VerificationEvent {
   id: string
   certificateId: string | null
   certificatePublicId: string | null
+  /** Libellé lisible « Nom (…abcd) » */
+  certificateLabel?: string | null
+  /** Code complet (tooltip) */
+  certificateFullCode?: string | null
   result: VerificationResultType
   verifiedAt: string
   country?: string | null

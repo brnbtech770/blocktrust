@@ -219,7 +219,7 @@ export default async function AdminCertificatesPage({
                 className="border-b border-white/5 transition-all hover:bg-white/[0.02]"
               >
                 <td className="px-6 py-4">
-                  <IdCell id={cert.id} display={cert.publicId ?? cert.id.slice(0, 8)} />
+                  <IdCell id={cert.id} publicId={cert.publicId} entity={cert.entity} />
                 </td>
                 <td className="px-6 py-4">
                   <p className="text-white font-medium">{getEntityName(cert.entity)}</p>

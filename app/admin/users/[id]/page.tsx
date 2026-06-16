@@ -8,6 +8,7 @@ import { notFound } from 'next/navigation'
 import type Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 import { adminUserDetailSelect } from '@/lib/prisma-admin-user'
+import { formatCertificateLabel } from '@/lib/format-certificate-label'
 
 export default async function AdminUserDetailPage({
   params,
@@ -156,7 +157,13 @@ export default async function AdminUserDetailPage({
                 </div>
                 {entity.certificates.length > 0 ? (
                   <div className="mt-3 space-y-3 border-t border-white/10 pt-3">
-                    {entity.certificates.map((certificate) => (
+                    {entity.certificates.map((certificate) => {
+                      const certLabel = formatCertificateLabel({
+                        id: certificate.id,
+                        publicId: certificate.publicId,
+                        entity,
+                      })
+                      return (
                       <div
                         key={certificate.id}
                         className="rounded-lg border p-3"
@@ -171,18 +178,17 @@ export default async function AdminUserDetailPage({
                           })}{' '}
                           · {certificate.status}
                         </p>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <p className="mb-1 text-white/40 text-xs uppercase tracking-widest">ID public</p>
-                            <p className="break-all font-mono text-white/60 text-xs">{certificate.publicId ?? '—'}</p>
-                          </div>
-                          <div>
-                            <p className="mb-1 text-white/40 text-xs uppercase tracking-widest">ID interne</p>
-                            <p className="break-all font-mono text-white/40 text-xs">{certificate.id}</p>
-                          </div>
+                        <div>
+                          <p className="mb-1 text-white/40 text-xs uppercase tracking-widest">Badge</p>
+                          <p
+                            className="font-mono text-white/70 text-xs"
+                            title={certLabel.fullCode}
+                          >
+                            {certLabel.label}
+                          </p>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 ) : null}
               </div>

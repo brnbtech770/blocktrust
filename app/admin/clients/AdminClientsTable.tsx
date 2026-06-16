@@ -24,6 +24,7 @@ export type AdminClientRow = {
   anchorClassName: string
   anchorIcon: 'check' | 'clock' | 'x'
   certificateId: string | null
+  certificateLabel: string | null
   canAnchorCertificate: boolean
   planCode: string
   billingLabel: string
@@ -173,6 +174,14 @@ export default function AdminClientsTable({ rows }: { rows: AdminClientRow[] }) 
                       <AnchorIcon kind={r.anchorIcon} />
                       {r.anchorLabel}
                     </span>
+                    {r.certificateLabel ? (
+                      <span
+                        className="font-mono text-[10px] text-white/45"
+                        title={r.certificateId ?? undefined}
+                      >
+                        {r.certificateLabel}
+                      </span>
+                    ) : null}
                     {r.canAnchorCertificate && r.certificateId ? (
                       <button
                         type="button"

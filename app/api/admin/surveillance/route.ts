@@ -6,6 +6,11 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
+import {
+  entityDisplayNameFromEntity,
+  formatCertificateLabel,
+  formatUserLabel,
+} from '@/lib/format-certificate-label'
 
 export const dynamic = 'force-dynamic'
 
@@ -156,7 +161,7 @@ export async function GET() {
       count,
     }))
 
-  const recentFraudAlerts = await prisma.adminAlert.findMany({
+  const recentFraudAlertsRaw = await prisma.adminAlert.findMany({
     where: {
       type: {
         in: ['FRAUD_ALERT', 'SUSPICIOUS_VOLUME', 'SUSPICIOUS_SCANNING'],
@@ -164,6 +169,111 @@ export async function GET() {
     },
     orderBy: { createdAt: 'desc' },
     take: 10,
+  })
+
+  const entityIds = [
+    ...new Set(
+      recentFraudAlertsRaw
+        .map((a) => a.entityId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
+  const certIds = [
+    ...new Set(
+      recentFraudAlertsRaw
+        .map((a) => {
+          if (!a.metadata || typeof a.metadata !== 'object' || Array.isArray(a.metadata)) {
+            return null
+          }
+          const cid = (a.metadata as Record<string, unknown>).certificateId
+          return typeof cid === 'string' ? cid : null
+        })
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
+  const userIds = [
+    ...new Set(
+      recentFraudAlertsRaw
+        .map((a) => a.userId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ]
+
+  const [entities, certs, users] = await Promise.all([
+    entityIds.length
+      ? prisma.entity.findMany({
+          where: { id: { in: entityIds } },
+          select: {
+            id: true,
+            entityType: true,
+            firstName: true,
+            lastName: true,
+            legalName: true,
+            tradeName: true,
+            email: true,
+          },
+        })
+      : Promise.resolve([]),
+    certIds.length
+      ? prisma.certificate.findMany({
+          where: { id: { in: certIds } },
+          select: {
+            id: true,
+            publicId: true,
+            entity: {
+              select: {
+                entityType: true,
+                firstName: true,
+                lastName: true,
+                legalName: true,
+                tradeName: true,
+                email: true,
+              },
+            },
+          },
+        })
+      : Promise.resolve([]),
+    userIds.length
+      ? prisma.user.findMany({
+          where: { id: { in: userIds } },
+          select: { id: true, name: true, email: true },
+        })
+      : Promise.resolve([]),
+  ])
+
+  const entityMap = new Map(entities.map((e) => [e.id, e]))
+  const certMap = new Map(certs.map((c) => [c.id, c]))
+  const userMap = new Map(users.map((u) => [u.id, u]))
+
+  const recentFraudAlerts = recentFraudAlertsRaw.map((a) => {
+    const entity = a.entityId ? entityMap.get(a.entityId) : undefined
+    const metaCertId =
+      a.metadata && typeof a.metadata === 'object' && !Array.isArray(a.metadata)
+        ? (a.metadata as Record<string, unknown>).certificateId
+        : null
+    const cert =
+      typeof metaCertId === 'string' ? certMap.get(metaCertId) : undefined
+    const user = a.userId ? userMap.get(a.userId) : undefined
+    const contactLabel =
+      (cert
+        ? formatCertificateLabel({
+            id: cert.id,
+            publicId: cert.publicId,
+            entity: cert.entity,
+          }).label
+        : null) ??
+      (entity ? entityDisplayNameFromEntity(entity) : null) ??
+      (user ? formatUserLabel(user) : null)
+
+    return {
+      id: a.id,
+      type: a.type,
+      title: a.title,
+      description: a.description,
+      contactLabel,
+      read: a.read,
+      createdAt: a.createdAt.toISOString(),
+    }
   })
 
   const fraudAlertsGenerated =
@@ -199,8 +309,9 @@ export async function GET() {
       type: a.type,
       title: a.title,
       description: a.description,
+      contactLabel: a.contactLabel,
       read: a.read,
-      createdAt: a.createdAt.toISOString(),
+      createdAt: a.createdAt,
     })),
     agents: {
       fraud: {

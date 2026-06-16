@@ -4,6 +4,7 @@
 
 import { prisma } from '@/app/lib/db'
 import { createAdminAlert } from '@/lib/admin-alerts'
+import { formatCertificateLabel } from '@/lib/format-certificate-label'
 
 const EVENT_SOURCE = 'eventual-anomaly-check' as const
 
@@ -27,9 +28,26 @@ export async function runEventualAnomalyCheck(certificateId: string, userId?: st
 
   const cert = await prisma.certificate.findUnique({
     where: { id: certificateId },
-    select: { entityId: true, publicId: true },
+    select: {
+      entityId: true,
+      publicId: true,
+      entity: {
+        select: {
+          entityType: true,
+          firstName: true,
+          lastName: true,
+          legalName: true,
+          tradeName: true,
+          email: true,
+        },
+      },
+    },
   })
-  const publicLabel = cert?.publicId ?? certificateId
+  const certLabel = formatCertificateLabel({
+    id: certificateId,
+    publicId: cert?.publicId,
+    entity: cert?.entity,
+  })
 
   const recentVerifs = await prisma.verification.count({
     where: {
@@ -44,7 +62,7 @@ export async function runEventualAnomalyCheck(certificateId: string, userId?: st
       await createAdminAlert({
         type: 'SUSPICIOUS_VOLUME',
         title: `Volume suspect — ${recentVerifs} scans/heure`,
-        description: `Le certificat ${publicLabel} a été scanné ${recentVerifs} fois dans la dernière heure.`,
+        description: `${certLabel.label} — ${recentVerifs} scans dans la dernière heure.`,
         entityId: cert?.entityId ?? undefined,
         userId: userId ?? undefined,
         metadata: {
@@ -75,7 +93,7 @@ export async function runEventualAnomalyCheck(certificateId: string, userId?: st
       await createAdminAlert({
         type: 'SUSPICIOUS_SCANNING',
         title: `IPs multiples — ${distinctIpCount} sources`,
-        description: `Le certificat ${publicLabel} est scanné depuis ${distinctIpCount} adresses IP distinctes en 1h — possible scan automatisé.`,
+        description: `${certLabel.label} — scanné depuis ${distinctIpCount} adresses IP distinctes en 1h (scan automatisé possible).`,
         entityId: cert?.entityId ?? undefined,
         userId: userId ?? undefined,
         metadata: {
@@ -103,7 +121,7 @@ export async function runEventualAnomalyCheck(certificateId: string, userId?: st
       await createAdminAlert({
         type: 'FRAUD_ALERT',
         title: '🚨 Fraude détectée en temps réel',
-        description: `${recentFrauds} tentative(s) de fraude détectée(s) sur le certificat ${publicLabel} dans la dernière heure.`,
+        description: `${recentFrauds} tentative(s) de fraude — ${certLabel.label} (dernière heure).`,
         entityId: cert?.entityId ?? undefined,
         userId: userId ?? undefined,
         metadata: {

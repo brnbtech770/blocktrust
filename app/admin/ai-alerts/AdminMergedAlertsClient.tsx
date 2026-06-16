@@ -19,6 +19,9 @@ export type MergedAdminAlertRow = {
   createdAt: string
   entityId: string | null
   userId: string | null
+  entityName?: string | null
+  certificateLabel?: string | null
+  contactLabel?: string | null
 }
 
 export type MergedAiAlertRow = {
@@ -36,6 +39,8 @@ export type MergedAiAlertRow = {
   entityName: string
   certificatePublicId: string | null
   certificateId: string | null
+  certificateLabel?: string | null
+  certificateFullCode?: string | null
 }
 
 export type MergedAlertTab = 'ALL' | 'FRAUD' | 'SUSPICIOUS' | 'SYSTEM' | 'KYC'
@@ -363,6 +368,11 @@ export default function AdminMergedAlertsClient({
                           </span>
                         </div>
                         <p className="font-semibold text-white">{alert.title}</p>
+                        {alert.contactLabel ? (
+                          <p className="mt-1 text-sm font-medium text-bt-cyan/90">
+                            {alert.contactLabel}
+                          </p>
+                        ) : null}
                         <p className="mt-1 text-sm" style={{ color: 'var(--bt-muted)' }}>
                           {alert.description}
                         </p>
@@ -449,8 +459,9 @@ export default function AdminMergedAlertsClient({
                         href={`/admin/certificates/${ai.certificateId}`}
                         className="text-sm hover:underline"
                         style={{ color: 'var(--bt-cyan)' }}
+                        title={ai.certificateFullCode ?? ai.certificatePublicId ?? ai.certificateId ?? undefined}
                       >
-                        {ai.certificatePublicId || ai.certificateId.slice(0, 8)} →
+                        {ai.certificateLabel ?? ai.certificatePublicId ?? ai.certificateId.slice(0, 8)} →
                       </Link>
                     </div>
                   )}

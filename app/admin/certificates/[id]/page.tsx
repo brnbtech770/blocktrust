@@ -8,6 +8,7 @@ import { notFound } from 'next/navigation'
 import CertificateActions from '@/app/components/admin/CertificateActions'
 import { getCertificateLevelDisplayLabel } from '@/lib/validationLevelDisplay'
 import { resolveEffectivePlan } from '@/lib/plan-features'
+import { formatCertificateLabel } from '@/lib/format-certificate-label'
 
 export default async function AdminCertificateDetailPage({
   params,
@@ -73,13 +74,25 @@ export default async function AdminCertificateDetailPage({
   })
   const levelLabel = getCertificateLevelDisplayLabel(certificate.level, ownerPlan)
 
+  const certDisplay = formatCertificateLabel({
+    id: certificate.id,
+    publicId: certificate.publicId,
+    entity: certificate.entity,
+    displayName: getEntityName(),
+  })
+
   return (
     <div>
       <div className="mb-8">
         <a href="/admin/certificates" className="mb-4 inline-block hover:underline" style={{ color: 'var(--bt-cyan)' }}>
           ← Retour à la liste
         </a>
-        <p style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}>ID: {certificate.publicId || certificate.id}</p>
+        <p
+          style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}
+          title={certDisplay.fullCode}
+        >
+          Badge : {certDisplay.label}
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-6 mb-6">

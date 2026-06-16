@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
+import { formatCertificateLabel } from '@/lib/format-certificate-label'
 import type { VerificationEvent } from '@/types/dashboard'
 
 export const dynamic = 'force-dynamic'
@@ -34,20 +35,47 @@ export async function GET(
         certificate: { entity: { userId } },
       },
       include: {
-        certificate: { select: { publicId: true } },
+        certificate: {
+          select: {
+            id: true,
+            publicId: true,
+            entity: {
+              select: {
+                entityType: true,
+                firstName: true,
+                lastName: true,
+                legalName: true,
+                tradeName: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { verifiedAt: 'desc' },
       take: limit,
     })
 
-    const events: VerificationEvent[] = verifications.map((v) => ({
-      id: v.id,
-      certificateId: v.certificateId,
-      certificatePublicId: v.certificate?.publicId ?? null,
-      result: v.result,
-      verifiedAt: v.verifiedAt.toISOString(),
-      country: v.country ?? undefined,
-    }))
+    const events: VerificationEvent[] = verifications.map((v) => {
+      const cert = v.certificate
+      const formatted = cert
+        ? formatCertificateLabel({
+            id: cert.id,
+            publicId: cert.publicId,
+            entity: cert.entity,
+          })
+        : null
+      return {
+        id: v.id,
+        certificateId: v.certificateId,
+        certificatePublicId: cert?.publicId ?? null,
+        certificateLabel: formatted?.label ?? null,
+        certificateFullCode: formatted?.fullCode ?? null,
+        result: v.result,
+        verifiedAt: v.verifiedAt.toISOString(),
+        country: v.country ?? undefined,
+      }
+    })
 
     return NextResponse.json(events)
   } catch (e) {

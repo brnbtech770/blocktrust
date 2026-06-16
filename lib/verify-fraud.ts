@@ -12,6 +12,11 @@ import type { Prisma } from '@prisma/client'
 import { createAdminAlert } from '@/lib/admin-alerts'
 import { sendEmailFireAndForget } from '@/lib/email'
 import { FraudAlertEmail, subject as fraudAlertCertificateSubject } from '@/emails/FraudAlertEmail'
+import {
+  entityDisplayNameFromEntity,
+  fetchCertificateLabel,
+  formatUserLabel,
+} from '@/lib/format-certificate-label'
 
 export const VERIFY_SECURITY_HEADERS = {
   'Cache-Control': 'no-store',
@@ -58,8 +63,32 @@ export async function createAdminFraudAlert(args: {
   } as const
 
   const parts: string[] = []
-  if (args.certificateId) parts.push(`Certificat ${args.certificateId}`)
-  if (args.entityId) parts.push(`Entité ${args.entityId}`)
+  if (args.certificateId) {
+    const certLabel = await fetchCertificateLabel(args.certificateId)
+    parts.push(certLabel?.label ?? `Certificat …${args.certificateId.slice(-4)}`)
+  } else if (args.entityId) {
+    const entity = await prisma.entity.findUnique({
+      where: { id: args.entityId },
+      select: {
+        entityType: true,
+        firstName: true,
+        lastName: true,
+        legalName: true,
+        tradeName: true,
+        email: true,
+      },
+    })
+    if (entity) {
+      const name = entityDisplayNameFromEntity(entity)
+      if (name) parts.push(name)
+    }
+  } else if (args.userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: args.userId },
+      select: { id: true, name: true, email: true },
+    })
+    if (user) parts.push(formatUserLabel(user))
+  }
 
   await createAdminAlert({
     type: args.type,

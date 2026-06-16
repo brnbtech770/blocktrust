@@ -24,6 +24,7 @@ import ActivityFeedSkeleton from "@/app/components/dashboard/ActivityFeedSkeleto
 import { getTrustScoreColor, getTrustScoreLabelFr } from "@/lib/trustscore";
 import { getPlanWording, resolvePlanKeyForWording } from "@/lib/plan-wording";
 import { resolveEffectivePlan } from "@/lib/plan-features";
+import { formatCertificateLabel } from "@/lib/format-certificate-label";
 
 export default async function Dashboard({
   searchParams,
@@ -180,18 +181,47 @@ export default async function Dashboard({
           certificateId: { not: null },
           certificate: { entity: { userId: user.id } },
         },
-        include: { certificate: { select: { publicId: true } } },
+        include: {
+          certificate: {
+            select: {
+              id: true,
+              publicId: true,
+              entity: {
+                select: {
+                  entityType: true,
+                  firstName: true,
+                  lastName: true,
+                  legalName: true,
+                  tradeName: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
         orderBy: { verifiedAt: 'desc' },
         take: 10,
       })
-    ).map((v) => ({
-      id: v.id,
-      certificateId: v.certificateId,
-      certificatePublicId: v.certificate?.publicId ?? null,
-      result: v.result,
-      verifiedAt: v.verifiedAt.toISOString(),
-      country: v.country ?? undefined,
-    }));
+    ).map((v) => {
+      const cert = v.certificate
+      const formatted = cert
+        ? formatCertificateLabel({
+            id: cert.id,
+            publicId: cert.publicId,
+            entity: cert.entity,
+          })
+        : null
+      return {
+        id: v.id,
+        certificateId: v.certificateId,
+        certificatePublicId: cert?.publicId ?? null,
+        certificateLabel: formatted?.label ?? null,
+        certificateFullCode: formatted?.fullCode ?? null,
+        result: v.result,
+        verifiedAt: v.verifiedAt.toISOString(),
+        country: v.country ?? undefined,
+      }
+    });
 
     return (
       <>

@@ -20,6 +20,7 @@ import {
   planAllowsPolygonAnchoring,
   resolveEffectivePlan,
 } from '@/lib/plan-features'
+import { formatCertificateLabel } from '@/lib/format-certificate-label'
 
 export const dynamic = 'force-dynamic'
 
@@ -61,6 +62,7 @@ function formatPlanBillingLabel(planCode: string, isYearly: boolean): string {
 
 type FlatCert = {
   id: string
+  publicId: string | null
   status: string
   blockchainStatus: string
   polygonTxHash: string | null
@@ -72,6 +74,7 @@ function flattenCerts(
   entities: {
     certificates: {
       id: string
+      publicId: string | null
       status: string
       blockchainStatus: string
       polygonTxHash: string | null
@@ -185,6 +188,7 @@ export default async function AdminClientsPage({
             orderBy: { issuedAt: 'desc' },
             select: {
               id: true,
+              publicId: true,
               status: true,
               blockchainStatus: true,
               polygonTxHash: true,
@@ -245,6 +249,13 @@ export default async function AdminClientsPage({
         anchorClassName: a.className,
         anchorIcon: a.icon,
         certificateId: cert?.id ?? null,
+        certificateLabel: cert
+          ? formatCertificateLabel({
+              id: cert.id,
+              publicId: cert.publicId,
+              displayName: displayName !== '—' ? displayName : undefined,
+            }).label
+          : null,
         canAnchorCertificate,
         planCode,
         billingLabel,

@@ -8,6 +8,10 @@ import {
   recentAgentAlertExists,
   writeAgentAuditLog,
 } from '@/lib/agents/agent-utils'
+import {
+  formatCertificateLabel,
+  formatUserLabel,
+} from '@/lib/format-certificate-label'
 
 const AGENT_META = { source: 'fraud-surveillance' } as const
 
@@ -60,17 +64,14 @@ export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
     if (dup) continue
 
     const entity = v.certificate?.entity
-    const displayName =
-      [entity?.firstName, entity?.lastName].filter(Boolean).join(' ') || undefined
-    const entityName =
-      entity?.tradeName ??
-      entity?.legalName ??
-      displayName ??
-      v.certificate?.publicId ??
-      v.certificateId
+    const certLabel = formatCertificateLabel({
+      id: v.certificateId,
+      publicId: v.certificate?.publicId,
+      entity: entity ?? undefined,
+    })
     await createFraudAdminAlert({
       title: 'Alerte fraude détectée',
-      description: `FRAUD_ALERT sur certificat ${v.certificate?.publicId ?? v.certificateId} (${entityName})`,
+      description: `FRAUD_ALERT — ${certLabel.label}`,
       entityId: v.certificate?.entityId ?? undefined,
       userId: v.certificate?.entity?.userId,
       decrementTrustScoreUserId: v.certificate?.entity?.userId,
@@ -104,7 +105,7 @@ export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
 
     await createFraudAdminAlert({
       title: 'Alerte fraude détectée',
-      description: `TrustScore critique (${user.trustScore}) pour l'utilisateur ${user.id.slice(0, 8)}…`,
+      description: `TrustScore critique (${user.trustScore}) — ${formatUserLabel(user)}`,
       userId: user.id,
       decrementTrustScoreUserId: user.id,
       metadata: {
@@ -145,13 +146,29 @@ export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
       select: {
         entityId: true,
         publicId: true,
-        entity: { select: { userId: true } },
+        entity: {
+          select: {
+            userId: true,
+            entityType: true,
+            firstName: true,
+            lastName: true,
+            legalName: true,
+            tradeName: true,
+            email: true,
+          },
+        },
       },
+    })
+
+    const certLabel = formatCertificateLabel({
+      id: certificateId,
+      publicId: cert?.publicId,
+      entity: cert?.entity,
     })
 
     await createFraudAdminAlert({
       title: 'Alerte fraude détectée',
-      description: `${row._count.id} vérifications échouées en 1h sur ${cert?.publicId ?? certificateId}`,
+      description: `${row._count.id} vérifications échouées en 1h — ${certLabel.label}`,
       entityId: cert?.entityId ?? undefined,
       userId: cert?.entity?.userId,
       decrementTrustScoreUserId: cert?.entity?.userId,

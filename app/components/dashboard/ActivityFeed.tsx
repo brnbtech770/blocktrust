@@ -70,6 +70,11 @@ function shortId(id: string | null): string {
   return id.length <= 10 ? id : `${id.slice(0, 6)}…${id.slice(-4)}`
 }
 
+function certificateDisplayLabel(ev: VerificationEvent): string {
+  if (ev.certificateLabel) return ev.certificateLabel
+  return shortId(ev.certificatePublicId ?? ev.certificateId)
+}
+
 /**
  * Dédupe par certificateId : une seule entrée (la plus récente) par certificat.
  * Les évènements sans certificateId sont conservés tels quels (clé id).
@@ -140,7 +145,14 @@ export default function ActivityFeed({ initialEvents = [] }: ActivityFeedProps) 
               {resultIcon(ev.result)}
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-white">
-                  Certificat <span className="font-mono" style={{ color: 'var(--bt-cyan)' }}>{shortId(ev.certificatePublicId ?? ev.certificateId)}</span>
+                  Vérification{' '}
+                  <span
+                    className="font-mono"
+                    style={{ color: 'var(--bt-cyan)' }}
+                    title={ev.certificateFullCode ?? ev.certificatePublicId ?? ev.certificateId ?? undefined}
+                  >
+                    {certificateDisplayLabel(ev)}
+                  </span>
                   {' · '}
                   <span
                     style={{

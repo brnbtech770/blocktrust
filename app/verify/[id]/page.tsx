@@ -34,6 +34,7 @@ import {
 } from '@/lib/certified-contact'
 import { formatPriceFr, ESSENTIEL_MONTHLY_EUR } from '@/lib/pricing'
 import { getValidationLevelLabel } from '@/lib/validationLevelDisplay'
+import { formatCertificateLabel } from '@/lib/format-certificate-label'
 
 export const dynamic = 'force-dynamic'
 
@@ -761,6 +762,12 @@ function ValidView({
   trustedCircleUncertDomainWarn?: boolean
 }) {
   const name = entityDisplayName(entity)
+  const certRef = formatCertificateLabel({
+    id: certificate.id,
+    publicId: certificate.publicId,
+    entity,
+    displayName: name,
+  })
   const level = getValidationLevelLabel(certificate.level)
   const issued = new Date(certificate.issuedAt).toLocaleDateString('fr-FR', {
     day: 'numeric',
@@ -793,8 +800,8 @@ function ValidView({
           <h1 className="font-syne mb-4 text-center text-xl font-bold leading-tight text-white sm:text-2xl">
             {name}
           </h1>
-          <p className="mb-2 text-center font-mono text-xs text-white/60 sm:text-sm">
-            ID {certificate.publicId ?? certificate.id}
+          <p className="mb-2 text-center font-mono text-xs text-white/60 sm:text-sm" title={certRef.fullCode}>
+            Réf. {certRef.suffix}
           </p>
           <p className="mb-6 text-center text-sm text-white/70">
             Vérifié par BLOCKTRUST

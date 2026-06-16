@@ -5,6 +5,7 @@
 
 import { prisma } from '@/app/lib/db'
 import { createAdminAlert } from '@/lib/admin-alerts'
+import { formatCertificateLabel } from '@/lib/format-certificate-label'
 import type { Prisma } from '@prisma/client'
 
 const AGENT_META = { source: 'anomaly-detector' } as const
@@ -66,13 +67,32 @@ export async function runAnomalyDetection(): Promise<AnomalyDetectionResult> {
 
     const cert = await prisma.certificate.findUnique({
       where: { id: certificateId },
-      select: { entityId: true, publicId: true },
+      select: {
+        entityId: true,
+        publicId: true,
+        entity: {
+          select: {
+            entityType: true,
+            firstName: true,
+            lastName: true,
+            legalName: true,
+            tradeName: true,
+            email: true,
+          },
+        },
+      },
+    })
+
+    const certLabel = formatCertificateLabel({
+      id: certificateId,
+      publicId: cert?.publicId,
+      entity: cert?.entity,
     })
 
     await createAdminAlert({
       type: 'SUSPICIOUS_VOLUME',
       title: '⚠️ Volume anormal de vérifications',
-      description: `${row._count.id} vérifications en 1h sur le certificat ${cert?.publicId ?? certificateId}`,
+      description: `${row._count.id} vérifications en 1h — ${certLabel.label}`,
       entityId: cert?.entityId ?? undefined,
       metadata: {
         ...AGENT_META,
@@ -166,13 +186,32 @@ export async function runAnomalyDetection(): Promise<AnomalyDetectionResult> {
     const hit = firstHitByCert.get(cid)
     const cert = await prisma.certificate.findUnique({
       where: { id: cid },
-      select: { entityId: true, publicId: true },
+      select: {
+        entityId: true,
+        publicId: true,
+        entity: {
+          select: {
+            entityType: true,
+            firstName: true,
+            lastName: true,
+            legalName: true,
+            tradeName: true,
+            email: true,
+          },
+        },
+      },
+    })
+
+    const certLabel = formatCertificateLabel({
+      id: cid,
+      publicId: cert?.publicId,
+      entity: cert?.entity,
     })
 
     await createAdminAlert({
       type: 'FRAUD_ALERT',
       title: '🚨 Certificat révoqué toujours utilisé',
-      description: `Le certificat révoqué ${cert?.publicId ?? cid} a encore des vérifications récentes`,
+      description: `Certificat révoqué encore scanné — ${certLabel.label}`,
       entityId: cert?.entityId ?? undefined,
       metadata: {
         ...AGENT_META,
