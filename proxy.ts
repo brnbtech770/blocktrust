@@ -53,6 +53,7 @@ async function getEmailFromSession(req: NextRequest): Promise<string | null> {
 function isProtectedVerifySubpath(pathname: string): boolean {
   if (pathname === '/verify' || pathname === '/verify/') return false
   if (pathname.startsWith('/verify/qr/')) return false
+  if (pathname.startsWith('/verify/bis/')) return false
   return pathname.startsWith('/verify/')
 }
 
@@ -73,6 +74,7 @@ function isProtectedApi(pathname: string): boolean {
   if (pathname.startsWith('/api/badge/')) return false
   if (pathname === '/api/v2/verify' || pathname.startsWith('/api/v2/verify/')) return false
   if (pathname === '/api/verify/resolve-token') return false
+  if (pathname.startsWith('/api/bis/verify')) return false
   if (pathname.includes('/webhook')) return false
   if (
     pathname === '/api/extension/me' ||
@@ -100,6 +102,9 @@ function isProtectedApi(pathname: string): boolean {
     '/api/verify/',
     '/api/v2/issue',
     '/api/v2/sign',
+    '/api/bis/sign',
+    '/api/bis/my-signatures',
+    '/api/bis/received',
     '/api/extension/api-key',
     '/api/stats',
     '/api/activity',
@@ -276,6 +281,9 @@ export const config = {
     '/api/verify/:path*',
     '/api/v2/issue',
     '/api/v2/sign',
+    '/api/bis/sign',
+    '/api/bis/my-signatures',
+    '/api/bis/received',
     '/api/extension/api-key',
     '/api/stripe/:path*',
     '/api/stats',
