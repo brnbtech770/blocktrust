@@ -323,6 +323,42 @@ export async function computeTrustEngineScore(
     });
   }
 
+  const [bisSentCount, bisVerifiedCount] = await Promise.all([
+    prisma.interactionSignature
+      .count({ where: { senderCertId: cert.id } })
+      .catch(() => 0),
+    prisma.interactionSignature
+      .count({ where: { senderCertId: cert.id, verified: true } })
+      .catch(() => 0),
+  ]);
+
+  if (bisSentCount > 0) {
+    const bisSignedBonus = Math.min(20, bisSentCount * 2);
+    const bisVerifiedBonus = bisVerifiedCount;
+    const bisTotal = bisSignedBonus + bisVerifiedBonus;
+    behaviorScore = Math.min(100, behaviorScore + bisTotal);
+    signals.push({
+      type: "BIS_INTERACTIONS",
+      label: `${bisSentCount} interaction(s) signée(s) BIS`,
+      impact: "positive",
+      weight: bisTotal,
+      detail:
+        bisVerifiedCount > 0
+          ? `${bisVerifiedCount} vérifiée(s) par le destinataire (+${bisVerifiedBonus})`
+          : undefined,
+    });
+  }
+
+  if (cert.status === "REVOKED" && bisSentCount > 0) {
+    behaviorScore = Math.max(0, behaviorScore - 10);
+    signals.push({
+      type: "BIS_CERT_REVOKED",
+      label: "Certificat révoqué après signatures BIS",
+      impact: "negative",
+      weight: -10,
+    });
+  }
+
   // ─── TECHNICAL SCORE ──────────────────────
   let technicalScore = 50;
 
