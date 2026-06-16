@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Instagram, Linkedin, Network } from "lucide-react";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
+import FooterSiteCertBadge from "@/app/components/landing/FooterSiteCertBadge";
 import { openCookieSettings } from "@/app/lib/cookie-consent";
 
 const links: { label: string; href: string }[] = [
@@ -102,11 +103,16 @@ export default function Footer() {
         </div>
 
         <div
-          className="mt-10 border-t pt-6 text-xs text-white/55 sm:flex sm:items-center sm:justify-between"
+          className="mt-10 flex flex-col gap-4 border-t pt-6 sm:flex-row sm:items-center sm:justify-between"
           style={{ borderColor: "var(--bt-border)" }}
         >
-          <p>© 2026 BRNB TECH SAS — BLOCKTRUST<span className="text-[10px] align-super">™</span></p>
-          <p className="mt-2 sm:mt-0">RCS Paris — Hébergé par Vercel</p>
+          <p className="text-xs text-white/55">
+            © 2026 BRNB TECH SAS — BLOCKTRUST<span className="text-[10px] align-super">™</span>
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+            <p className="text-xs text-white/55">RCS Paris — Hébergé par Vercel</p>
+            <FooterSiteCertBadge />
+          </div>
         </div>
       </div>
     </footer>

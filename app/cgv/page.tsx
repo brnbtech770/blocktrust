@@ -3,6 +3,7 @@
 
 import Link from 'next/link'
 import Markdown from '@/app/components/ui/Markdown'
+import Footer from '@/app/components/landing/Footer'
 
 const CGV_MARKDOWN = `<!-- CGV BLOCKTRUST — VERSION 2 (1er mai 2026), révisée par Laurianne Winter (DPO/juriste), juin 2026.
 Cette version intègre : (1) les corrections factuelles d'import (URL /pricing, contact@blocktrust.tech pour la CGV) ; (2) les modifications de fond rédigées par Laurianne en juin 2026 — Trust Circle, Vaults et contacts de confiance, offres familiales, clause d'ancrage blockchain, clause de disponibilité/maintenance, reformulation du préavis de modification (« délai raisonnable ») et du remboursement (« sommes éligibles »).
@@ -204,6 +205,7 @@ Signature du client (uniquement en cas de notification du présent formulaire su
 
 export default function CgvPage() {
   return (
+    <>
     <div className="mx-auto max-w-3xl px-4 py-12 text-white/80">
       <Markdown source={CGV_MARKDOWN} />
       <p className="mt-10 border-t border-white/10 pt-6 text-sm text-white/50">
@@ -215,5 +217,7 @@ export default function CgvPage() {
         </Link>
       </p>
     </div>
+    <Footer />
+    </>
   )
 }

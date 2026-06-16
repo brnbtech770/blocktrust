@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Navbar from '@/app/components/landing/Navbar'
+import Footer from '@/app/components/landing/Footer'
 
 export const metadata: Metadata = {
   title: 'FAQ — BLOCKTRUST',
@@ -36,6 +37,7 @@ export default function FaqPage() {
           </Link>
         </div>
       </section>
+      <Footer />
     </div>
   )
 }

@@ -15,6 +15,7 @@ function clientIp(req: NextRequest): string {
 }
 
 const DIMS = {
+  xs: { w: 120, h: 140 },
   sm: { w: 240, h: 280 },
   md: { w: 320, h: 400 },
   lg: { w: 400, h: 480 },

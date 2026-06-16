@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { ArrowRight } from 'lucide-react'
 import Navbar from '@/app/components/landing/Navbar'
+import Footer from '@/app/components/landing/Footer'
 import PricingToggle from '@/app/components/pricing/PricingToggle'
 import PricingGridB2C from '@/app/components/pricing/PricingGridB2C'
 import PricingGridB2B from '@/app/components/pricing/PricingGridB2B'
@@ -253,6 +254,7 @@ export default function PricingPage() {
           Nous contacter
         </a>
       </section>
+      <Footer />
     </div>
   )
 }
