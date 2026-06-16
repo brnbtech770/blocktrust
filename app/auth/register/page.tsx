@@ -4,10 +4,11 @@ import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
-import { Logo } from "@/app/components/ui/Logo";
+import { Eye, EyeOff } from "lucide-react";
+import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
 
 const cardClass =
-  "mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm sm:p-8";
+  "mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-6";
 
 const inputStyle: CSSProperties = {
   width: "100%",
@@ -18,6 +19,14 @@ const inputStyle: CSSProperties = {
   color: "#fff",
 };
 
+function RequiredLabel({ htmlFor, children }: { htmlFor: string; children: string }) {
+  return (
+    <label htmlFor={htmlFor} style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>
+      {children} <span className="text-[#E05252]" aria-hidden>*</span>
+    </label>
+  );
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
@@ -25,6 +34,8 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -63,7 +74,7 @@ export default function RegisterPage() {
     setFieldError({});
     if (!acceptCgu) {
       setError(
-        "Vous devez accepter les conditions générales et la politique de confidentialité."
+        "Vous devez accepter les conditions générales et la politique de confidentialité.",
       );
       return;
     }
@@ -105,117 +116,170 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="overflow-x-hidden px-4 py-8 sm:px-6 sm:py-12">
-      <div style={{ margin: '0 auto 24px', display: 'flex', justifyContent: 'center' }}>
-        <Logo size="lg" withText href="/" className="drop-shadow-[0_0_14px_rgba(0,212,255,0.45)]" />
-      </div>
-      <div className={cardClass}>
-        <h1 className="font-syne mb-6 text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
-          Créer un compte
-        </h1>
-        <div className="mb-6 p-4 bg-white/[0.03] border border-white/10 rounded-xl">
-          <p className="text-white/70 text-xs text-center mb-3">
-            Vous êtes à 3 étapes de votre badge certifié
+    <div className="flex min-h-screen flex-col overflow-x-hidden">
+      <AuthMinimalHeader />
+      <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 pb-6 sm:px-6">
+        <div className={cardClass}>
+          <h1 className="font-syne mb-4 text-2xl font-bold text-white sm:text-3xl">
+            Créer un compte
+          </h1>
+          <p className="mb-4 text-xs text-white/45">
+            Les champs marqués d&apos;un <span className="text-[#E05252]">*</span> sont obligatoires.
           </p>
-          <div className="flex flex-col items-center gap-3 text-xs sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-3 sm:gap-y-1">
-            <span className="text-white/40 text-center sm:text-left shrink-0">
-              1. Créez votre compte
-            </span>
-            <span className="text-white/20 hidden sm:inline shrink-0" aria-hidden>
-              →
-            </span>
-            <span className="text-white/40 text-center sm:text-left shrink-0">
-              2. Choisissez votre plan
-            </span>
-            <span className="text-white/20 hidden sm:inline shrink-0" aria-hidden>
-              →
-            </span>
-            <span className="text-white/40 text-center max-w-[min(100%,280px)] sm:max-w-[260px] leading-snug">
-              <span className="text-white/50">3.</span> Intégrez votre badge partout
-              <br />
-              <span className="text-white/35">
-                — email, site web, documents, numéro de téléphone certifié
-              </span>
-            </span>
-          </div>
-          <div className="mt-4 p-3 bg-white/[0.02] border border-white/5 rounded-lg">
-            <p className="text-white/30 text-xs text-center leading-relaxed">
-              Vous recevez un email d&apos;un inconnu ? Vérifiez son badge gratuitement sur
-              <Link
-                href="/verify"
-                className="text-[#00d4ff]/60 hover:text-[#00d4ff] ml-1 transition"
-              >
-                blocktrust.tech/verify
-              </Link>
-              — sans compte requis.
+          <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <p className="mb-2 text-center text-xs text-white/50">
+              1. Compte · 2. Plan · 3. Badge partout
+            </p>
+            <p className="text-center text-[11px] leading-relaxed text-white/35">
+              Sans engagement · Résiliable à tout moment
             </p>
           </div>
-          <p className="text-white/30 text-xs text-center mt-1">
-            Sans engagement · Résiliable à tout moment
+          <form onSubmit={handleSubmit} autoComplete="on">
+            <input
+              ref={websiteHoneypotRef}
+              type="text"
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              style={{ display: "none" }}
+            />
+            <div style={{ marginBottom: "0.875rem" }}>
+              <RequiredLabel htmlFor="firstName">Prénom</RequiredLabel>
+              <input
+                id="firstName"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+                className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]"
+                style={inputStyle}
+                autoComplete="given-name"
+              />
+            </div>
+            <div style={{ marginBottom: "0.875rem" }}>
+              <RequiredLabel htmlFor="lastName">Nom</RequiredLabel>
+              <input
+                id="lastName"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+                className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]"
+                style={inputStyle}
+                autoComplete="family-name"
+              />
+            </div>
+            <div style={{ marginBottom: "0.875rem" }}>
+              <RequiredLabel htmlFor="email">Email</RequiredLabel>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]"
+                style={inputStyle}
+                autoComplete="email"
+              />
+            </div>
+            <div style={{ marginBottom: "0.875rem" }}>
+              <RequiredLabel htmlFor="password">Mot de passe</RequiredLabel>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]"
+                  style={{ ...inputStyle, paddingRight: "2.75rem" }}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 inline-flex min-h-[36px] min-w-[36px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-white/50 hover:text-bt-cyan"
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-white/45">
+                Minimum 12 caractères · 1 majuscule · 1 chiffre · 1 caractère spécial
+              </p>
+              {fieldError.password && (
+                <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>
+                  {fieldError.password}
+                </p>
+              )}
+            </div>
+            <div style={{ marginBottom: "0.875rem" }}>
+              <RequiredLabel htmlFor="confirmPassword">Confirmer le mot de passe</RequiredLabel>
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]"
+                  style={{ ...inputStyle, paddingRight: "2.75rem" }}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="absolute right-2 top-1/2 inline-flex min-h-[36px] min-w-[36px] -translate-y-1/2 cursor-pointer items-center justify-center rounded-md text-white/50 hover:text-bt-cyan"
+                  aria-label={
+                    showConfirmPassword ? "Masquer la confirmation" : "Afficher la confirmation"
+                  }
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {fieldError.confirmPassword && (
+                <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>
+                  {fieldError.confirmPassword}
+                </p>
+              )}
+            </div>
+            <label className="mb-4 flex cursor-pointer items-start gap-3 text-sm" style={{ color: "var(--bt-muted)" }}>
+              <input
+                type="checkbox"
+                checked={acceptCgu}
+                onChange={(e) => setAcceptCgu(e.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0 cursor-pointer rounded border-white/20 bg-transparent accent-[#00d4ff]"
+              />
+              <span>
+                J&apos;accepte les{" "}
+                <Link href="/cgu" className="cursor-pointer text-[#00d4ff] hover:underline" target="_blank" rel="noopener noreferrer">
+                  CGU
+                </Link>{" "}
+                et la{" "}
+                <Link href="/privacy" className="cursor-pointer text-[#00d4ff] hover:underline" target="_blank" rel="noopener noreferrer">
+                  Politique de confidentialité
+                </Link>
+                .
+              </span>
+            </label>
+            {error && <p style={{ color: "#E05252", marginBottom: "1rem" }}>{error}</p>}
+            <button
+              type="submit"
+              disabled={loading || !acceptCgu}
+              className="w-full cursor-pointer rounded-lg py-3 font-bold transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+              style={{ background: "#00d4ff", color: "#0a1628" }}
+            >
+              {loading ? "Création..." : "Créer mon compte"}
+            </button>
+          </form>
+          <p style={{ color: "var(--bt-muted)", marginTop: "1.25rem", fontSize: "0.875rem" }}>
+            Déjà un compte ?{" "}
+            <Link href="/auth/signin" className="cursor-pointer text-[#00d4ff] hover:underline">
+              Se connecter
+            </Link>
           </p>
         </div>
-        <form onSubmit={handleSubmit} autoComplete="on">
-          <input
-            ref={websiteHoneypotRef}
-            type="text"
-            name="website"
-            tabIndex={-1}
-            autoComplete="off"
-            aria-hidden="true"
-            style={{ display: "none" }}
-          />
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Prénom</label>
-            <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} autoComplete="given-name" />
-          </div>
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Nom</label>
-            <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} autoComplete="family-name" />
-          </div>
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} autoComplete="email" />
-          </div>
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Mot de passe</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} autoComplete="new-password" />
-            {fieldError.password && <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>{fieldError.password}</p>}
-          </div>
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ color: "var(--bt-muted)", display: "block", marginBottom: "4px" }}>Confirmer le mot de passe</label>
-            <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.1)]" style={inputStyle} autoComplete="new-password" />
-            {fieldError.confirmPassword && <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>{fieldError.confirmPassword}</p>}
-          </div>
-          <label className="mb-4 flex cursor-pointer items-start gap-3 text-sm" style={{ color: "var(--bt-muted)" }}>
-            <input
-              type="checkbox"
-              checked={acceptCgu}
-              onChange={(e) => setAcceptCgu(e.target.checked)}
-              className="mt-1 h-4 w-4 shrink-0 rounded border-white/20 bg-transparent accent-[#00d4ff]"
-            />
-            <span>
-              J&apos;accepte les{" "}
-              <Link href="/cgu" className="text-[#00d4ff] hover:underline" target="_blank" rel="noopener noreferrer">
-                CGU
-              </Link>{" "}
-              et la{" "}
-              <Link href="/privacy" className="text-[#00d4ff] hover:underline" target="_blank" rel="noopener noreferrer">
-                Politique de confidentialité
-              </Link>
-              .
-            </span>
-          </label>
-          {error && <p style={{ color: "#E05252", marginBottom: "1rem" }}>{error}</p>}
-          <button type="submit" disabled={loading || !acceptCgu} className="w-full py-3 rounded-lg font-bold transition-all hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed" style={{ background: "#00d4ff", color: "#0a1628" }}>
-            {loading ? "Création..." : "Créer mon compte"}
-          </button>
-        </form>
-        <p style={{ color: "var(--bt-muted)", marginTop: "1.5rem", fontSize: "0.875rem" }}>
-          Déjà un compte ?{" "}
-          <Link href="/auth/signin" className="text-[#00d4ff] hover:underline">
-            Se connecter
-          </Link>
-        </p>
       </div>
     </div>
   );
