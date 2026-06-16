@@ -105,8 +105,11 @@ export const getKycSiretLimiter = () => getLimiter("bt:kyc:siret", 10, "1 h");
 // Mot de passe oublié (anti-spam d'emails) : 3 / h par identifiant (IP ou email)
 export const getForgotPasswordLimiter = () => getLimiter("bt:forgot", 3, "1 h");
 
-// Résolution de token rotatif /api/verify/resolve-token (anti brute-force) : 30 / min par IP
-export const getResolveTokenLimiter = () => getLimiter("bt:resolvetoken", 30, "1 m");
+// Résolution de token rotatif /api/verify/resolve-token (anti brute-force) : 30 / min par IP hash
+export const getResolveTokenLimiter = () => getLimiter("bt:resolve-token", 30, "1 m");
+
+// Vérification publique BIS /api/bis/verify/[id] : 30 / min par IP hash
+export const getBisVerifyLimiter = () => getLimiter("bt:bis-verify", 30, "1 m");
 
 // Génération QR / badge SVG (anti-énumération de certificats/noms) : 120 / min par IP
 // Limite volontairement généreuse : ces ressources sont parfois embarquées (img) et chargées en série.

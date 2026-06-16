@@ -3,18 +3,36 @@
  * GET /api/bis/verify/[signatureId] — vérification publique BIS
  */
 import { NextRequest, NextResponse } from 'next/server'
+import { hashIp } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/db'
 import {
   computeBisDisplayLevel,
   verifyBisSignature,
 } from '@/lib/bis-sign'
 import { computeTrustEngineScore } from '@/lib/trust-engine'
+import { checkBisVerifyRateLimit } from '@/lib/rate-limit-cost'
 import { btErrorDevDetails } from '@/lib/prodLog'
 
 type RouteContext = { params: Promise<{ signatureId: string }> }
 
-export async function GET(_req: NextRequest, context: RouteContext) {
+function clientIp(req: NextRequest): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+}
+
+export async function GET(req: NextRequest, context: RouteContext) {
   try {
+    const ipHash = hashIp(clientIp(req))
+    const rate = await checkBisVerifyRateLimit(ipHash)
+    if (!rate.ok) {
+      return NextResponse.json(
+        { error: 'rate_limited' },
+        {
+          status: 429,
+          headers: rate.retryAfter ? { 'Retry-After': String(rate.retryAfter) } : undefined,
+        },
+      )
+    }
+
     const { signatureId } = await context.params
     const id = signatureId.trim()
     if (!id) {

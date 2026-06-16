@@ -16,6 +16,7 @@ import {
   getKycSiretLimiter,
   getForgotPasswordLimiter,
   getResolveTokenLimiter,
+  getBisVerifyLimiter,
   getBadgeLimiter,
 } from "@/lib/rate-limit-redis";
 
@@ -120,10 +121,16 @@ export async function checkForgotPasswordRateLimit(identifier: string): Promise<
   return costLimit(getForgotPasswordLimiter(), forgotStore, identifier, 3, 3_600_000);
 }
 
-// ── Résolution de token rotatif (anti brute-force) : 30 / min par IP ──
+// ── Résolution de token rotatif (anti brute-force) : 30 / min par IP hash ──
 const resolveTokenStore = new Map<string, Window>();
-export async function checkResolveTokenRateLimit(ip: string): Promise<CostRateResult> {
-  return costLimit(getResolveTokenLimiter(), resolveTokenStore, ip, 30, 60_000);
+export async function checkResolveTokenRateLimit(ipHash: string): Promise<CostRateResult> {
+  return costLimit(getResolveTokenLimiter(), resolveTokenStore, ipHash, 30, 60_000);
+}
+
+// ── Vérification publique BIS : 30 / min par IP hash ──
+const bisVerifyStore = new Map<string, Window>();
+export async function checkBisVerifyRateLimit(ipHash: string): Promise<CostRateResult> {
+  return costLimit(getBisVerifyLimiter(), bisVerifyStore, ipHash, 30, 60_000);
 }
 
 // ── QR / badge SVG (anti-énumération) : 120 / min par IP ──

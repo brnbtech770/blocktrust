@@ -2,6 +2,7 @@
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { hashIp } from '@/app/lib/auth'
 import { resolveCertificateVerifyToken } from '@/lib/certificate-verify-token'
 import { checkResolveTokenRateLimit } from '@/lib/rate-limit-cost'
 
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'not_found' }, { status: 400 })
   }
 
-  const rate = await checkResolveTokenRateLimit(clientIp(req))
+  const rate = await checkResolveTokenRateLimit(hashIp(clientIp(req)))
   if (!rate.ok) {
     return NextResponse.json(
       { error: 'rate_limited' },
