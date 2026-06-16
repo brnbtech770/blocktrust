@@ -28,6 +28,15 @@ Extension Manifest V3 pour vérifier les expéditeurs Gmail via l’API BLOCKTRU
 3. Le script de contenu tente d’afficher un **badge** à côté de l’expéditeur selon la réponse API  
    (certifié, dans vos contacts, alerte, non certifié).
 
+### Signatures BIS (Phase 2a — v1.0.4+)
+
+- Scan du corps de l’email ouvert pour un lien `blocktrust.tech/verify/bis/[id]`.
+- Un seul appel API : `GET /api/extension/verify-sender?email=…&domain=…&bisId=…`
+- Badge enrichi : **BIS Niveau N — Signé** (signature valide) ou orange si expirée/invalide.
+- **Alerte** : expéditeur certifié qui signe habituellement ses interactions BIS mais email sans lien → avertissement dans la tooltip.
+
+> Phase 2b (header `X-BlockTrust-Signature`) nécessitera des permissions Gmail supplémentaires — hors scope v1.0.4.
+
 > L’UI Gmail change souvent : les sélecteurs dans `content/gmail.js` pourront nécessiter des ajustements.
 
 ## Fichiers
