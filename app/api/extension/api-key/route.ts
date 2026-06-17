@@ -7,7 +7,7 @@ import { NextRequest } from "next/server";
 import { auth } from "@/app/lib/auth-server";
 import { prisma } from "@/app/lib/db";
 import { generateExtensionApiKey } from "@/lib/api-key";
-import { getCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
+import { extensionJsonResponse, extensionOptionsResponse } from "@/lib/extension-cors";
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
 import { z } from "zod";
 
@@ -19,7 +19,7 @@ const postBodySchema = z.object({
 });
 
 export async function OPTIONS(req: NextRequest) {
-  return new Response(null, { status: 204, headers: getCorsHeaders(req) });
+  return extensionOptionsResponse(req);
 }
 
 async function writeNewExtensionKey(userId: string): Promise<

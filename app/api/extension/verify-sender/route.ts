@@ -13,7 +13,7 @@ import {
   type ExtensionVerifyContext,
 } from "@/lib/extension-verify-sender";
 import { enrichExtensionPayloadWithBis } from "@/lib/extension-bis-enrichment";
-import { getCorsHeaders, extensionJsonResponse } from "@/lib/extension-cors";
+import { extensionJsonResponse, extensionOptionsResponse } from "@/lib/extension-cors";
 import { checkPlanRateLimit } from "@/lib/rate-limit-plan";
 import { resolveEffectivePlan } from "@/lib/plan-features";
 import { getRedis } from "@/lib/rate-limit-redis";
@@ -27,7 +27,7 @@ const BASE_URL =
   "https://blocktrust.tech";
 
 export async function OPTIONS(req: NextRequest) {
-  return new Response(null, { status: 204, headers: getCorsHeaders(req) });
+  return extensionOptionsResponse(req);
 }
 
 export async function GET(req: NextRequest) {

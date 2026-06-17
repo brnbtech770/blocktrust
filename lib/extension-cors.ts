@@ -22,11 +22,14 @@ const ALLOWED_HTTPS_HOSTNAMES = new Set<string>([
 // Hôtes locaux (dev uniquement) — comparaison EXACTE.
 const ALLOWED_LOCAL_HOSTNAMES = new Set<string>(["localhost", "127.0.0.1"]);
 
+function isProductionEnv(): boolean {
+  return process.env.NODE_ENV === "production";
+}
+
 /**
- * IDs d'extension autorisés (optionnel) : EXTENSION_ID="abc,def".
- * Si défini, seules ces extensions sont acceptées. Sinon, toute origine
- * `chrome-extension://` est acceptée (le schéma est un préfixe sûr et le
- * bypass par sous-chaîne ne s'applique pas ici).
+ * IDs d'extension autorisés : EXTENSION_ID="abc,def" (ou NEXT_PUBLIC_EXTENSION_ID).
+ * Prod sans EXTENSION_ID → toute origine chrome-extension:// est refusée.
+ * Dev sans EXTENSION_ID → permissif (toute extension locale).
  */
 function allowedExtensionIds(): Set<string> | null {
   const raw = (process.env.EXTENSION_ID ?? process.env.NEXT_PUBLIC_EXTENSION_ID ?? "").trim();
@@ -36,6 +39,18 @@ function allowedExtensionIds(): Set<string> | null {
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
   return ids.length > 0 ? new Set(ids) : null;
+}
+
+function isChromeExtensionOriginAllowed(hostname: string): boolean {
+  const normalized = hostname.toLowerCase();
+  const ids = allowedExtensionIds();
+
+  if (isProductionEnv()) {
+    if (!ids) return false;
+    return ids.has(normalized);
+  }
+
+  return ids ? ids.has(normalized) : true;
 }
 
 function isAllowedOrigin(origin: string): boolean {
@@ -50,13 +65,10 @@ function isAllowedOrigin(origin: string): boolean {
 
   const hostname = url.hostname.toLowerCase();
 
-  // Extension Chrome — hostname = ID de l'extension.
   if (url.protocol === "chrome-extension:") {
-    const ids = allowedExtensionIds();
-    return ids ? ids.has(hostname) : true;
+    return isChromeExtensionOriginAllowed(hostname);
   }
 
-  // Dev local — http(s)://localhost ou 127.0.0.1 (hostname exact).
   if (
     process.env.NODE_ENV !== "production" &&
     ALLOWED_LOCAL_HOSTNAMES.has(hostname) &&
@@ -65,12 +77,34 @@ function isAllowedOrigin(origin: string): boolean {
     return true;
   }
 
-  // Hôtes HTTPS de production — hostname exact.
   if (url.protocol === "https:") {
     return ALLOWED_HTTPS_HOSTNAMES.has(hostname);
   }
 
   return false;
+}
+
+/**
+ * Rejette les requêtes chrome-extension:// non autorisées (403).
+ * Retourne null si la requête peut continuer.
+ */
+export function rejectForbiddenExtensionOrigin(
+  req: NextRequest,
+): NextResponse | null {
+  const origin = req.headers.get("origin")?.trim() ?? "";
+  if (!origin) return null;
+
+  let url: URL;
+  try {
+    url = new URL(origin);
+  } catch {
+    return null;
+  }
+
+  if (url.protocol !== "chrome-extension:") return null;
+  if (isChromeExtensionOriginAllowed(url.hostname)) return null;
+
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 
 export function getCorsHeaders(request: NextRequest): Record<string, string> {
@@ -92,5 +126,15 @@ export function extensionJsonResponse(
   body: unknown,
   status = 200,
 ): NextResponse {
+  const forbidden = rejectForbiddenExtensionOrigin(req);
+  if (forbidden) return forbidden;
+
   return NextResponse.json(body, { status, headers: getCorsHeaders(req) });
+}
+
+export function extensionOptionsResponse(req: NextRequest): Response {
+  const forbidden = rejectForbiddenExtensionOrigin(req);
+  if (forbidden) return forbidden;
+
+  return new Response(null, { status: 204, headers: getCorsHeaders(req) });
 }
