@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
   getAdminEmailList,
   getInternalEmailList,
@@ -13,16 +13,15 @@ import {
 
 const ORIGINAL_ADMIN_EMAILS = process.env.ADMIN_EMAILS
 const ORIGINAL_INTERNAL_EMAILS = process.env.INTERNAL_EMAILS
-const ORIGINAL_NODE_ENV = process.env.NODE_ENV
 
 describe('admin-utils — getAdminEmailList', () => {
   afterEach(() => {
     process.env.ADMIN_EMAILS = ORIGINAL_ADMIN_EMAILS
-    process.env.NODE_ENV = ORIGINAL_NODE_ENV
+    vi.unstubAllEnvs()
   })
 
   it('parse une liste multi-emails (trim + lowercase + filtre vides) + union dev', () => {
-    process.env.NODE_ENV = 'test'
+    vi.stubEnv('NODE_ENV', 'test')
     process.env.ADMIN_EMAILS = ' Admin@Blocktrust.tech , , second@blocktrust.tech '
     const list = getAdminEmailList()
     expect(list).toContain('admin@blocktrust.tech')
@@ -38,7 +37,7 @@ describe('admin-utils — getAdminEmailList', () => {
   })
 
   it('production : ADMIN_EMAILS seul si défini', () => {
-    process.env.NODE_ENV = 'production'
+    vi.stubEnv('NODE_ENV', 'production')
     process.env.ADMIN_EMAILS = 'only-admin@example.com'
     expect(getAdminEmailList()).toEqual(['only-admin@example.com'])
   })
@@ -47,7 +46,7 @@ describe('admin-utils — getAdminEmailList', () => {
 describe('admin-utils — isDashboardAdmin / isAdmin', () => {
   afterEach(() => {
     process.env.ADMIN_EMAILS = ORIGINAL_ADMIN_EMAILS
-    process.env.NODE_ENV = ORIGINAL_NODE_ENV
+    vi.unstubAllEnvs()
   })
 
   it('true pour les 4 emails dashboard admin', () => {
@@ -69,7 +68,7 @@ describe('admin-utils — isDashboardAdmin / isAdmin', () => {
   })
 
   it('production : seuls les emails ADMIN_EMAILS sont admin', () => {
-    process.env.NODE_ENV = 'production'
+    vi.stubEnv('NODE_ENV', 'production')
     process.env.ADMIN_EMAILS = 'only-admin@example.com'
     expect(isDashboardAdmin('only-admin@example.com')).toBe(true)
     expect(isDashboardAdmin('brnbtech@gmail.com')).toBe(false)
@@ -87,7 +86,7 @@ describe('admin-utils — isSuperAdmin', () => {
 describe('admin-utils — isInternalAccount', () => {
   afterEach(() => {
     process.env.INTERNAL_EMAILS = ORIGINAL_INTERNAL_EMAILS
-    process.env.NODE_ENV = ORIGINAL_NODE_ENV
+    vi.unstubAllEnvs()
   })
 
   it('true pour les 9 comptes internes', () => {
