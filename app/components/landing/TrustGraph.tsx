@@ -20,9 +20,10 @@ export default function TrustGraph() {
           <Network className="h-4 w-4" aria-hidden />
           Trust Graph
         </p>
-        <h2 className="font-syne mx-auto max-w-3xl text-balance text-xl font-semibold leading-snug text-white sm:text-2xl lg:text-3xl">
-          Une infrastructure que{" "}
-          <span className="text-gold">personne ne peut copier.</span>
+        <h2 className="font-syne mx-auto max-w-[18rem] text-balance text-lg font-semibold leading-[1.25] text-white sm:max-w-md sm:text-xl md:max-w-lg md:text-2xl lg:max-w-none lg:whitespace-nowrap lg:text-[1.625rem] lg:leading-tight xl:text-[1.875rem]">
+          Une infrastructure que
+          <br className="lg:hidden" aria-hidden="true" />
+          <span className="text-gold"> personne ne peut copier.</span>
         </h2>
 
         <ul className="mt-6 flex flex-col gap-3">
