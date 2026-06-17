@@ -28,8 +28,9 @@ export default function Hero() {
           </div>
 
           {/* H1 */}
-          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 max-w-3xl text-balance text-2xl font-bold leading-[1.2] tracking-tight text-white sm:mt-6 sm:text-4xl">
-            L&apos;identité numérique qui protège vos échanges.
+          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 max-w-2xl text-balance text-2xl font-bold leading-[1.2] tracking-tight text-white sm:mt-6 sm:text-4xl">
+            L&apos;identité numérique{" "}
+            <span className="text-bt-cyan">protège vos échanges.</span>
           </h1>
 
           {/* Sous-titre — headline validée équipe (Deborah + Laurianne 28/04/2026) */}
