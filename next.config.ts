@@ -57,6 +57,9 @@ const CONTENT_SECURITY_POLICY = [
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["stripe"],
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
   images: {
     formats: ["image/webp"],
   },

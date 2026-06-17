@@ -1,28 +1,9 @@
 import type { Metadata } from "next";
-import { Inter, IBM_Plex_Mono, Space_Grotesk } from "next/font/google";
 import ConsentedAnalytics from "@/app/components/analytics/ConsentedAnalytics";
 import "./globals.css";
 import { Providers } from "./providers";
 import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "@/lib/site-metadata";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  weight: ["400", "500", "600", "700", "800", "900"],
-});
-
-const ibmPlexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono-bt",
-  weight: ["400", "500", "600"],
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
+import { fontVariables } from "@/lib/fonts";
 
 /** Invalider cache navigateur (Safari/iOS très agressif). Incrémenter après nouveau favicon. */
 const ICON_CACHE_QUERY = "v=badge-svg-2";
@@ -96,7 +77,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className="dark">
       <body
-        className={`${inter.variable} ${ibmPlexMono.variable} ${spaceGrotesk.variable} font-sans antialiased bg-navy text-gray-100 overflow-x-hidden`}
+        className={`${fontVariables} font-sans antialiased bg-navy text-gray-100 overflow-x-hidden`}
       >
         <Providers>{children}</Providers>
         <ConsentedAnalytics />

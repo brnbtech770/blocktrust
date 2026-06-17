@@ -1,22 +1,13 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
 import Navbar from "./landing/Navbar";
 import Hero from "./landing/Hero";
-import QuickUnderstand from "./landing/QuickUnderstand";
-import BisSection from "./landing/BisSection";
-import Problem from "./landing/Problem";
-import Categories from "./landing/Categories";
-import Solution from "./landing/Solution";
-import Particuliers from "./landing/Particuliers";
-import Entreprises from "./landing/Entreprises";
-import Integration from "./landing/Integration";
-import PricingTeaser from "./landing/PricingTeaser";
-import TrustMonitoring from "./landing/TrustMonitoring";
-import TrustGraph from "./landing/TrustGraph";
-import FinalCTA from "./landing/FinalCTA";
-import Proofs from "./landing/Proofs";
-import Footer from "./landing/Footer";
+
+const LandingBelowFold = dynamic(() => import("./landing/LandingBelowFold"), {
+  loading: () => null,
+});
 
 /** Passé depuis `app/page.tsx` (RSC) pour conserver `ThreatAlert` en Server Component. */
 export default function LandingPageClient({ threatAlert }: { threatAlert: ReactNode }) {
@@ -28,22 +19,8 @@ export default function LandingPageClient({ threatAlert }: { threatAlert: ReactN
       <Navbar />
       <main>
         <Hero />
-        <Problem />
-        {threatAlert}
-        <Solution />
-        <QuickUnderstand />
-        <BisSection />
-        <Categories />
-        <Particuliers />
-        <Entreprises />
-        <Integration />
-        <PricingTeaser />
-        <TrustMonitoring />
-        <TrustGraph />
-        <FinalCTA />
-        <Proofs />
+        <LandingBelowFold threatAlert={threatAlert} />
       </main>
-      <Footer />
     </div>
   );
 }

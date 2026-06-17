@@ -31,10 +31,10 @@
   --foreground:     #ffffff;
 }
 
-/* Hiérarchie des polices :
-   Inter 400-900       → corps (nav, boutons, paragraphes, labels, inputs)
+/* Hiérarchie des polices (lib/fonts.ts — next/font, font-display: swap) :
+   Inter 400/700       → corps (nav, boutons, paragraphes, labels, inputs)
    Space Grotesk 700   → titres H1-H4, logo BLOCKTRUST (alias Tailwind: font-syne)
-   IBM Plex Mono       → hashes, timestamps, badges techniques, ticker blockchain
+   IBM Plex Mono 400   → hashes, timestamps, badges techniques (preload différé)
 */
 @theme inline {
   --color-background: var(--background);

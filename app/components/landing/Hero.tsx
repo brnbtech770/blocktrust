@@ -1,9 +1,18 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ShieldCheck, UserCheck, Link2 } from "lucide-react";
-import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
 import TechTermTooltip from "@/app/components/ui/TechTermTooltip";
+
+const BlockTrustBadge = dynamic(() => import("@/app/components/ui/BlockTrustBadge"), {
+  loading: () => (
+    <div
+      className="relative z-10 h-full w-full animate-pulse rounded-3xl bg-white/[0.04]"
+      aria-hidden
+    />
+  ),
+});
 
 export default function Hero() {
   return (
