@@ -62,6 +62,17 @@ function isProtectedCheckoutPath(pathname: string): boolean {
   return pathname === '/checkout' || pathname.startsWith('/checkout/')
 }
 
+/** Dashboard abonné — session requise (garde Edge, complète le layout). */
+function isProtectedDashboardPath(pathname: string): boolean {
+  return pathname === '/dashboard' || pathname.startsWith('/dashboard/')
+}
+
+function redirectToSignIn(request: NextRequest, pathname: string): NextResponse {
+  const signInUrl = new URL('/auth/signin', request.url)
+  signInUrl.searchParams.set('callbackUrl', `${pathname}${request.nextUrl.search}`)
+  return NextResponse.redirect(signInUrl)
+}
+
 function isProtectedApi(pathname: string): boolean {
   if (!pathname.startsWith('/api/')) return false
 
@@ -181,14 +192,7 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isProtectedVerifySubpath(pathname) || isProtectedCheckoutPath(pathname)) {
-    const signInRedirect = () => {
-      const signInUrl = new URL('/auth/signin', request.url)
-      signInUrl.searchParams.set(
-        'callbackUrl',
-        `${pathname}${request.nextUrl.search}`
-      )
-      return NextResponse.redirect(signInUrl)
-    }
+    const signInRedirect = () => redirectToSignIn(request, pathname)
     try {
       const email = await getEmailFromSession(request)
       if (!email) {
@@ -200,6 +204,19 @@ export async function proxy(request: NextRequest) {
       // JAMAIS laisser passer (le /verify public n'est pas un « protected subpath »).
       console.error('Proxy protected redirect:', error)
       return signInRedirect()
+    }
+  }
+
+  if (isProtectedDashboardPath(pathname)) {
+    try {
+      const email = await getEmailFromSession(request)
+      if (!email) {
+        return redirectToSignIn(request, pathname)
+      }
+      return NextResponse.next()
+    } catch (error) {
+      console.error('Proxy dashboard guard:', error)
+      return redirectToSignIn(request, pathname)
     }
   }
 
