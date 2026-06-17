@@ -379,3 +379,8 @@ h5, h6 {
   .howto-line-in,
   .howto-pop { opacity: 1; transform: none; }
 }
+
+/* Landing — text-wrap: balance (Tailwind: text-balance) pour éviter les mots orphelins */
+.text-balance {
+  text-wrap: balance;
+}

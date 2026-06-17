@@ -20,10 +20,10 @@ export default function PricingTeaser() {
           <Sparkles className="h-4 w-4" />
           Tarifs
         </p>
-        <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-snug text-white sm:text-3xl">
+        <h2 className="font-syne mx-auto max-w-3xl text-balance text-2xl font-semibold leading-snug text-white sm:text-3xl">
           Un plan adapté à <span className="text-bt-cyan">chaque besoin</span>
         </h2>
-        <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
+        <p className="mx-auto mt-4 max-w-2xl text-balance text-sm leading-relaxed text-white/70 sm:text-base">
           Particuliers ou entreprises — démarrez sans engagement, annulez à tout moment.
         </p>
       </Reveal>
@@ -36,7 +36,7 @@ export default function PricingTeaser() {
           <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg border border-bt-cyan/30 bg-bt-cyan/10">
             <User className="h-5 w-5 text-bt-cyan" />
           </div>
-          <h3 className="font-syne text-base font-semibold text-white sm:text-lg">Particulier</h3>
+          <h3 className="font-syne text-balance text-base font-semibold text-white sm:text-lg">Particulier</h3>
           <div className="mt-2 flex flex-wrap items-baseline gap-x-2 whitespace-nowrap">
             <span className="text-sm font-medium text-white/50">À partir de</span>
             <span className="font-syne text-2xl font-bold text-white sm:text-3xl">
@@ -56,7 +56,7 @@ export default function PricingTeaser() {
           <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg border border-gold/30 bg-gold/10">
             <Building2 className="h-5 w-5 text-gold" />
           </div>
-          <h3 className="font-syne text-base font-semibold text-white sm:text-lg">Entreprise</h3>
+          <h3 className="font-syne text-balance text-base font-semibold text-white sm:text-lg">Entreprise</h3>
           <div className="mt-2 flex flex-wrap items-baseline gap-x-2 whitespace-nowrap">
             <span className="text-sm font-medium text-white/60">À partir de</span>
             <span className="font-syne text-2xl font-bold text-white sm:text-3xl">

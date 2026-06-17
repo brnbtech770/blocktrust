@@ -28,16 +28,16 @@ export default function Hero() {
           </div>
 
           {/* H1 */}
-          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 text-2xl font-bold leading-[1.2] tracking-tight text-white sm:mt-6 sm:text-4xl">
+          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 max-w-3xl text-balance text-2xl font-bold leading-[1.2] tracking-tight text-white sm:mt-6 sm:text-4xl">
             L&apos;identité numérique qui protège vos échanges.
           </h1>
 
           {/* Sous-titre — headline validée équipe (Deborah + Laurianne 28/04/2026) */}
-          <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl text-left font-sans text-lg leading-relaxed text-white sm:mt-6 sm:text-xl">
+          <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl text-balance text-left font-sans text-lg leading-relaxed text-white sm:mt-6 sm:text-xl">
             La preuve que c&apos;est <span className="font-semibold text-bt-cyan">vous</span>.
             La certitude que c&apos;est <span className="font-semibold text-gold">eux</span>.
           </p>
-          <p className="opacity-0 animate-fade-up [animation-delay:360ms] mt-2 max-w-2xl text-sm leading-relaxed text-white/40">
+          <p className="opacity-0 animate-fade-up [animation-delay:360ms] mt-2 max-w-2xl text-balance text-sm leading-relaxed text-white/40">
             Certifiez ce que vous envoyez. Vérifiez ce que vous recevez. Faux RIB, faux conseiller, faux
             fournisseur — détectés en 1 scan avant que le mal soit fait.
           </p>
@@ -72,7 +72,7 @@ export default function Hero() {
             <li className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-bt-cyan" />
               <div>
-                <div className="font-syne text-base font-bold text-gold">
+                <div className="font-syne text-balance text-base font-bold text-gold">
                   Vos envois certifiés
                 </div>
                 <div className="text-xs text-white/60">Prouvez que c&apos;est bien vous</div>
@@ -81,7 +81,7 @@ export default function Hero() {
             <li className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
               <UserCheck className="mt-0.5 h-5 w-5 shrink-0 text-gold" />
               <div>
-                <div className="font-syne text-base font-bold text-gold">
+                <div className="font-syne text-balance text-base font-bold text-gold">
                   Vos réceptions protégées
                 </div>
                 <div className="text-xs text-white/60">Détectez les usurpations</div>
@@ -90,7 +90,7 @@ export default function Hero() {
             <li className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
               <Link2 className="mt-0.5 h-5 w-5 shrink-0 text-bt-cyan" />
               <div>
-                <div className="font-syne text-base font-bold text-gold">
+                <div className="font-syne text-balance text-base font-bold text-gold">
                   Ancré <TechTermTooltip term="blockchain">blockchain</TechTermTooltip>
                 </div>
                 <div className="text-xs text-white/60">

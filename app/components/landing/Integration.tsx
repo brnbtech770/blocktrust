@@ -68,7 +68,7 @@ export default function Integration() {
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
           Intégration
         </p>
-        <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-snug text-white sm:text-3xl">
+        <h2 className="font-syne mx-auto max-w-3xl text-balance text-2xl font-semibold leading-snug text-white sm:text-3xl">
           Intégrez votre badge <span className="text-bt-cyan">partout</span>
         </h2>
       </Reveal>

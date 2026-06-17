@@ -31,11 +31,11 @@ export default function FinalCTA() {
           <BlockTrustBadge size={64} instanceId="final-cta" showWatermark={false} />
         </div>
 
-        <h2 className="font-syne mx-auto mt-6 max-w-2xl text-2xl font-semibold leading-snug text-white sm:text-3xl">
+        <h2 className="font-syne mx-auto mt-6 max-w-3xl text-balance text-2xl font-semibold leading-snug text-white sm:text-3xl">
           Prêt à sécuriser votre{" "}
           <span className="text-bt-cyan">identité digitale&nbsp;?</span>
         </h2>
-        <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-white/75 sm:text-base">
+        <p className="mx-auto mt-4 max-w-2xl text-balance text-sm leading-relaxed text-white/75 sm:text-base">
           Rejoignez les professionnels qui font confiance à BLOCKTRUST pour protéger
           chacune de leurs interactions.
         </p>

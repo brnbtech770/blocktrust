@@ -20,9 +20,9 @@ export default function TrustMonitoring() {
           <Activity className="h-4 w-4" aria-hidden />
           Trust Monitoring
         </p>
-        <h2 className="font-syne max-w-2xl text-xl font-semibold leading-snug text-white sm:text-2xl lg:text-3xl">
-          BLOCKTRUST ne se contente pas d&apos;alerter.{" "}
-          <span className="text-bt-cyan">Il surveille.</span>
+        <h2 className="font-syne mx-auto max-w-3xl text-balance text-xl font-semibold leading-snug text-white sm:text-2xl lg:text-3xl">
+          BLOCKTRUST™ ne se contente pas d&apos;alerter —{" "}
+          <span className="text-bt-cyan">il surveille.</span>
         </h2>
 
         <ul className="mt-6 flex flex-col gap-3">

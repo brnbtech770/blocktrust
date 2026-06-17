@@ -37,11 +37,11 @@ export default function ThreatAlert() {
           <p className="neon-red mb-2 text-xs font-semibold uppercase tracking-widest">
             Menaces permanentes
           </p>
-          <h2 className="font-syne mb-4 max-w-2xl text-2xl font-bold leading-snug text-white sm:text-3xl">
-            Aujourd&apos;hui, n&apos;importe qui peut{" "}
-            <span className="text-[#E05252]">se faire passer pour vous</span>
+          <h2 className="font-syne mb-4 max-w-3xl text-balance text-2xl font-bold leading-snug text-white sm:text-3xl">
+            N&apos;importe qui peut{" "}
+            <span className="text-[#E05252]">se faire passer pour vous</span>.
           </h2>
-          <p className="max-w-2xl text-sm leading-relaxed text-white/50 sm:text-base">
+          <p className="max-w-2xl text-balance text-sm leading-relaxed text-white/50 sm:text-base">
             Des outils accessibles à tous permettent de cloner une identité, usurper un email ou
             falsifier un document — en quelques minutes, sans compétences techniques.
           </p>
@@ -97,7 +97,7 @@ export default function ThreatAlert() {
               La réponse BLOCKTRUST
             </p>
           </div>
-          <p className="mx-auto max-w-lg text-sm leading-relaxed text-white/70 sm:text-base">
+          <p className="mx-auto max-w-lg text-balance text-sm leading-relaxed text-white/70 sm:text-base">
             BLOCKTRUST certifie votre identité et celle de vos interlocuteurs — toute tentative
             d&apos;usurpation est détectée immédiatement avant que le mal soit fait.
           </p>

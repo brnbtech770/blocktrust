@@ -27,16 +27,16 @@ export default function BisSection() {
               </p>
               <h2
                 id="bis-heading"
-                className="font-syne text-xl font-semibold leading-snug text-white sm:text-2xl"
+                className="font-syne mx-auto max-w-2xl text-balance text-xl font-semibold leading-snug text-white sm:mx-0 sm:text-2xl"
               >
-                Chaque interaction peut être signée et vérifiée{" "}
-                <span className="text-bt-cyan">cryptographiquement.</span>
+                Signez et vérifiez{" "}
+                <span className="text-bt-cyan">chaque interaction.</span>
               </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/65 sm:text-base">
+              <p className="mt-3 max-w-2xl text-balance text-sm leading-relaxed text-white/65 sm:text-base">
                 Emails, documents, contrats, paiements — signez vos interactions avec votre identité
                 certifiée. Vos destinataires vérifient en un clic.
               </p>
-              <p className="mt-4 text-sm font-medium leading-relaxed text-gold/90">
+              <p className="mt-4 text-balance text-sm font-medium leading-relaxed text-gold/90">
                 Même si votre boîte email est piratée, un attaquant ne peut pas forger votre signature.
               </p>
               <Link

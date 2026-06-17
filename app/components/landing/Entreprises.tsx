@@ -45,7 +45,7 @@ export default function Entreprises() {
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-gold">
           Pour les entreprises
         </p>
-        <h2 className="font-syne mx-auto max-w-2xl pb-2 text-2xl font-semibold leading-snug text-white sm:text-3xl">
+        <h2 className="font-syne mx-auto max-w-3xl text-balance pb-2 text-2xl font-semibold leading-snug text-white sm:text-3xl">
           Sécurisez chaque interaction <span className="text-gold">B2B et B2C</span>
         </h2>
       </Reveal>
@@ -65,7 +65,7 @@ export default function Entreprises() {
               >
                 <Icon className="h-6 w-6 text-gold" />
               </div>
-              <h3 className="font-syne mb-2 text-base font-semibold text-white">
+              <h3 className="font-syne mb-2 text-balance text-base font-semibold text-white">
                 {c.title}
               </h3>
               <p className="text-sm leading-relaxed text-white/70">{c.text}</p>

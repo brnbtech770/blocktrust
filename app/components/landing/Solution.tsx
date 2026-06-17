@@ -61,7 +61,7 @@ export default function Solution() {
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
           La solution
         </p>
-        <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-snug text-white sm:text-3xl">
+        <h2 className="font-syne mx-auto max-w-3xl text-balance text-2xl font-semibold leading-snug text-white sm:text-3xl">
           3 étapes pour sécuriser votre <span className="text-bt-cyan">identité</span>
         </h2>
       </Reveal>
@@ -99,7 +99,7 @@ export default function Solution() {
                 >
                   <Icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: step.iconColor }} />
                 </div>
-                <h3 className="font-syne mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-lg font-semibold leading-snug text-white sm:text-xl">
+                <h3 className="font-syne mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-balance text-lg font-semibold leading-snug text-white sm:text-xl">
                   <span className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
                     {step.step}
                   </span>

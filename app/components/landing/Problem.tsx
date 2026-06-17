@@ -29,11 +29,11 @@ export default function Problem() {
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-red">
           Le problème
         </p>
-        <h2 className="font-syne mx-auto max-w-2xl text-2xl font-semibold leading-snug text-white sm:text-3xl">
-          L&apos;usurpation de confiance est devenue la{" "}
-          <span className="text-red-400">norme</span>.
+        <h2 className="font-syne mx-auto max-w-3xl text-balance text-2xl font-semibold leading-snug text-white sm:text-3xl">
+          L&apos;usurpation de confiance est{" "}
+          <span className="text-red-400">la norme</span>.
         </h2>
-        <p className="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
+        <p className="mx-auto mt-5 max-w-2xl text-balance text-sm leading-relaxed text-white/70 sm:text-base">
           Un email, un appel, un document ou un paiement ne garantit plus que l&apos;interlocuteur
           est légitime.
           <br />
@@ -50,7 +50,7 @@ export default function Problem() {
             >
               <User className="h-5 w-5" style={{ color: "#E05252" }} />
             </div>
-            <h3 className="font-syne text-base font-semibold text-white">Particuliers</h3>
+            <h3 className="font-syne text-balance text-base font-semibold text-white">Particuliers</h3>
           </div>
           <ul className="space-y-2.5">
             {particuliers.map((item) => (
@@ -70,7 +70,7 @@ export default function Problem() {
             >
               <Building2 className="h-5 w-5" style={{ color: "#E05252" }} />
             </div>
-            <h3 className="font-syne text-base font-semibold text-white">Professionnels</h3>
+            <h3 className="font-syne text-balance text-base font-semibold text-white">Professionnels</h3>
           </div>
           <ul className="space-y-2.5">
             {professionnels.map((item) => (
@@ -87,7 +87,7 @@ export default function Problem() {
         <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-white/45">
           La question
         </p>
-        <p className="font-syne text-xl font-semibold italic leading-snug text-bt-cyan sm:text-2xl">
+        <p className="font-syne mx-auto max-w-3xl text-balance text-xl font-semibold italic leading-snug text-bt-cyan sm:text-2xl">
           Puis-je faire confiance à cette interaction ?
         </p>
       </Reveal>
