@@ -27,7 +27,7 @@ export default function BisSection() {
               </p>
               <h2
                 id="bis-heading"
-                className="font-syne mx-auto max-w-2xl text-balance text-xl font-semibold leading-snug text-white sm:mx-0 sm:text-2xl"
+                className="font-syne mx-auto max-w-[18rem] text-balance text-lg font-semibold leading-snug text-white sm:mx-0 sm:max-w-md sm:text-xl md:text-2xl"
               >
                 Signez et vérifiez{" "}
                 <span className="text-bt-cyan">chaque interaction.</span>

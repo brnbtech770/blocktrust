@@ -16,7 +16,7 @@ export default function Hero() {
         <div className="order-1 lg:col-span-3">
           {/* Pill eyebrow */}
           <div
-            className="opacity-0 animate-fade-up [animation-delay:0ms] inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm sm:text-base font-mono tracking-wider neon-gold"
+            className="opacity-0 animate-fade-up [animation-delay:0ms] inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-full border px-3 py-1.5 text-xs font-mono tracking-wider neon-gold sm:gap-2 sm:px-4 sm:text-sm sm:tracking-wider md:text-base"
             style={{
               background: "rgba(189,167,107,0.08)",
               borderColor: "var(--bt-border-gold)",
@@ -27,20 +27,29 @@ export default function Hero() {
             <span><span aria-hidden>✦</span> Infalsifiable</span>
           </div>
 
-          {/* H1 */}
-          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 max-w-none text-balance text-2xl font-bold leading-[1.2] tracking-tight text-white sm:mt-6 sm:text-3xl lg:whitespace-nowrap lg:text-[1.875rem] lg:leading-tight xl:text-[2.125rem]">
-            L&apos;identité numérique{" "}
-            <span className="text-bt-cyan">protège vos échanges.</span>
+          {/* H1 — mobile : 2 lignes propres · desktop lg+ : 1 ligne */}
+          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 max-w-[18rem] text-balance text-[1.375rem] font-bold leading-[1.25] tracking-tight text-white sm:mt-6 sm:max-w-md sm:text-2xl md:max-w-lg md:text-3xl lg:max-w-none lg:whitespace-nowrap lg:text-[1.875rem] lg:leading-tight xl:text-[2.125rem]">
+            L&apos;identité numérique
+            <br className="lg:hidden" aria-hidden="true" />
+            <span className="text-bt-cyan"> protège vos échanges.</span>
           </h1>
 
           {/* Sous-titre — headline validée équipe (Deborah + Laurianne 28/04/2026) */}
-          <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-5 max-w-2xl text-balance text-left font-sans text-lg leading-relaxed text-white sm:mt-6 sm:text-xl">
+          <p className="opacity-0 animate-fade-up [animation-delay:280ms] mt-4 max-w-[18rem] text-balance text-left text-base leading-snug text-white sm:mt-5 sm:max-w-md sm:text-lg sm:leading-relaxed md:max-w-lg md:text-xl">
             La preuve que c&apos;est <span className="font-semibold text-bt-cyan">vous</span>.
-            La certitude que c&apos;est <span className="font-semibold text-gold">eux</span>.
+            <br className="sm:hidden" aria-hidden="true" />
+            <span className="sm:ml-1">
+              La certitude que c&apos;est <span className="font-semibold text-gold">eux</span>.
+            </span>
           </p>
-          <p className="opacity-0 animate-fade-up [animation-delay:360ms] mt-2 max-w-2xl text-balance text-sm leading-relaxed text-white/40">
-            Certifiez ce que vous envoyez. Vérifiez ce que vous recevez. Faux RIB, faux conseiller, faux
-            fournisseur — détectés en 1 scan avant que le mal soit fait.
+          <p className="opacity-0 animate-fade-up [animation-delay:360ms] mt-3 max-w-[20rem] text-balance text-sm leading-relaxed text-white/40 sm:mt-2 sm:max-w-md md:max-w-lg">
+            Certifiez ce que vous envoyez. Vérifiez ce que vous recevez.
+            <span className="hidden sm:inline">
+              {" "}
+              Faux RIB, faux conseiller, faux fournisseur — détectés en 1 scan avant que le mal soit
+              fait.
+            </span>
+            <span className="sm:hidden"> Détectés en 1 scan.</span>
           </p>
 
           {/* CTAs + micro-copy */}
@@ -59,12 +68,18 @@ export default function Hero() {
                 Voir comment ça marche
               </Link>
             </div>
-            <p className="text-xs font-light leading-relaxed text-white/60 sm:text-sm">
-              Vérification gratuite pour tous ·{" "}
+            <p className="flex max-w-md flex-wrap items-center gap-x-1.5 gap-y-1 text-xs font-light leading-relaxed text-white/60 sm:max-w-none sm:text-sm">
+              <span>Vérification gratuite pour tous</span>
+              <span className="text-white/30" aria-hidden>
+                ·
+              </span>
               <Link href="/pricing" className="cursor-pointer text-bt-cyan/90 hover:text-bt-cyan">
                 Voir nos tarifs
-              </Link>{" "}
-              · Sans engagement
+              </Link>
+              <span className="text-white/30" aria-hidden>
+                ·
+              </span>
+              <span>Sans engagement</span>
             </p>
           </div>
 
@@ -104,9 +119,9 @@ export default function Hero() {
 
         {/* Badge — mobile : largeur vue = carré implicite ; halo centré largeur×hauteur identiques (Safari) */}
         <div className="order-2 flex w-full justify-center lg:col-span-2 lg:w-auto lg:justify-end lg:self-center">
-          <div className="opacity-0 animate-fade-in [animation-delay:300ms] flex w-full flex-col items-center px-1 pt-6 pb-16 sm:px-2 sm:pt-8 sm:pb-20 lg:max-w-none lg:px-0 lg:pb-0 lg:pt-0">
+          <div className="opacity-0 animate-fade-in [animation-delay:300ms] flex w-full flex-col items-center px-1 pt-4 pb-10 sm:px-2 sm:pt-8 sm:pb-16 lg:max-w-none lg:px-0 lg:pb-0 lg:pt-0">
             <div
-              className="relative isolate mx-auto aspect-square w-[min(17.5rem,88vw)] shrink-0 animate-float overflow-visible drop-shadow-[0_0_36px_rgba(0,212,255,0.38)] sm:w-[min(18rem,90vw)] lg:h-80 lg:w-80 lg:max-w-none"
+              className="relative isolate mx-auto aspect-square w-[min(15rem,82vw)] shrink-0 animate-float overflow-visible drop-shadow-[0_0_36px_rgba(0,212,255,0.38)] sm:w-[min(17.5rem,88vw)] md:w-[min(18rem,90vw)] lg:h-80 lg:w-80 lg:max-w-none"
               style={{ WebkitTransform: "translateZ(0)" }}
             >
               <div

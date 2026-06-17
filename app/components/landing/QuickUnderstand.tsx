@@ -41,7 +41,7 @@ export default function QuickUnderstand() {
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
           La solution
         </p>
-        <h2 className="font-syne mx-auto max-w-3xl text-balance text-2xl font-semibold leading-snug text-white sm:text-3xl">
+        <h2 className="font-syne mx-auto max-w-3xl text-balance text-xl font-semibold leading-snug text-white sm:text-2xl md:text-3xl">
           BLOCKTRUST™ vérifie vos interactions{" "}
           <span className="text-bt-cyan">avant que vous agissiez.</span>
         </h2>
