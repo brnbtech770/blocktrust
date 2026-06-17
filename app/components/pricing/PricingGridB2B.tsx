@@ -3,9 +3,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Minus, Plus } from 'lucide-react'
-import PlanCard, { type PlanCardFeature } from './PlanCard'
+import PlanCard from './PlanCard'
 import {
   formatPriceFr,
+  PRICING_CARD_BENEFITS_B2B,
+  getPlanPerMonthAmount,
+  getPlanPriceId,
   isPerSeatPlan,
   TEAM_SEATS_MIN,
   TEAM_SEATS_MAX,
@@ -13,30 +16,14 @@ import {
   type BillingInterval,
 } from '@/lib/pricing'
 
-const DESCRIPTIONS: Record<string, string> = {
-  STARTER: 'Indépendants & très petites équipes',
-  TEAM: 'Pour les équipes en croissance',
-  ENTERPRISE: 'Pour les grandes organisations',
-}
-
 const CTA_STYLES: Record<string, { background: string; border?: string; color: string }> = {
   STARTER: { background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white' },
   TEAM: { background: '#00d4ff', color: '#0a1628' },
   ENTERPRISE: { background: 'transparent', border: '1px solid var(--bt-gold)', color: 'var(--bt-gold)' },
 }
 
-const ICONS: Record<string, 'person' | 'shield' | 'group' | 'building' | 'crown'> = {
-  STARTER: 'person',
-  TEAM: 'group',
-  ENTERPRISE: 'crown',
-}
-
 const ENTERPRISE_MAILTO =
   'mailto:commercial@blocktrust.tech?subject=Demande%20d%27information%20Enterprise'
-
-function mapFeatures(plan: PlanB2B): PlanCardFeature[] {
-  return plan.features.map((f) => ({ label: f.label, included: f.included }))
-}
 
 type CheckoutOpts = { quantity?: number; addonQuantity?: number }
 
@@ -75,7 +62,7 @@ function SeatSelector({
             aria-label="Retirer un utilisateur"
             onClick={() => setSeats(Math.max(TEAM_SEATS_MIN, seats - 1))}
             disabled={seats <= TEAM_SEATS_MIN}
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-white/15 text-white disabled:opacity-30"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-white/15 text-white disabled:cursor-not-allowed disabled:opacity-30"
           >
             <Minus className="h-3.5 w-3.5" />
           </button>
@@ -85,7 +72,7 @@ function SeatSelector({
             aria-label="Ajouter un utilisateur"
             onClick={() => setSeats(Math.min(TEAM_SEATS_MAX, seats + 1))}
             disabled={seats >= TEAM_SEATS_MAX}
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-white/15 text-white disabled:opacity-30"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-white/15 text-white disabled:cursor-not-allowed disabled:opacity-30"
           >
             <Plus className="h-3.5 w-3.5" />
           </button>
@@ -93,61 +80,46 @@ function SeatSelector({
       </div>
       <p className="mt-2 text-center text-xs text-white/50">
         Total :{' '}
-        <span className="font-semibold text-white">{formatPriceFr(total)}€ HT</span> /mois ({seats} utilisateurs)
-      </p>
-      <p className="mt-1 text-center text-[11px] text-white/35">
-        Plus de {TEAM_SEATS_MAX} utilisateurs ?{' '}
-        <a href={ENTERPRISE_MAILTO} className="text-bt-cyan underline-offset-2 hover:underline">
-          Parler à un expert
-        </a>
+        <span className="font-semibold text-white">{formatPriceFr(total)}€ (HT)</span>/mois
       </p>
     </div>
   )
 }
 
-export default function PricingGridB2B({ plans, interval, currentPlan, isAuthenticated, loadingPlan, onCheckout }: Props) {
+export default function PricingGridB2B({
+  plans,
+  interval,
+  currentPlan,
+  isAuthenticated,
+  loadingPlan,
+  onCheckout,
+}: Props) {
   const router = useRouter()
   const [teamSeats, setTeamSeats] = useState<number>(TEAM_SEATS_MIN)
 
   return (
-    <>
-      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-3 lg:px-8">
+    <div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-3 lg:px-8">
       {plans.map((plan) => {
         const isCurrent = isAuthenticated && currentPlan === plan.id
         const isEnterprise = plan.id === 'ENTERPRISE'
         const perSeat = isPerSeatPlan(plan.id)
         const hasPrices = plan.prices != null
-        const priceInfo = hasPrices ? plan.prices?.[interval] : null
-        const priceId = priceInfo?.priceId ?? ''
+        const priceId = hasPrices ? (getPlanPriceId(plan, interval) ?? '') : ''
+        const perUnit = hasPrices ? (getPlanPerMonthAmount(plan, interval) ?? 0) : null
+        const benefits = PRICING_CARD_BENEFITS_B2B[plan.id] ?? []
+        const isPopular = plan.id === 'TEAM'
         const isYearly = interval === 'yearly'
 
-        const perUnit =
-          priceInfo && isYearly && 'perMonth' in priceInfo && typeof priceInfo.perMonth === 'number'
-            ? priceInfo.perMonth
-            : priceInfo?.amount ?? 0
-
-        // Team est facturé par siège (min. 2) → affichage « À partir de ».
-        const displayPrice: number | string = !priceInfo
-          ? 'Sur devis'
-          : perSeat
-          ? `À partir de ${formatPriceFr(perUnit * TEAM_SEATS_MIN)}€`
-          : perUnit
-        const priceUnit = !priceInfo ? undefined : perSeat ? '/mois (HT)' : '/mois (HT)'
-
-        const savingBadge =
-          isYearly && priceInfo && 'saving' in priceInfo && priceInfo.saving
-            ? `-${priceInfo.saving.replace('%', '')}%`
-            : undefined
-
         let billedNote: string | undefined
-        if (isEnterprise) {
-          billedNote = 'Dégressivité selon volume d’utilisateurs'
-        } else if (perSeat && priceInfo) {
-          billedNote = isYearly
-            ? `${formatPriceFr(perUnit)}€/utilisateur · Facturé ${formatPriceFr(perUnit * 12 * TEAM_SEATS_MIN)}€/an (${TEAM_SEATS_MIN} utilisateurs min.) · Économisez 20%`
-            : `${formatPriceFr(perUnit)}€/utilisateur (min. ${TEAM_SEATS_MIN})`
-        } else if (priceInfo && isYearly) {
-          billedNote = `Facturé ${formatPriceFr(priceInfo.amount)}€ en une fois · Économisez 20%`
+        if (hasPrices && plan.prices) {
+          const priceInfo = plan.prices[interval]
+          if (perSeat) {
+            billedNote = isYearly
+              ? `${formatPriceFr(perUnit ?? 0)}€ (HT)/utilisateur · min. ${TEAM_SEATS_MIN} utilisateurs`
+              : `${formatPriceFr(perUnit ?? 0)}€ (HT)/utilisateur · min. ${TEAM_SEATS_MIN} utilisateurs`
+          } else if (isYearly) {
+            billedNote = `Facturé ${formatPriceFr(priceInfo.amount)}€/an (HT)`
+          }
         }
 
         const quantity = perSeat ? teamSeats : undefined
@@ -155,27 +127,20 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
         return (
           <PlanCard
             key={plan.id}
-            mode="B2B"
             name={plan.name}
-            description={DESCRIPTIONS[plan.id] ?? ''}
-            price={displayPrice}
-            priceUnit={priceUnit}
-            savingBadge={savingBadge}
+            price={isEnterprise ? 'Sur devis' : (perUnit ?? 0)}
+            taxLabel={isEnterprise ? undefined : '(HT)'}
+            priceUnit={isEnterprise ? undefined : perSeat ? '/mois/utilisateur' : '/mois'}
             billedNote={billedNote}
-            priceTaxNote={hasPrices ? 'Prix HT · TVA 20% en sus' : undefined}
-            subtitle={plan.users}
-            badges={[{ label: 'Multi-support inclus', style: 'multiSupport' }]}
-            features={mapFeatures(plan)}
-            accordionFeatures={plan.accordionFeatures}
+            features={benefits}
             extraControl={
-              perSeat && priceInfo ? (
+              perSeat && perUnit != null ? (
                 <SeatSelector seats={teamSeats} setSeats={setTeamSeats} perUnit={perUnit} />
               ) : undefined
             }
-            cta={isEnterprise ? 'Contactez-nous' : isCurrent ? 'Plan actuel' : 'Démarrer'}
+            cta={isEnterprise ? 'Contactez-nous' : isCurrent ? 'Plan actuel' : 'Choisir ce plan'}
             ctaStyle={CTA_STYLES[plan.id] ?? { background: '#00d4ff', color: '#0a1628' }}
-            isPopular={plan.highlighted}
-            icon={ICONS[plan.id] ?? 'person'}
+            isPopular={isPopular}
             ctaDisabled={isCurrent}
             ctaLoading={hasPrices && loadingPlan === priceId}
             ctaHref={isEnterprise ? ENTERPRISE_MAILTO : undefined}
@@ -183,20 +148,16 @@ export default function PricingGridB2B({ plans, interval, currentPlan, isAuthent
               isEnterprise || isCurrent
                 ? undefined
                 : !isAuthenticated
-                ? hasPrices && priceId
-                  ? () => router.push(signinCheckoutCallbackUrl(priceId, quantity))
-                  : () => router.push(`/auth/signin?callbackUrl=${encodeURIComponent('/pricing')}`)
-                : hasPrices
-                ? () => onCheckout(priceId, quantity != null ? { quantity } : undefined)
-                : undefined
+                  ? hasPrices && priceId
+                    ? () => router.push(signinCheckoutCallbackUrl(priceId, quantity))
+                    : () => router.push(`/auth/signin?callbackUrl=${encodeURIComponent('/pricing')}`)
+                  : hasPrices
+                    ? () => onCheckout(priceId, quantity != null ? { quantity } : undefined)
+                    : undefined
             }
           />
         )
       })}
-      </div>
-      <p className="mx-auto mt-6 max-w-5xl px-4 text-center text-xs text-white/30 sm:px-6 lg:px-8">
-        Prix HT · TVA 20% en sus · Sans engagement · White Label en option
-      </p>
-    </>
+    </div>
   )
 }

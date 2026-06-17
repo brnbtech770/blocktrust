@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Suspense, useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
@@ -8,22 +9,17 @@ import Footer from '@/app/components/landing/Footer'
 import PricingToggle from '@/app/components/pricing/PricingToggle'
 import PricingGridB2C from '@/app/components/pricing/PricingGridB2C'
 import PricingGridB2B from '@/app/components/pricing/PricingGridB2B'
-import type { PlanB2C, PlanB2B } from '@/lib/pricing'
+import { YEARLY_DISCOUNT_LABEL, type PlanB2C, type PlanB2B } from '@/lib/pricing'
 
 function PricingContextMessage() {
   const searchParams = useSearchParams()
   const message = searchParams.get('message')
   if (!message?.trim()) return null
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+    <div className="mx-auto max-w-3xl px-4 pt-6 sm:px-6 lg:px-8">
       <div
         role="status"
-        className="rounded-xl border px-4 py-3 text-sm"
-        style={{
-          borderColor: 'rgba(0,212,255,0.45)',
-          background: 'rgba(0,212,255,0.1)',
-          color: 'var(--bt-text)',
-        }}
+        className="rounded-xl border border-bt-cyan/45 bg-bt-cyan/10 px-4 py-3 text-sm text-[var(--bt-text)]"
       >
         {message}
       </div>
@@ -40,7 +36,6 @@ export default function PricingPage() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [mode, setMode] = useState<'B2C' | 'B2B'>('B2C')
 
-  // Active automatiquement l'onglet Entreprises depuis ?tab=entreprises ou #entreprises.
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
@@ -58,11 +53,12 @@ export default function PricingPage() {
         setPlans(data.plans || [])
         setPlansB2B(data.plansB2B || [])
       })
-      .catch(() => { setPlans([]); setPlansB2B([]) })
+      .catch(() => {
+        setPlans([])
+        setPlansB2B([])
+      })
   }, [])
 
-  // Redirige vers l'écran de confirmation (acceptation CGU/CGV + renonciation B2C)
-  // qui recueille le consentement avant la création de la session Stripe.
   function handleCheckout(
     priceId: string,
     opts?: { quantity?: number; addonQuantity?: number },
@@ -85,39 +81,31 @@ export default function PricingPage() {
         <PricingContextMessage />
       </Suspense>
 
-      {/* Hero */}
-      <section className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-4 sm:pb-6">
-        <h1 className="font-syne text-center text-2xl font-bold text-white sm:text-3xl lg:text-4xl mb-3 sm:mb-4">
-          <span className="text-white">Tarifs </span>
-          <span className="text-gold">transparents</span>
+      <section className="mx-auto max-w-7xl px-3 pt-8 pb-4 sm:px-6 sm:pt-12 sm:pb-6 lg:px-8">
+        <h1 className="font-syne text-balance mx-auto mb-3 max-w-3xl text-center text-2xl font-bold text-white sm:mb-4 sm:text-3xl lg:text-4xl">
+          Des tarifs simples et transparents
         </h1>
-        <h2 className="mx-auto max-w-2xl text-center text-base font-medium text-white/70 sm:text-lg">
-          Le badge BLOCKTRUST est inclus dans tous nos abonnements. Sans frais cachés.
-        </h2>
-        <div className="mx-auto mb-6 mt-3 max-w-2xl space-y-0.5 px-1 text-center font-sans text-sm leading-relaxed text-white/60 sm:mb-10 sm:text-base">
-          <p>Choisissez la formule adaptée à vos besoins.</p>
-          <p>Mensuel sans engagement ou annuel à tarif préférentiel.</p>
-        </div>
+        <p className="mx-auto mb-8 max-w-2xl text-balance text-center text-base text-white/70 sm:mb-10 sm:text-lg">
+          Choisissez la protection qui vous correspond.
+        </p>
 
         <PricingToggle mode={mode} setMode={setMode} />
 
-        {/* Toggle Mensuel / Annuel */}
         <div
           role="tablist"
           aria-label="Fréquence de facturation"
-          className="mb-4 flex max-w-full flex-wrap items-center justify-center gap-2 px-1 sm:gap-3"
+          className="mb-8 flex max-w-full flex-wrap items-center justify-center gap-2 px-1 sm:gap-3"
         >
           <button
             type="button"
             role="tab"
             aria-selected={interval === 'monthly'}
             onClick={() => setInterval('monthly')}
-            className="min-w-0 shrink rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:px-5 sm:text-base"
-            style={{
-              background: interval === 'monthly' ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.06)',
-              color: interval === 'monthly' ? '#00d4ff' : 'var(--bt-muted)',
-              border: `1px solid ${interval === 'monthly' ? 'rgba(0,212,255,0.4)' : 'var(--bt-border)'}`,
-            }}
+            className={`min-w-0 shrink cursor-pointer rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors sm:px-5 sm:text-base ${
+              interval === 'monthly'
+                ? 'border-bt-cyan/40 bg-bt-cyan/20 text-bt-cyan'
+                : 'border-white/10 bg-white/[0.06] text-white/50'
+            }`}
           >
             Mensuel
           </button>
@@ -126,48 +114,21 @@ export default function PricingPage() {
             role="tab"
             aria-selected={interval === 'yearly'}
             onClick={() => setInterval('yearly')}
-            className="min-w-0 shrink rounded-lg px-4 py-2.5 text-sm font-medium transition-colors sm:px-5 sm:text-base"
-            style={{
-              background: interval === 'yearly' ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.06)',
-              color: interval === 'yearly' ? '#00d4ff' : 'var(--bt-muted)',
-              border: `1px solid ${interval === 'yearly' ? 'rgba(0,212,255,0.4)' : 'var(--bt-border)'}`,
-            }}
+            className={`min-w-0 shrink cursor-pointer rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors sm:px-5 sm:text-base ${
+              interval === 'yearly'
+                ? 'border-bt-cyan/40 bg-bt-cyan/20 text-bt-cyan'
+                : 'border-white/10 bg-white/[0.06] text-white/50'
+            }`}
           >
             Annuel
           </button>
-          <span
-            className="rounded-full px-3 py-1 text-[10px] font-medium"
-            style={{
-              background: interval === 'yearly' ? 'rgba(29,184,126,0.15)' : 'rgba(255,255,255,0.06)',
-              color: interval === 'yearly' ? '#1DB87E' : 'var(--bt-muted)',
-              fontFamily: 'var(--font-mono-bt), "IBM Plex Mono", monospace',
-            }}
-          >
-            {interval === 'yearly' ? '−20% • Paiement annuel' : 'Sans engagement'}
+          <span className="rounded-full bg-emerald-500/15 px-3 py-1 font-mono text-[10px] font-medium text-emerald-400">
+            {YEARLY_DISCOUNT_LABEL}
           </span>
         </div>
-
-        {/* Pill info */}
-        <div
-          className="w-fit mx-auto mb-3 text-[13px] rounded-full px-4 py-1.5 border"
-          style={{ borderColor: 'var(--bt-border)', color: 'var(--bt-muted)' }}
-        >
-          {mode === 'B2B'
-            ? '1 badge = 1 identité · multi-support'
-            : '1 profil = 1 badge multi-support + Trust Circle inclus'}
-        </div>
-
-        {/* Phrase explicative B2B */}
-        {mode === 'B2B' && (
-          <p className="text-center text-sm max-w-xl mx-auto mb-8" style={{ color: 'var(--bt-muted)' }}>
-            <span className="text-white font-semibold">1 poste = 1 utilisateur.</span>{' '}
-            Son badge BLOCKTRUST fonctionne sur tous ses appareils (PC, mobile, tablette) sans configuration supplémentaire.
-          </p>
-        )}
       </section>
 
-      {/* Grilles tarifaires — sous chaque bouton : PlanCard affiche la mention résiliation */}
-      <section className="pb-16">
+      <section className="pb-10">
         {mode === 'B2C' ? (
           <PricingGridB2C
             plans={plans}
@@ -188,30 +149,34 @@ export default function PricingPage() {
           />
         )}
 
-        <div className="mx-auto mt-8 max-w-2xl rounded-xl border border-white/5 bg-white/[0.02] p-4 text-center">
-          <p className="text-xs leading-relaxed text-white/40">
-            <span className="font-semibold text-white/60">Contacts</span> = personnes ou entreprises dont vous
-            enregistrez les coordonnées officielles (domaine, email, téléphone, wallet).
-            <span className="mx-2">·</span>
-            <span className="font-semibold text-white/60">Réseau de confiance</span> = contacts qui ont aussi un
-            badge BLOCKTRUST — protection maximale activée automatiquement.
+        <div className="mx-auto mt-10 flex flex-col items-center gap-4 px-4 text-center">
+          <a
+            href="#compare"
+            className="cursor-pointer text-sm font-medium text-bt-cyan underline-offset-4 hover:underline"
+          >
+            Comparer les plans en détail →
+          </a>
+          <p className="text-sm text-white/60">
+            Des questions ?{' '}
+            <Link
+              href="/faq"
+              className="cursor-pointer font-medium text-bt-cyan underline-offset-4 hover:underline"
+            >
+              Consultez notre FAQ →
+            </Link>
           </p>
         </div>
 
-        {/* Notes légales */}
-        <div className="mx-auto mt-6 max-w-3xl space-y-1 px-4 text-center text-xs text-white/30 sm:px-6">
-          <p>
-            <span className="font-mono">†</span> Vérifications illimitées : usage raisonnable, voir CGV.
-          </p>
-          <p>
-            <span className="font-mono">*</span> Contacts illimités / vérifications Team : conditions détaillées
-            dans les{' '}
-            <a href="/cgv" className="text-white/45 underline-offset-2 hover:text-bt-cyan">
-              CGV
-            </a>
-            .
-          </p>
-        </div>
+        <section
+          id="compare"
+          aria-labelledby="compare-heading"
+          className="mx-auto mt-8 max-w-3xl px-4 text-center sm:px-6"
+        >
+          <h2 id="compare-heading" className="sr-only">
+            Comparatif des plans
+          </h2>
+          <p className="text-sm text-white/40">Tableau comparatif détaillé — bientôt disponible.</p>
+        </section>
       </section>
 
       <Footer />

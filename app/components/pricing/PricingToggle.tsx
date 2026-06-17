@@ -12,61 +12,35 @@ export default function PricingToggle({ mode, setMode }: Props) {
     <div
       role="tablist"
       aria-label="Type de clientèle"
-      className="mx-auto mb-10 flex w-full max-w-md flex-wrap justify-center gap-1 rounded-[10px] p-1 sm:w-fit sm:max-w-none sm:flex-nowrap"
-      style={{
-        background: 'rgba(255,255,255,0.05)',
-        border: '1px solid var(--bt-border)',
-      }}
+      className="mx-auto mb-8 flex w-full max-w-md flex-wrap justify-center gap-1 rounded-[10px] border border-white/10 bg-white/[0.05] p-1 sm:mb-10 sm:w-fit sm:max-w-none sm:flex-nowrap"
     >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={mode === 'B2B'}
-        onClick={() => setMode('B2B')}
-        className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition sm:flex-initial sm:px-6 sm:text-base"
-        style={
-          mode === 'B2B'
-            ? { background: '#00d4ff', color: '#0a1628' }
-            : { background: 'transparent', color: 'var(--bt-muted)' }
-        }
-        onMouseEnter={(e) => {
-          if (mode !== 'B2B') {
-            e.currentTarget.style.color = 'white'
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (mode !== 'B2B') {
-            e.currentTarget.style.color = 'var(--bt-muted)'
-          }
-        }}
-      >
-        <BuildingIcon className="w-4 h-4" />
-        Entreprises
-      </button>
       <button
         type="button"
         role="tab"
         aria-selected={mode === 'B2C'}
         onClick={() => setMode('B2C')}
-        className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition sm:flex-initial sm:px-6 sm:text-base"
-        style={
+        className={`flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition sm:flex-initial sm:px-6 sm:text-base ${
           mode === 'B2C'
-            ? { background: '#00d4ff', color: '#0a1628' }
-            : { background: 'transparent', color: 'var(--bt-muted)' }
-        }
-        onMouseEnter={(e) => {
-          if (mode !== 'B2C') {
-            e.currentTarget.style.color = 'white'
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (mode !== 'B2C') {
-            e.currentTarget.style.color = 'var(--bt-muted)'
-          }
-        }}
+            ? 'bg-bt-cyan text-[#0a1628]'
+            : 'bg-transparent text-white/50 hover:text-white'
+        }`}
       >
-        <PersonIcon className="w-4 h-4" />
+        <PersonIcon className="h-4 w-4" />
         Particuliers
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mode === 'B2B'}
+        onClick={() => setMode('B2B')}
+        className={`flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition sm:flex-initial sm:px-6 sm:text-base ${
+          mode === 'B2B'
+            ? 'bg-bt-cyan text-[#0a1628]'
+            : 'bg-transparent text-white/50 hover:text-white'
+        }`}
+      >
+        <BuildingIcon className="h-4 w-4" />
+        Entreprises
       </button>
     </div>
   )

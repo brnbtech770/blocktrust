@@ -174,6 +174,44 @@ export function formatPriceFr(amount: number): string {
   });
 }
 
+/** Badge affiché sur le toggle annuel /pricing. */
+export const YEARLY_DISCOUNT_LABEL = "-20%";
+
+type PlanWithPrices = {
+  prices: {
+    monthly: { amount: number; priceId?: string };
+    yearly: {
+      amount: number;
+      perMonth: number;
+      priceId?: string;
+      saving?: string;
+      savingEur?: number;
+    };
+  } | null;
+};
+
+/** Montant mensuel affiché (TTC/HT) pour un plan payant et un cycle donné. */
+export function getPlanPerMonthAmount(
+  plan: PlanWithPrices,
+  interval: BillingInterval,
+): number | null {
+  if (!plan.prices) return null;
+  const priceInfo = plan.prices[interval];
+  if (interval === "yearly" && priceInfo && "perMonth" in priceInfo) {
+    return priceInfo.perMonth;
+  }
+  return priceInfo?.amount ?? null;
+}
+
+/** PriceId Stripe pour un plan payant et un cycle donné. */
+export function getPlanPriceId(
+  plan: PlanWithPrices,
+  interval: BillingInterval,
+): string | undefined {
+  if (!plan.prices) return undefined;
+  return plan.prices[interval]?.priceId;
+}
+
 /** Id plan catalogue (B2C_/B2B_ retirés, majuscules). */
 function resolveCatalogPlanId(planId: string): string {
   return planId
@@ -206,6 +244,55 @@ export function formatPlanMonthlyPriceLabel(planId: string): string | null {
 
 export type PlanB2C = (typeof PLANS_B2C)[number];
 export type PlanB2B = (typeof PLANS_B2B)[number];
+
+/** Bénéfices courts affichés sur les cartes /pricing (B2C). */
+export const PRICING_CARD_BENEFITS_B2C: Record<
+  PlanB2C["id"],
+  readonly string[]
+> = {
+  DISCOVERY: ["Badge d'identité", "5 contacts", "20 vérifications/mois"],
+  ESSENTIEL: [
+    "Badge ancré blockchain",
+    "20 contacts",
+    "500 vérifications/mois",
+  ],
+  PREMIUM: [
+    "Cercle de confiance",
+    "Signatures BIS",
+    "100 contacts",
+    "Vérifications illimitées",
+  ],
+  FAMILLE: [
+    "Jusqu'à 5 profils",
+    "200 contacts partagés",
+    "Vérifications illimitées",
+  ],
+};
+
+/** Bénéfices courts affichés sur les cartes /pricing (B2B). */
+export const PRICING_CARD_BENEFITS_B2B: Record<
+  PlanB2B["id"],
+  readonly string[]
+> = {
+  STARTER: [
+    "1 utilisateur",
+    "Badge certifié + ancrage",
+    "100 contacts",
+    "Signatures BIS",
+  ],
+  TEAM: [
+    "2-10 utilisateurs",
+    "Vault d'équipe illimité",
+    "Audit logs",
+    "Signatures BIS",
+  ],
+  ENTERPRISE: [
+    "SSO/SAML",
+    "API",
+    "Marque blanche",
+    "Support dédié",
+  ],
+};
 
 /** Plan B2C par id (ou undefined). */
 export function getPlanB2CById(id: string): PlanB2C | undefined {
