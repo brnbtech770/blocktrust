@@ -174,6 +174,7 @@ export default function FaqContent() {
                 return (
                   <li
                     key={item.id}
+                    id={item.id}
                     className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] transition-colors hover:border-bt-cyan/40"
                   >
                     <button

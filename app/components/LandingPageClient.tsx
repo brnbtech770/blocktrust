@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import Navbar from "./landing/Navbar";
 import Hero from "./landing/Hero";
 import QuickUnderstand from "./landing/QuickUnderstand";
+import BisSection from "./landing/BisSection";
 import Problem from "./landing/Problem";
 import Categories from "./landing/Categories";
 import Solution from "./landing/Solution";
@@ -31,6 +32,7 @@ export default function LandingPageClient({ threatAlert }: { threatAlert: ReactN
         {threatAlert}
         <Solution />
         <QuickUnderstand />
+        <BisSection />
         <Categories />
         <Particuliers />
         <Entreprises />
