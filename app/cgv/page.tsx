@@ -116,7 +116,7 @@ La société se réserve également le droit de suspendre, limiter ou révoquer 
 Conformément aux articles L.221-18 et suivants du Code de la consommation, le client agissant en qualité de consommateur dispose d’un délai de quatorze (14) jours à compter de la souscription de l’abonnement pour exercer son droit de rétractation, sans avoir à motiver sa décision ni à supporter de pénalités.
 Pour exercer son droit de rétractation, le client doit notifier sa décision au moyen d’une déclaration dénuée d’ambiguïté, par exemple :
 - par courrier électronique à l’adresse suivante : contact@blocktrust.tech ;
-- ou par courrier postal à l’adresse suivante : 17 bis Avenue Franklin Roosevelt 94300 Vincennes
+- ou par courrier postal à l’adresse suivante : 17 bis Avenue Franklin Roosevelt, 94300 Vincennes, France
 Le client peut également utiliser le formulaire type de rétractation figurant en annexe des présentes CGV, sans que son usage soit obligatoire.
 En cas d’exercice valable du droit de rétractation, la société procédera au remboursement des sommes éligibles conformément aux dispositions légales applicables, au plus tard dans un délai de quatorze (14) jours à compter de la date à laquelle elle est informée de la décision de rétractation, en utilisant le même moyen de paiement que celui utilisé lors de la transaction initiale, sauf accord exprès du client pour un autre moyen.
 Conformément à l’article L.221-28 du Code de la consommation, le client reconnaît et accepte expressément que l’exécution du service commence immédiatement après la souscription, et renonce expressément à son droit de rétractation dès lors que le service a été pleinement exécuté avant l’expiration du délai de quatorze (14) jours.
@@ -193,7 +193,7 @@ En cas de refus des nouvelles CGV, le client pourra résilier son abonnement ava
 (Veuillez compléter et renvoyer le présent formulaire uniquement si vous souhaitez vous rétracter)
 À l’attention de :
 SAS BRNB TECH
-17 bis Avenue Franklin Roosevelt 94300 Vincennes
+17 bis Avenue Franklin Roosevelt, 94300 Vincennes, France
 contact@blocktrust.tech
 Je vous notifie par la présente ma rétractation du contrat portant sur la souscription de l’abonnement suivant :
 - Nom de l’abonnement : __________________________
