@@ -28,7 +28,7 @@ export default function Hero() {
           </div>
 
           {/* H1 */}
-          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 max-w-2xl text-balance text-2xl font-bold leading-[1.2] tracking-tight text-white sm:mt-6 sm:text-4xl">
+          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 max-w-none text-balance text-2xl font-bold leading-[1.2] tracking-tight text-white sm:mt-6 sm:text-3xl lg:whitespace-nowrap lg:text-[1.875rem] lg:leading-tight xl:text-[2.125rem]">
             L&apos;identité numérique{" "}
             <span className="text-bt-cyan">protège vos échanges.</span>
           </h1>
