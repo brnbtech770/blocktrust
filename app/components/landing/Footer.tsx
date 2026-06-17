@@ -110,7 +110,7 @@ export default function Footer() {
             <div className="space-y-1">
               <p className="font-semibold text-white/70">Éditeur du site</p>
               <p>BRNB TECH SAS (en cours d&apos;immatriculation)</p>
-              <p>20 rue du Donjon, 94300 Vincennes, France</p>
+              <p>17 bis Avenue Franklin Roosevelt, 94300 Vincennes, France</p>
               <p>
                 Email :{" "}
                 <a href="mailto:contact@blocktrust.tech" className="cursor-pointer text-bt-cyan/80 hover:text-bt-cyan">

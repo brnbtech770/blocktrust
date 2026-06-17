@@ -75,7 +75,7 @@ export default function PrivacyContent() {
           <p>
             <strong className="text-white/90">BRNB TECH SAS</strong>
             <br />
-            Adresse : 3 rue Sacrot, 94160 Saint-Mandé
+            Adresse : 17 bis Avenue Franklin Roosevelt, 94300 Vincennes
             <br />
             Responsable de traitement : Olivier Bernabé
           </p>
