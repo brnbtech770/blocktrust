@@ -40,6 +40,14 @@ const prismaMock = vi.hoisted(() => ({
   },
 }))
 
+vi.mock('@/lib/rate-limit-public-failclosed', () => ({
+  checkPublicVerifyIpRateLimit: vi.fn().mockResolvedValue({ ok: true }),
+  PUBLIC_RATE_LIMIT_503_BODY: {
+    error: 'service_unavailable',
+    message: 'Service temporairement indisponible',
+  },
+}))
+
 vi.mock('@/lib/rate-limit-verify', () => ({
   checkRateLimitVerifyAsync: vi.fn().mockResolvedValue({
     ok: true,

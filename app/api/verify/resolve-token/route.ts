@@ -4,7 +4,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { hashIp } from '@/app/lib/auth'
 import { resolveCertificateVerifyToken } from '@/lib/certificate-verify-token'
-import { checkResolveTokenRateLimit } from '@/lib/rate-limit-cost'
+import {
+  checkPublicResolveTokenRateLimit,
+  PUBLIC_RATE_LIMIT_503_BODY,
+} from '@/lib/rate-limit-public-failclosed'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +21,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'not_found' }, { status: 400 })
   }
 
-  const rate = await checkResolveTokenRateLimit(hashIp(clientIp(req)))
+  const ipHash = hashIp(clientIp(req))
+  const rate = await checkPublicResolveTokenRateLimit(ipHash)
+  if (!rate.ok && rate.kind === 'unavailable') {
+    return NextResponse.json(PUBLIC_RATE_LIMIT_503_BODY, { status: 503 })
+  }
   if (!rate.ok) {
     return NextResponse.json(
       { error: 'rate_limited' },

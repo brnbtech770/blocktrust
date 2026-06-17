@@ -15,7 +15,7 @@ import {
 } from "@/lib/verify-fraud";
 import { persistUserTrustScore } from "@/lib/trustscore";
 import { btLog } from "@/lib/prodLog";
-import { checkRateLimitVerifyAsync } from "@/lib/rate-limit-verify";
+import { checkPublicVerifyIpRateLimit, PUBLIC_RATE_LIMIT_503_BODY } from "@/lib/rate-limit-public-failclosed";
 import { checkV2VerifyJti } from "@/lib/rate-limit-cost";
 
 function getIp(req: NextRequest) {
@@ -55,7 +55,10 @@ export async function POST(req: NextRequest) {
     // Endpoint PUBLIC : rate limit par IP en tête de route (anti-DoS + anti-pollution
     // du pipeline de détection de fraude). Fail-soft (Redis lazy + fallback in-memory).
     const ip = getIp(req);
-    const ipRate = await checkRateLimitVerifyAsync(ip);
+    const ipRate = await checkPublicVerifyIpRateLimit(ip);
+    if (!ipRate.ok && ipRate.kind === "unavailable") {
+      return NextResponse.json(PUBLIC_RATE_LIMIT_503_BODY, { status: 503 });
+    }
     if (!ipRate.ok) {
       return NextResponse.json(
         { verdict: "ERROR", reason: "rate_limited" },

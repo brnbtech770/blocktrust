@@ -10,7 +10,10 @@ import {
   verifyBisSignature,
 } from '@/lib/bis-sign'
 import { computeTrustEngineScore } from '@/lib/trust-engine'
-import { checkBisVerifyRateLimit } from '@/lib/rate-limit-cost'
+import {
+  checkPublicBisVerifyRateLimit,
+  PUBLIC_RATE_LIMIT_503_BODY,
+} from '@/lib/rate-limit-public-failclosed'
 import { btErrorDevDetails } from '@/lib/prodLog'
 
 type RouteContext = { params: Promise<{ signatureId: string }> }
@@ -22,7 +25,10 @@ function clientIp(req: NextRequest): string {
 export async function GET(req: NextRequest, context: RouteContext) {
   try {
     const ipHash = hashIp(clientIp(req))
-    const rate = await checkBisVerifyRateLimit(ipHash)
+    const rate = await checkPublicBisVerifyRateLimit(ipHash)
+    if (!rate.ok && rate.kind === 'unavailable') {
+      return NextResponse.json(PUBLIC_RATE_LIMIT_503_BODY, { status: 503 })
+    }
     if (!rate.ok) {
       return NextResponse.json(
         { error: 'rate_limited' },

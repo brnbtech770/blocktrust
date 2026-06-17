@@ -49,6 +49,18 @@ vi.mock('@/lib/prodLog', () => ({
   btLog: vi.fn(),
 }))
 
+vi.mock('@/lib/rate-limit-public-failclosed', () => ({
+  checkPublicVerifyIpRateLimit: vi.fn().mockResolvedValue({ ok: true }),
+  PUBLIC_RATE_LIMIT_503_BODY: {
+    error: 'service_unavailable',
+    message: 'Service temporairement indisponible',
+  },
+}))
+
+vi.mock('@/lib/rate-limit-cost', () => ({
+  checkV2VerifyJti: vi.fn().mockResolvedValue({ ok: true }),
+}))
+
 import { PATCH } from '@/app/api/certificates/[id]/route'
 import { GET as getAdminStats } from '@/app/api/admin/stats/route'
 import { POST as postV2Verify } from '@/app/api/v2/verify/route'

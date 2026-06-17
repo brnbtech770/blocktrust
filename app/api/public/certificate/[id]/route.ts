@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/app/lib/db";
 import { hashIp } from "@/app/lib/auth";
 import { auth } from "@/app/lib/auth-server";
-import { checkRateLimitVerifyAsync } from "@/lib/rate-limit-verify";
+import { checkPublicVerifyIpRateLimit, PUBLIC_RATE_LIMIT_503_BODY } from "@/lib/rate-limit-public-failclosed";
 import { walletNetworkLabelFr } from "@/lib/wallet-validation";
 import {
   createAdminFraudAlert,
@@ -103,7 +103,10 @@ export async function GET(
   }
 
   const ip = getIp(req);
-  const rate = await checkRateLimitVerifyAsync(ip);
+  const rate = await checkPublicVerifyIpRateLimit(ip);
+  if (!rate.ok && rate.kind === "unavailable") {
+    return NextResponse.json(PUBLIC_RATE_LIMIT_503_BODY, { status: 503 });
+  }
   if (!rate.ok) {
     return NextResponse.json(
       { verdict: "ERROR", reason: "rate_limited", error: "rate_limited" },
