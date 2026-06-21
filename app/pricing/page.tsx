@@ -9,6 +9,7 @@ import Footer from '@/app/components/landing/Footer'
 import PricingToggle from '@/app/components/pricing/PricingToggle'
 import PricingGridB2C from '@/app/components/pricing/PricingGridB2C'
 import PricingGridB2B from '@/app/components/pricing/PricingGridB2B'
+import PricingCompareTable from '@/app/components/pricing/PricingCompareTable'
 import { YEARLY_DISCOUNT_LABEL, type PlanB2C, type PlanB2B } from '@/lib/pricing'
 
 function PricingContextMessage() {
@@ -167,16 +168,7 @@ export default function PricingPage() {
           </p>
         </div>
 
-        <section
-          id="compare"
-          aria-labelledby="compare-heading"
-          className="mx-auto mt-8 max-w-3xl px-4 text-center sm:px-6"
-        >
-          <h2 id="compare-heading" className="sr-only">
-            Comparatif des plans
-          </h2>
-          <p className="text-sm text-white/40">Tableau comparatif détaillé — bientôt disponible.</p>
-        </section>
+        <PricingCompareTable mode={mode} />
       </section>
 
       <Footer />
