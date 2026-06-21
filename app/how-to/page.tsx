@@ -4,14 +4,14 @@ import Footer from "@/app/components/landing/Footer";
 import HowToContent from "./HowToContent";
 
 export const metadata: Metadata = {
-  title: "Comment utiliser BLOCKTRUST™ — Guide complet",
+  title: "Comment ça marche — BLOCKTRUST™",
   description:
-    "Guide d'installation et d'utilisation de BLOCKTRUST™ pour particuliers et entreprises. Intégration badge, API, marque blanche.",
+    "Comprenez BLOCKTRUST™ en 3 minutes : création de badge, signatures, vérification de contacts et lexique des termes techniques expliqués simplement.",
   alternates: { canonical: "/how-to" },
   openGraph: {
-    title: "Comment utiliser BLOCKTRUST™ — Guide complet",
+    title: "Comment fonctionne BLOCKTRUST™ ?",
     description:
-      "Schéma de vérification, démos animées, FAQ. Tout ce qu'il faut savoir pour intégrer BLOCKTRUST™.",
+      "De la création de votre badge à la protection de vos échanges — tout se fait en quelques minutes.",
     url: "/how-to",
   },
 };
