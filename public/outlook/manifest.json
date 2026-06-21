@@ -1,0 +1,109 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "1.0.0.0",
+  "id": "f8e3d2c1-9b4a-4e5f-a6b7-c8d9e0f1a2b3",
+  "developer": {
+    "name": "BRNB TECH SAS",
+    "websiteUrl": "https://blocktrust.tech",
+    "privacyUrl": "https://blocktrust.tech/privacy",
+    "termsOfUseUrl": "https://blocktrust.tech/cgu"
+  },
+  "name": {
+    "short": "BLOCKTRUST TrustScan",
+    "full": "BLOCKTRUST TrustScan — Vérification d'identité Outlook"
+  },
+  "description": {
+    "short": "Vérifiez l'identité de vos correspondants dans Outlook",
+    "full": "BLOCKTRUST TrustScan vérifie automatiquement l'identité certifiée de vos expéditeurs et détecte les signatures BIS directement dans Outlook."
+  },
+  "icons": {
+    "color": "https://blocktrust.tech/outlook/assets/icon-80.png",
+    "outline": "https://blocktrust.tech/outlook/assets/icon-32.png"
+  },
+  "accentColor": "#00d4ff",
+  "validDomains": [
+    "blocktrust.tech",
+    "www.blocktrust.tech"
+  ],
+  "authorization": {
+    "permissions": {
+      "resourceSpecific": [
+        {
+          "name": "MailboxItem.Read.User",
+          "type": "Delegated"
+        }
+      ]
+    }
+  },
+  "extensions": [
+    {
+      "requirements": {
+        "scopes": ["mail"]
+      },
+      "runtimes": [
+        {
+          "requirements": {
+            "capabilities": [
+              {
+                "name": "Mailbox",
+                "minVersion": "1.5"
+              }
+            ]
+          },
+          "id": "BlocktrustTaskPaneRuntime",
+          "type": "general",
+          "code": {
+            "page": "https://blocktrust.tech/outlook/taskpane"
+          },
+          "lifetime": "short",
+          "actions": [
+            {
+              "id": "VerifySender",
+              "type": "openPage",
+              "pinnable": false,
+              "view": "dashboard",
+              "displayName": "Vérifier l'expéditeur"
+            }
+          ]
+        }
+      ],
+      "ribbons": [
+        {
+          "contexts": ["mailRead"],
+          "tabs": [
+            {
+              "builtInTabId": "TabDefault",
+              "groups": [
+                {
+                  "id": "BlocktrustGroup",
+                  "label": "BLOCKTRUST",
+                  "icons": [
+                    {
+                      "size": 16,
+                      "url": "https://blocktrust.tech/outlook/assets/icon-16.png"
+                    }
+                  ],
+                  "controls": [
+                    {
+                      "id": "VerifySenderButton",
+                      "type": "button",
+                      "label": "Vérifier l'expéditeur",
+                      "icons": [
+                        {
+                          "size": 16,
+                          "url": "https://blocktrust.tech/outlook/assets/icon-16.png"
+                        }
+                      ],
+                      "actionId": "VerifySender"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
