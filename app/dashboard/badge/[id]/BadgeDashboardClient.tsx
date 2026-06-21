@@ -1,20 +1,19 @@
 // app/dashboard/badge/[id]/BadgeDashboardClient.tsx
-// Page client — badge, embed, QR, IDs
+// Page client — badge, embed, QR rotatif, IDs
 // ============================================================
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
-import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
 import { truncateVerificationPublicId } from '@/lib/truncate-public-id'
 import { copyToClipboard } from '@/lib/copy-to-clipboard'
 import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 import { isNotAnchored } from '@/lib/plan-features'
 import { BlockchainUpgradePrompt } from '@/app/components/ui/BlockchainUpgradePrompt'
-import { Copy, Download, ExternalLink, Check, Link2, Clock, Mail, Lock, History } from 'lucide-react'
+import { Copy, Download, ExternalLink, Check, Clock, Mail, Lock, History, RefreshCw } from 'lucide-react'
 import { TTL_PRESETS, type VerifyTokenListItem } from '@/lib/certificate-verify-token-constants'
 
 interface BadgeData {
@@ -40,7 +39,12 @@ interface BadgeData {
   lastVerifiedAt: string | null
 }
 
-type CopyTarget = 'embed' | 'script' | 'secure' | 'link'
+type CopyTarget = 'embed' | 'script' | 'secure' | 'link' | 'permanent'
+
+type RotatingLink = {
+  url: string
+  expiresAt: string
+}
 
 type BadgeDashboardClientProps = {
   isAdmin: boolean
@@ -57,8 +61,8 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
   const [embedCopied, setEmbedCopied] = useState(false)
   const [scriptCopied, setScriptCopied] = useState(false)
   const [secureLinkCopied, setSecureLinkCopied] = useState(false)
-  const [linkCopied, setLinkCopied] = useState(false)
-  const [verifyLink, setVerifyLink] = useState<{ url: string; expiresAt: string; token: string } | null>(null)
+  const [permanentLinkCopied, setPermanentLinkCopied] = useState(false)
+  const [verifyLink, setVerifyLink] = useState<RotatingLink | null>(null)
   const [generating, setGenerating] = useState(false)
   const [ttlHours, setTtlHours] = useState<number>(24)
   const [tokenHistory, setTokenHistory] = useState<VerifyTokenListItem[]>([])
@@ -75,22 +79,78 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
     }
   }, [sessionStatus, router, params.id])
 
-  const fetchTokenHistory = async (certificateId: string) => {
+  const fetchTokenHistory = useCallback(async (certificateId: string) => {
     setHistoryLoading(true)
     try {
       const res = await fetch(
         `/api/verify/tokens?certificateId=${encodeURIComponent(certificateId)}`,
         { credentials: 'include' },
       )
-      if (!res.ok) return
+      if (!res.ok) return []
       const data = (await res.json()) as { tokens?: VerifyTokenListItem[] }
-      setTokenHistory(Array.isArray(data.tokens) ? data.tokens : [])
+      const tokens = Array.isArray(data.tokens) ? data.tokens : []
+      setTokenHistory(tokens)
+      return tokens
     } catch {
-      /* fail-soft */
+      return []
     } finally {
       setHistoryLoading(false)
     }
-  }
+  }, [])
+
+  const generateRotatingLink = useCallback(
+    async (certificateId: string, hours: number): Promise<RotatingLink | null> => {
+      setGenerating(true)
+      try {
+        const res = await fetch('/api/verify/generate-link', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            certificateId,
+            ttlHours: hours,
+          }),
+        })
+        const data = (await res.json()) as {
+          verifyUrl?: string
+          expiresAt?: string
+          message?: string
+        }
+        if (!res.ok || !data.verifyUrl || !data.expiresAt) {
+          alert(
+            typeof data.message === 'string'
+              ? data.message
+              : 'Impossible de générer le lien de vérification.',
+          )
+          return null
+        }
+        const link = { url: data.verifyUrl, expiresAt: data.expiresAt }
+        setVerifyLink(link)
+        await fetchTokenHistory(certificateId)
+        return link
+      } catch {
+        alert('Erreur réseau.')
+        return null
+      } finally {
+        setGenerating(false)
+      }
+    },
+    [fetchTokenHistory],
+  )
+
+  const ensureRotatingLink = useCallback(
+    async (certificateId: string, hours: number) => {
+      const tokens = await fetchTokenHistory(certificateId)
+      const active = tokens.find((t) => t.status === 'active')
+      if (active) {
+        const link = { url: active.verifyUrl, expiresAt: active.expiresAt }
+        setVerifyLink(link)
+        return link
+      }
+      return generateRotatingLink(certificateId, hours)
+    },
+    [fetchTokenHistory, generateRotatingLink],
+  )
 
   const fetchBadge = async () => {
     try {
@@ -106,7 +166,7 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
       const certificates = await response.json()
       const certificate = certificates.find(
         (c: { id: string; publicId: string | null }) =>
-          c.id === params.id || c.publicId === params.id
+          c.id === params.id || c.publicId === params.id,
       )
 
       if (!certificate) {
@@ -116,7 +176,7 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
       try {
         const trustScoreResponse = await fetch(
           `/api/entities/${certificate.entity.id}/trust-score`,
-          { credentials: 'include' }
+          { credentials: 'include' },
         )
         if (trustScoreResponse.ok) {
           const trustScore = await trustScoreResponse.json()
@@ -127,7 +187,7 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
       }
 
       setBadgeData(certificate)
-      void fetchTokenHistory(certificate.id)
+      void ensureRotatingLink(certificate.id, 24)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erreur')
     } finally {
@@ -160,7 +220,7 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
     const ok = await copyToClipboard(text)
     if (!ok) {
       alert('Erreur lors de la copie')
-      return
+      return false
     }
     if (target === 'embed') {
       setEmbedCopied(true)
@@ -168,73 +228,56 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
     } else if (target === 'script') {
       setScriptCopied(true)
       setTimeout(() => setScriptCopied(false), 2000)
-    } else if (target === 'link') {
-      setLinkCopied(true)
-      setTimeout(() => setLinkCopied(false), 2000)
-    } else {
+    } else if (target === 'secure') {
       setSecureLinkCopied(true)
       setTimeout(() => setSecureLinkCopied(false), 2000)
+    } else if (target === 'permanent') {
+      setPermanentLinkCopied(true)
+      setTimeout(() => setPermanentLinkCopied(false), 2000)
+    }
+    return true
+  }
+
+  const handleCopyEmbed = () => void handleCopy(getEmbedCode(), 'embed')
+
+  const handleCopyScript = () => void handleCopy(getScriptCode(), 'script')
+
+  const handleCopyRotatingLink = async () => {
+    if (!badgeData) return
+    let link = verifyLink
+    if (!link) {
+      link = await generateRotatingLink(badgeData.id, ttlHours)
+    }
+    if (link) {
+      await handleCopy(link.url, 'secure')
     }
   }
 
-  const handleCopyEmbed = () => handleCopy(getEmbedCode(), 'embed')
-
-  const handleCopyScript = () => handleCopy(getScriptCode(), 'script')
-
-  const handleDownloadQR = (format: 'png' | 'svg') => {
+  const handleRegenerateLink = async () => {
     if (!badgeData) return
-    const badgeId = badgeData.publicId || badgeData.id
-    const url = `/api/qr/${badgeId}?format=${format}`
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `blocktrust-qr-${badgeId}.${format}`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    const link = await generateRotatingLink(badgeData.id, ttlHours)
+    if (link) {
+      await handleCopy(link.url, 'secure')
+    }
   }
 
-  const handleGenerateSecureLink = async () => {
-    if (!badgeData) return
-    setGenerating(true)
-    setVerifyLink(null)
+  const handleDownloadRotatingQR = async () => {
+    if (!verifyLink) return
+    const qrUrl = `/api/verify/link-qr?url=${encodeURIComponent(verifyLink.url)}`
     try {
-      const res = await fetch('/api/verify/generate-link', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          certificateId: badgeData.id,
-          ttlHours,
-        }),
-      })
-      const data = (await res.json()) as {
-        verifyUrl?: string
-        expiresAt?: string
-        token?: string
-        message?: string
-        error?: string
-      }
-      if (!res.ok) {
-        alert(
-          typeof data.message === 'string'
-            ? data.message
-            : 'Impossible de générer le lien de vérification temporaire.',
-        )
-        return
-      }
-      if (data.verifyUrl && data.expiresAt && data.token) {
-        setVerifyLink({
-          url: data.verifyUrl,
-          expiresAt: data.expiresAt,
-          token: data.token,
-        })
-        await handleCopy(data.verifyUrl, 'secure')
-        void fetchTokenHistory(badgeData.id)
-      }
+      const res = await fetch(qrUrl, { credentials: 'include' })
+      if (!res.ok) throw new Error('QR indisponible')
+      const blob = await res.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = objectUrl
+      anchor.download = `blocktrust-qr-rotatif-${badgeData?.publicId ?? badgeData?.id ?? 'badge'}.png`
+      document.body.appendChild(anchor)
+      anchor.click()
+      document.body.removeChild(anchor)
+      URL.revokeObjectURL(objectUrl)
     } catch {
-      alert('Erreur réseau.')
-    } finally {
-      setGenerating(false)
+      alert('Impossible de télécharger le QR code.')
     }
   }
 
@@ -302,6 +345,9 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
   const verifyIdLabel = truncateVerificationPublicId(badgeData.publicId)
   const publicVerifyHref = buildPublicVerifyUrl(badgeId)
   const notAnchored = isNotAnchored(badgeData.blockchainStatus)
+  const rotatingQrSrc = verifyLink
+    ? `/api/verify/link-qr?url=${encodeURIComponent(verifyLink.url)}`
+    : null
 
   return (
     <>
@@ -317,23 +363,9 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
         <div className={`grid gap-4 ${isAdmin ? 'sm:grid-cols-2' : ''}`}>
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
             <p className="mb-2 text-xs uppercase tracking-widest text-white/40">ID de vérification</p>
-            <div className="flex items-center justify-between gap-3">
-              <p className="truncate font-mono text-sm text-white/70">{verifyIdLabel}</p>
-              <button
-                type="button"
-                onClick={() => void handleCopy(publicVerifyHref, 'link')}
-                className="flex shrink-0 text-white/30 transition hover:text-white/60"
-                aria-label="Copier le lien de vérification"
-              >
-                {linkCopied ? (
-                  <Check className="h-4 w-4" aria-hidden />
-                ) : (
-                  <Copy className="h-4 w-4" aria-hidden />
-                )}
-              </button>
-            </div>
-            <p className="mt-1 text-xs text-white/20">
-              Partagez cet ID pour permettre la vérification
+            <p className="truncate font-mono text-sm text-white/70">{verifyIdLabel}</p>
+            <p className="mt-1 text-xs text-white/30">
+              Identifiant public de votre badge (widget site)
             </p>
           </div>
 
@@ -385,7 +417,7 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
           <button
             type="button"
             onClick={handleCopyEmbed}
-            className="mb-6 flex w-full items-center justify-center gap-2 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 px-4 py-2 text-bt-cyan transition hover:bg-bt-cyan/25"
+            className="mb-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 px-4 py-2 text-bt-cyan transition hover:bg-bt-cyan/25"
           >
             {embedCopied ? (
               <>
@@ -409,7 +441,7 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
           <button
             type="button"
             onClick={handleCopyScript}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#BDA76B]/40 bg-[#BDA76B]/15 px-4 py-2 text-[#BDA76B] transition hover:bg-[#BDA76B]/25"
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#BDA76B]/40 bg-[#BDA76B]/15 px-4 py-2 text-[#BDA76B] transition hover:bg-[#BDA76B]/25"
           >
             {scriptCopied ? (
               <>
@@ -460,11 +492,17 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
           <li className="flex gap-3">
             <span className="font-mono text-[#00d4ff]">4.</span>
             <span>
-              Collez le <strong className="text-white">lien de vérification</strong> de votre badge
-              :{' '}
-              <code className="break-all rounded bg-black/30 px-1.5 py-0.5 font-mono text-xs text-[#00d4ff]">
-                {publicVerifyHref}
-              </code>
+              Collez votre <strong className="text-white">lien de vérification rotatif</strong>
+              {verifyLink ? (
+                <>
+                  {' '}
+                  <code className="break-all rounded bg-black/30 px-1.5 py-0.5 font-mono text-xs text-[#00d4ff]">
+                    {verifyLink.url}
+                  </code>
+                </>
+              ) : (
+                ' (section QR Code ci-dessous)'
+              )}
             </span>
           </li>
           <li className="flex gap-3">
@@ -475,7 +513,7 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
         <button
           type="button"
           onClick={handleCopyEmbed}
-          className="mt-5 inline-flex items-center gap-2 rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/15 px-4 py-2 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/25"
+          className="mt-5 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/15 px-4 py-2 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/25"
         >
           {embedCopied ? (
             <>
@@ -492,120 +530,142 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
       </div>
 
       <div className="mb-6 rounded-xl border border-white/10 bg-[#0d1f3c] p-6">
-        <h2 className="mb-6 font-syne text-lg font-semibold text-white">
+        <h2 className="mb-2 font-syne text-lg font-semibold text-white">
           QR Code & Vérification
         </h2>
+        <p className="mb-6 text-xs leading-relaxed text-white/45">
+          Partagez un lien rotatif (24 h par défaut) — plus sûr qu&apos;un lien permanent pour vos
+          échanges ponctuels.
+        </p>
 
         <div className="flex flex-col items-start gap-6 sm:flex-row">
           <div className="mx-auto shrink-0 sm:mx-0">
-            <div className="h-[200px] w-[200px] rounded-xl bg-white p-4">
-              <img
-                src={`/api/qr/${badgeId}?format=png`}
-                alt="QR Code"
-                width={168}
-                height={168}
-                className="h-full w-full"
-              />
+            <div className="flex h-[200px] w-[200px] items-center justify-center rounded-xl bg-white p-4">
+              {rotatingQrSrc && !generating ? (
+                <img
+                  src={rotatingQrSrc}
+                  alt="QR code de vérification rotatif"
+                  width={168}
+                  height={168}
+                  className="h-full w-full"
+                />
+              ) : (
+                <p className="text-center text-xs text-navy/60">Génération du QR…</p>
+              )}
             </div>
+            {verifyLink ? (
+              <p className="mt-2 flex items-center justify-center gap-1 text-[10px] text-white/40">
+                <Clock className="h-3 w-3 shrink-0" aria-hidden />
+                Expire le{' '}
+                {new Date(verifyLink.expiresAt).toLocaleDateString('fr-FR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
+            ) : null}
           </div>
 
-          <div className="w-full flex-1 space-y-3">
-            <VerifyBadgeButton certId={badgeId} behavior="copy" />
-
-            <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-              <p className="mb-3 text-sm font-medium text-white">
-                Lien de vérification temporaire
-              </p>
-              <p className="mb-3 text-xs leading-relaxed text-white/40">
-                Générez un lien unique qui expire automatiquement — idéal pour un email ou un échange ponctuel.
-              </p>
-              <div className="mb-3 flex flex-wrap gap-2">
-                {TTL_PRESETS.map((preset) => (
-                  <button
-                    key={preset.hours}
-                    type="button"
-                    onClick={() => setTtlHours(preset.hours)}
-                    className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
-                      ttlHours === preset.hours
-                        ? 'border-[#BDA76B]/50 bg-[#BDA76B]/15 text-[#BDA76B]'
-                        : 'border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white/70'
-                    }`}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={handleGenerateSecureLink}
-                disabled={generating}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#BDA76B]/30 bg-[#BDA76B]/10 py-3 text-sm font-semibold text-[#BDA76B] transition hover:bg-[#BDA76B]/20 disabled:opacity-50"
-              >
-                <Link2 className="h-4 w-4 shrink-0" aria-hidden />
-                {generating
-                  ? 'Génération...'
-                  : secureLinkCopied
-                    ? 'Lien copié !'
-                    : 'Générer un lien de vérification temporaire'}
-              </button>
+          <div className="w-full flex-1 space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {TTL_PRESETS.map((preset) => (
+                <button
+                  key={preset.hours}
+                  type="button"
+                  onClick={() => setTtlHours(preset.hours)}
+                  className={`cursor-pointer rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                    ttlHours === preset.hours
+                      ? 'border-[#BDA76B]/50 bg-[#BDA76B]/15 text-[#BDA76B]'
+                      : 'border-white/10 bg-white/5 text-white/50 hover:border-white/20 hover:text-white/70'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
             </div>
 
+            <button
+              type="button"
+              onClick={() => void handleCopyRotatingLink()}
+              disabled={generating}
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#00d4ff]/40 bg-[#00d4ff]/15 py-3 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/25 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {secureLinkCopied ? (
+                <>
+                  <Check className="h-4 w-4 shrink-0" aria-hidden />
+                  Lien copié !
+                </>
+              ) : (
+                <>
+                  <Copy className="h-4 w-4 shrink-0" aria-hidden />
+                  {generating ? 'Génération…' : 'Copier le lien'}
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => void handleRegenerateLink()}
+              disabled={generating}
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#BDA76B]/30 bg-[#BDA76B]/10 py-2.5 text-sm font-semibold text-[#BDA76B] transition hover:bg-[#BDA76B]/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw className="h-4 w-4 shrink-0" aria-hidden />
+              {generating ? 'Génération…' : 'Générer un nouveau lien'}
+            </button>
+
             {verifyLink ? (
-              <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                <p className="mb-2 flex items-center gap-1 text-xs text-white/40">
-                  <Clock className="h-3 w-3 shrink-0" aria-hidden />
-                  Expire le{' '}
-                  {new Date(verifyLink.expiresAt).toLocaleDateString('fr-FR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-                <div className="mb-4 flex flex-col items-center gap-3 sm:flex-row">
-                  <div className="h-[120px] w-[120px] shrink-0 rounded-lg bg-white p-2">
-                    <img
-                      src={`/api/verify/link-qr?url=${encodeURIComponent(verifyLink.url)}`}
-                      alt="QR code du lien temporaire"
-                      width={104}
-                      height={104}
-                      className="h-full w-full"
-                    />
-                  </div>
-                  <div className="flex w-full min-w-0 flex-1 items-center gap-2">
-                    <code className="flex-1 break-all font-mono text-xs text-white/60">
-                      {verifyLink.url}
-                    </code>
-                    <button
-                      type="button"
-                      onClick={() => void handleCopy(verifyLink.url, 'secure')}
-                      className="shrink-0 text-[#00d4ff] transition hover:text-white"
-                      aria-label="Copier le lien"
-                    >
-                      {secureLinkCopied ? (
-                        <Check className="h-4 w-4" aria-hidden />
-                      ) : (
-                        <Copy className="h-4 w-4" aria-hidden />
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <p className="text-xs italic text-white/20">
-                  Lien unique — générez-en un nouveau pour chaque envoi
-                </p>
+              <div className="rounded-xl border border-white/10 bg-black/20 p-3">
+                <code className="block break-all font-mono text-xs text-white/55">{verifyLink.url}</code>
               </div>
             ) : null}
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => void handleDownloadRotatingQR()}
+                disabled={!verifyLink || generating}
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/20 px-4 py-2 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/30 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <Download size={18} aria-hidden />
+                Télécharger le QR (PNG)
+              </button>
+              {verifyLink ? (
+                <a
+                  href={verifyLink.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs text-bt-cyan hover:text-bt-cyan/90"
+                >
+                  Ouvrir le lien <ExternalLink size={12} aria-hidden />
+                </a>
+              ) : null}
+            </div>
+
+            <div className="border-t border-white/5 pt-3">
+              <button
+                type="button"
+                onClick={() => void handleCopy(publicVerifyHref, 'permanent')}
+                className="cursor-pointer text-xs text-white/35 underline-offset-2 transition hover:text-white/55 hover:underline"
+              >
+                {permanentLinkCopied ? 'Lien permanent copié' : 'Lien permanent (avancé)'}
+              </button>
+              <p className="mt-1 text-[10px] leading-relaxed text-white/25">
+                Ne partagez le lien permanent que si vous acceptez qu&apos;il reste valide
+                indéfiniment. Le widget site utilise toujours l&apos;ID permanent.
+              </p>
+            </div>
 
             <div className="rounded-xl border border-white/10 bg-black/20 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <History className="h-4 w-4 text-white/40" aria-hidden />
-                <p className="text-sm font-medium text-white">Historique des liens</p>
+                <p className="text-sm font-medium text-white">Historique des liens rotatifs</p>
               </div>
               {historyLoading ? (
                 <p className="text-xs text-white/40">Chargement…</p>
               ) : tokenHistory.length === 0 ? (
-                <p className="text-xs text-white/30">Aucun lien temporaire généré.</p>
+                <p className="text-xs text-white/30">Aucun lien rotatif généré.</p>
               ) : (
                 <ul className="max-h-48 space-y-2 overflow-y-auto">
                   {tokenHistory.map((item) => (
@@ -643,29 +703,6 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
                 </ul>
               )}
             </div>
-
-            <p className="text-xs leading-relaxed text-white/30">
-              Le QR permanent pointe vers votre lien public. Le lien temporaire expire selon la durée choisie.
-            </p>
-
-            <div className="flex flex-wrap gap-3 pt-1">
-              <button
-                type="button"
-                onClick={() => handleDownloadQR('png')}
-                className="flex items-center gap-2 rounded-lg border border-[#00d4ff]/40 bg-[#00d4ff]/20 px-4 py-2 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/30"
-              >
-                <Download size={18} aria-hidden />
-                Télécharger PNG
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDownloadQR('svg')}
-                className="flex items-center gap-2 rounded-lg border border-[#BDA76B]/40 bg-[#BDA76B]/20 px-4 py-2 text-sm font-semibold text-[#BDA76B] transition hover:bg-[#BDA76B]/30"
-              >
-                <Download size={18} aria-hidden />
-                Télécharger SVG
-              </button>
-            </div>
           </div>
         </div>
       </div>
@@ -690,15 +727,19 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
             </p>
           </div>
           <div>
-            <p className="mb-2 text-base font-medium text-white/60">Lien de vérification</p>
-            <a
-              href={publicVerifyHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-bt-cyan hover:text-bt-cyan/90"
-            >
-              Ouvrir <ExternalLink size={14} aria-hidden />
-            </a>
+            <p className="mb-2 text-base font-medium text-white/60">Lien actif</p>
+            {verifyLink ? (
+              <a
+                href={verifyLink.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-bt-cyan hover:text-bt-cyan/90"
+              >
+                Ouvrir <ExternalLink size={14} aria-hidden />
+              </a>
+            ) : (
+              <p className="text-sm text-white/40">—</p>
+            )}
           </div>
         </div>
       </div>
