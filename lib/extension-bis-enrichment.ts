@@ -4,6 +4,7 @@
 
 import { normalizeEmail } from '@/lib/bis-access'
 import { getPublicBisVerification } from '@/lib/bis-public-verify'
+import { sanitizeDisplayText } from '@/lib/sanitize-display-text'
 import {
   normalizeSenderEmail,
   type ExtensionBisVerification,
@@ -54,10 +55,10 @@ export async function enrichExtensionPayloadWithBis(params: {
         valid: verified.valid,
         bisLevel: verified.bisLevel,
         interactionType: verified.interactionType,
-        contextLabel: verified.contextLabel,
+        contextLabel: sanitizeDisplayText(verified.contextLabel),
         signedAt: verified.signedAt,
         expiresAt: verified.expiresAt,
-        reason: verified.reason,
+        reason: sanitizeDisplayText(verified.reason ?? null) ?? undefined,
       }
     }
   }

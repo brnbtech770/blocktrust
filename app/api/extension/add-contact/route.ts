@@ -13,6 +13,7 @@ import { checkEntityQuota } from "@/lib/checkQuota";
 import { deriveCertificateLevelFromPlan } from "@/lib/certificate-plan-level";
 import { resolveEffectivePlan } from "@/lib/plan-features";
 import { z } from "zod";
+import { assertSafeDisplayText } from "@/lib/sanitize-display-text";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,6 +53,11 @@ export async function POST(req: NextRequest) {
   }
 
   const { name, email, domain } = parsed.data;
+
+  const nameCheck = assertSafeDisplayText(name, "Nom");
+  if (!nameCheck.ok) {
+    return extensionJsonResponse(req, { error: "validation_error", message: nameCheck.reason }, 400);
+  }
 
   const apiKey = extractExtensionApiKey(req);
   const userId = await findUserIdByExtensionApiKey(apiKey);
@@ -108,7 +114,7 @@ export async function POST(req: NextRequest) {
     return extensionJsonResponse(req, { success: true, entityId: existing.id, existing: true }, 200);
   }
 
-  const { firstName, lastName } = splitName(name);
+  const { firstName, lastName } = splitName(nameCheck.value);
   let website: string | null = null;
   const d = domain.trim().toLowerCase();
   if (d) {

@@ -29,6 +29,20 @@ const SENDER_SELECTORS = [
 console.log("[BLOCKTRUST] Content script chargé sur Gmail");
 console.log("[BLOCKTRUST] API_BASE:", API_BASE);
 
+/**
+ * Échappe le texte inséré dans innerHTML (données API / entité).
+ * @param {unknown} value
+ * @returns {string}
+ */
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 chrome.storage.local.get(["apiKey"], (data) => {
   console.log("[BLOCKTRUST] Clé API:", data.apiKey ? "présente" : "absente");
 });
@@ -366,7 +380,7 @@ function signalRowHtml(label, ok) {
   return `
     <div class="bt-tooltip-row">
       <span style="color:${markColor} !important;font-weight:700 !important;font-size:10px !important;min-width:18px !important;">${mark}</span>
-      <span>${label}</span>
+      <span>${escapeHtml(label)}</span>
     </div>`;
 }
 
@@ -383,6 +397,10 @@ function formatInteractionType(type) {
     MARKETPLACE: "Marketplace",
   };
   return map[type] || type || "—";
+}
+
+function safeFormatInteractionType(type) {
+  return escapeHtml(formatInteractionType(type));
 }
 
 function formatDateFr(iso) {
@@ -409,10 +427,10 @@ function bisTooltipSectionHtml(result) {
       <div class="bt-tooltip-section">
         <span class="bt-tooltip-title">Interaction signée</span>
         <div class="bt-tooltip-row"><span>Niveau BIS : ${bis.bisLevel}</span></div>
-        <div class="bt-tooltip-row"><span>Type : ${formatInteractionType(bis.interactionType)}</span></div>
+        <div class="bt-tooltip-row"><span>Type : ${safeFormatInteractionType(bis.interactionType)}</span></div>
         ${
           bis.contextLabel
-            ? `<div class="bt-tooltip-row"><span>Contexte : ${String(bis.contextLabel).trim()}</span></div>`
+            ? `<div class="bt-tooltip-row"><span>Contexte : ${escapeHtml(String(bis.contextLabel).trim())}</span></div>`
             : ""
         }
         <div class="bt-tooltip-row"><span>Signé le : ${formatDateFr(bis.signedAt)}</span></div>
@@ -428,7 +446,7 @@ function bisTooltipSectionHtml(result) {
       <span class="bt-tooltip-title" style="color:#f59e0b !important;">Signature BIS</span>
       <div class="bt-tooltip-row bt-tooltip-warn">
         Signature invalide ou expirée
-        ${bis.reason ? `<br><span style="font-size:10px !important;">${bis.reason}</span>` : ""}
+        ${bis.reason ? `<br><span style="font-size:10px !important;">${escapeHtml(bis.reason)}</span>` : ""}
       </div>
     </div>`;
 }
@@ -438,7 +456,7 @@ function bisMissingAlertHtml(result) {
   return `
     <div class="bt-tooltip-section">
       <span class="bt-tooltip-title" style="color:#f59e0b !important;">Alerte BIS</span>
-      <div class="bt-tooltip-row bt-tooltip-warn">${result.bisMissingAlertMessage}</div>
+      <div class="bt-tooltip-row bt-tooltip-warn">${escapeHtml(result.bisMissingAlertMessage)}</div>
     </div>`;
 }
 
@@ -479,7 +497,7 @@ function attachBadgeTooltip(badge, result) {
   ];
   const entityLine =
     result.entityName && String(result.entityName).trim()
-      ? `<div style="margin-bottom:6px !important;color:rgba(255,255,255,0.75) !important;font-size:11px !important;">${String(result.entityName).trim()}</div>`
+      ? `<div style="margin-bottom:6px !important;color:rgba(255,255,255,0.75) !important;font-size:11px !important;">${escapeHtml(String(result.entityName).trim())}</div>`
       : "";
 
   badge.addEventListener("mouseenter", () => {
@@ -666,7 +684,7 @@ function createVerifyBadge(result) {
   } else if (result.status === "UNKNOWN") {
     attachUnknownBadgeTooltip(badge);
   } else {
-    badge.title = result.message || result.status || "";
+    badge.title = escapeHtml(result.message || result.status || "");
   }
 
   return badge;

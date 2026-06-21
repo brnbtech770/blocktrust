@@ -10,6 +10,7 @@ import type { Prisma } from "@prisma/client";
 import {
   validateCertifiedContactArraysPartial,
 } from "@/lib/certified-contact";
+import { assertSafeDisplayText } from "@/lib/sanitize-display-text";
 
 const patchEntitySchema = z
   .object({
@@ -149,8 +150,14 @@ export async function PATCH(
     updateData.phone = p.phone === null ? null : p.phone.trim() || null;
   }
   if (p.description !== undefined) {
-    updateData.description =
-      p.description === null ? null : p.description.trim() || null;
+    if (p.description === null || p.description.trim() === "") {
+      updateData.description = null;
+    } else {
+      const check = assertSafeDisplayText(p.description, "Description");
+      if (!check.ok)
+        return NextResponse.json({ error: check.reason }, { status: 400 });
+      updateData.description = check.value;
+    }
   }
 
   if (p.website !== undefined) {
@@ -170,30 +177,33 @@ export async function PATCH(
 
   if (entity.entityType === "INDIVIDUAL") {
     if (p.firstName !== undefined) {
-      const v = (p.firstName ?? "").trim();
-      if (!v)
-        return NextResponse.json({ error: "Prénom invalide." }, { status: 400 });
-      updateData.firstName = v;
+      const check = assertSafeDisplayText(p.firstName ?? "", "Prénom");
+      if (!check.ok)
+        return NextResponse.json({ error: check.reason }, { status: 400 });
+      updateData.firstName = check.value;
     }
     if (p.lastName !== undefined) {
-      const v = (p.lastName ?? "").trim();
-      if (!v)
-        return NextResponse.json({ error: "Nom invalide." }, { status: 400 });
-      updateData.lastName = v;
+      const check = assertSafeDisplayText(p.lastName ?? "", "Nom");
+      if (!check.ok)
+        return NextResponse.json({ error: check.reason }, { status: 400 });
+      updateData.lastName = check.value;
     }
   } else if (entity.entityType === "BUSINESS") {
     if (p.legalName !== undefined) {
-      const v = (p.legalName ?? "").trim();
-      if (!v)
-        return NextResponse.json(
-          { error: "Nom légal invalide." },
-          { status: 400 },
-        );
-      updateData.legalName = v;
+      const check = assertSafeDisplayText(p.legalName ?? "", "Nom légal");
+      if (!check.ok)
+        return NextResponse.json({ error: check.reason }, { status: 400 });
+      updateData.legalName = check.value;
     }
     if (p.tradeName !== undefined) {
-      updateData.tradeName =
-        p.tradeName === null ? null : p.tradeName.trim() || null;
+      if (p.tradeName === null || p.tradeName.trim() === "") {
+        updateData.tradeName = null;
+      } else {
+        const check = assertSafeDisplayText(p.tradeName, "Nom commercial");
+        if (!check.ok)
+          return NextResponse.json({ error: check.reason }, { status: 400 });
+        updateData.tradeName = check.value;
+      }
     }
   }
 

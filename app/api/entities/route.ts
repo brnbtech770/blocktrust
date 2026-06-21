@@ -17,6 +17,7 @@ import {
 } from '@/lib/plan-features';
 import { deriveCertificateLevelFromPlan } from '@/lib/certificate-plan-level';
 import { checkPlanRateLimit } from '@/lib/rate-limit-plan';
+import { assertSafeDisplayText } from '@/lib/sanitize-display-text';
 
 // ─────────────────────────────────────────────
 // Schémas de validation
@@ -125,6 +126,40 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parsed.data;
+
+    if (data.entityType === 'INDIVIDUAL') {
+      const fnCheck = assertSafeDisplayText(data.firstName, 'Prénom');
+      if (!fnCheck.ok) {
+        return NextResponse.json({ error: fnCheck.reason }, { status: 400 });
+      }
+      const lnCheck = assertSafeDisplayText(data.lastName, 'Nom');
+      if (!lnCheck.ok) {
+        return NextResponse.json({ error: lnCheck.reason }, { status: 400 });
+      }
+      data.firstName = fnCheck.value;
+      data.lastName = lnCheck.value;
+    } else {
+      const legalCheck = assertSafeDisplayText(data.legalName, 'Nom légal');
+      if (!legalCheck.ok) {
+        return NextResponse.json({ error: legalCheck.reason }, { status: 400 });
+      }
+      data.legalName = legalCheck.value;
+      if (data.tradeName?.trim()) {
+        const tradeCheck = assertSafeDisplayText(data.tradeName, 'Nom commercial');
+        if (!tradeCheck.ok) {
+          return NextResponse.json({ error: tradeCheck.reason }, { status: 400 });
+        }
+        data.tradeName = tradeCheck.value;
+      }
+    }
+
+    if (data.description?.trim()) {
+      const descCheck = assertSafeDisplayText(data.description, 'Description');
+      if (!descCheck.ok) {
+        return NextResponse.json({ error: descCheck.reason }, { status: 400 });
+      }
+      data.description = descCheck.value;
+    }
 
     const walletCheck = validateWalletPair(data.walletAddress, data.walletNetwork);
     if (!walletCheck.ok) {

@@ -15,6 +15,7 @@ import {
   isValidContentHash,
   normalizeEmail,
 } from '@/lib/bis-access'
+import { assertSafeDisplayText } from '@/lib/sanitize-display-text'
 
 const signBodySchema = z.object({
   recipientEmail: z.string().email(),
@@ -63,6 +64,15 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    let safeContextLabel: string | undefined
+    if (contextLabel?.trim()) {
+      const ctxCheck = assertSafeDisplayText(contextLabel, 'Contexte')
+      if (!ctxCheck.ok) {
+        return NextResponse.json({ error: ctxCheck.reason }, { status: 400 })
+      }
+      safeContextLabel = ctxCheck.value
+    }
+
     const senderCert = await resolveSenderBisCertificate(session.user.id)
     if (!senderCert) {
       return NextResponse.json(
@@ -80,7 +90,7 @@ export async function POST(req: NextRequest) {
       senderEmail: session.user.email,
       recipientEmail: normalizeEmail(recipientEmail),
       interactionType,
-      contextLabel,
+      contextLabel: safeContextLabel,
       contentHash: contentHash.toLowerCase(),
     })
 

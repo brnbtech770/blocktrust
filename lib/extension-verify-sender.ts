@@ -3,6 +3,7 @@
 // ============================================================
 
 import type { Certificate, Entity } from "@prisma/client";
+import { sanitizeDisplayText } from "@/lib/sanitize-display-text";
 
 type CertStatus = "PENDING" | "ACTIVE" | "REVOKED" | "EXPIRED" | "ANCHORED" | "SUSPENDED";
 
@@ -85,13 +86,16 @@ function entityHostFromWebsite(website: string | null | undefined): string | nul
 }
 
 function entityDisplayName(e: EntityWithCerts): string {
-  if (e.tradeName?.trim()) return e.tradeName.trim();
-  if (e.legalName?.trim()) return e.legalName.trim();
-  const fn = e.firstName?.trim() ?? "";
-  const ln = e.lastName?.trim() ?? "";
-  const full = `${fn} ${ln}`.trim();
-  if (full) return full;
-  return e.email;
+  let raw: string;
+  if (e.tradeName?.trim()) raw = e.tradeName.trim();
+  else if (e.legalName?.trim()) raw = e.legalName.trim();
+  else {
+    const fn = e.firstName?.trim() ?? "";
+    const ln = e.lastName?.trim() ?? "";
+    const full = `${fn} ${ln}`.trim();
+    raw = full || e.email;
+  }
+  return sanitizeDisplayText(raw) ?? raw.replace(/[<>&]/g, "");
 }
 
 function entityMatchesSender(e: EntityWithCerts, emailNorm: string, domainNorm: string): boolean {
