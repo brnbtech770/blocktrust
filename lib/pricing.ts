@@ -391,7 +391,7 @@ export const PLANS_B2B = [
   },
   {
     id: "ENTERPRISE",
-    name: "Enterprise",
+    name: "Entreprise",
     users: "Sur mesure",
     highlighted: false,
     prices: null,

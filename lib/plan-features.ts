@@ -124,8 +124,8 @@ const PLAN_DISPLAY_LABELS: Record<string, string> = {
   B2B_TEAM: 'Team',
   BUSINESS: 'Business',
   B2B_BUSINESS: 'Business',
-  ENTERPRISE: 'Enterprise',
-  B2B_ENTERPRISE: 'Enterprise',
+  ENTERPRISE: 'Entreprise',
+  B2B_ENTERPRISE: 'Entreprise',
 }
 
 /**

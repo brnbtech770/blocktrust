@@ -65,7 +65,7 @@ export default function PricingTeaser() {
             <span className="text-xs text-white/60 sm:text-sm">HT/user/mois</span>
           </div>
           <p className="mt-1 text-xs leading-relaxed text-white/50 sm:text-sm">
-            Starter · Team · Enterprise sur devis
+            Starter · Team · Entreprise sur devis
           </p>
           <p className="mt-3 text-xs leading-relaxed text-white/70 sm:text-sm">
             API B2B, multi-comptes, vérification d&apos;identité avancée, intégrations dédiées.

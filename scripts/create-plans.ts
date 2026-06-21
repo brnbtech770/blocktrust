@@ -214,7 +214,7 @@ async function main() {
     },
     // B2B ENTERPRISE — sur devis (pas de price Stripe)
     {
-      name: 'Enterprise',
+      name: 'Entreprise',
       type: PlanType.B2B_ENTERPRISE,
       price: 0,
       interval: BillingInterval.MONTHLY,

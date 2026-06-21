@@ -69,7 +69,7 @@ describe('plan-features — getPlanDisplayLabel', () => {
     expect(getPlanDisplayLabel('ESSENTIEL')).toBe('Essentiel')
     expect(getPlanDisplayLabel('B2C_ESSENTIEL')).toBe('Essentiel')
     expect(getPlanDisplayLabel('B2B_TEAM')).toBe('Team')
-    expect(getPlanDisplayLabel('B2B_ENTERPRISE')).toBe('Enterprise')
+    expect(getPlanDisplayLabel('B2B_ENTERPRISE')).toBe('Entreprise')
     expect(getPlanDisplayLabel('FAMILLE_PLUS')).toBe('Famille+')
   })
 

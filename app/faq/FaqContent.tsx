@@ -292,7 +292,7 @@ function buildB2BSections(): FaqSection[] {
           a: (
             <p>
               Starter : {starterMonthly}&nbsp;€ HT/mois/utilisateur. Team : {teamMonthly}&nbsp;€
-              HT/mois/utilisateur (2-10 utilisateurs). Enterprise : sur devis (51+ utilisateurs,
+              HT/mois/utilisateur (2-10 utilisateurs). Entreprise : sur devis (51+ utilisateurs,
               SSO/SAML, API, marque blanche).{" "}
               <Link href="/pricing?tab=entreprises" className="text-bt-cyan hover:underline">
                 Voir le détail sur la page tarifs
@@ -306,7 +306,7 @@ function buildB2BSections(): FaqSection[] {
           q: "L'API est-elle disponible ?",
           a: (
             <p>
-              L&apos;API complète est disponible sur le plan Enterprise. Contactez-nous à{" "}
+              L&apos;API complète est disponible sur le plan Entreprise. Contactez-nous à{" "}
               <a href="mailto:commercial@blocktrust.tech" className="text-bt-cyan hover:underline">
                 commercial@blocktrust.tech
               </a>{" "}
@@ -341,7 +341,7 @@ function buildB2BSections(): FaqSection[] {
               <a href="mailto:commercial@blocktrust.tech" className="text-bt-cyan hover:underline">
                 commercial@blocktrust.tech
               </a>{" "}
-              ou via le formulaire Enterprise sur la{" "}
+              ou via le formulaire Entreprise sur la{" "}
               <Link href="/pricing?tab=entreprises#compare" className="text-bt-cyan hover:underline">
                 page tarifs
               </Link>

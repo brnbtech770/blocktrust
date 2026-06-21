@@ -23,7 +23,7 @@ const CTA_STYLES: Record<string, { background: string; border?: string; color: s
 }
 
 const ENTERPRISE_MAILTO =
-  'mailto:commercial@blocktrust.tech?subject=Demande%20d%27information%20Enterprise'
+  'mailto:commercial@blocktrust.tech?subject=Demande%20d%27information%20Entreprise'
 
 type CheckoutOpts = { quantity?: number; addonQuantity?: number }
 
