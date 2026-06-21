@@ -31,7 +31,7 @@ export default function Problem() {
         </p>
         <h2 className="font-syne mx-auto max-w-3xl text-balance text-2xl font-semibold leading-snug text-white sm:text-3xl">
           L&apos;usurpation de confiance est{" "}
-          <span className="text-red-400">la norme</span>.
+          <span className="text-red-400">le danger</span>.
         </h2>
         <p className="mx-auto mt-5 max-w-2xl text-balance text-sm leading-relaxed text-white/70 sm:text-base">
           Un email, un appel, un document ou un paiement ne garantit plus que l&apos;interlocuteur
