@@ -140,15 +140,25 @@ export async function createFraudAdminAlert(args: {
   notifySecurityTeam(args.description)
 
   if (args.decrementTrustScoreUserId) {
-    await prisma.user
-      .update({
+    const current = await prisma.user
+      .findUnique({
         where: { id: args.decrementTrustScoreUserId },
-        data: {
-          trustScore: { decrement: 10 },
-          trustScoreAt: new Date(),
-        },
+        select: { trustScore: true },
       })
       .catch(() => null)
+
+    if (current) {
+      const nextScore = Math.max(0, (current.trustScore ?? 0) - 10)
+      await prisma.user
+        .update({
+          where: { id: args.decrementTrustScoreUserId },
+          data: {
+            trustScore: nextScore,
+            trustScoreAt: new Date(),
+          },
+        })
+        .catch(() => null)
+    }
   }
 
   await prisma.auditLog
