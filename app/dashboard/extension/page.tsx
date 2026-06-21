@@ -1,5 +1,5 @@
 // app/dashboard/extension/page.tsx
-// Clé API extension Chrome TrustScan + instructions d'installation
+// Clés API extensions TrustScan (Chrome + Outlook) + instructions d'installation
 // ============================================================
 
 export const dynamic = "force-dynamic";
@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/app/lib/auth-server";
 import { prisma } from "@/app/lib/db";
 import ExtensionChromePanel from "@/app/components/dashboard/ExtensionChromePanel";
+import ExtensionOutlookPanel from "@/app/components/dashboard/ExtensionOutlookPanel";
 import { userHasExtensionApiKey } from "@/lib/extension-api-key";
 
 export default async function ExtensionDashboardPage() {
@@ -38,6 +39,9 @@ export default async function ExtensionDashboardPage() {
             masked: user.extensionApiKey ?? null,
           }}
         />
+        <div className="mt-6">
+          <ExtensionOutlookPanel />
+        </div>
       </div>
     </div>
   );

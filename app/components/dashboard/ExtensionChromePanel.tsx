@@ -164,8 +164,9 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
           <div>
             <h2 className="font-syne text-lg font-semibold text-white">Clé API extension</h2>
             <p className="mt-1 text-sm text-white/50">
-              Cette clé lie l&apos;extension Chrome à votre compte BLOCKTRUST™. Affichée en clair
-              une seule fois à la génération — tous les forfaits, y compris Découverte.
+              Cette clé lie les extensions Chrome et Outlook à votre compte BLOCKTRUST™.
+              Affichée en clair une seule fois à la génération — tous les forfaits, y compris
+              Découverte.
             </p>
           </div>
           <span

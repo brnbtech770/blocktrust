@@ -1,5 +1,5 @@
 // lib/extension-cors.ts
-// CORS pour l’extension Chrome (chrome-extension://*, Gmail content script, app BLOCKTRUST).
+// CORS pour l’extension Chrome (chrome-extension://*, Gmail content script, Outlook Web, app BLOCKTRUST).
 // ============================================================
 //
 // SÉCURITÉ : l'origine est parsée avec `new URL()` puis comparée par HOSTNAME EXACT.
@@ -17,6 +17,9 @@ const ALLOWED_HTTPS_HOSTNAMES = new Set<string>([
   "blocktrust.tech",
   "www.blocktrust.tech",
   "mail.google.com",
+  "outlook.office.com",
+  "outlook.office365.com",
+  "outlook.live.com",
 ]);
 
 // Hôtes locaux (dev uniquement) — comparaison EXACTE.

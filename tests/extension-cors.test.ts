@@ -3,6 +3,7 @@ import { NextRequest } from 'next/server'
 import {
   rejectForbiddenExtensionOrigin,
   extensionOptionsResponse,
+  getCorsHeaders,
 } from '@/lib/extension-cors'
 
 const ORIGINAL_EXTENSION_ID = process.env.EXTENSION_ID
@@ -56,5 +57,18 @@ describe('extension-cors — EXTENSION_ID prod', () => {
     delete process.env.EXTENSION_ID
     const res = extensionOptionsResponse(extensionRequest('anyid'))
     expect(res.status).toBe(403)
+  })
+
+  it('origines Outlook autorisées pour CORS', () => {
+    for (const host of [
+      'https://outlook.office.com',
+      'https://outlook.office365.com',
+      'https://outlook.live.com',
+    ]) {
+      const req = new NextRequest('https://blocktrust.tech/api/extension/verify-sender', {
+        headers: { origin: host },
+      })
+      expect(getCorsHeaders(req)['Access-Control-Allow-Origin']).toBe(host)
+    }
   })
 })
