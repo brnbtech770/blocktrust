@@ -1,20 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
   UserPlus,
   Share2,
   ShieldCheck,
-  ChevronRight,
+  Puzzle,
+  Mail,
   ChevronDown,
+  type LucideIcon,
 } from "lucide-react";
 import TechTermTooltip, {
   HOW_TO_LEXICON_ENTRIES,
   TECH_TERM_DEFINITIONS,
 } from "@/app/components/ui/TechTermTooltip";
 
-const STEPS = [
+type StepItem = {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  duration: string;
+  href?: string;
+  linkLabel?: string;
+};
+
+const STEPS: StepItem[] = [
   {
     icon: UserPlus,
     title: "Créez votre badge",
@@ -36,9 +47,24 @@ const STEPS = [
       "Avant de répondre, signer ou payer — vérifiez l'identité de votre interlocuteur. L'extension Chrome le fait automatiquement dans Gmail.",
     duration: "1 clic",
   },
-] as const;
+  {
+    icon: Puzzle,
+    title: "Protégez-vous dans Gmail",
+    description:
+      "Installez l'extension Chrome BLOCKTRUST™ TrustScan. Elle vérifie automatiquement l'identité de chaque expéditeur et détecte les signatures BIS — directement dans Gmail.",
+    duration: "installation en 1 minute",
+    href: "/dashboard/extension",
+    linkLabel: "Installer l'extension →",
+  },
+];
 
-const PROTECTION_LAYERS = [
+type ProtectionLayer = {
+  icon?: LucideIcon;
+  title: string;
+  body: ReactNode;
+};
+
+const PROTECTION_LAYERS: ProtectionLayer[] = [
   {
     title: "Votre identité est infalsifiable",
     body: (
@@ -70,22 +96,43 @@ const PROTECTION_LAYERS = [
       </>
     ),
   },
-] as const;
+  {
+    icon: Mail,
+    title: "Protection automatique dans Gmail",
+    body: (
+      <>
+        L&apos;extension Chrome scanne vos emails en temps réel. Badge vert pour les contacts
+        certifiés, alerte orange si un contact habitué à signer ne signe pas — signal de
+        compromission potentielle.
+      </>
+    ),
+  },
+];
 
 function StepCard({
   icon: Icon,
   title,
   description,
   duration,
-}: (typeof STEPS)[number]) {
+  href,
+  linkLabel,
+}: StepItem) {
   return (
-    <div className="flex flex-1 flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+    <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6">
       <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-bt-cyan/10">
         <Icon className="h-6 w-6 text-bt-cyan" aria-hidden />
       </div>
       <h3 className="font-syne text-balance text-lg font-bold text-white">{title}</h3>
       <p className="mt-3 flex-1 text-sm leading-relaxed text-white/65">{description}</p>
       <p className="mt-4 font-mono text-xs uppercase tracking-wider text-gold">{duration}</p>
+      {href && linkLabel ? (
+        <Link
+          href={href}
+          className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-bt-cyan transition hover:text-[#21dfff]"
+        >
+          {linkLabel}
+        </Link>
+      ) : null}
     </div>
   );
 }
@@ -108,27 +155,17 @@ export default function HowToContent() {
         </p>
       </header>
 
-      {/* Section 2 — En 3 étapes */}
+      {/* Section 2 — En 4 étapes */}
       <section className="mt-16" aria-labelledby="steps-heading">
         <h2
           id="steps-heading"
           className="font-syne text-balance mx-auto mb-10 max-w-3xl text-center text-xl font-bold text-white sm:text-2xl"
         >
-          En 3 étapes
+          En 4 étapes
         </h2>
-        <div className="flex flex-col items-center gap-4 md:flex-row md:items-stretch md:justify-center md:gap-2">
-          {STEPS.map((step, index) => (
-            <div key={step.title} className="contents">
-              <StepCard {...step} />
-              {index < STEPS.length - 1 ? (
-                <div className="flex shrink-0 items-center justify-center py-1 md:py-0">
-                  <ChevronRight
-                    className="h-6 w-6 text-bt-cyan rotate-90 md:rotate-0"
-                    aria-hidden
-                  />
-                </div>
-              ) : null}
-            </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+          {STEPS.map((step) => (
+            <StepCard key={step.title} {...step} />
           ))}
         </div>
       </section>
@@ -141,18 +178,26 @@ export default function HowToContent() {
         >
           Ce qui rend BLOCKTRUST™ unique
         </h2>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {PROTECTION_LAYERS.map((layer) => (
-            <div
-              key={layer.title}
-              className="rounded-2xl border border-white/10 bg-white/[0.03] p-6"
-            >
-              <h3 className="font-syne text-balance text-base font-bold text-bt-cyan sm:text-lg">
-                {layer.title}
-              </h3>
-              <p className="mt-3 text-sm leading-relaxed text-white/65">{layer.body}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {PROTECTION_LAYERS.map((layer) => {
+            const LayerIcon = layer.icon;
+            return (
+              <div
+                key={layer.title}
+                className="rounded-2xl border border-white/10 bg-white/[0.03] p-6"
+              >
+                {LayerIcon ? (
+                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-bt-cyan/10">
+                    <LayerIcon className="h-5 w-5 text-bt-cyan" aria-hidden />
+                  </div>
+                ) : null}
+                <h3 className="font-syne text-balance text-base font-bold text-bt-cyan sm:text-lg">
+                  {layer.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-white/65">{layer.body}</p>
+              </div>
+            );
+          })}
         </div>
       </section>
 
