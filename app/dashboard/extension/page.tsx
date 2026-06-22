@@ -9,6 +9,7 @@ import { auth } from "@/app/lib/auth-server";
 import { prisma } from "@/app/lib/db";
 import ExtensionChromePanel from "@/app/components/dashboard/ExtensionChromePanel";
 import ExtensionOutlookPanel from "@/app/components/dashboard/ExtensionOutlookPanel";
+import ExtensionMcpPanel from "@/app/components/dashboard/ExtensionMcpPanel";
 import { userHasExtensionApiKey } from "@/lib/extension-api-key";
 
 export default async function ExtensionDashboardPage() {
@@ -42,6 +43,7 @@ export default async function ExtensionDashboardPage() {
         <div className="mt-6">
           <ExtensionOutlookPanel />
         </div>
+        <ExtensionMcpPanel />
       </div>
     </div>
   );
