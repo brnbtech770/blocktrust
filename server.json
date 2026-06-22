@@ -1,0 +1,20 @@
+{
+  "$schema": "https://registry.modelcontextprotocol.io/schemas/server.json",
+  "name": "io.github.brnbtech770/blocktrust-trustscan",
+  "description": "Verify contact identities, domain legitimacy, and website authenticity. Detect phishing, typosquatting, and invoice fraud (fake bank details). Manage your trust network (contacts, Trust Circle, Vault). Sign interactions cryptographically with BIS (BlockTrust Interaction Signature). 15 tools for digital trust verification — powered by blockchain-anchored certificates.",
+  "version": "1.0.0",
+  "homepage": "https://blocktrust.tech",
+  "repository": "https://github.com/brnbtech770/blocktrust",
+  "license": "Proprietary",
+  "contacts": [
+    {
+      "email": "contact@blocktrust.tech"
+    }
+  ],
+  "remotes": [
+    {
+      "transportType": "streamable-http",
+      "url": "https://blocktrust.tech/mcp/sse"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 {
   "name": "blocktrust",
   "version": "0.1.0",
+  "mcpName": "io.github.brnbtech770/blocktrust-trustscan",
   "private": true,
   "browserslist": [
     "chrome >= 90",
