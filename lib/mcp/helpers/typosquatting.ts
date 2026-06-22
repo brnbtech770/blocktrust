@@ -1,5 +1,5 @@
 // lib/mcp/helpers/typosquatting.ts
-// Détection typosquatting — Levenshtein + homoglyphes visuels.
+// Détection typosquatting — Levenshtein ≤ 2 + homoglyphes visuels (o/0, l/1, rn/m, .com/.co).
 // ============================================================
 
 const VISUAL_SUBSTITUTIONS: Array<[string, string]> = [
