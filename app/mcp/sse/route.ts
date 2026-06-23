@@ -1,15 +1,12 @@
 // app/mcp/sse/route.ts
 // Endpoint SSE MCP — GET (stream) + POST (JSON-RPC).
 // Auth : Bearer bt_ext_… | Rate limit : 60/min
+// tools/list : réponse statique immédiate (sans DB / Redis).
 // ============================================================
 
 import { NextRequest } from "next/server";
-import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { isInitializeRequest, JSONRPCMessageSchema } from "@modelcontextprotocol/sdk/types.js";
-import { authenticateMcpRequest } from "@/lib/mcp/auth";
-import { checkMcpRateLimit } from "@/lib/mcp/rate-limit";
 import { getMcpSessions, pruneStaleMcpSessions } from "@/lib/mcp/session-store";
-import { buildBlockTrustMcpServer } from "@/lib/mcp/server";
 import {
   buildStaticToolsListHttpResponse,
   isStaticToolsListRequest,
@@ -54,6 +51,12 @@ function rebuildRequest(req: NextRequest, body: unknown): Request {
 }
 
 async function createMcpSession(userId: string) {
+  const [{ WebStandardStreamableHTTPServerTransport }, { buildBlockTrustMcpServer }] =
+    await Promise.all([
+      import("@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js"),
+      import("@/lib/mcp/server"),
+    ]);
+
   pruneStaleMcpSessions();
   const mcp = buildBlockTrustMcpServer(userId);
 
@@ -81,6 +84,19 @@ async function handleMcpRequest(
   req: NextRequest,
   preParsedBody?: unknown,
 ): Promise<Response> {
+  if (
+    req.method === "POST" &&
+    preParsedBody !== undefined &&
+    isStaticToolsListRequest(preParsedBody)
+  ) {
+    return buildStaticToolsListHttpResponse(preParsedBody, req.headers);
+  }
+
+  const [{ authenticateMcpRequest }, { checkMcpRateLimit }] = await Promise.all([
+    import("@/lib/mcp/auth"),
+    import("@/lib/mcp/rate-limit"),
+  ]);
+
   const auth = await authenticateMcpRequest(req);
   if (!auth.ok) {
     return unauthorizedResponse(auth.message);
@@ -102,6 +118,10 @@ async function handleMcpRequest(
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
+    }
+
+    if (isStaticToolsListRequest(parsedBody)) {
+      return buildStaticToolsListHttpResponse(parsedBody, req.headers);
     }
   }
 
@@ -167,7 +187,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   if (isStaticToolsListRequest(parsedBody)) {
-    return buildStaticToolsListHttpResponse(parsedBody);
+    return buildStaticToolsListHttpResponse(parsedBody, req.headers);
   }
 
   return handleMcpRequest(req, parsedBody);
