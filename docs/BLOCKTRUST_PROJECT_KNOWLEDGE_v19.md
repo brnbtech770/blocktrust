@@ -1,6 +1,6 @@
 # BLOCKTRUST — Knowledge Base v19 (COMPLÈTE)
-**Date : 21 juin 2026 | Score : ~99% tech · 20% commercial | 128 tests · 83% coverage**
-*(Consolide v18 + BIS Phase 2 + Extension Outlook + Landing complète + Codes rotatifs + Audit 3 + Perf LCP)*
+**Date : 23 juin 2026 | Score : ~99% tech · 20% commercial | 140 tests · 83% coverage**
+*(Consolide v18 + BIS Phase 2 + Extension Outlook + MCP 15 outils publié + Landing complète + Codes rotatifs + Audits 3-4 + Alertes + Perf LCP)*
 
 ---
 
@@ -350,7 +350,7 @@ Monitoring   : Sentry + /status + /api/health (détail ops = admin only, SEC-3)
 IA Veille    : Claude Haiku 4.5
 CI/CD        : GitHub Actions (CI verte ✅)
 Déploiement  : Vercel Pro (blocktrust-mvp)
-Tests        : Vitest (113 tests — ~83% coverage)
+Tests        : Vitest (140 tests — ~83% coverage)
 Dev port     : 3004 (local)
 Repo         : github.com/brnbtech770/blocktrust
 ```
@@ -463,19 +463,20 @@ Toggle annuel par défaut, réduction en € (B2C) / -20% (B2B).
 - ✅ BIS : +2/sig (max +20), +1/vérifiée, -10 cert révoqué (dans Behavior)
 - ✅ Cache Redis /verify TTL 5min
 
-### Extension Chrome TrustScan (98%)
-- ✅ v1.0.4 soumise Web Store (BIS Phase 2 intégrée, review en cours — host permissions Gmail = 3-7j)
+### Extension Chrome TrustScan (99%)
+- ✅ v1.0.5 soumise Web Store (XSS fix + sanitization — security fix, review en cours)
 - ✅ Manifest V3, content script Gmail, 4 endpoints, badge vert/gris, cache 5min + queue 300ms
 - ✅ Auth header Authorization: Bearer / X-API-Key (plus query string — SEC-2)
 - ✅ Marqueur dashboard (content/blocktrust-mark.js, data-blocktrust-trustscan="installed")
 - ✅ Tooltip hover : TrustScore + signaux (restaurée)
 - ✅ BIS Phase 2 : détection liens BIS dans Gmail, badge enrichi "BIS Niveau 3 — Signé", alerte compromission
-- ✅ Page /dashboard/extension (clé API bt_ext_... pour tous les plans, Chrome + Outlook)
+- ✅ XSS fix : escapeHtml() dans gmail.js, sanitizeDisplayText sur toutes les données API (audit 4)
+- ✅ Page /dashboard/extension (clé API bt_ext_... pour tous les plans, Chrome + Outlook + MCP)
 - ✅ Bannière "Protégez-vous dans Gmail" dans le dashboard (dismissable, détection auto)
 - ✅ Lien sidebar "Extension Chrome" (icône Puzzle)
 - ✅ URL listing : https://chromewebstore.google.com/detail/bemcnlbifffejlijnndkdgcjpmijfaeg
 - ✅ Doc instructions test (Drive : 19lFjFvizG7XosU56FScgUyoAk8zD8TQtVon72-Rn6g4)
-- ✅ Description Web Store mise à jour avec BIS (soumise 17 juin)
+- ✅ Description Web Store mise à jour avec BIS
 
 ### Extension Outlook TrustScan (NOUVEAU — Phase 1, 21 juin)
 - ✅ Office Add-in (unified manifest JSON), pas COM/VSTO
@@ -503,6 +504,100 @@ Phase 2    : LaunchEvent auto à l'ouverture d'un email
 Phase 3    : Signature BIS sortante dans le composeur
 Phase 4    : Publication Microsoft AppSource
 ```
+
+### Serveur MCP BlockTrust (NOUVEAU — 21 juin, PUBLIÉ)
+**15 outils MCP publiés au registre officiel — BlockTrust = infrastructure de confiance pour les agents IA.**
+
+```
+Registre   : io.github.brnbtech770/blocktrust-trustscan v1.0.0 ACTIVE
+Endpoint   : https://blocktrust.tech/mcp/sse
+Transport  : Streamable HTTP + SSE
+Auth       : Authorization: Bearer bt_ext_... (même clé que extensions)
+Rate limit : 60 req/min par clé API (Upstash)
+Doc        : https://blocktrust.tech/mcp
+Spec       : docs/BLOCKTRUST_MCP_SPEC_v2.md
+```
+
+Les 15 outils :
+```
+BLOC A — Vérification (8 outils, publics ou auth) :
+  verify_identity         → vérifier un email (verdict, TrustScore, signaux, ancrage)
+  verify_domain           → vérifier un domaine (entités certifiées, âge, disposable)
+  verify_website          → vérifier un site web (phishing, typosquatting)
+  verify_interaction      → vérifier une signature BIS
+  sign_interaction        → signer une interaction BIS (plan payant + cert ancré)
+  get_trust_score         → TrustScore détaillé (4 sous-scores + activité BIS)
+  list_trusted_domains    → domaines du Trust Circle de l'utilisateur
+  check_domain_reputation → réputation domaine (RDAP, SPF, typosquatting, risk level)
+
+BLOC B — Contacts (3 outils, auth) :
+  add_contact             → ajouter un contact (auto-enrichi si certifié)
+  search_contacts         → chercher par nom, email, domaine, label
+  list_contacts           → tous les contacts avec stats certification
+
+BLOC C — Trust Circle (2 outils, Premium+) :
+  add_to_trust_circle     → ajouter au cercle de confiance (MUTUAL/UNILATERAL)
+  list_trust_circle       → lister les membres avec TrustScore et relation
+
+BLOC D — Vault (2 outils, Premium+ ou B2B) :
+  store_in_vault          → stocker une donnée sensible (RIB, contrat, clé)
+  search_vault            → chercher + compareValue = DÉTECTION FRAUDE AU FAUX RIB
+```
+
+Détection typosquatting : lib/mcp/helpers/typosquatting.ts (Levenshtein + homoglyphes o↔0, l↔1, rn↔m)
+Sanitization : sanitizeMcpOutput sur toutes les données sortantes
+Publication GitHub Action : .github/workflows/publish-mcp.yml (tag mcp-v* ou workflow_dispatch)
+
+Compatibilité :
+```
+Claude Desktop → config JSON mcpServers + url + headers
+Claude Code    → claude mcp add blocktrust
+Cursor / VS Code → config MCP standard
+ChatGPT        → wrapper OpenAPI (Phase 3)
+```
+
+Roadmap MCP :
+```
+Phase 1 ✅ : 15 tools + SSE + auth + doc /mcp + publication registre
+Phase 2    : Soumettre Anthropic Connectors Directory (apparaître dans Claude.ai)
+Phase 3    : Soumettre mcp.so + smithery.ai (visibilité max)
+Phase 4    : Wrapper OpenAPI pour GPT/ChatGPT
+Phase 5    : Monitoring MCP (usage, conversion, fraude détectée)
+```
+
+### Correctifs alertes (NOUVEAU — 23 juin)
+Problème : un nouvel utilisateur Découverte (Jim Acoca) recevait 3 alertes en 5 minutes après inscription (TrustScore bas, KYC non complété, cluster échecs). Excessif et contre-productif.
+
+4 fixes appliqués :
+```
+Fix 1 — Période de grâce 72h (lib/alert-grace-period.ts)
+  Comptes < 72h : alertes filtrées (sauf vraies fraudes CONTEXT_MISMATCH, badge falsifié)
+  recordGracePeriodSkip() → audit log ALERT_GRACE_SKIPPED
+
+Fix 2 — Alertes adaptées au plan
+  Découverte : pas d'alerte KYC/ancrage (features non disponibles sur ce plan)
+  Essentiel : pas d'alerte Trust Circle (pas dans le plan)
+  shouldSendKycReminder(plan) dans onboarding-monitor
+
+Fix 3 — Seuil TrustScore adapté
+  Découverte : jamais d'alerte TrustScore bas (état normal)
+  Compte < 7 jours : seuil < 10 (au lieu de < 30)
+  Compte mature : seuil < 30 (inchangé)
+
+Fix 4 — Déduplication AdminAlert
+  Même type + même certificateId dans les 60 dernières minutes → skip
+  Empêche le double comptage sync + agent sur la même Verification
+```
+
+Résultat pour les nouveaux utilisateurs Découverte : 0 alerte au lieu de 3. Les vraies fraudes restent actives.
+Bandeau admin : compteur alertes du jour + skips grâce period sur /admin/ai-alerts et /admin/dashboard.
+
+### Audit sécurité n°4 (21 juin)
+- ✅ HIGH : XSS stockée via entityName/BIS dans l'extension Gmail → escapeHtml() + sanitize-display-text.ts
+- ✅ Sanitization API : verify-sender, bis-enrichment, entities, bis/sign, add-contact → rejet markup à l'écriture
+- ✅ TrustScore plancher 0 : Math.max(0, score - 10) dans createFraudAdminAlert (jamais négatif)
+- ✅ Extension Chrome v1.0.5 construite avec le fix XSS → soumise Web Store
+- 8 tests unitaires sanitization + 140 tests totaux
 
 ### Badge ambassadeur (16 juin)
 - ✅ Certificat BLOCKTRUST™ créé en prod via /api/admin/repair-ambassador-cert
@@ -636,7 +731,7 @@ Lot 3 (dette technique — APRÈS lancement) :
 
 ### RGPD / Emails / Qualité
 - ✅ BiometricConsentModal Art.9, CertifiedEmailFooter (18 templates)
-- ✅ 113 tests vitest (~83% coverage), /status, Sentry crons
+- ✅ 140 tests vitest (~83% coverage), /status, Sentry crons
 - ✅ /privacy complète, Vercel Analytics + Speed Insights, OG image + favicon, sitemap GSC indexé
 - ✅ OpenTimestamp PI ancré Bitcoin (29 mai 2026, SHA256 002c0687, commit 9659c77) — preuve antériorité principale
 - ✅ NOTICE + en-têtes copyright sur 20 fichiers cœur IP
@@ -707,18 +802,19 @@ CertificateVerifyToken → Codes rotatifs (16 juin)
 
 ---
 
-## 13. AVANCEMENT — 21 juin 2026
+## 13. AVANCEMENT — 23 juin 2026
 ```
 Technique core      ████████████████████  100%
-Sécurité            ████████████████████   99%  (3 audits traités + BIS)
-Produit/UX          ████████████████████   99%  (BIS Phase 1+2 + landing complète)
-Extension Chrome    ████████████████████   99%  (v1.0.4 en review Google)
+Sécurité            ████████████████████   99%  (4 audits traités + BIS + sanitization)
+Produit/UX          ████████████████████   99%  (BIS Phase 1+2 + landing complète + alertes corrigées)
+Extension Chrome    ████████████████████   99%  (v1.0.5 en review Google — XSS fix)
 Extension Outlook   █████████████████░░░   85%  (Phase 1 déployée, AppSource à venir)
-Trust Engine V2     ██████████████████░░   92%  (+signaux BIS)
-Agents/Monitoring   ████████████████████  100%  (Vercel Pro, crons horaires)
+MCP                 ████████████████████  100%  (15 outils, registre officiel ACTIVE)
+Trust Engine V2     ██████████████████░░   92%  (+signaux BIS + plancher 0)
+Agents/Monitoring   ████████████████████  100%  (Vercel Pro, crons horaires, grâce period 72h)
 Dashboard admin     ████████████████████  100%  (accès séparé, état connexion, ancrage)
 Infrastructure      ████████████████████  100%  (bold-frost, Vercel Pro, CI verte + tests bloquants)
-Tests               █████████████████░░░   83%  (128 tests)
+Tests               █████████████████░░░   83%  (140 tests)
 Pricing/Freemium    ████████████████████  100%  (pricing + #compare + FAQ + rotatifs)
 Legal/Compliance    ████████████████░░░░   85%
 Marketing/GTM       █████████████████░░░   80%
@@ -735,11 +831,23 @@ Score commercial : 20%
 ### PRIORITÉ 1 — Avant Stripe Live
 ```
 □ 4 tests checkout Stripe mode Test (Essentiel, Famille+add-on, Team sièges, Découverte)
-□ Attendre review Google extension v1.0.4 (soumise 17 juin, 3-7j)
+□ Attendre review Google extension v1.0.5 (soumise 21 juin — XSS fix)
 □ TVA avec Laurianne → Stripe Tax
+□ Tester MCP depuis Claude Desktop (config mcpServers + clé API)
 ```
 
-### PRIORITÉ 2 — Landing / UX (QUASI TERMINÉ)
+### PRIORITÉ 2 — Distribution MCP (NOUVEAU — à faire cette semaine)
+```
+✅ MCP publié au registre officiel (io.github.brnbtech770/blocktrust-trustscan ACTIVE)
+✅ GitHub Action publish-mcp.yml (tag mcp-v* ou workflow_dispatch)
+□ Soumettre au Anthropic Connectors Directory (anthropic.com/partners/mcp)
+  → Pour apparaître dans les connecteurs Claude.ai (comme Gmail, Google Drive)
+□ Soumettre sur mcp.so (~20K serveurs listés, le plus gros catalogue)
+□ Soumettre sur smithery.ai (populaire chez les développeurs d'agents)
+□ Tester MCP via Claude Desktop avec la clé API
+```
+
+### PRIORITÉ 3 — Landing / UX (TERMINÉ)
 ```
 ✅ Pricing page (cartes allégées, toggle, TTC/HT)
 ✅ Tableau comparatif #compare (B2C 4 + B2B 3, fix headers)
@@ -750,6 +858,7 @@ Score commercial : 20%
 ✅ Fix perf LCP
 ✅ Noms liés aux codes badge dans admin + alertes
 ✅ Codes rotatifs par défaut dans le dashboard
+✅ Correctifs alertes (grâce period 72h, plan, TrustScore, déduplication)
 □ Onglet Verify intégré au Dashboard (cosmétique nav — optionnel)
 ```
 
@@ -853,7 +962,9 @@ Règle landing : "COMPLÉTER pas MODIFIER" — slogan INTOUCHABLE.
 | Production | https://blocktrust.tech |
 | Admin | /admin/dashboard (isDashboardAdmin, 4 emails) |
 | BIS | /dashboard/bis + /verify/bis/[id] |
-| Extension Chrome | /dashboard/extension |
+| MCP | https://blocktrust.tech/mcp/sse (15 outils, registre officiel ACTIVE) |
+| MCP Doc | https://blocktrust.tech/mcp |
+| Extension Chrome | /dashboard/extension (v1.0.5 en review Google) |
 | Extension Outlook | /outlook/taskpane (sideload via manifest.json) |
 | Badge ambassadeur | footer toutes pages → /verify?certId=cmqgsdnik0005jo0414m07afq |
 | GitHub | github.com/brnbtech770/blocktrust (dossier local : blocktrust-mvp) |
@@ -867,10 +978,11 @@ Règle landing : "COMPLÉTER pas MODIFIER" — slogan INTOUCHABLE.
 | INPI | n°5253718 |
 | DPO / Sécurité | privacy@ · security@blocktrust.tech |
 | Chrome Web Store | https://chromewebstore.google.com/detail/bemcnlbifffejlijnndkdgcjpmijfaeg |
+| MCP Registry | io.github.brnbtech770/blocktrust-trustscan (ACTIVE) |
 | Dev port | 3004 (local) |
 
 ---
 
-*Mis à jour le 21 juin 2026 — v19 COMPLÈTE*
-*Consolide v18 + BIS Phase 2 + Extension Outlook Phase 1 + Landing complète (pricing/FAQ/#compare/how-to) + Codes rotatifs + Noms badges + Audit 3 (2 lots) + Fix perf LCP + Adresse siège*
+*Mis à jour le 23 juin 2026 — v19 COMPLÈTE*
+*Consolide v18 + BIS Phase 2 + Extension Outlook Phase 1 + MCP 15 outils (registre officiel ACTIVE) + Landing complète + Codes rotatifs + Noms badges + Audits 3-4 + Alertes corrigées + Fix perf LCP + Adresse siège*
 *Règle de clôture : uploader dans Project Knowledge + commit docs/ après chaque session.*
