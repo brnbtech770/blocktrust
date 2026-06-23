@@ -75,16 +75,16 @@ async function dispatchStatelessMcpPost(
   const mcp = buildBlockTrustMcpServer(userId);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
+    // JSON complet par requête — indispensable serverless (pas de SSE stream coupé).
+    enableJsonResponse: true,
   });
 
-  try {
-    await mcp.connect(transport);
-    const forwardReq = rebuildRequest(req, parsedBody);
-    return await transport.handleRequest(forwardReq, { parsedBody });
-  } finally {
-    void mcp.close().catch(() => null);
-    void transport.close().catch(() => null);
-  }
+  await mcp.connect(transport);
+  const forwardReq = rebuildRequest(req, parsedBody);
+  const response = await transport.handleRequest(forwardReq, { parsedBody });
+  void mcp.close().catch(() => null);
+  void transport.close().catch(() => null);
+  return response;
 }
 
 async function handleMcpPost(req: NextRequest, parsedBody: unknown): Promise<Response> {
