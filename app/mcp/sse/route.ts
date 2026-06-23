@@ -9,7 +9,11 @@ import { isInitializeRequest, JSONRPCMessageSchema } from "@modelcontextprotocol
 import { authenticateMcpRequest } from "@/lib/mcp/auth";
 import { checkMcpRateLimit } from "@/lib/mcp/rate-limit";
 import { getMcpSessions, pruneStaleMcpSessions } from "@/lib/mcp/session-store";
-import { buildBlockTrustMcpServer, loadMcpContext } from "@/lib/mcp/server";
+import { buildBlockTrustMcpServer } from "@/lib/mcp/server";
+import {
+  buildStaticToolsListHttpResponse,
+  isStaticToolsListRequest,
+} from "@/lib/mcp/static-tools-list";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -51,8 +55,7 @@ function rebuildRequest(req: NextRequest, body: unknown): Request {
 
 async function createMcpSession(userId: string) {
   pruneStaleMcpSessions();
-  const ctx = await loadMcpContext(userId);
-  const mcp = buildBlockTrustMcpServer(ctx);
+  const mcp = buildBlockTrustMcpServer(userId);
 
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: () => crypto.randomUUID(),
@@ -74,7 +77,10 @@ async function createMcpSession(userId: string) {
   return { transport, mcp, userId };
 }
 
-async function handleMcpRequest(req: NextRequest): Promise<Response> {
+async function handleMcpRequest(
+  req: NextRequest,
+  preParsedBody?: unknown,
+): Promise<Response> {
   const auth = await authenticateMcpRequest(req);
   if (!auth.ok) {
     return unauthorizedResponse(auth.message);
@@ -86,9 +92,9 @@ async function handleMcpRequest(req: NextRequest): Promise<Response> {
   }
 
   const sessionId = req.headers.get("mcp-session-id");
-  let parsedBody: unknown = undefined;
+  let parsedBody: unknown = preParsedBody;
 
-  if (req.method === "POST") {
+  if (req.method === "POST" && parsedBody === undefined) {
     try {
       parsedBody = await req.json();
     } catch {
@@ -150,7 +156,21 @@ export async function GET(req: NextRequest): Promise<Response> {
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
-  return handleMcpRequest(req);
+  let parsedBody: unknown;
+  try {
+    parsedBody = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "invalid_json" }), {
+      status: 400,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  if (isStaticToolsListRequest(parsedBody)) {
+    return buildStaticToolsListHttpResponse(parsedBody);
+  }
+
+  return handleMcpRequest(req, parsedBody);
 }
 
 export async function DELETE(req: NextRequest): Promise<Response> {
