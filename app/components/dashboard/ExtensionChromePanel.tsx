@@ -131,9 +131,9 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
             <Puzzle className="h-5 w-5 text-bt-cyan" aria-hidden />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="font-syne text-xl font-bold text-white sm:text-2xl">
+            <h2 className="font-syne text-xl font-bold text-white sm:text-2xl">
               Extension Chrome BLOCKTRUST™
-            </h1>
+            </h2>
             <p className="mt-2 text-sm leading-relaxed text-white/65">
               Connectez l&apos;extension à votre compte pour vérifier l&apos;identité de vos
               correspondants directement dans Gmail.

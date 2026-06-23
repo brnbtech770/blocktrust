@@ -149,7 +149,7 @@ export default async function DashboardSidebar() {
           { name: 'Facturation', href: '/dashboard/billing', icon: 'CreditCard' },
           { name: 'Paramètres', href: '/dashboard/settings', icon: 'Settings' },
           {
-            name: 'Extension Chrome',
+            name: 'Extensions',
             href: '/dashboard/extension',
             icon: 'Puzzle' as const,
           },

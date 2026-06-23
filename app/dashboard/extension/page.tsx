@@ -34,6 +34,12 @@ export default async function ExtensionDashboardPage() {
   return (
     <div className="py-6 text-white/80 sm:py-8">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <header className="mb-8">
+          <h1 className="font-syne text-2xl font-bold text-white sm:text-3xl">
+            Extensions &amp; Intégrations
+          </h1>
+          <p className="mt-2 text-sm text-white/65">Connectez BlockTrust à vos outils.</p>
+        </header>
         <ExtensionChromePanel
           extensionKeyInitial={{
             hasKey: userHasExtensionApiKey(user.extensionApiKeyHash),
