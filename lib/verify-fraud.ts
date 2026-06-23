@@ -9,6 +9,13 @@
 import * as React from 'react'
 import { prisma } from '@/app/lib/db'
 import type { Prisma } from '@prisma/client'
+import {
+  getCertificateOwnerForGraceCheck,
+  getUserForGraceCheck,
+  recentDuplicateAdminAlert,
+  recordGracePeriodSkip,
+  shouldSkipAlertForNewAccount,
+} from '@/lib/alert-grace-period'
 import { createAdminAlert } from '@/lib/admin-alerts'
 import { sendEmailFireAndForget } from '@/lib/email'
 import { FraudAlertEmail, subject as fraudAlertCertificateSubject } from '@/emails/FraudAlertEmail'
@@ -55,7 +62,32 @@ export async function createAdminFraudAlert(args: {
   certificateId?: string | null
   userId?: string | null
   metadata?: Record<string, unknown>
-}) {
+}): Promise<{ created: boolean; skipped?: 'dedup' | 'grace' }> {
+  if (args.certificateId) {
+    const dup = await recentDuplicateAdminAlert(args.type, args.certificateId)
+    if (dup) return { created: false, skipped: 'dedup' }
+  }
+
+  const graceUser =
+    (args.userId ? await getUserForGraceCheck(args.userId) : null) ??
+    (args.certificateId ? await getCertificateOwnerForGraceCheck(args.certificateId) : null)
+
+  if (
+    shouldSkipAlertForNewAccount(graceUser, args.type, {
+      metadata: args.metadata,
+      count: typeof args.metadata?.count === 'number' ? args.metadata.count : undefined,
+    })
+  ) {
+    if (graceUser) {
+      await recordGracePeriodSkip({
+        userId: graceUser.id,
+        alertType: args.type,
+        rule: typeof args.metadata?.reason === 'string' ? args.metadata.reason : undefined,
+      })
+    }
+    return { created: false, skipped: 'grace' }
+  }
+
   const titleByType = {
     FRAUD_ALERT: 'Alerte fraude (vérification publique)',
     SUSPICIOUS_VOLUME: 'Volume de vérifications suspect',
@@ -101,6 +133,8 @@ export async function createAdminFraudAlert(args: {
       ...(args.certificateId ? { certificateId: args.certificateId } : {}),
     },
   })
+
+  return { created: true }
 }
 
 export type AnomalyKind = 'SUSPICIOUS_VOLUME' | 'SUSPICIOUS_SCANNING'
