@@ -36,12 +36,18 @@ export function isStaticToolsListRequest(parsedBody: unknown): boolean {
   if (toolsList.length === 0) return false;
 
   const blockingRequests = messages.filter(
-    (m) =>
-      m.method &&
-      m.id !== undefined &&
-      m.method !== "tools/list",
+    (m) => m.method && m.id !== undefined && m.method !== "tools/list",
   );
   return blockingRequests.length === 0;
+}
+
+/** True si le corps ne contient que des notifications MCP (pas de requête JSON-RPC). */
+export function isMcpNotificationOnlyRequest(parsedBody: unknown): boolean {
+  const messages = normalizeMessages(parsedBody);
+  if (messages.length === 0) return false;
+  return messages.every(
+    (m) => typeof m.method === "string" && m.method.startsWith("notifications/") && m.id === undefined,
+  );
 }
 
 function formatSseEvent(message: object): string {

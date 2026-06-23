@@ -1,14 +1,13 @@
 // app/mcp/sse/route.ts
-// Endpoint SSE MCP — GET (stream) + POST (JSON-RPC).
+// Endpoint MCP Streamable HTTP (stateless — compatible Vercel serverless).
 // Auth : Bearer bt_ext_… | Rate limit : 60/min
-// tools/list : réponse statique immédiate (sans DB / Redis).
+// Pas de session en mémoire : chaque POST est autonome (userId via clé API).
 // ============================================================
 
 import { NextRequest } from "next/server";
-import { isInitializeRequest, JSONRPCMessageSchema } from "@modelcontextprotocol/sdk/types.js";
-import { getMcpSessions, pruneStaleMcpSessions } from "@/lib/mcp/session-store";
 import {
   buildStaticToolsListHttpResponse,
+  isMcpNotificationOnlyRequest,
   isStaticToolsListRequest,
 } from "@/lib/mcp/static-tools-list";
 
@@ -40,6 +39,17 @@ function rateLimitedResponse(retryAfter?: number): Response {
   );
 }
 
+function methodNotAllowedResponse(): Response {
+  return new Response(
+    JSON.stringify({
+      jsonrpc: "2.0",
+      error: { code: -32000, message: "Method not allowed." },
+      id: null,
+    }),
+    { status: 405, headers: { Allow: "POST", "Content-Type": "application/json" } },
+  );
+}
+
 function rebuildRequest(req: NextRequest, body: unknown): Request {
   const headers = new Headers(req.headers);
   return new Request(req.url, {
@@ -50,46 +60,40 @@ function rebuildRequest(req: NextRequest, body: unknown): Request {
   } as RequestInit);
 }
 
-async function createMcpSession(userId: string) {
+/** Transport MCP stateless — une instance par requête POST (pas de session RAM). */
+async function dispatchStatelessMcpPost(
+  req: NextRequest,
+  parsedBody: unknown,
+  userId: string,
+): Promise<Response> {
   const [{ WebStandardStreamableHTTPServerTransport }, { buildBlockTrustMcpServer }] =
     await Promise.all([
       import("@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js"),
       import("@/lib/mcp/server"),
     ]);
 
-  pruneStaleMcpSessions();
   const mcp = buildBlockTrustMcpServer(userId);
-
   const transport = new WebStandardStreamableHTTPServerTransport({
-    sessionIdGenerator: () => crypto.randomUUID(),
-    onsessioninitialized: (sessionId) => {
-      getMcpSessions().set(sessionId, {
-        transport,
-        mcp,
-        userId,
-        createdAt: Date.now(),
-      });
-    },
-    onsessionclosed: (sessionId) => {
-      getMcpSessions().delete(sessionId);
-      void mcp.close().catch(() => null);
-    },
+    sessionIdGenerator: undefined,
   });
 
-  await mcp.connect(transport);
-  return { transport, mcp, userId };
+  try {
+    await mcp.connect(transport);
+    const forwardReq = rebuildRequest(req, parsedBody);
+    return await transport.handleRequest(forwardReq, { parsedBody });
+  } finally {
+    void mcp.close().catch(() => null);
+    void transport.close().catch(() => null);
+  }
 }
 
-async function handleMcpRequest(
-  req: NextRequest,
-  preParsedBody?: unknown,
-): Promise<Response> {
-  if (
-    req.method === "POST" &&
-    preParsedBody !== undefined &&
-    isStaticToolsListRequest(preParsedBody)
-  ) {
-    return buildStaticToolsListHttpResponse(preParsedBody, req.headers);
+async function handleMcpPost(req: NextRequest, parsedBody: unknown): Promise<Response> {
+  if (isStaticToolsListRequest(parsedBody)) {
+    return buildStaticToolsListHttpResponse(parsedBody, req.headers);
+  }
+
+  if (isMcpNotificationOnlyRequest(parsedBody)) {
+    return new Response(null, { status: 202 });
   }
 
   const [{ authenticateMcpRequest }, { checkMcpRateLimit }] = await Promise.all([
@@ -107,72 +111,11 @@ async function handleMcpRequest(
     return rateLimitedResponse(rate.retryAfter);
   }
 
-  const sessionId = req.headers.get("mcp-session-id");
-  let parsedBody: unknown = preParsedBody;
-
-  if (req.method === "POST" && parsedBody === undefined) {
-    try {
-      parsedBody = await req.json();
-    } catch {
-      return new Response(JSON.stringify({ error: "invalid_json" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    if (isStaticToolsListRequest(parsedBody)) {
-      return buildStaticToolsListHttpResponse(parsedBody, req.headers);
-    }
-  }
-
-  if (sessionId) {
-    const session = getMcpSessions().get(sessionId);
-    if (!session || session.userId !== auth.userId) {
-      return new Response(JSON.stringify({ error: "session_not_found" }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-    const forwardReq =
-      req.method === "POST" && parsedBody !== undefined
-        ? rebuildRequest(req, parsedBody)
-        : req;
-    return session.transport.handleRequest(forwardReq, { parsedBody });
-  }
-
-  if (req.method !== "POST" || parsedBody === undefined) {
-    return new Response(
-      JSON.stringify({
-        error: "session_required",
-        message: "Initialisez une session MCP via POST (initialize), puis réutilisez Mcp-Session-Id.",
-      }),
-      { status: 400, headers: { "Content-Type": "application/json" } },
-    );
-  }
-
-  const messages = Array.isArray(parsedBody) ? parsedBody : [parsedBody];
-  const isInit = messages.some((msg) => {
-    try {
-      return isInitializeRequest(JSONRPCMessageSchema.parse(msg));
-    } catch {
-      return false;
-    }
-  });
-
-  if (!isInit) {
-    return new Response(JSON.stringify({ error: "initialization_required" }), {
-      status: 400,
-      headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  const { transport } = await createMcpSession(auth.userId);
-  const forwardReq = rebuildRequest(req, parsedBody);
-  return transport.handleRequest(forwardReq, { parsedBody });
+  return dispatchStatelessMcpPost(req, parsedBody, auth.userId);
 }
 
-export async function GET(req: NextRequest): Promise<Response> {
-  return handleMcpRequest(req);
+export async function GET(): Promise<Response> {
+  return methodNotAllowedResponse();
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -186,13 +129,9 @@ export async function POST(req: NextRequest): Promise<Response> {
     });
   }
 
-  if (isStaticToolsListRequest(parsedBody)) {
-    return buildStaticToolsListHttpResponse(parsedBody, req.headers);
-  }
-
-  return handleMcpRequest(req, parsedBody);
+  return handleMcpPost(req, parsedBody);
 }
 
-export async function DELETE(req: NextRequest): Promise<Response> {
-  return handleMcpRequest(req);
+export async function DELETE(): Promise<Response> {
+  return new Response(null, { status: 200 });
 }
