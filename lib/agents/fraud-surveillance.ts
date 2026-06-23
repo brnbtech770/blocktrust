@@ -4,6 +4,12 @@
 
 import { prisma } from '@/app/lib/db'
 import {
+  accountAgeMs,
+  recordGracePeriodSkip,
+  shouldAlertLowTrustScore,
+  shouldSkipAlertForNewAccount,
+} from '@/lib/alert-grace-period'
+import {
   createFraudAdminAlert,
   recentAgentAlertExists,
   writeAgentAuditLog,
@@ -12,6 +18,7 @@ import {
   formatCertificateLabel,
   formatUserLabel,
 } from '@/lib/format-certificate-label'
+import { resolveEffectivePlan } from '@/lib/plan-features'
 
 const AGENT_META = { source: 'fraud-surveillance' } as const
 
@@ -20,6 +27,12 @@ export type FraudSurveillanceResult = {
   lowTrustAlerts: number
   failedClusterAlerts: number
   ipClusterAlerts: number
+  graceSkipped: number
+}
+
+function metadataRecord(value: unknown): Record<string, unknown> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined
+  return value as Record<string, unknown>
 }
 
 export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
@@ -31,6 +44,7 @@ export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
   let lowTrustAlerts = 0
   let failedClusterAlerts = 0
   let ipClusterAlerts = 0
+  let graceSkipped = 0
 
   // FRAUD_ALERT récentes (< 1h) non traitées en alerte admin
   const recentFraudVerifs = await prisma.verification.findMany({
@@ -43,11 +57,21 @@ export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
       id: true,
       certificateId: true,
       verifiedAt: true,
+      metadata: true,
       certificate: {
         select: {
           entityId: true,
           publicId: true,
-          entity: { select: { userId: true, legalName: true, tradeName: true, firstName: true, lastName: true } },
+          entity: {
+            select: {
+              userId: true,
+              legalName: true,
+              tradeName: true,
+              firstName: true,
+              lastName: true,
+              user: { select: { id: true, createdAt: true } },
+            },
+          },
         },
       },
     },
@@ -62,6 +86,21 @@ export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
       oneHourAgo,
     )
     if (dup) continue
+
+    const fraudMeta = metadataRecord(v.metadata)
+    const owner = v.certificate?.entity?.user
+    if (
+      owner &&
+      shouldSkipAlertForNewAccount(owner, 'FRAUD_ALERT', { metadata: fraudMeta })
+    ) {
+      await recordGracePeriodSkip({
+        userId: owner.id,
+        alertType: 'FRAUD_ALERT',
+        rule: 'fraud_alert_verification',
+      })
+      graceSkipped += 1
+      continue
+    }
 
     const entity = v.certificate?.entity
     const certLabel = formatCertificateLabel({
@@ -80,22 +119,34 @@ export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
         rule: 'fraud_alert_verification',
         verificationId: v.id,
         certificateId: v.certificateId,
+        ...(fraudMeta ?? {}),
       },
     })
     fraudAlertsCreated += 1
   }
 
-  // TrustScore < 30 non alerté (24h)
+  // TrustScore bas — seuil adapté à l'âge du compte ; jamais pour Découverte
   const lowTrustUsers = await prisma.user.findMany({
     where: {
       trustScore: { lt: 30 },
       kycStatus: { not: 'REJECTED' },
     },
-    select: { id: true, trustScore: true, email: true },
+    select: {
+      id: true,
+      trustScore: true,
+      email: true,
+      createdAt: true,
+      subscription: { select: { plan: true, status: true } },
+    },
     take: 30,
   })
 
   for (const user of lowTrustUsers) {
+    const plan = resolveEffectivePlan({ subscription: user.subscription, email: user.email })
+    const ageMs = accountAgeMs(user)
+    const score = user.trustScore ?? 0
+    if (!shouldAlertLowTrustScore({ trustScore: score, accountAgeMs: ageMs, plan })) continue
+
     const dup = await recentAgentAlertExists(
       'FRAUD_ALERT',
       { path: ['userId'], equals: user.id },
@@ -103,16 +154,26 @@ export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
     )
     if (dup) continue
 
+    if (shouldSkipAlertForNewAccount(user, 'FRAUD_ALERT', { metadata: { rule: 'low_trust_score' } })) {
+      await recordGracePeriodSkip({
+        userId: user.id,
+        alertType: 'FRAUD_ALERT',
+        rule: 'low_trust_score',
+      })
+      graceSkipped += 1
+      continue
+    }
+
     await createFraudAdminAlert({
       title: 'Alerte fraude détectée',
-      description: `TrustScore critique (${user.trustScore}) — ${formatUserLabel(user)}`,
+      description: `TrustScore critique (${score}) — ${formatUserLabel(user)}`,
       userId: user.id,
       decrementTrustScoreUserId: user.id,
       metadata: {
         ...AGENT_META,
         rule: 'low_trust_score',
         userId: user.id,
-        trustScore: user.trustScore,
+        trustScore: score,
       },
     })
     lowTrustAlerts += 1
@@ -155,10 +216,27 @@ export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
             legalName: true,
             tradeName: true,
             email: true,
+            user: { select: { id: true, createdAt: true } },
           },
         },
       },
     })
+
+    const owner = cert?.entity?.user
+    if (
+      owner &&
+      shouldSkipAlertForNewAccount(owner, 'FRAUD_ALERT', {
+        metadata: { rule: 'failed_verification_cluster' },
+      })
+    ) {
+      await recordGracePeriodSkip({
+        userId: owner.id,
+        alertType: 'FRAUD_ALERT',
+        rule: 'failed_verification_cluster',
+      })
+      graceSkipped += 1
+      continue
+    }
 
     const certLabel = formatCertificateLabel({
       id: certificateId,
@@ -182,7 +260,7 @@ export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
     failedClusterAlerts += 1
   }
 
-  // Même IP — 10+ certificats distincts vérifiés en 1h
+  // Même IP — 10+ certificats distincts vérifiés en 1h (pas de filtre grâce — attaque externe)
   const ipGroups = await prisma.verification.groupBy({
     by: ['ipHash'],
     where: {
@@ -223,6 +301,7 @@ export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
     lowTrustAlerts,
     failedClusterAlerts,
     ipClusterAlerts,
+    graceSkipped,
   })
 
   return {
@@ -230,5 +309,6 @@ export async function runFraudSurveillance(): Promise<FraudSurveillanceResult> {
     lowTrustAlerts,
     failedClusterAlerts,
     ipClusterAlerts,
+    graceSkipped,
   }
 }
