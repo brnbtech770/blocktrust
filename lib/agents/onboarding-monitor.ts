@@ -24,8 +24,9 @@ import {
   recentAuditLogExists,
   writeAgentAuditLog,
 } from '@/lib/agents/agent-utils'
+import { shouldSendKycReminder } from '@/lib/alert-grace-period'
 import { isAdmin } from '@/lib/admin-utils'
-import { DISCOVERY_DURATION_DAYS, DISCOVERY_EXPIRED_PLAN } from '@/lib/plan-features'
+import { DISCOVERY_DURATION_DAYS, DISCOVERY_EXPIRED_PLAN, resolveEffectivePlan } from '@/lib/plan-features'
 import { retryStalePendingAnchors } from '@/lib/polygon'
 
 export type DiscoveryLifecycleResult = {
@@ -207,12 +208,19 @@ export async function runOnboardingMonitor(): Promise<OnboardingMonitorResult> {
       createdAt: { lt: fortyEightHoursAgo },
       email: { not: null },
     },
-    select: { id: true, email: true, name: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      subscription: { select: { plan: true, status: true } },
+    },
     take: 50,
   })
 
   for (const user of unverifiedUsers) {
     if (!user.email) continue
+    const plan = resolveEffectivePlan({ subscription: user.subscription, email: user.email })
+    if (!shouldSendKycReminder(plan)) continue
     const alreadyReminded = await recentAuditLogExists(
       'ONBOARDING_KYC_REMINDER',
       user.id,
