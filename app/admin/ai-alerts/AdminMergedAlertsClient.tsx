@@ -45,6 +45,11 @@ export type MergedAiAlertRow = {
 
 export type MergedAlertTab = 'ALL' | 'FRAUD' | 'SUSPICIOUS' | 'SYSTEM' | 'KYC'
 
+export type AlertDailySummary = {
+  alertsToday: number
+  graceSkipsToday: number
+}
+
 type UnifiedAlert =
   | (MergedAdminAlertRow & { tabCategory: MergedAlertTab | 'OTHER' })
   | (MergedAiAlertRow & { tabCategory: MergedAlertTab | 'OTHER' })
@@ -194,10 +199,12 @@ export default function AdminMergedAlertsClient({
   adminAlerts: initialAdmin,
   aiAlerts,
   initialTab,
+  alertDailySummary,
 }: {
   adminAlerts: MergedAdminAlertRow[]
   aiAlerts: MergedAiAlertRow[]
   initialTab: MergedAlertTab
+  alertDailySummary?: AlertDailySummary
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -294,6 +301,36 @@ export default function AdminMergedAlertsClient({
           {banner}
         </div>
       )}
+
+      {alertDailySummary ? (
+        <div
+          className="mb-4 rounded-lg border px-4 py-3 text-sm"
+          style={{
+            background: 'rgba(0,212,255,0.08)',
+            borderColor: 'rgba(0,212,255,0.25)',
+            color: 'rgba(255,255,255,0.85)',
+          }}
+          role="status"
+        >
+          <span className="font-mono font-semibold text-[#00d4ff]">
+            {alertDailySummary.alertsToday}
+          </span>{' '}
+          alerte{alertDailySummary.alertsToday !== 1 ? 's' : ''} aujourd&apos;hui
+          {alertDailySummary.graceSkipsToday > 0 ? (
+            <>
+              {' '}
+              (
+              <span className="text-white/60">
+                {alertDailySummary.graceSkipsToday} compte
+                {alertDailySummary.graceSkipsToday !== 1 ? 's' : ''} neuf
+                {alertDailySummary.graceSkipsToday !== 1 ? 's' : ''} en période de grâce — ignoré
+                {alertDailySummary.graceSkipsToday !== 1 ? 's' : ''}
+              </span>
+              )
+            </>
+          ) : null}
+        </div>
+      ) : null}
 
       <p className="mb-6 text-sm" style={{ color: 'var(--bt-muted)' }}>
         Alertes anti-fraude IA et alertes opérationnelles (inscriptions, KYC, paiements, certificats).

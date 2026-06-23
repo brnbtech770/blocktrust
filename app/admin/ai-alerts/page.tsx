@@ -12,6 +12,7 @@ import {
   formatCertificateLabel,
   formatUserLabel,
 } from '@/lib/format-certificate-label'
+import { getAdminAlertDailySummary } from '@/lib/alert-grace-period'
 
 type SearchParams = { tab?: string }
 
@@ -36,7 +37,7 @@ export default async function AdminAiAlertsPage({
   const { tab: tabRaw } = await searchParams
   const initialTab = parseTab(tabRaw)
 
-  const [adminRows, aiRows] = await Promise.all([
+  const [adminRows, aiRows, alertDailySummary] = await Promise.all([
     prisma.adminAlert.findMany({
       orderBy: { createdAt: 'desc' },
       take: 200,
@@ -61,6 +62,7 @@ export default async function AdminAiAlertsPage({
       orderBy: { createdAt: 'desc' },
       take: 100,
     }),
+    getAdminAlertDailySummary(),
   ])
 
   const entityIds = [
@@ -189,6 +191,7 @@ export default async function AdminAiAlertsPage({
       adminAlerts={adminAlerts}
       aiAlerts={aiAlerts}
       initialTab={initialTab}
+      alertDailySummary={alertDailySummary}
     />
   )
 }

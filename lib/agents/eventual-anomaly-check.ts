@@ -4,6 +4,10 @@
 
 import { prisma } from '@/app/lib/db'
 import { createAdminAlert } from '@/lib/admin-alerts'
+import {
+  recordGracePeriodSkip,
+  shouldSkipAlertForNewAccount,
+} from '@/lib/alert-grace-period'
 import { formatCertificateLabel } from '@/lib/format-certificate-label'
 
 const EVENT_SOURCE = 'eventual-anomaly-check' as const
@@ -33,12 +37,14 @@ export async function runEventualAnomalyCheck(certificateId: string, userId?: st
       publicId: true,
       entity: {
         select: {
+          userId: true,
           entityType: true,
           firstName: true,
           lastName: true,
           legalName: true,
           tradeName: true,
           email: true,
+          user: { select: { id: true, createdAt: true } },
         },
       },
     },
@@ -48,6 +54,8 @@ export async function runEventualAnomalyCheck(certificateId: string, userId?: st
     publicId: cert?.publicId,
     entity: cert?.entity,
   })
+
+  const owner = cert?.entity?.user
 
   const recentVerifs = await prisma.verification.count({
     where: {
@@ -59,20 +67,35 @@ export async function runEventualAnomalyCheck(certificateId: string, userId?: st
   if (recentVerifs > 20) {
     const dup = await recentRealtimeAlert('realtime_volume_check', certificateId, dedupSince)
     if (!dup) {
-      await createAdminAlert({
-        type: 'SUSPICIOUS_VOLUME',
-        title: `Volume suspect — ${recentVerifs} scans/heure`,
-        description: `${certLabel.label} — ${recentVerifs} scans dans la dernière heure.`,
-        entityId: cert?.entityId ?? undefined,
-        userId: userId ?? undefined,
-        metadata: {
-          source: EVENT_SOURCE,
-          severity: recentVerifs > 50 ? 'HIGH' : 'MEDIUM',
-          certificateId,
+      const meta = {
+        source: EVENT_SOURCE,
+        severity: recentVerifs > 50 ? 'HIGH' : 'MEDIUM',
+        certificateId,
+        count: recentVerifs,
+        rule: 'realtime_volume_check',
+      }
+      if (
+        owner &&
+        shouldSkipAlertForNewAccount(owner, 'SUSPICIOUS_VOLUME', {
+          metadata: meta,
           count: recentVerifs,
+        })
+      ) {
+        await recordGracePeriodSkip({
+          userId: owner.id,
+          alertType: 'SUSPICIOUS_VOLUME',
           rule: 'realtime_volume_check',
-        },
-      })
+        })
+      } else {
+        await createAdminAlert({
+          type: 'SUSPICIOUS_VOLUME',
+          title: `Volume suspect — ${recentVerifs} scans/heure`,
+          description: `${certLabel.label} — ${recentVerifs} scans dans la dernière heure.`,
+          entityId: cert?.entityId ?? undefined,
+          userId: userId ?? cert?.entity?.userId ?? undefined,
+          metadata: meta,
+        })
+      }
     }
   }
 
@@ -90,20 +113,32 @@ export async function runEventualAnomalyCheck(certificateId: string, userId?: st
   if (distinctIpCount > 10) {
     const dupIp = await recentRealtimeAlert('realtime_ip_diversity', certificateId, dedupSince)
     if (!dupIp) {
-      await createAdminAlert({
-        type: 'SUSPICIOUS_SCANNING',
-        title: `IPs multiples — ${distinctIpCount} sources`,
-        description: `${certLabel.label} — scanné depuis ${distinctIpCount} adresses IP distinctes en 1h (scan automatisé possible).`,
-        entityId: cert?.entityId ?? undefined,
-        userId: userId ?? undefined,
-        metadata: {
-          source: EVENT_SOURCE,
-          severity: 'HIGH',
-          certificateId,
-          distinctIpCount,
+      const meta = {
+        source: EVENT_SOURCE,
+        severity: 'HIGH',
+        certificateId,
+        distinctIpCount,
+        rule: 'realtime_ip_diversity',
+      }
+      if (
+        owner &&
+        shouldSkipAlertForNewAccount(owner, 'SUSPICIOUS_SCANNING', { metadata: meta })
+      ) {
+        await recordGracePeriodSkip({
+          userId: owner.id,
+          alertType: 'SUSPICIOUS_SCANNING',
           rule: 'realtime_ip_diversity',
-        },
-      })
+        })
+      } else {
+        await createAdminAlert({
+          type: 'SUSPICIOUS_SCANNING',
+          title: `IPs multiples — ${distinctIpCount} sources`,
+          description: `${certLabel.label} — scanné depuis ${distinctIpCount} adresses IP distinctes en 1h (scan automatisé possible).`,
+          entityId: cert?.entityId ?? undefined,
+          userId: userId ?? cert?.entity?.userId ?? undefined,
+          metadata: meta,
+        })
+      }
     }
   }
 
@@ -118,20 +153,34 @@ export async function runEventualAnomalyCheck(certificateId: string, userId?: st
   if (recentFrauds > 0) {
     const dupFraud = await recentRealtimeAlert('realtime_fraud_detection', certificateId, dedupSince)
     if (!dupFraud) {
-      await createAdminAlert({
-        type: 'FRAUD_ALERT',
-        title: '🚨 Fraude détectée en temps réel',
-        description: `${recentFrauds} tentative(s) de fraude — ${certLabel.label} (dernière heure).`,
-        entityId: cert?.entityId ?? undefined,
-        userId: userId ?? undefined,
-        metadata: {
-          source: EVENT_SOURCE,
-          severity: 'CRITICAL',
-          certificateId,
-          fraudCount: recentFrauds,
+      const meta = {
+        source: EVENT_SOURCE,
+        severity: 'CRITICAL',
+        certificateId,
+        fraudCount: recentFrauds,
+        rule: 'realtime_fraud_detection',
+      }
+      // Fraude temps réel : skip seulement si compte neuf ET pas fraude avérée
+      // (les FRAUD_ALERT critiques sont filtrées en amont par createAdminFraudAlert)
+      if (
+        owner &&
+        shouldSkipAlertForNewAccount(owner, 'FRAUD_ALERT', { metadata: meta })
+      ) {
+        await recordGracePeriodSkip({
+          userId: owner.id,
+          alertType: 'FRAUD_ALERT',
           rule: 'realtime_fraud_detection',
-        },
-      })
+        })
+      } else {
+        await createAdminAlert({
+          type: 'FRAUD_ALERT',
+          title: '🚨 Fraude détectée en temps réel',
+          description: `${recentFrauds} tentative(s) de fraude — ${certLabel.label} (dernière heure).`,
+          entityId: cert?.entityId ?? undefined,
+          userId: userId ?? cert?.entity?.userId ?? undefined,
+          metadata: meta,
+        })
+      }
     }
   }
 }

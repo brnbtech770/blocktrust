@@ -14,6 +14,7 @@ import {
 } from '@/lib/admin-revenue'
 import { formatPriceFr } from '@/lib/pricing'
 import { getPlanDisplayLabel } from '@/lib/plan-features'
+import { getAdminAlertDailySummary } from '@/lib/alert-grace-period'
 import { AlertTriangle, BadgeCheck, Euro, TrendingUp, Users } from 'lucide-react'
 import { auth } from '@/app/lib/auth-server'
 import { isSuperAdmin } from '@/app/lib/admin'
@@ -77,6 +78,7 @@ export default async function AdminDashboard() {
     subsForRevenue,
     verificationsToday,
     alertsUnreadWeek,
+    alertDailySummary,
   ] = await Promise.all([
     prisma.certificate
       .count({ where: { status: 'PENDING' } })
@@ -106,6 +108,7 @@ export default async function AdminDashboard() {
     prisma.adminAlert
       .count({ where: { read: false, createdAt: { gte: weekAgo } } })
       .catch(() => 0),
+    getAdminAlertDailySummary(),
   ])
 
   let mrrDb = 0
@@ -147,6 +150,23 @@ export default async function AdminDashboard() {
   return (
     <div className="font-sans text-base leading-relaxed text-white/80">
       <p className="mb-8 text-sm text-white/60">Vue d&apos;ensemble de la plateforme</p>
+
+      {alertDailySummary.graceSkipsToday > 0 ? (
+        <div
+          className="mb-6 rounded-xl border border-[#00d4ff]/25 bg-[#00d4ff]/10 px-4 py-3 text-sm text-white/80"
+          role="status"
+        >
+          <span className="font-mono font-semibold text-[#00d4ff]">
+            {alertDailySummary.alertsToday}
+          </span>{' '}
+          alerte{alertDailySummary.alertsToday !== 1 ? 's' : ''} aujourd&apos;hui —{' '}
+          <span className="text-white/55">
+            {alertDailySummary.graceSkipsToday} filtrée
+            {alertDailySummary.graceSkipsToday !== 1 ? 's' : ''} (comptes neufs {'<'} 72 h en période
+            de grâce)
+          </span>
+        </div>
+      ) : null}
 
       {/* KPIs existants */}
       <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">

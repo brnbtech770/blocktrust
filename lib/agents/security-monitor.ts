@@ -8,6 +8,7 @@ import {
   recentAgentAlertExists,
   writeAgentAuditLog,
 } from '@/lib/agents/agent-utils'
+import { recordGracePeriodSkip, shouldSkipAlertForNewAccount } from '@/lib/alert-grace-period'
 
 const AGENT_META = { source: 'security-monitor' } as const
 
@@ -16,6 +17,7 @@ export type SecurityMonitorResult = {
   authFailedAlerts: number
   apiKeyAlerts: number
   kycRetryAlerts: number
+  graceSkipped: number
 }
 
 export async function runSecurityMonitor(): Promise<SecurityMonitorResult> {
@@ -26,6 +28,7 @@ export async function runSecurityMonitor(): Promise<SecurityMonitorResult> {
   let authFailedAlerts = 0
   let apiKeyAlerts = 0
   let kycRetryAlerts = 0
+  let graceSkipped = 0
 
   // Rate limit extension dépassé (> 100/min par identifiant)
   const extensionRateLogs = await prisma.auditLog.groupBy({
@@ -118,6 +121,25 @@ export async function runSecurityMonitor(): Promise<SecurityMonitorResult> {
     )
     if (dup) continue
 
+    const user = await prisma.user.findUnique({
+      where: { id: log.userId },
+      select: { id: true, createdAt: true },
+    })
+    if (
+      user &&
+      shouldSkipAlertForNewAccount(user, 'SECURITY', {
+        metadata: { rule: 'extension_api_key_created' },
+      })
+    ) {
+      await recordGracePeriodSkip({
+        userId: user.id,
+        alertType: 'SECURITY',
+        rule: 'extension_api_key_created',
+      })
+      graceSkipped += 1
+      continue
+    }
+
     await createSecurityAdminAlert({
       title: 'Alerte sécurité',
       description: `Nouvelle clé API extension créée pour l'utilisateur ${log.userId.slice(0, 8)}…`,
@@ -175,6 +197,7 @@ export async function runSecurityMonitor(): Promise<SecurityMonitorResult> {
     authFailedAlerts,
     apiKeyAlerts,
     kycRetryAlerts,
+    graceSkipped,
   })
 
   return {
@@ -182,5 +205,6 @@ export async function runSecurityMonitor(): Promise<SecurityMonitorResult> {
     authFailedAlerts,
     apiKeyAlerts,
     kycRetryAlerts,
+    graceSkipped,
   }
 }

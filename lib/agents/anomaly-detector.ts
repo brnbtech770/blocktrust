@@ -5,6 +5,10 @@
 
 import { prisma } from '@/app/lib/db'
 import { createAdminAlert } from '@/lib/admin-alerts'
+import {
+  recordGracePeriodSkip,
+  shouldSkipAlertForNewAccount,
+} from '@/lib/alert-grace-period'
 import { formatCertificateLabel } from '@/lib/format-certificate-label'
 import type { Prisma } from '@prisma/client'
 
@@ -32,12 +36,15 @@ export type AnomalyDetectionResult = {
   highVolume: number
   fraudRate: number
   revokedScans: number
+  graceSkipped: number
 }
 
 export async function runAnomalyDetection(): Promise<AnomalyDetectionResult> {
   const now = new Date()
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
   const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+
+  let graceSkipped = 0
 
   // Règle 1 : volume anormal par certificat (> 50 vérifs / h)
   const highVolumeGroups = await prisma.verification.groupBy({
@@ -78,10 +85,34 @@ export async function runAnomalyDetection(): Promise<AnomalyDetectionResult> {
             legalName: true,
             tradeName: true,
             email: true,
+            user: { select: { id: true, createdAt: true } },
           },
         },
       },
     })
+
+    const owner = cert?.entity?.user
+    const alertMeta = {
+      ...AGENT_META,
+      certificateId,
+      count: row._count.id,
+      window: '1h',
+    }
+    if (
+      owner &&
+      shouldSkipAlertForNewAccount(owner, 'SUSPICIOUS_VOLUME', {
+        metadata: alertMeta,
+        count: row._count.id,
+      })
+    ) {
+      await recordGracePeriodSkip({
+        userId: owner.id,
+        alertType: 'SUSPICIOUS_VOLUME',
+        rule: 'high_volume_1h',
+      })
+      graceSkipped += 1
+      continue
+    }
 
     const certLabel = formatCertificateLabel({
       id: certificateId,
@@ -94,17 +125,12 @@ export async function runAnomalyDetection(): Promise<AnomalyDetectionResult> {
       title: '⚠️ Volume anormal de vérifications',
       description: `${row._count.id} vérifications en 1h — ${certLabel.label}`,
       entityId: cert?.entityId ?? undefined,
-      metadata: {
-        ...AGENT_META,
-        certificateId,
-        count: row._count.id,
-        window: '1h',
-      },
+      metadata: alertMeta,
     })
     highVolumeAlerts += 1
   }
 
-  // Règle 2 : taux de FRAUD_ALERT élevé (> 10 % sur 24 h)
+  // Règle 2 : taux de FRAUD_ALERT élevé (> 10 % sur 24 h) — métrique globale, pas de filtre grâce
   const totalVerifs = await prisma.verification.count({
     where: { verifiedAt: { gte: oneDayAgo } },
   })
@@ -140,7 +166,7 @@ export async function runAnomalyDetection(): Promise<AnomalyDetectionResult> {
     }
   }
 
-  // Règle 3 : certificat révoqué encore scanné (vérifs récentes)
+  // Règle 3 : certificat révoqué encore scanné — fraude avérée, jamais filtrée
   const revokedHits = await prisma.verification.findMany({
     where: {
       verifiedAt: { gte: oneHourAgo },
@@ -237,6 +263,7 @@ export async function runAnomalyDetection(): Promise<AnomalyDetectionResult> {
         revokedAlertsCreated: revokedScanAlerts,
         totalVerifs24h: totalVerifs,
         fraudVerifs24h: fraudVerifs,
+        graceSkipped,
       } as Prisma.InputJsonValue,
     },
   })
@@ -245,5 +272,6 @@ export async function runAnomalyDetection(): Promise<AnomalyDetectionResult> {
     highVolume: highVolumeGroups.length,
     fraudRate,
     revokedScans: revokedCertIds.length,
+    graceSkipped,
   }
 }
