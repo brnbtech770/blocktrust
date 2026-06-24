@@ -91,7 +91,11 @@ export function buildBlockTrustMcpServer(userId: string): McpServer {
     const def = MCP_TOOL_DEFINITIONS.find((t) => t.name === name)!;
     server.registerTool(
       name,
-      { description: def.description, inputSchema: MCP_TOOL_ZOD[name] },
+      {
+        description: def.description,
+        inputSchema: MCP_TOOL_ZOD[name],
+        annotations: def.annotations,
+      },
       withCtx(name),
     );
   }

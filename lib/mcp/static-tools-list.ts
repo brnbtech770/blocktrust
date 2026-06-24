@@ -7,10 +7,11 @@ import { MCP_TOOL_DEFINITIONS } from "@/lib/mcp/tool-definitions";
 import type { JsonRpcId } from "@/lib/mcp/types";
 
 const STATIC_TOOLS_LIST_RESULT = {
-  tools: MCP_TOOL_DEFINITIONS.map(({ name, description, inputSchema }) => ({
+  tools: MCP_TOOL_DEFINITIONS.map(({ name, description, inputSchema, annotations }) => ({
     name,
     description,
     inputSchema,
+    annotations,
   })),
 } as const;
 

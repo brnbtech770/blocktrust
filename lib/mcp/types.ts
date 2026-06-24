@@ -26,10 +26,15 @@ export type JsonRpcResponse = {
   error?: JsonRpcError;
 };
 
+export type McpToolAnnotations =
+  | { title: string; readOnlyHint: true }
+  | { title: string; destructiveHint: true };
+
 export type McpToolDefinition = {
   name: string;
   description: string;
   inputSchema: Record<string, unknown>;
+  annotations: McpToolAnnotations;
 };
 
 export type McpToolContext = {

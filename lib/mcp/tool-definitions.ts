@@ -1,5 +1,5 @@
 // lib/mcp/tool-definitions.ts
-// Définitions des 15 outils MCP (schemas + descriptions).
+// Définitions des 15 outils MCP (schemas + descriptions + annotations).
 // ============================================================
 
 import { z } from "zod";
@@ -15,6 +15,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       properties: { email: { type: "string", description: "Adresse email à vérifier" } },
       required: ["email"],
     },
+    annotations: { title: "Verify contact identity", readOnlyHint: true },
   },
   {
     name: "verify_domain",
@@ -25,6 +26,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       properties: { domain: { type: "string", description: "Nom de domaine" } },
       required: ["domain"],
     },
+    annotations: { title: "Verify domain certification", readOnlyHint: true },
   },
   {
     name: "verify_website",
@@ -35,6 +37,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       properties: { url: { type: "string", description: "URL ou domaine du site" } },
       required: ["url"],
     },
+    annotations: { title: "Verify website legitimacy", readOnlyHint: true },
   },
   {
     name: "verify_interaction",
@@ -44,6 +47,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       properties: { bisId: { type: "string", description: "ID de la signature BIS" } },
       required: ["bisId"],
     },
+    annotations: { title: "Verify BIS interaction signature", readOnlyHint: true },
   },
   {
     name: "sign_interaction",
@@ -59,6 +63,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       },
       required: ["recipientEmail", "interactionType", "contentHash"],
     },
+    annotations: { title: "Sign interaction with BIS", destructiveHint: true },
   },
   {
     name: "get_trust_score",
@@ -68,6 +73,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       properties: { email: { type: "string" } },
       required: ["email"],
     },
+    annotations: { title: "Get contact trust score", readOnlyHint: true },
   },
   {
     name: "list_trusted_domains",
@@ -76,6 +82,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       type: "object",
       properties: { limit: { type: "number" } },
     },
+    annotations: { title: "List trusted domains", readOnlyHint: true },
   },
   {
     name: "check_domain_reputation",
@@ -85,6 +92,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       properties: { domain: { type: "string" } },
       required: ["domain"],
     },
+    annotations: { title: "Check domain reputation", readOnlyHint: true },
   },
   {
     name: "add_contact",
@@ -102,6 +110,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       },
       required: ["email", "name"],
     },
+    annotations: { title: "Add a contact", destructiveHint: true },
   },
   {
     name: "search_contacts",
@@ -115,6 +124,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       },
       required: ["query"],
     },
+    annotations: { title: "Search contacts", readOnlyHint: true },
   },
   {
     name: "list_contacts",
@@ -128,6 +138,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
         offset: { type: "number" },
       },
     },
+    annotations: { title: "List contacts", readOnlyHint: true },
   },
   {
     name: "add_to_trust_circle",
@@ -140,6 +151,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       },
       required: ["email"],
     },
+    annotations: { title: "Add to trust circle", destructiveHint: true },
   },
   {
     name: "list_trust_circle",
@@ -148,6 +160,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       type: "object",
       properties: { limit: { type: "number" } },
     },
+    annotations: { title: "List trust circle members", readOnlyHint: true },
   },
   {
     name: "store_in_vault",
@@ -164,6 +177,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
       },
       required: ["label", "type", "value"],
     },
+    annotations: { title: "Store in vault", destructiveHint: true },
   },
   {
     name: "search_vault",
@@ -178,6 +192,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
         compareValue: { type: "string", description: "RIB/IBAN reçu à comparer" },
       },
     },
+    annotations: { title: "Search vault entries", readOnlyHint: true },
   },
 ];
 
