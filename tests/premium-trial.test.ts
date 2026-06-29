@@ -3,6 +3,7 @@ import {
   isExpiredPremiumTrial,
   isPremiumTrialSubscription,
   PREMIUM_TRIAL_END,
+  resolvePremiumTrialDisplayName,
 } from '@/lib/premium-trial'
 
 describe('premium-trial', () => {
@@ -48,5 +49,35 @@ describe('premium-trial', () => {
         currentPeriodEnd: new Date(Date.now() + 86_400_000),
       }),
     ).toBe(false)
+  })
+})
+
+describe('resolvePremiumTrialDisplayName', () => {
+  it('uses entity first and last name when present', () => {
+    expect(
+      resolvePremiumTrialDisplayName(
+        {
+          firstName: 'Jim',
+          lastName: 'Acoca',
+          legalName: null,
+          tradeName: null,
+        },
+        'jimacoca@gmail.com',
+      ),
+    ).toBe('Jim Acoca')
+  })
+
+  it('falls back to email local part when entity has no name', () => {
+    expect(
+      resolvePremiumTrialDisplayName(
+        {
+          firstName: null,
+          lastName: null,
+          legalName: null,
+          tradeName: null,
+        },
+        'jusaadoun@gmail.com',
+      ),
+    ).toBe('Jusaadoun')
   })
 })

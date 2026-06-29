@@ -55,6 +55,73 @@ export function isExpiredPremiumTrial(sub: PremiumTrialSubscription | null | und
   return sub.currentPeriodEnd.getTime() < Date.now()
 }
 
+function emailLocalDisplayName(email: string): string {
+  const local = email.split('@')[0] ?? 'Utilisateur'
+  return local.charAt(0).toUpperCase() + local.slice(1)
+}
+
+function entityDisplayName(
+  entity: {
+    firstName: string | null
+    lastName: string | null
+    legalName: string | null
+    tradeName: string | null
+  } | null,
+  email: string,
+): string {
+  if (entity) {
+    const full = [entity.firstName, entity.lastName].filter(Boolean).join(' ').trim()
+    if (full) return full
+    if (entity.legalName?.trim()) return entity.legalName.trim()
+    if (entity.tradeName?.trim()) return entity.tradeName.trim()
+  }
+  return emailLocalDisplayName(email)
+}
+
+async function ensureUserForPremiumTrial(email: string) {
+  const existingUser = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: 'insensitive' } },
+    include: { subscription: true },
+  })
+
+  if (existingUser) {
+    return { user: existingUser, userCreated: false as const }
+  }
+
+  const existingEntity = await prisma.entity.findFirst({
+    where: { email: { equals: email, mode: 'insensitive' } },
+    orderBy: { createdAt: 'asc' },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      legalName: true,
+      tradeName: true,
+    },
+  })
+
+  const displayName = entityDisplayName(existingEntity, email)
+
+  const user = await prisma.user.create({
+    data: {
+      email,
+      name: displayName,
+      kycStatus: 'PENDING',
+      accountType: 'PERSONAL',
+    },
+    include: { subscription: true },
+  })
+
+  if (existingEntity) {
+    await prisma.entity.update({
+      where: { id: existingEntity.id },
+      data: { userId: user.id },
+    })
+  }
+
+  return { user, userCreated: true as const, linkedEntity: existingEntity != null }
+}
+
 function splitDisplayName(userName: string, email: string): { firstName: string; lastName: string | null } {
   const trimmed = userName.trim()
   if (trimmed) {
@@ -75,6 +142,18 @@ export type GrantPremiumTrialResult =
   | { ok: false; skipped: true; reason: string }
   | { ok: false; skipped?: false; reason: string }
 
+export function resolvePremiumTrialDisplayName(
+  entity: {
+    firstName: string | null
+    lastName: string | null
+    legalName: string | null
+    tradeName: string | null
+  } | null,
+  email: string,
+): string {
+  return entityDisplayName(entity, email)
+}
+
 export async function grantPremiumTrial(params: {
   email: string
   trialEndsAt?: Date
@@ -83,14 +162,7 @@ export async function grantPremiumTrial(params: {
   const email = params.email.trim().toLowerCase()
   const trialEndsAt = params.trialEndsAt ?? PREMIUM_TRIAL_END
 
-  const user = await prisma.user.findFirst({
-    where: { email: { equals: email, mode: 'insensitive' } },
-    include: { subscription: true },
-  })
-
-  if (!user) {
-    return { ok: false, skipped: true, reason: 'Utilisateur introuvable' }
-  }
+  const { user } = await ensureUserForPremiumTrial(email)
 
   const sub = user.subscription
   if (sub?.stripeSubscriptionId && isActiveBillingStatus(sub.status)) {
