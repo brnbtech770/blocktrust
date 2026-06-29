@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BLOCKTRUST TrustScan",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Vérifiez automatiquement l'identité des expéditeurs dans Gmail. Protection contre l'usurpation d'identité et le phishing.",
   "permissions": ["storage", "activeTab"],
   "host_permissions": ["https://mail.google.com/*", "https://blocktrust.tech/*"],

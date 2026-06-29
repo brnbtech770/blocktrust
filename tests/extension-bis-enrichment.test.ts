@@ -31,7 +31,7 @@ function certifiedPayload(): ExtensionVerifyPayload {
     'signer@acme.fr',
     'acme.fr',
     BASE_URL,
-    { userCertifiedEmails: [], userCertifiedDomains: [], trustRelationEmails: [] },
+    { userCertifiedEmails: [], userCertifiedDomains: [], trustRelationEmails: [], contactEntityEmails: [], contactEntityDomains: [] },
   )
 }
 

@@ -11,7 +11,10 @@ export type ExtensionVerifyStatus = "CERTIFIED" | "IN_CONTACTS" | "UNKNOWN" | "F
 
 export type ExtensionVerifySignals = {
   kycVerified: boolean;
+  /** Présent dans le Trust Circle de l'utilisateur. */
   inNetwork: boolean;
+  /** Présent dans les contacts / coordonnées certifiées de l'utilisateur. */
+  inContact: boolean;
   polygonAnchored: boolean;
 };
 
@@ -58,6 +61,9 @@ export type ExtensionVerifyContext = {
   userCertifiedEmails: string[];
   userCertifiedDomains: string[];
   trustRelationEmails: string[];
+  /** Emails issus des entités-contacts de l'utilisateur (liste Mes Contacts). */
+  contactEntityEmails: string[];
+  contactEntityDomains: string[];
 };
 
 export function normalizeSenderEmail(email: string): string {
@@ -98,7 +104,11 @@ function entityDisplayName(e: EntityWithCerts): string {
   return sanitizeDisplayText(raw) ?? raw.replace(/[<>&]/g, "");
 }
 
-function entityMatchesSender(e: EntityWithCerts, emailNorm: string, domainNorm: string): boolean {
+export function entityMatchesSender(
+  e: EntityWithCerts,
+  emailNorm: string,
+  domainNorm: string,
+): boolean {
   if (emailNorm && e.email.toLowerCase() === emailNorm) return true;
   if (emailNorm && e.certifiedEmails.some((x) => x.toLowerCase() === emailNorm)) return true;
   if (domainNorm) {
@@ -140,24 +150,39 @@ function senderMatchesTrustRelationEmail(emailNorm: string, ctx: ExtensionVerify
   return ctx.trustRelationEmails.some((x) => x.toLowerCase() === emailNorm);
 }
 
+function senderInUserContacts(
+  emailNorm: string,
+  domainNorm: string,
+  ctx: ExtensionVerifyContext,
+): boolean {
+  if (senderMatchesUserCertified(emailNorm, domainNorm, ctx)) return true;
+  if (emailNorm && ctx.contactEntityEmails.some((x) => x.toLowerCase() === emailNorm)) {
+    return true;
+  }
+  if (
+    domainNorm &&
+    ctx.contactEntityDomains.some((d) => normalizeSenderDomain(d) === domainNorm)
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function buildSignals(
   pick: EntityWithCerts | null,
   bestCert: Certificate | null,
   emailNorm: string,
   domainNorm: string,
   ctx: ExtensionVerifyContext,
-  status: ExtensionVerifyStatus,
 ): ExtensionVerifySignals {
-  const inNetwork =
-    status === "IN_CONTACTS" ||
-    status === "CERTIFIED" ||
-    senderMatchesTrustRelationEmail(emailNorm, ctx) ||
-    senderMatchesUserCertified(emailNorm, domainNorm, ctx);
+  const inNetwork = senderMatchesTrustRelationEmail(emailNorm, ctx);
+  const inContact = senderInUserContacts(emailNorm, domainNorm, ctx);
 
   if (!pick) {
     return {
       kycVerified: false,
       inNetwork,
+      inContact,
       polygonAnchored: false,
     };
   }
@@ -165,6 +190,7 @@ function buildSignals(
   return {
     kycVerified: pick.kycStatus === "VERIFIED",
     inNetwork,
+    inContact,
     polygonAnchored: Boolean(
       bestCert &&
         (bestCert.blockchainStatus === "ANCHORED" ||
@@ -172,6 +198,40 @@ function buildSignals(
           bestCert.polygonTxHash),
     ),
   };
+}
+
+function certifiedMessage(signals: ExtensionVerifySignals): string {
+  if (signals.inNetwork && signals.inContact) {
+    return "Certifié BLOCKTRUST™ — dans votre réseau · contact vérifié";
+  }
+  if (signals.inNetwork) {
+    return "Certifié BLOCKTRUST™ — dans votre réseau";
+  }
+  if (signals.inContact) {
+    return "Certifié BLOCKTRUST™ — contact vérifié";
+  }
+  return "Certifié BLOCKTRUST™";
+}
+
+/** Extrait emails / domaines des entités-contacts de l'utilisateur. */
+export function collectContactEntityKeys(
+  entities: EntityWithCerts[],
+): { emails: string[]; domains: string[] } {
+  const emails = new Set<string>();
+  const domains = new Set<string>();
+  for (const e of entities) {
+    if (e.email?.trim()) emails.add(e.email.trim().toLowerCase());
+    for (const x of e.certifiedEmails) {
+      if (x?.trim()) emails.add(x.trim().toLowerCase());
+    }
+    for (const d of e.certifiedDomains) {
+      const norm = normalizeSenderDomain(d);
+      if (norm) domains.add(norm);
+    }
+    const host = entityHostFromWebsite(e.website);
+    if (host) domains.add(host);
+  }
+  return { emails: [...emails], domains: [...domains] };
 }
 
 function finalizePayload(
@@ -203,6 +263,7 @@ function inContactsFallbackPayload(
   domainNorm: string,
   message: string,
   ctx: ExtensionVerifyContext,
+  signals?: ExtensionVerifySignals,
 ): ExtensionVerifyPayload {
   return finalizePayload({
     verified: false,
@@ -212,7 +273,7 @@ function inContactsFallbackPayload(
     badgeUrl: null,
     certifiedDomains: [],
     certifiedEmails: emailNorm ? [emailNorm] : [],
-    signals: buildSignals(null, null, emailNorm, domainNorm, ctx, "IN_CONTACTS"),
+    signals: signals ?? buildSignals(null, null, emailNorm, domainNorm, ctx),
     message,
   });
 }
@@ -237,6 +298,8 @@ export function buildExtensionVerifyResult(
     userCertifiedEmails: [],
     userCertifiedDomains: [],
     trustRelationEmails: [],
+    contactEntityEmails: [],
+    contactEntityDomains: [],
   };
 
   if (!emailNorm && !domainNorm) {
@@ -248,28 +311,19 @@ export function buildExtensionVerifyResult(
       badgeUrl: null,
       certifiedDomains: [],
       certifiedEmails: [],
-      signals: buildSignals(null, null, emailNorm, domainNorm, ctx, "UNKNOWN"),
+      signals: buildSignals(null, null, emailNorm, domainNorm, ctx),
       message: "Paramètres email ou domaine requis.",
     });
   }
 
   const matches = entities.filter((e) => entityMatchesSender(e, emailNorm, domainNorm));
   if (matches.length === 0) {
-    if (senderMatchesTrustRelationEmail(emailNorm, ctx)) {
-      return inContactsFallbackPayload(
-        emailNorm,
-        domainNorm,
-        "Contact présent dans votre Trust Circle.",
-        ctx,
-      );
-    }
-    if (senderMatchesUserCertified(emailNorm, domainNorm, ctx)) {
-      return inContactsFallbackPayload(
-        emailNorm,
-        domainNorm,
-        "Email ou domaine présent dans vos coordonnées certifiées.",
-        ctx,
-      );
+    const signals = buildSignals(null, null, emailNorm, domainNorm, ctx);
+    if (signals.inNetwork || signals.inContact) {
+      const message = signals.inNetwork
+        ? "Présent dans votre Trust Circle — non certifié BLOCKTRUST™."
+        : "Contact connu — non certifié BLOCKTRUST™.";
+      return inContactsFallbackPayload(emailNorm, domainNorm, message, ctx, signals);
     }
     return finalizePayload({
       verified: false,
@@ -279,8 +333,8 @@ export function buildExtensionVerifyResult(
       badgeUrl: null,
       certifiedDomains: [],
       certifiedEmails: [],
-      signals: buildSignals(null, null, emailNorm, domainNorm, ctx, "UNKNOWN"),
-      message: "Aucun contact certifié ne correspond à cet expéditeur.",
+      signals,
+      message: "Expéditeur non certifié BLOCKTRUST™.",
     });
   }
 
@@ -303,7 +357,7 @@ export function buildExtensionVerifyResult(
   const slug = bestCert?.publicId ?? bestCert?.id ?? null;
   const badgeUrl = slug ? `${baseUrl.replace(/\/$/, "")}/badge/${slug}` : null;
 
-  const signals = buildSignals(pick, bestCert, emailNorm, domainNorm, ctx, "CERTIFIED");
+  const signals = buildSignals(pick, bestCert, emailNorm, domainNorm, ctx);
 
   if (hasActive) {
     return finalizePayload({
@@ -315,7 +369,7 @@ export function buildExtensionVerifyResult(
       certifiedDomains,
       certifiedEmails,
       signals,
-      message: "Ce contact possède un badge BLOCKTRUST actif.",
+      message: certifiedMessage(signals),
     });
   }
 
@@ -328,7 +382,7 @@ export function buildExtensionVerifyResult(
       badgeUrl,
       certifiedDomains,
       certifiedEmails,
-      signals: buildSignals(pick, bestCert, emailNorm, domainNorm, ctx, "FRAUD"),
+      signals,
       message: "Badge invalide, expiré ou révoqué pour ce contact.",
     });
   }
@@ -341,7 +395,7 @@ export function buildExtensionVerifyResult(
     badgeUrl: null,
     certifiedDomains,
     certifiedEmails,
-    signals: buildSignals(pick, bestCert, emailNorm, domainNorm, ctx, "IN_CONTACTS"),
-    message: "Contact présent dans votre liste, sans badge actif.",
+    signals,
+    message: "Contact connu — sans badge BLOCKTRUST actif.",
   });
 }

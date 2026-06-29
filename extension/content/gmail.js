@@ -492,7 +492,8 @@ function attachBadgeTooltip(badge, result) {
   const signals = result.signals || {};
   const rows = [
     { label: "Vérification d'identité", ok: Boolean(signals.kycVerified) },
-    { label: "Dans votre réseau", ok: Boolean(signals.inNetwork) },
+    ...(signals.inContact ? [{ label: "Contact vérifié", ok: true }] : []),
+    ...(signals.inNetwork ? [{ label: "Dans votre réseau", ok: true }] : []),
     { label: "Ancré Polygon", ok: Boolean(signals.polygonAnchored) },
   ];
   const entityLine =
@@ -533,9 +534,20 @@ function attachBadgeTooltip(badge, result) {
 /**
  * Tooltip expéditeur non certifié + lien inscription.
  * @param {HTMLElement} badge
+ * @param {{ status?: string, message?: string, signals?: { inNetwork?: boolean, inContact?: boolean } }} [result]
  */
-function attachUnknownBadgeTooltip(badge) {
+function attachUnknownBadgeTooltip(badge, result) {
   badge.style.cursor = "help";
+  const inNetwork = Boolean(result?.signals?.inNetwork);
+  const inContact = Boolean(result?.signals?.inContact);
+  const knownHint =
+    inNetwork && inContact
+      ? "Présent dans votre réseau et vos contacts<br>"
+      : inNetwork
+        ? "Présent dans votre Trust Circle<br>"
+        : inContact
+          ? "Présent dans vos contacts<br>"
+          : "";
 
   badge.addEventListener("mouseenter", () => {
     if (!activeTooltip) {
@@ -546,9 +558,10 @@ function attachUnknownBadgeTooltip(badge) {
     applyTooltipBaseStyles(activeTooltip, true);
 
     activeTooltip.innerHTML = `
-      <span class="bt-tooltip-title">BLOCKTRUST™ — Non vérifié</span>
+      <span class="bt-tooltip-title">BLOCKTRUST™ — Non certifié</span>
       <div class="bt-tooltip-row bt-tooltip-muted">
-        Expéditeur non certifié<br>
+        ${knownHint}
+        Expéditeur non certifié BLOCKTRUST™<br>
         Aucune preuve d'identité disponible<br>
         <span class="bt-tooltip-highlight">Certifiez-vous gratuitement</span>
       </div>
@@ -631,24 +644,31 @@ function createVerifyBadge(result) {
       typeof result.trustScore === "number" && Number.isFinite(result.trustScore)
         ? Math.round(result.trustScore)
         : null;
-    const mainLine =
-      score != null
-        ? `✓ Certifié • Score ${score}/100`
-        : "✓ Certifié BLOCKTRUST™";
+    const mainLine = score != null ? `✓ Certifié • Score ${score}/100` : "✓ Certifié BLOCKTRUST™";
+    const networkLine =
+      result.signals?.inNetwork && result.signals?.inContact
+        ? `<span class="bt-bis-sub">Dans votre réseau · Contact vérifié</span>`
+        : result.signals?.inNetwork
+          ? `<span class="bt-bis-sub">Dans votre réseau</span>`
+          : result.signals?.inContact
+            ? `<span class="bt-bis-sub">Contact vérifié</span>`
+            : "";
     const bisLine = hasValidBis
       ? `<span class="bt-bis-sub">${fileCheckIconSvg(10)} BIS Niveau ${bis.bisLevel} — Signé</span>`
       : result.bisMissingAlert
         ? `<span class="bt-bis-sub" style="color:#fef3c7 !important;">⚠ Sans signature BIS</span>`
         : "";
-    innerHtml = `<span style="display:inline-flex !important;align-items:center !important;gap:4px !important;">${mainLine}</span>${bisLine}`;
+    innerHtml = `<span style="display:inline-flex !important;align-items:center !important;gap:4px !important;">${mainLine}</span>${networkLine}${bisLine}`;
   } else if (result.status === "IN_CONTACTS") {
-    statusClass = "bt-contacts";
+    statusClass = "bt-unknown";
     colorStyles = `
-      background: #0ea5e9 !important;
-      color: #ffffff !important;
-      border: none !important;
+      background: rgba(100,116,139,0.15) !important;
+      border: 1px solid rgba(100,116,139,0.3) !important;
+      color: #94a3b8 !important;
     `;
-    innerHtml = "◎ Dans vos contacts";
+    innerHtml = result.signals?.inNetwork
+      ? "◎ Réseau — non certifié"
+      : "? Connu — non certifié";
   } else if (result.status === "FRAUD") {
     statusClass = "bt-fraud";
     colorStyles = `
@@ -681,8 +701,8 @@ function createVerifyBadge(result) {
 
   if (result.status === "CERTIFIED" || hasInvalidBis || hasValidBis) {
     attachBadgeTooltip(badge, result);
-  } else if (result.status === "UNKNOWN") {
-    attachUnknownBadgeTooltip(badge);
+  } else if (result.status === "UNKNOWN" || result.status === "IN_CONTACTS") {
+    attachUnknownBadgeTooltip(badge, result);
   } else {
     badge.title = escapeHtml(result.message || result.status || "");
   }

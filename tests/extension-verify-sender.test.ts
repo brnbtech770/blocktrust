@@ -72,6 +72,8 @@ const emptyCtx: ExtensionVerifyContext = {
   userCertifiedEmails: [],
   userCertifiedDomains: [],
   trustRelationEmails: [],
+  contactEntityEmails: [],
+  contactEntityDomains: [],
 }
 
 describe('Extension verify-sender', () => {
@@ -95,9 +97,50 @@ describe('Extension verify-sender', () => {
     expect(result.bisSignatureDetected).toBe(false)
     expect(result.bisVerification).toBeNull()
     expect(result.bisMissingAlert).toBe(false)
+    expect(result.message).toBe('Certifié BLOCKTRUST™')
+    expect(result.signals.inNetwork).toBe(false)
+    expect(result.signals.inContact).toBe(false)
   })
 
-  it('email dans Trust Circle → IN_CONTACTS', () => {
+  it('certifié globalement + Trust Circle → CERTIFIED avec inNetwork', () => {
+    const entity = makeEntity('partner@corp.io')
+    const ctx: ExtensionVerifyContext = {
+      ...emptyCtx,
+      trustRelationEmails: ['partner@corp.io'],
+    }
+    const result = buildExtensionVerifyResult(
+      [entity],
+      'partner@corp.io',
+      '',
+      BASE_URL,
+      ctx,
+    )
+
+    expect(result.status).toBe('CERTIFIED')
+    expect(result.signals.inNetwork).toBe(true)
+    expect(result.message).toContain('réseau')
+  })
+
+  it('certifié globalement + contact utilisateur → CERTIFIED avec inContact', () => {
+    const entity = makeEntity('vendor@acme.fr')
+    const ctx: ExtensionVerifyContext = {
+      ...emptyCtx,
+      contactEntityEmails: ['vendor@acme.fr'],
+    }
+    const result = buildExtensionVerifyResult(
+      [entity],
+      'vendor@acme.fr',
+      '',
+      BASE_URL,
+      ctx,
+    )
+
+    expect(result.status).toBe('CERTIFIED')
+    expect(result.signals.inContact).toBe(true)
+    expect(result.message).toContain('contact vérifié')
+  })
+
+  it('email dans Trust Circle sans badge global → IN_CONTACTS gris', () => {
     const ctx: ExtensionVerifyContext = {
       ...emptyCtx,
       trustRelationEmails: ['partner@corp.io'],
@@ -106,6 +149,7 @@ describe('Extension verify-sender', () => {
 
     expect(result.status).toBe('IN_CONTACTS')
     expect(result.signals.inNetwork).toBe(true)
+    expect(result.verified).toBe(false)
   })
 
   it('email inconnu → UNKNOWN', () => {
@@ -152,6 +196,8 @@ describe('Extension verify-sender', () => {
       userCertifiedEmails: ['mine@blocktrust.tech'],
       userCertifiedDomains: [],
       trustRelationEmails: [],
+      contactEntityEmails: [],
+      contactEntityDomains: [],
     }
     const result = buildExtensionVerifyResult([], 'mine@blocktrust.tech', '', BASE_URL, ctx)
 

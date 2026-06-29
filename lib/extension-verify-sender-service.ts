@@ -2,9 +2,12 @@
 // Logique verify-sender partagée (extension + MCP).
 // ============================================================
 
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/app/lib/db";
 import {
   buildExtensionVerifyResult,
+  collectContactEntityKeys,
+  entityMatchesSender,
   normalizeSenderDomain,
   normalizeSenderEmail,
   type ExtensionVerifyContext,
@@ -17,6 +20,56 @@ const DEFAULT_BASE_URL =
   process.env.NEXTAUTH_URL?.replace(/\/$/, "") ||
   "https://blocktrust.tech";
 
+const entityInclude = {
+  certificates: { orderBy: { issuedAt: "desc" as const } },
+  trustScore: { select: { score: true } },
+};
+
+type EntityWithCerts = Prisma.EntityGetPayload<{ include: typeof entityInclude }>;
+
+/** Recherche globale d'entités certifiées correspondant à l'expéditeur. */
+export async function findGlobalEntitiesMatchingSender(
+  emailNorm: string,
+  domainNorm: string,
+  limit = 25,
+): Promise<EntityWithCerts[]> {
+  if (!emailNorm && !domainNorm) return [];
+
+  const or: Prisma.EntityWhereInput[] = [];
+  if (emailNorm) {
+    or.push({ email: { equals: emailNorm, mode: "insensitive" } });
+    or.push({ certifiedEmails: { has: emailNorm } });
+  }
+  if (domainNorm) {
+    or.push({ certifiedDomains: { has: domainNorm } });
+    or.push({ website: { contains: domainNorm, mode: "insensitive" } });
+  }
+  if (or.length === 0) return [];
+
+  const candidates = await prisma.entity.findMany({
+    where: { OR: or },
+    include: entityInclude,
+    take: limit,
+    orderBy: { updatedAt: "desc" },
+  });
+
+  return candidates.filter((e) => entityMatchesSender(e, emailNorm, domainNorm));
+}
+
+function mergeEntities(
+  primary: EntityWithCerts[],
+  extra: EntityWithCerts[],
+): EntityWithCerts[] {
+  const seen = new Set(primary.map((e) => e.id));
+  const merged = [...primary];
+  for (const e of extra) {
+    if (seen.has(e.id)) continue;
+    seen.add(e.id);
+    merged.push(e);
+  }
+  return merged;
+}
+
 export async function runExtensionVerifySender(params: {
   userId: string;
   emailRaw: string;
@@ -28,18 +81,15 @@ export async function runExtensionVerifySender(params: {
   const emailRaw = params.emailRaw;
   const domainRaw = params.domainRaw ?? "";
   const bisIdRaw = params.bisId?.trim() ?? "";
+  const emailNorm = normalizeSenderEmail(emailRaw);
+  const domainNorm = normalizeSenderDomain(domainRaw);
 
   const userEmail = await prisma.user
     .findUnique({ where: { id: params.userId }, select: { email: true } })
     .then((u) => u?.email ?? null)
     .catch(() => null);
 
-  const entityInclude = {
-    certificates: { orderBy: { issuedAt: "desc" as const } },
-    trustScore: { select: { score: true } },
-  };
-
-  const [userProfile, trustRelations, ownEntities] = await Promise.all([
+  const [userProfile, trustRelations, ownEntities, globalEntities] = await Promise.all([
     prisma.user.findUnique({
       where: { id: params.userId },
       select: { certifiedEmails: true, certifiedDomains: true },
@@ -55,33 +105,11 @@ export async function runExtensionVerifySender(params: {
       where: { userId: params.userId },
       include: entityInclude,
     }),
+    findGlobalEntitiesMatchingSender(emailNorm, domainNorm),
   ]);
 
-  const partnerUserIds = [
-    ...new Set(
-      trustRelations
-        .map((r) => r.toUserId)
-        .filter((id): id is string => typeof id === "string" && id.length > 0),
-    ),
-  ];
-
-  const partnerEntities =
-    partnerUserIds.length > 0
-      ? await prisma.entity.findMany({
-          where: { userId: { in: partnerUserIds } },
-          include: entityInclude,
-        })
-      : [];
-
-  const seenEntityIds = new Set(ownEntities.map((e) => e.id));
-  const entities = [
-    ...ownEntities,
-    ...partnerEntities.filter((e) => {
-      if (seenEntityIds.has(e.id)) return false;
-      seenEntityIds.add(e.id);
-      return true;
-    }),
-  ];
+  const entities = mergeEntities(globalEntities, ownEntities);
+  const contactKeys = collectContactEntityKeys(ownEntities);
 
   const verifyContext: ExtensionVerifyContext = {
     userCertifiedEmails: userProfile?.certifiedEmails ?? [],
@@ -89,6 +117,8 @@ export async function runExtensionVerifySender(params: {
     trustRelationEmails: trustRelations
       .map((r) => r.toEmail)
       .filter((e): e is string => Boolean(e?.trim())),
+    contactEntityEmails: contactKeys.emails,
+    contactEntityDomains: contactKeys.domains,
   };
 
   const payload = await enrichExtensionPayloadWithBis({
