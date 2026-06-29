@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
+import { canPromoteToMutual, promoteToMutual } from '@/lib/trust-circle-mutual'
 import { persistUserTrustScore } from '@/lib/trustscore'
 
 export async function POST(
@@ -61,17 +62,8 @@ export async function POST(
     },
   })
 
-  if (reverse?.status === 'CONFIRMED') {
-    await prisma.$transaction([
-      prisma.userTrustRelation.update({
-        where: { id: relation.id },
-        data: { isMutual: true, trustType: 'MUTUAL' },
-      }),
-      prisma.userTrustRelation.update({
-        where: { id: reverse.id },
-        data: { isMutual: true, trustType: 'MUTUAL' },
-      }),
-    ])
+  if (canPromoteToMutual(reverse)) {
+    await promoteToMutual(relation.id, reverse!.id)
     await persistUserTrustScore(session.user.id)
     await persistUserTrustScore(relation.fromUserId)
     const { sendMutualTrustEmail } = await import('@/lib/trust-circle-email')

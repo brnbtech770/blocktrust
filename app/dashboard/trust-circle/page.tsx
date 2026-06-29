@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { UserPlus, Trash2, Link2 } from 'lucide-react'
+import { UserPlus, Trash2, Link2, Check } from 'lucide-react'
 import TrustCircleInviteModal from '@/app/components/TrustCircleInviteModal'
 import TrustCircleManualModal from '@/app/components/TrustCircleManualModal'
 import { QuotaBanner } from '@/app/components/trust-circle/QuotaBanner'
@@ -34,7 +34,13 @@ type ManualTrustEntry = {
   toName?: string | null
 }
 
-type TrustCircleCardData = TrustRelationItem | ManualTrustEntry
+type ReceivedTrustRelation = {
+  id: string
+  inviteToken: string | null
+  fromUser?: TrustCircleUserSummary | null
+}
+
+type TrustCircleCardData = TrustRelationItem | ManualTrustEntry | ReceivedTrustRelation
 
 type ApiEntityRow = {
   id: string
@@ -54,6 +60,7 @@ interface TrustCircleData {
   mutual: TrustRelationItem[]
   unilateral: TrustRelationItem[]
   pending: TrustRelationItem[]
+  received: ReceivedTrustRelation[]
   manualEntries: ManualTrustEntry[]
   stats: {
     current: number
@@ -70,7 +77,7 @@ export default function TrustCirclePage() {
   const [data, setData] = useState<TrustCircleData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState<'all' | 'mutual' | 'pending' | 'manual'>('all')
+  const [activeTab, setActiveTab] = useState<'all' | 'mutual' | 'pending' | 'received' | 'manual'>('all')
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showManualModal, setShowManualModal] = useState(false)
   const [userEntities, setUserEntities] = useState<Array<{ id: string; name: string; entityType: string }>>([])
@@ -136,6 +143,31 @@ export default function TrustCirclePage() {
     }
   }
 
+  const handleAcceptInvitation = async (inviteToken: string | null) => {
+    if (!inviteToken) {
+      alert('Invitation invalide')
+      return
+    }
+    try {
+      const res = await fetch(`/api/trust-circle/confirm/${inviteToken}`, {
+        method: 'POST',
+        credentials: 'include',
+      })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(body.error || 'Erreur lors de l\'acceptation')
+      }
+      setToastMessage(
+        body.trustType === 'MUTUAL'
+          ? 'Contact mutuel certifié'
+          : 'Invitation acceptée',
+      )
+      await fetchTrustCircle()
+    } catch (err: unknown) {
+      alert(getErrorMessage(err))
+    }
+  }
+
   const handleDelete = async (id: string, deleteType: 'relation' | 'manual') => {
     if (!confirm('Supprimer ce contact du Trust Circle ?')) return
     try {
@@ -188,7 +220,12 @@ export default function TrustCirclePage() {
     )
   }
 
-  const totalEntites = (data.mutual?.length ?? 0) + (data.unilateral?.length ?? 0) + (data.pending?.length ?? 0) + (data.manualEntries?.length ?? 0)
+  const totalEntites =
+    (data.mutual?.length ?? 0) +
+    (data.unilateral?.length ?? 0) +
+    (data.pending?.length ?? 0) +
+    (data.received?.length ?? 0) +
+    (data.manualEntries?.length ?? 0)
   const quotaAllowed = data.stats.limit == null || data.stats.current < data.stats.limit
 
   return (
@@ -227,7 +264,7 @@ export default function TrustCirclePage() {
         />
 
         <div className="-mx-1 mb-6 flex gap-1 overflow-x-auto border-b border-white/10 px-1 pb-0.5 sm:gap-2">
-          {(['all', 'mutual', 'pending', 'manual'] as const).map((tab) => (
+          {(['all', 'mutual', 'pending', 'received', 'manual'] as const).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -240,7 +277,8 @@ export default function TrustCirclePage() {
             >
               {tab === 'all' && `Toutes (${totalEntites})`}
               {tab === 'mutual' && `Mutuelles (${data.mutual?.length ?? 0})`}
-              {tab === 'pending' && `Invitation envoyée (${data.pending?.length ?? 0})`}
+              {tab === 'pending' && `En attente (${data.pending?.length ?? 0})`}
+              {tab === 'received' && `Invitation reçue (${data.received?.length ?? 0})`}
               {tab === 'manual' && `Manuelles (${data.manualEntries?.length ?? 0})`}
             </button>
           ))}
@@ -257,6 +295,13 @@ export default function TrustCirclePage() {
             ...(data.pending || []).map((r) => (
               <Card key={r.id} type="pending" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
             )),
+            ...(data.received || []).map((r) => (
+              <ReceivedCard
+                key={r.id}
+                data={r}
+                onAccept={() => handleAcceptInvitation(r.inviteToken)}
+              />
+            )),
             ...(data.manualEntries || []).map((e) => (
               <Card key={e.id} type="manual" data={e} onDelete={() => handleDelete(e.id, 'manual')} />
             )),
@@ -266,6 +311,13 @@ export default function TrustCirclePage() {
           ))}
           {activeTab === 'pending' && (data.pending || []).map((r) => (
             <Card key={r.id} type="pending" data={r} onDelete={() => handleDelete(r.id, 'relation')} />
+          ))}
+          {activeTab === 'received' && (data.received || []).map((r) => (
+            <ReceivedCard
+              key={r.id}
+              data={r}
+              onAccept={() => handleAcceptInvitation(r.inviteToken)}
+            />
           ))}
           {activeTab === 'manual' && (data.manualEntries || []).map((e) => (
             <Card key={e.id} type="manual" data={e} onDelete={() => handleDelete(e.id, 'manual')} />
@@ -315,9 +367,9 @@ export default function TrustCirclePage() {
 }
 
 function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pending' | 'manual'; data: TrustCircleCardData; onDelete?: () => void }) {
-  const relation = 'toUser' in data ? data : null
-  const manual = 'entityName' in data ? data : null
-  const name = relation?.toUser?.name || relation?.toName || manual?.entityName || relation?.toEmail || manual?.toEmail || '—'
+  const relation = 'toUser' in data ? data as TrustRelationItem : null
+  const manual = 'entityName' in data ? data as ManualTrustEntry : null
+  const name = relation?.toUser?.name || relation?.toName || manual?.entityName || relation?.toEmail || manual?.toEmail || manual?.entityEmail || '—'
   const email = relation?.toUser?.email || relation?.toEmail || manual?.entityEmail || manual?.toEmail
   return (
     <div
@@ -325,7 +377,7 @@ function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pendi
       style={{
         borderColor:
           type === 'mutual'
-            ? 'rgba(0,212,255,0.4)'
+            ? 'rgba(16,185,129,0.45)'
             : type === 'unilateral'
               ? 'rgba(0,212,255,0.25)'
               : type === 'manual'
@@ -336,9 +388,13 @@ function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pendi
     >
       <div className="flex justify-between items-start">
         <div>
-          {type === 'mutual' && <span className="text-[9px] font-mono text-green-500 bg-green-500/10 px-2 py-0.5 rounded">Mutuelle</span>}
+          {type === 'mutual' && (
+            <span className="text-[9px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+              Contact mutuel certifié
+            </span>
+          )}
           {type === 'unilateral' && <span className="rounded bg-bt-cyan/10 px-2 py-0.5 text-[9px] text-bt-cyan/90">Unilatérale</span>}
-          {type === 'pending' && <span className="text-[9px] text-gray-400 bg-white/10 px-2 py-0.5 rounded">Invitation envoyée</span>}
+          {type === 'pending' && <span className="text-[9px] text-amber-400/90 bg-amber-500/10 px-2 py-0.5 rounded">En attente</span>}
           {type === 'manual' && <span className="text-[9px] text-green-500 bg-green-500/10 px-2 py-0.5 rounded">Vérifié admin</span>}
           <h3 className="font-syne mt-1 break-words text-base font-bold text-white sm:text-lg">{name}</h3>
           {email && <p className="text-xs sm:text-sm text-gray-400 break-all">{email}</p>}
@@ -354,6 +410,44 @@ function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pendi
             <Trash2 size={15} strokeWidth={1.75} />
           </button>
         )}
+      </div>
+    </div>
+  )
+}
+
+function ReceivedCard({
+  data,
+  onAccept,
+}: {
+  data: ReceivedTrustRelation
+  onAccept: () => void
+}) {
+  const name = data.fromUser?.name || data.fromUser?.email || '—'
+  const email = data.fromUser?.email
+  return (
+    <div
+      className="p-3 sm:p-4 rounded-xl border"
+      style={{
+        borderColor: 'rgba(245,158,11,0.35)',
+        background: 'rgba(13,31,60,0.8)',
+      }}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start">
+        <div>
+          <span className="text-[9px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded">
+            Invitation reçue
+          </span>
+          <h3 className="font-syne mt-1 break-words text-base font-bold text-white sm:text-lg">{name}</h3>
+          {email && <p className="text-xs sm:text-sm text-gray-400 break-all">{email}</p>}
+        </div>
+        <button
+          type="button"
+          onClick={onAccept}
+          className="flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/25 sm:text-sm"
+        >
+          <Check size={14} aria-hidden />
+          Accepter
+        </button>
       </div>
     </div>
   )

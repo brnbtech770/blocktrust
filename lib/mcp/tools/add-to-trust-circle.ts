@@ -5,7 +5,7 @@
 import { prisma } from "@/app/lib/db";
 import { checkTrustCircleQuota } from "@/lib/checkTrustCircleQuota";
 import { checkPlanRateLimit } from "@/lib/rate-limit-plan";
-import { persistUserTrustScore } from "@/lib/trustscore";
+import { tryPromoteMutualOnAdd } from "@/lib/trust-circle-mutual";
 import { runExtensionVerifySender } from "@/lib/extension-verify-sender-service";
 import { mcpPlanAllowsTrustCircle } from "@/lib/mcp/helpers/plan-gates";
 import { mcpErrorResult, mcpJsonResult } from "@/lib/mcp/sanitize-output";
@@ -109,34 +109,13 @@ export async function handleAddToTrustCircle(
   });
 
   if (targetUser) {
-    const reverse = await prisma.userTrustRelation.findFirst({
-      where: { fromUserId: targetUser.id, toUserId: ctx.userId },
+    const promoted = await tryPromoteMutualOnAdd({
+      relationId: relation.id,
+      fromUserId: ctx.userId,
+      toUserId: targetUser.id,
     });
 
-    if (reverse?.status === "CONFIRMED") {
-      await prisma.$transaction([
-        prisma.userTrustRelation.update({
-          where: { id: relation.id },
-          data: {
-            isMutual: true,
-            trustType: "MUTUAL",
-            status: "CONFIRMED",
-            confirmedAt: new Date(),
-          },
-        }),
-        prisma.userTrustRelation.update({
-          where: { id: reverse.id },
-          data: {
-            isMutual: true,
-            trustType: "MUTUAL",
-            status: "CONFIRMED",
-            confirmedAt: new Date(),
-          },
-        }),
-      ]);
-      await persistUserTrustScore(ctx.userId);
-      await persistUserTrustScore(targetUser.id);
-
+    if (promoted) {
       const size = await prisma.userTrustRelation.count({
         where: {
           fromUserId: ctx.userId,

@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
+import { syncMutualRelationsForUser } from '@/lib/trust-circle-mutual'
 
 export async function GET(req: NextRequest) {
   const session = await auth()
@@ -25,7 +26,9 @@ export async function GET(req: NextRequest) {
   // Les quotas (checkTrustCircleQuota) limitent selon le plan.
   // Pas de blocage 403 — le quota gère les limites.
 
-  const [mutual, unilateral, pending, manualEntries, quota] = await Promise.all([
+  await syncMutualRelationsForUser(userId)
+
+  const [mutual, unilateral, pending, received, manualEntries, quota] = await Promise.all([
     prisma.userTrustRelation.findMany({
       where: { fromUserId: userId, isMutual: true },
       include: {
@@ -40,9 +43,29 @@ export async function GET(req: NextRequest) {
         isMutual: false,
         status: 'CONFIRMED',
       },
+      include: {
+        toUser: {
+          select: { id: true, name: true, email: true, kycStatus: true },
+        },
+      },
     }),
     prisma.userTrustRelation.findMany({
-      where: { fromUserId: userId, status: 'PENDING' },
+      where: { fromUserId: userId, status: 'PENDING', isMutual: false },
+      include: {
+        toUser: {
+          select: { id: true, name: true, email: true, kycStatus: true },
+        },
+      },
+    }),
+    prisma.userTrustRelation.findMany({
+      where: { toUserId: userId, status: 'PENDING', isMutual: false },
+      select: {
+        id: true,
+        inviteToken: true,
+        fromUser: {
+          select: { id: true, name: true, email: true, kycStatus: true },
+        },
+      },
     }),
     prisma.userManualTrustEntry.findMany({
       where: { requestedBy: userId },
@@ -55,6 +78,7 @@ export async function GET(req: NextRequest) {
     mutual,
     unilateral,
     pending,
+    received,
     manualEntries,
     stats: {
       current:           quota.current,

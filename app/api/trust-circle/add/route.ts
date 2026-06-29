@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
-import { persistUserTrustScore } from '@/lib/trustscore'
+import { tryPromoteMutualOnAdd } from '@/lib/trust-circle-mutual'
 import { checkPlanRateLimit } from '@/lib/rate-limit-plan'
 import { resolveEffectivePlan, planAllowsTrustCircle } from '@/lib/plan-features'
 import { z } from 'zod'
@@ -110,36 +110,13 @@ export async function POST(req: NextRequest) {
   })
 
   if (targetUser) {
-    const reverse = await prisma.userTrustRelation.findFirst({
-      where: {
-        fromUserId: targetUser.id,
-        toUserId:   userId,
-      },
+    const promoted = await tryPromoteMutualOnAdd({
+      relationId: relation.id,
+      fromUserId: userId,
+      toUserId:   targetUser.id,
     })
 
-    if (reverse?.status === 'CONFIRMED') {
-      await prisma.$transaction([
-        prisma.userTrustRelation.update({
-          where: { id: relation.id },
-          data: {
-            isMutual:    true,
-            trustType:   'MUTUAL',
-            status:      'CONFIRMED',
-            confirmedAt: new Date(),
-          },
-        }),
-        prisma.userTrustRelation.update({
-          where: { id: reverse.id },
-          data: {
-            isMutual:    true,
-            trustType:   'MUTUAL',
-            status:      'CONFIRMED',
-            confirmedAt: new Date(),
-          },
-        }),
-      ])
-      await persistUserTrustScore(userId)
-      await persistUserTrustScore(targetUser.id)
+    if (promoted) {
       const { sendMutualTrustEmail } = await import('@/lib/trust-circle-email')
       await sendMutualTrustEmail(userId, targetUser.id).catch(console.error)
       return NextResponse.json({
