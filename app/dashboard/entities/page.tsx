@@ -17,6 +17,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { walletNetworkLabelFr } from "@/lib/wallet-validation";
+import DeleteContactButton from "@/app/components/dashboard/DeleteContactButton";
 
 function KycStatusBadge({ status }: { status: string }) {
   const base =
@@ -192,19 +193,20 @@ export default async function EntitiesPage() {
                   <KycStatusBadge status={entity.kycStatus} />
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
                   <Link
                     href={`/dashboard/badge/${entity.certificates[0]?.id || entity.id}`}
-                    className="flex-1 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 px-4 py-3 text-center text-sm font-medium text-bt-cyan transition-colors hover:bg-bt-cyan/25"
+                    className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 px-4 py-3 text-center text-sm font-medium text-bt-cyan transition-colors hover:bg-bt-cyan/25"
                   >
                     Voir
                   </Link>
                   <Link
                     href={`/dashboard/create?edit=${entity.id}`}
-                    className="flex-1 rounded-lg bg-gray-700/50 px-4 py-3 text-center text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700"
+                    className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-lg bg-gray-700/50 px-4 py-3 text-center text-sm font-medium text-gray-300 transition-colors hover:bg-gray-700"
                   >
                     Modifier
                   </Link>
+                  <DeleteContactButton contactId={entity.id} />
                 </div>
               </div>
             );

@@ -5,7 +5,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { CertificateStatus, Prisma } from '@prisma/client';
 import { getAuthUser } from '@/app/lib/auth';
+import { auth } from '@/app/lib/auth-server';
 import { prisma } from '@/app/lib/db';
+import { deleteRevokedCertificate } from '@/lib/delete-revoked-certificate';
 import { z } from 'zod';
 
 const actionSchema = z
@@ -17,6 +19,22 @@ const actionSchema = z
 
 interface RouteParams {
   params: Promise<{ id: string }>;
+}
+
+export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const result = await deleteRevokedCertificate(session.user.id, id);
+
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  return NextResponse.json({ success: true });
 }
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {

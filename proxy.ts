@@ -100,6 +100,7 @@ function isProtectedApi(pathname: string): boolean {
 
   const protectedPrefixes = [
     '/api/certificates',
+    '/api/contacts',
     '/api/entities',
     '/api/organization',
     '/api/vault',
@@ -285,6 +286,7 @@ export const config = {
     '/checkout/:path*',
     '/api/debug-auth',
     '/api/certificates/:path*',
+    '/api/contacts/:path*',
     '/api/entities/:path*',
     '/api/organization/:path*',
     '/api/vault/:path*',

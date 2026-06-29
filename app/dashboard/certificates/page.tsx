@@ -21,6 +21,7 @@ import {
 import { UpgradePrompt } from "@/app/components/ui/UpgradePrompt";
 import { buildUpgradePromptProps } from "@/lib/upgradePromptProps";
 import { truncateVerificationPublicId } from "@/lib/truncate-public-id";
+import DeleteRevokedCertificateButton from "@/app/components/dashboard/DeleteRevokedCertificateButton";
 
 type CertificateStatus = "PENDING" | "ACTIVE" | "ANCHORED" | "SUSPENDED" | "REVOKED" | "EXPIRED";
 
@@ -376,6 +377,23 @@ export default function CertificatesPage() {
                       Votre certificat est en cours de validation par l&apos;équipe BLOCKTRUST.
                       Vous serez notifié par email sous 24–48h.
                     </p>
+                  ) : certificate.status === "REVOKED" ? (
+                    <>
+                      <Link
+                        href={`/dashboard/badge/${certificate.publicId ?? certificate.id}`}
+                        className="inline-flex min-h-[44px] items-center rounded-lg border border-white/20 px-4 py-2.5 text-sm font-medium text-white transition hover:border-white/40"
+                      >
+                        Voir détails
+                      </Link>
+                      <DeleteRevokedCertificateButton
+                        certificateId={certificate.id}
+                        onDeleted={() => {
+                          setCertificates((prev) =>
+                            prev.filter((c) => c.id !== certificate.id),
+                          );
+                        }}
+                      />
+                    </>
                   ) : (
                     <Link
                       href={`/dashboard/badge/${certificate.publicId ?? certificate.id}`}
