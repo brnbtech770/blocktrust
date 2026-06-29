@@ -258,6 +258,8 @@ export default async function Dashboard({
           ) : null}
         </div>
 
+        <ChromeExtensionBanner />
+
         {showOnboardingGuide && (
           <div className="bg-gradient-to-br from-[#0d1f3c] to-[#0a1628] border border-[#00d4ff]/20 rounded-xl p-6 mb-6">
             <p className="text-[#00d4ff] text-xs uppercase tracking-widest mb-4">
@@ -397,7 +399,6 @@ export default async function Dashboard({
               isAdmin={userIsAdmin}
             />
           </div>
-          <ChromeExtensionBanner />
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/dashboard/create"

@@ -5,6 +5,7 @@
 import { prisma } from '@/app/lib/db'
 import { requireAdminPage } from '@/app/lib/require-admin-page'
 import VerifyBadgeCard from '@/app/components/dashboard/VerifyBadgeCard'
+import ChromeExtensionBanner from '@/app/components/dashboard/ChromeExtensionBanner'
 import Link from 'next/link'
 import {
   ADMIN_PLAN_PRICES_MONTHLY,
@@ -149,7 +150,9 @@ export default async function AdminDashboard() {
 
   return (
     <div className="font-sans text-base leading-relaxed text-white/80">
-      <p className="mb-8 text-sm text-white/60">Vue d&apos;ensemble de la plateforme</p>
+      <p className="mb-4 text-sm text-white/60">Vue d&apos;ensemble de la plateforme</p>
+
+      <ChromeExtensionBanner className="mb-8" />
 
       {alertDailySummary.graceSkipsToday > 0 ? (
         <div

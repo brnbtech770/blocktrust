@@ -1,6 +1,7 @@
-/** URL Chrome Web Store — « # » tant que l’extension n’est pas publiée. */
+/** URL publique Chrome Web Store — TrustScan BLOCKTRUST™. */
 export const CHROME_EXTENSION_STORE_URL =
-  process.env.NEXT_PUBLIC_CHROME_EXTENSION_URL?.trim() || "#";
+  process.env.NEXT_PUBLIC_CHROME_EXTENSION_URL?.trim() ||
+  "https://chromewebstore.google.com/detail/bemcnlbifffejlijnndkdgcjpmijfaeg";
 
 export function isChromeExtensionStoreUrlReady(
   url: string = CHROME_EXTENSION_STORE_URL

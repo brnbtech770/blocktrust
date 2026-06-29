@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
+import ChromeIcon from "@/app/components/ui/ChromeIcon";
 import {
   CHROME_EXTENSION_STORE_URL,
   isChromeExtensionStoreUrlReady,
@@ -14,7 +15,13 @@ function isTrustScanExtensionPresent(): boolean {
   return document.documentElement.getAttribute(TRUSTSCAN_DOM_ATTR) === "installed";
 }
 
-export default function ChromeExtensionBanner() {
+type ChromeExtensionBannerProps = {
+  className?: string;
+};
+
+export default function ChromeExtensionBanner({
+  className = "mb-6",
+}: ChromeExtensionBannerProps) {
   const [visible, setVisible] = useState(false);
   const storeReady = isChromeExtensionStoreUrlReady();
 
@@ -55,7 +62,7 @@ export default function ChromeExtensionBanner() {
 
   return (
     <div
-      className="relative mb-6 overflow-hidden rounded-xl border border-bt-cyan/25 bg-gradient-to-br from-[#0d1f3c] to-[#0a1628] p-4 sm:p-5"
+      className={`relative overflow-hidden rounded-xl border border-bt-cyan/25 bg-gradient-to-br from-[#0d1f3c] to-[#0a1628] p-4 sm:p-5 ${className}`}
       role="region"
       aria-label="Extension Chrome BLOCKTRUST TrustScan"
     >
@@ -73,16 +80,16 @@ export default function ChromeExtensionBanner() {
       </button>
 
       <div className="flex flex-col gap-4 pr-8 sm:flex-row sm:items-center sm:gap-5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-bt-cyan/30 bg-bt-cyan/10">
-          <Download className="h-5 w-5 text-bt-cyan" aria-hidden />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/95 p-2">
+          <ChromeIcon className="h-7 w-7" />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="font-syne text-base font-semibold text-white sm:text-lg">
-            Protégez-vous directement dans Gmail
+            Protégez vos emails avec l&apos;extension BLOCKTRUST™
           </h3>
           <p className="mt-1 text-sm leading-relaxed text-white/65">
-            L&apos;extension BLOCKTRUST™ vérifie l&apos;identité de vos correspondants en
-            temps réel, directement dans votre boîte mail.
+            TrustScan vérifie l&apos;identité de vos correspondants en temps réel, directement
+            dans Gmail.
           </p>
         </div>
         <div className="shrink-0 sm:self-center">
@@ -99,7 +106,7 @@ export default function ChromeExtensionBanner() {
           ) : (
             <span
               className={`${ctaClass} cursor-not-allowed opacity-55`}
-              title="Bientôt disponible sur le Chrome Web Store"
+              title="Lien Chrome Web Store indisponible"
               aria-disabled="true"
             >
               <Download className="h-4 w-4 shrink-0" aria-hidden />

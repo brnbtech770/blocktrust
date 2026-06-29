@@ -10,9 +10,9 @@ import {
   ExternalLink,
   KeyRound,
   Loader2,
-  Puzzle,
   RefreshCw,
 } from "lucide-react";
+import ChromeIcon from "@/app/components/ui/ChromeIcon";
 import {
   CHROME_EXTENSION_STORE_URL,
   isChromeExtensionStoreUrlReady,
@@ -127,16 +127,21 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
     <div className="space-y-6">
       <section className="rounded-xl border border-bt-cyan/20 bg-gradient-to-br from-[#0d1f3c] to-[#0a1628] p-4 sm:p-6">
         <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-bt-cyan/30 bg-bt-cyan/10">
-            <Puzzle className="h-5 w-5 text-bt-cyan" aria-hidden />
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/95 p-2">
+            <ChromeIcon className="h-7 w-7" />
           </div>
           <div className="min-w-0 flex-1">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-full border border-emerald-500/35 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-400">
+                NOUVEAU — Disponible publiquement
+              </span>
+            </div>
             <h2 className="font-syne text-xl font-bold text-white sm:text-2xl">
               Extension Chrome BLOCKTRUST™
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-white/65">
-              Connectez l&apos;extension à votre compte pour vérifier l&apos;identité de vos
-              correspondants directement dans Gmail.
+              Installez TrustScan depuis le Chrome Web Store, puis connectez votre clé API pour
+              vérifier l&apos;identité de vos correspondants dans Gmail.
             </p>
           </div>
         </div>
@@ -146,11 +151,11 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
             href={CHROME_EXTENSION_STORE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:border-bt-cyan/40 hover:text-bt-cyan sm:w-auto"
+            className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-bt-cyan px-5 py-2.5 text-sm font-semibold text-navy transition hover:bg-bt-cyan/90 sm:w-auto"
           >
             <Download className="h-4 w-4 shrink-0" aria-hidden />
             Installer l&apos;extension
-            <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-60" aria-hidden />
+            <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-70" aria-hidden />
           </a>
         ) : (
           <p className="text-sm text-white/45">
@@ -290,8 +295,16 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
           <li className="flex gap-3">
             <span className="font-mono text-xs font-semibold text-bt-cyan">1</span>
             <span>
-              Installez l&apos;extension BLOCKTRUST TrustScan depuis le Chrome Web Store (ou chargez
-              le dossier <code className="text-white/80">extension/</code> en mode développeur).
+              Installez l&apos;extension BLOCKTRUST TrustScan depuis le{" "}
+              <a
+                href={CHROME_EXTENSION_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-bt-cyan hover:underline"
+              >
+                Chrome Web Store
+              </a>
+              .
             </span>
           </li>
           <li className="flex gap-3">
