@@ -66,18 +66,21 @@ export function isValidApiKeyShape(apiKey: string | null | undefined): apiKey is
 
 const EXT_PREFIX = "bt_ext_"
 
+export function maskExtensionApiKeyPreview(apiKey: string): string {
+  if (!apiKey || apiKey.length <= 12) return "••••••••"
+  return `${apiKey.slice(0, 8)}...${apiKey.slice(-4)}`
+}
+
 export function generateExtensionApiKey(): { apiKey: string; apiKeyHash: string; maskedDisplay: string } {
   const raw = randomBytes(32).toString("hex")
   const apiKey = `${EXT_PREFIX}${raw}`
   const apiKeyHash = hashApiKey(apiKey)
-  const maskedDisplay = `${EXT_PREFIX}${"•".repeat(24)}${raw.slice(-4)}`
+  const maskedDisplay = maskExtensionApiKeyPreview(apiKey)
   return { apiKey, apiKeyHash, maskedDisplay }
 }
 
 export function maskExtensionApiKey(apiKey: string): string {
-  if (!apiKey || apiKey.length < 16) return "••••••••"
-  const tail = apiKey.slice(-4)
-  return `${EXT_PREFIX}${"•".repeat(24)}${tail}`
+  return maskExtensionApiKeyPreview(apiKey)
 }
 
 export function isValidExtensionApiKeyShape(apiKey: string | null | undefined): apiKey is string {

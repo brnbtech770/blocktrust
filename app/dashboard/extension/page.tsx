@@ -24,6 +24,7 @@ export default async function ExtensionDashboardPage() {
       id: true,
       extensionApiKeyHash: true,
       extensionApiKey: true,
+      extensionApiKeyEnc: true,
     },
   });
 
@@ -44,6 +45,7 @@ export default async function ExtensionDashboardPage() {
           extensionKeyInitial={{
             hasKey: userHasExtensionApiKey(user.extensionApiKeyHash),
             masked: user.extensionApiKey ?? null,
+            canReveal: Boolean(user.extensionApiKeyEnc),
           }}
         />
         <div className="mt-6">

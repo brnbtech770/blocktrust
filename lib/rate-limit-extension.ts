@@ -7,6 +7,7 @@ import {
   getExtensionWriteLimiter,
   getExtensionMeLimiter,
   getExtensionKeygenLimiter,
+  getExtensionRevealLimiter,
   tryRedisLimit,
 } from "@/lib/rate-limit-redis";
 import type { RateLimitApiResult } from "@/lib/rate-limit-api";
@@ -16,6 +17,7 @@ const windows = {
   write: { limit: 30, windowMs: 60_000 },
   me: { limit: 60, windowMs: 60_000 },
   keygen: { limit: 10, windowMs: 60_000 },
+  reveal: { limit: 5, windowMs: 60_000 },
 } as const;
 
 type ExtensionLimitKind = keyof typeof windows;
@@ -52,6 +54,8 @@ function limiterFor(kind: ExtensionLimitKind) {
       return getExtensionMeLimiter();
     case "keygen":
       return getExtensionKeygenLimiter();
+    case "reveal":
+      return getExtensionRevealLimiter();
   }
 }
 

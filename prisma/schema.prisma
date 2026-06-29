@@ -155,8 +155,10 @@ model User {
 
   /// Clé API extension Chrome (TrustScan) — jamais la valeur secrète complète : hash SHA-256 uniquement.
   extensionApiKeyHash String? @unique
-  /// Indice affichage tableau de bord (ex. suffixe non secret), optionnel.
+  /// Indice affichage tableau de bord (ex. bt_ext_a88b...3746), optionnel.
   extensionApiKey     String? @unique
+  /// Clé complète chiffrée AES-256-GCM (révélation dashboard uniquement).
+  extensionApiKeyEnc  String? @db.Text
 
   /// Coordonnées certifiées au niveau compte (fusionnées avec celles de l’entité sur /verify public).
   certifiedEmails  String[] @default([])

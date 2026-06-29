@@ -120,6 +120,7 @@ export const getExtensionVerifyLimiter = () => getLimiter("bt:extension:verify",
 export const getExtensionWriteLimiter = () => getLimiter("bt:extension:write", 30, "1 m");
 export const getExtensionMeLimiter = () => getLimiter("bt:extension:me", 60, "1 m");
 export const getExtensionKeygenLimiter = () => getLimiter("bt:extension:keygen", 10, "1 m");
+export const getExtensionRevealLimiter = () => getLimiter("bt:extension:reveal", 5, "1 m");
 
 // Serveur MCP — 60 req/min par hash de clé API
 export const getMcpLimiter = () => getLimiter("bt:mcp", 60, "1 m");

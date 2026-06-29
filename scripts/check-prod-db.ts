@@ -32,6 +32,11 @@ const criticalColumns: CriticalColumn[] = [
     ddl: `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "extensionApiKey" TEXT`,
   },
   {
+    table: "User",
+    column: "extensionApiKeyEnc",
+    ddl: `ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "extensionApiKeyEnc" TEXT`,
+  },
+  {
     table: "Certificate",
     column: "blockchainStatus",
     ddl: `ALTER TABLE "Certificate" ADD COLUMN IF NOT EXISTS "blockchainStatus" TEXT NOT NULL DEFAULT 'PENDING'`,

@@ -7,6 +7,11 @@ import { NextRequest } from "next/server";
 import { auth } from "@/app/lib/auth-server";
 import { prisma } from "@/app/lib/db";
 import { generateExtensionApiKey } from "@/lib/api-key";
+import {
+  canEncryptExtensionApiKey,
+  decryptExtensionApiKey,
+  encryptExtensionApiKey,
+} from "@/lib/extension-api-key-crypto";
 import { extensionJsonResponse, extensionOptionsResponse } from "@/lib/extension-cors";
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
 import { z } from "zod";
@@ -15,7 +20,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const postBodySchema = z.object({
-  action: z.literal("regenerate"),
+  action: z.enum(["regenerate", "reveal"]),
 });
 
 export async function OPTIONS(req: NextRequest) {
@@ -26,6 +31,10 @@ async function writeNewExtensionKey(userId: string): Promise<
   | { ok: true; apiKey: string; masked: string }
   | { ok: false; error: string }
 > {
+  if (!canEncryptExtensionApiKey()) {
+    return { ok: false, error: "Configuration serveur incomplète." };
+  }
+
   for (let attempt = 0; attempt < 5; attempt++) {
     const { apiKey, apiKeyHash, maskedDisplay } = generateExtensionApiKey();
     try {
@@ -34,6 +43,7 @@ async function writeNewExtensionKey(userId: string): Promise<
         data: {
           extensionApiKeyHash: apiKeyHash,
           extensionApiKey: maskedDisplay,
+          extensionApiKeyEnc: encryptExtensionApiKey(apiKey),
         },
       });
       void prisma.auditLog
@@ -80,7 +90,7 @@ export async function GET(req: NextRequest) {
       apiKey: null,
       masked: existing.extensionApiKey ?? null,
       message:
-        "Une clé existe déjà pour ce compte. Elle ne peut être réaffichée. Utilisez « Régénérer la clé » sur la page Extension Chrome si vous devez en créer une nouvelle.",
+        "Une clé existe déjà pour ce compte. Utilisez « Afficher la clé » ou « Copier la clé complète » sur la page Extension Chrome.",
     });
   }
 
@@ -124,9 +134,63 @@ export async function POST(req: NextRequest) {
     return extensionJsonResponse(req, { error: "validation_error", message: "Action non reconnue." }, 400);
   }
 
+  if (parsed.data.action === "reveal") {
+    const revealRate = await checkRateLimitExtensionAsync("reveal", session.user.id);
+    if (!revealRate.ok) {
+      return extensionJsonResponse(
+        req,
+        { error: "rate_limited", message: "Trop de requêtes.", retryAfter: revealRate.retryAfter },
+        429,
+      );
+    }
+
+    const existing = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { extensionApiKeyHash: true, extensionApiKey: true, extensionApiKeyEnc: true },
+    });
+
+    if (!existing?.extensionApiKeyHash) {
+      return extensionJsonResponse(req, { error: "not_found", message: "Aucune clé API active." }, 404);
+    }
+
+    if (!existing.extensionApiKeyEnc) {
+      return extensionJsonResponse(req, {
+        error: "legacy_key",
+        hasKey: true,
+        masked: existing.extensionApiKey ?? null,
+        canReveal: false,
+        message:
+          "Cette clé a été créée avant la fonctionnalité de réaffichage. Régénérez-la une fois pour pouvoir la revoir ensuite.",
+      }, 409);
+    }
+
+    const apiKey = decryptExtensionApiKey(existing.extensionApiKeyEnc);
+    if (!apiKey) {
+      return extensionJsonResponse(req, { error: "server_error", message: "Impossible de déchiffrer la clé." }, 500);
+    }
+
+    void prisma.auditLog
+      .create({
+        data: {
+          action: "EXTENSION_API_KEY_REVEALED",
+          resource: "user",
+          resourceId: session.user.id,
+          userId: session.user.id,
+        },
+      })
+      .catch(() => null);
+
+    return extensionJsonResponse(req, {
+      hasKey: true,
+      apiKey,
+      masked: existing.extensionApiKey ?? null,
+      canReveal: true,
+    });
+  }
+
   await prisma.user.update({
     where: { id: session.user.id },
-    data: { extensionApiKeyHash: null, extensionApiKey: null },
+    data: { extensionApiKeyHash: null, extensionApiKey: null, extensionApiKeyEnc: null },
   });
 
   const created = await writeNewExtensionKey(session.user.id);
