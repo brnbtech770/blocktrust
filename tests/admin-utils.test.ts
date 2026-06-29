@@ -12,17 +12,19 @@ import {
 } from '@/lib/admin-utils'
 
 const ORIGINAL_ADMIN_EMAILS = process.env.ADMIN_EMAILS
+const ORIGINAL_DASHBOARD_ADMIN_EMAILS = process.env.DASHBOARD_ADMIN_EMAILS
 const ORIGINAL_INTERNAL_EMAILS = process.env.INTERNAL_EMAILS
 
 describe('admin-utils — getAdminEmailList', () => {
   afterEach(() => {
     process.env.ADMIN_EMAILS = ORIGINAL_ADMIN_EMAILS
+    process.env.DASHBOARD_ADMIN_EMAILS = ORIGINAL_DASHBOARD_ADMIN_EMAILS
     vi.unstubAllEnvs()
   })
 
-  it('parse une liste multi-emails (trim + lowercase + filtre vides) + union dev', () => {
+  it('parse DASHBOARD_ADMIN_EMAILS (trim + lowercase) + union dev', () => {
     vi.stubEnv('NODE_ENV', 'test')
-    process.env.ADMIN_EMAILS = ' Admin@Blocktrust.tech , , second@blocktrust.tech '
+    process.env.DASHBOARD_ADMIN_EMAILS = ' Admin@Blocktrust.tech , , second@blocktrust.tech '
     const list = getAdminEmailList()
     expect(list).toContain('admin@blocktrust.tech')
     expect(list).toContain('second@blocktrust.tech')
@@ -31,21 +33,34 @@ describe('admin-utils — getAdminEmailList', () => {
     }
   })
 
-  it('retourne DASHBOARD_ADMIN_EMAILS si ADMIN_EMAILS absent', () => {
+  it('retourne DASHBOARD_ADMIN_EMAILS hardcodé si env absent', () => {
+    delete process.env.DASHBOARD_ADMIN_EMAILS
     delete process.env.ADMIN_EMAILS
     expect(getAdminEmailList()).toEqual([...DASHBOARD_ADMIN_EMAILS])
   })
 
-  it('production : ADMIN_EMAILS seul si défini', () => {
+  it('production : DASHBOARD_ADMIN_EMAILS seul si défini', () => {
     vi.stubEnv('NODE_ENV', 'production')
-    process.env.ADMIN_EMAILS = 'only-admin@example.com'
+    process.env.DASHBOARD_ADMIN_EMAILS = 'only-admin@example.com'
     expect(getAdminEmailList()).toEqual(['only-admin@example.com'])
+  })
+
+  it('production : filtre les INTERNAL_EMAILS d’une liste ADMIN_EMAILS erronée', () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    delete process.env.DASHBOARD_ADMIN_EMAILS
+    process.env.ADMIN_EMAILS =
+      'brnbtech@gmail.com,brnbimmo@gmail.com,johannabernabe3@gmail.com'
+    const list = getAdminEmailList()
+    expect(list).toContain('brnbtech@gmail.com')
+    expect(list).not.toContain('brnbimmo@gmail.com')
+    expect(list).not.toContain('johannabernabe3@gmail.com')
   })
 })
 
 describe('admin-utils — isDashboardAdmin / isAdmin', () => {
   afterEach(() => {
     process.env.ADMIN_EMAILS = ORIGINAL_ADMIN_EMAILS
+    process.env.DASHBOARD_ADMIN_EMAILS = ORIGINAL_DASHBOARD_ADMIN_EMAILS
     vi.unstubAllEnvs()
   })
 
@@ -67,9 +82,9 @@ describe('admin-utils — isDashboardAdmin / isAdmin', () => {
     expect(isDashboardAdmin(null)).toBe(false)
   })
 
-  it('production : seuls les emails ADMIN_EMAILS sont admin', () => {
+  it('production : seuls les emails DASHBOARD_ADMIN_EMAILS sont admin', () => {
     vi.stubEnv('NODE_ENV', 'production')
-    process.env.ADMIN_EMAILS = 'only-admin@example.com'
+    process.env.DASHBOARD_ADMIN_EMAILS = 'only-admin@example.com'
     expect(isDashboardAdmin('only-admin@example.com')).toBe(true)
     expect(isDashboardAdmin('brnbtech@gmail.com')).toBe(false)
   })
@@ -89,11 +104,12 @@ describe('admin-utils — isInternalAccount', () => {
     vi.unstubAllEnvs()
   })
 
-  it('true pour les 9 comptes internes', () => {
+  it('true pour les 10 comptes internes (admins + équipe)', () => {
     for (const email of getAllInternalEmails()) {
       expect(isInternalAccount(email)).toBe(true)
     }
     expect(isInternalAccount('JohannaFartoukh@Yahoo.fr')).toBe(true)
+    expect(isInternalAccount('olivierbernabe@gmail.com')).toBe(true)
   })
 
   it('false pour un email externe / null', () => {

@@ -10,13 +10,14 @@ export const DASHBOARD_ADMIN_EMAILS = [
   'shai270202@gmail.com',
 ] as const
 
-/** Enterprise + dashboard user — pas d’accès /admin/* */
+/** Enterprise + dashboard user — pas d'accès /admin/* */
 export const INTERNAL_EMAILS = [
   'brnbimmo@gmail.com',
   'contact@brnb.fr',
   'bernabeshai56@gmail.com',
   'johannabernabe3@gmail.com',
   'johannafartoukh@yahoo.fr',
+  'olivierbernabe@gmail.com',
 ] as const
 
 export const SUPER_ADMIN_EMAIL = 'brnbtech@gmail.com'
@@ -48,14 +49,17 @@ function isProductionEnv(): boolean {
 let warnedAdminFallback = false
 let warnedInternalFallback = false
 let warnedSuperAdminFallback = false
+let warnedLegacyAdminEnv = false
 
-function warnOnce(flag: 'admin' | 'internal' | 'super', message: string): void {
+function warnOnce(flag: 'admin' | 'internal' | 'super' | 'legacyAdmin', message: string): void {
   if (flag === 'admin' && warnedAdminFallback) return
   if (flag === 'internal' && warnedInternalFallback) return
   if (flag === 'super' && warnedSuperAdminFallback) return
+  if (flag === 'legacyAdmin' && warnedLegacyAdminEnv) return
   if (flag === 'admin') warnedAdminFallback = true
   if (flag === 'internal') warnedInternalFallback = true
   if (flag === 'super') warnedSuperAdminFallback = true
+  if (flag === 'legacyAdmin') warnedLegacyAdminEnv = true
   console.warn(message)
 }
 
@@ -64,35 +68,11 @@ export function getAllInternalEmails(): readonly string[] {
 }
 
 /**
- * Emails admin pour notifications et contrôle d'accès /admin.
- * Prod + ADMIN_EMAILS défini → liste env uniquement.
- * Prod sans env → fallback hardcodé + warning.
- * Dev/test → union env + hardcodé (accès local sans config).
+ * Comptes internes Enterprise (INTERNAL_EMAILS) — sans les admins dashboard.
  */
-export function getAdminEmailList(): string[] {
-  const fromEnv = parseEmailListEnv('ADMIN_EMAILS')
-  const hardcoded = [...DASHBOARD_ADMIN_EMAILS]
-
-  if (isProductionEnv()) {
-    if (fromEnv.length > 0) return fromEnv
-    warnOnce(
-      'admin',
-      '[admin-utils] ADMIN_EMAILS absent en production — fallback liste hardcodée',
-    )
-    return hardcoded
-  }
-
-  if (fromEnv.length === 0) return hardcoded
-  return [...new Set([...fromEnv, ...hardcoded])]
-}
-
-/**
- * Comptes internes (admin + enterprise internes) — notifications, plans, bootstrap.
- * Même politique que getAdminEmailList avec INTERNAL_EMAILS.
- */
-export function getInternalEmailList(): string[] {
+function getInternalTeamEmailList(): string[] {
   const fromEnv = parseEmailListEnv('INTERNAL_EMAILS')
-  const hardcoded = [...getAllInternalEmails()]
+  const hardcoded = [...INTERNAL_EMAILS]
 
   if (isProductionEnv()) {
     if (fromEnv.length > 0) return fromEnv
@@ -105,6 +85,51 @@ export function getInternalEmailList(): string[] {
 
   if (fromEnv.length === 0) return hardcoded
   return [...new Set([...fromEnv, ...hardcoded])]
+}
+
+/**
+ * Emails autorisés sur /admin/* — DASHBOARD_ADMIN_EMAILS uniquement.
+ * Prod : variable DASHBOARD_ADMIN_EMAILS (Vercel). ADMIN_EMAILS = fallback déprécié.
+ * Garde-fou : un email INTERNAL_EMAILS seul n'est jamais promu admin (config env erronée).
+ */
+export function getAdminEmailList(): string[] {
+  const fromDashboardEnv = parseEmailListEnv('DASHBOARD_ADMIN_EMAILS')
+  const legacyEnv = parseEmailListEnv('ADMIN_EMAILS')
+  const hardcodedAdmins = [...DASHBOARD_ADMIN_EMAILS]
+  const internalTeam = new Set(getInternalTeamEmailList())
+
+  let candidates: string[]
+  if (isProductionEnv()) {
+    if (fromDashboardEnv.length > 0) {
+      candidates = fromDashboardEnv
+    } else if (legacyEnv.length > 0) {
+      warnOnce(
+        'legacyAdmin',
+        '[admin-utils] DASHBOARD_ADMIN_EMAILS absent — fallback ADMIN_EMAILS (déprécié)',
+      )
+      candidates = legacyEnv
+    } else {
+      warnOnce(
+        'admin',
+        '[admin-utils] DASHBOARD_ADMIN_EMAILS absent en production — fallback hardcodé',
+      )
+      candidates = hardcodedAdmins
+    }
+  } else {
+    candidates = [...new Set([...fromDashboardEnv, ...legacyEnv, ...hardcodedAdmins])]
+  }
+
+  return candidates.filter(
+    (email) =>
+      hardcodedAdmins.includes(email as DashboardAdminEmail) || !internalTeam.has(email),
+  )
+}
+
+/**
+ * Tous les comptes internes (admins dashboard + équipe Enterprise) — plans, bootstrap, notifications.
+ */
+export function getInternalEmailList(): string[] {
+  return [...new Set([...getInternalTeamEmailList(), ...getAdminEmailList()])]
 }
 
 /** Email super-admin (dashboard équipe interne). */
