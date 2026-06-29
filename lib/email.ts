@@ -36,13 +36,14 @@ export type SendEmailParams = {
   subject: string
   react: ReactElement
   replyTo?: string
+  from?: string
 }
 
 /**
  * Envoie un email via Resend. Ne lance jamais d'exception.
  * Sans RESEND_API_KEY : log un avertissement et ne fait pas d'appel API.
  */
-export async function sendEmail({ to, subject, react, replyTo }: SendEmailParams) {
+export async function sendEmail({ to, subject, react, replyTo, from }: SendEmailParams) {
   try {
     const resend = getResend()
     if (!resend) {
@@ -54,7 +55,7 @@ export async function sendEmail({ to, subject, react, replyTo }: SendEmailParams
     }
 
     const { data, error } = await resend.emails.send({
-      from: FROM,
+      from: from ?? FROM,
       to: Array.isArray(to) ? to : [to],
       subject,
       react,

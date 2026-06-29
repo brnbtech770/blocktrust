@@ -7,6 +7,7 @@ import { prisma } from '@/app/lib/db'
 import { sendEmailFireAndForget } from '@/lib/email'
 import { monthlyRevenueForSubscription } from '@/lib/admin-revenue'
 import { appBaseUrl, recentAuditLogExists, writeAgentAuditLog } from '@/lib/agents/agent-utils'
+import { runPremiumTrialExpiry } from '@/lib/premium-trial'
 import { Body, Button, Html, Text } from '@react-email/components'
 
 const REMINDER_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000
@@ -52,6 +53,8 @@ function SubscriptionExpiryEmail({
 export type SubscriptionMonitorResult = {
   expiredRemindersSent: number
   warningRemindersSent: number
+  premiumTrialsDowngraded: number
+  premiumTrialExpiryEmailsSent: number
   mrrEur: number
   activeSubscriptions: number
 }
@@ -160,6 +163,8 @@ export async function runSubscriptionMonitor(): Promise<SubscriptionMonitorResul
     warningRemindersSent += 1
   }
 
+  const premiumTrialResult = await runPremiumTrialExpiry()
+
   const activeSubs = await prisma.subscription.findMany({
     where: { status: 'active' },
     select: { id: true, plan: true, stripePriceId: true },
@@ -174,6 +179,8 @@ export async function runSubscriptionMonitor(): Promise<SubscriptionMonitorResul
   await writeAgentAuditLog('SUBSCRIPTION_MONITOR_RUN', 'subscription-monitor', {
     expiredRemindersSent,
     warningRemindersSent,
+    premiumTrialsDowngraded: premiumTrialResult.downgraded,
+    premiumTrialExpiryEmailsSent: premiumTrialResult.emailsSent,
     mrrEur,
     activeSubscriptions: activeSubs.length,
   })
@@ -192,6 +199,8 @@ export async function runSubscriptionMonitor(): Promise<SubscriptionMonitorResul
   return {
     expiredRemindersSent,
     warningRemindersSent,
+    premiumTrialsDowngraded: premiumTrialResult.downgraded,
+    premiumTrialExpiryEmailsSent: premiumTrialResult.emailsSent,
     mrrEur,
     activeSubscriptions: activeSubs.length,
   }
