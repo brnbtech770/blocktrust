@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
       apiKey: null,
       masked: existing.extensionApiKey ?? null,
       message:
-        "Une clé existe déjà pour ce compte. Utilisez « Afficher la clé » ou « Copier la clé complète » sur la page Extension Chrome.",
+        "Une clé existe déjà pour ce compte. Utilisez « Copier la clé » sur la page Extension Chrome.",
     });
   }
 

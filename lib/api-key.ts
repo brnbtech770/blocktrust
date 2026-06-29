@@ -17,6 +17,7 @@
 
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto'
 import type { PrismaClient } from '@prisma/client'
+import { EXTENSION_API_KEY_MASKED_DISPLAY } from '@/lib/extension-api-key'
 
 const PREFIX = 'bt_live_'
 
@@ -66,9 +67,8 @@ export function isValidApiKeyShape(apiKey: string | null | undefined): apiKey is
 
 const EXT_PREFIX = "bt_ext_"
 
-export function maskExtensionApiKeyPreview(apiKey: string): string {
-  if (!apiKey || apiKey.length <= 12) return "••••••••"
-  return `${apiKey.slice(0, 8)}...${apiKey.slice(-4)}`
+export function maskExtensionApiKeyPreview(_apiKey?: string): string {
+  return EXTENSION_API_KEY_MASKED_DISPLAY
 }
 
 export function generateExtensionApiKey(): { apiKey: string; apiKeyHash: string; maskedDisplay: string } {

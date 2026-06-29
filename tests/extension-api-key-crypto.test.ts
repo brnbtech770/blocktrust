@@ -5,6 +5,7 @@ import {
   canEncryptExtensionApiKey,
 } from "@/lib/extension-api-key-crypto";
 import { generateExtensionApiKey, maskExtensionApiKeyPreview } from "@/lib/api-key";
+import { EXTENSION_API_KEY_MASKED_DISPLAY } from "@/lib/extension-api-key";
 
 describe("extension-api-key-crypto", () => {
   const prevSecret = process.env.NEXTAUTH_SECRET;
@@ -41,11 +42,10 @@ describe("extension-api-key-crypto", () => {
 });
 
 describe("maskExtensionApiKeyPreview", () => {
-  it("shows first 8 and last 4 characters", () => {
+  it("always returns fixed masked display without leaking key material", () => {
     const { apiKey, maskedDisplay } = generateExtensionApiKey();
-    expect(maskedDisplay).toBe(maskExtensionApiKeyPreview(apiKey));
-    expect(maskedDisplay).toMatch(/^bt_ext_[a-f0-9]\.\.\.[a-f0-9]{4}$/i);
-    expect(maskedDisplay.startsWith(apiKey.slice(0, 8))).toBe(true);
-    expect(maskedDisplay.endsWith(apiKey.slice(-4))).toBe(true);
+    expect(maskedDisplay).toBe(EXTENSION_API_KEY_MASKED_DISPLAY);
+    expect(maskExtensionApiKeyPreview(apiKey)).toBe(maskedDisplay);
+    expect(maskedDisplay).not.toContain(apiKey.slice(8));
   });
 });

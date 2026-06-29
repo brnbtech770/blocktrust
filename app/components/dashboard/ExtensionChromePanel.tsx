@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
-  AlertTriangle,
   Check,
   Copy,
   Download,
   ExternalLink,
-  Eye,
   KeyRound,
   Loader2,
   RefreshCw,
@@ -18,6 +16,7 @@ import {
   CHROME_EXTENSION_STORE_URL,
   isChromeExtensionStoreUrlReady,
 } from "@/lib/chrome-extension";
+import { EXTENSION_API_KEY_MASKED_DISPLAY } from "@/lib/extension-api-key";
 
 export type ExtensionKeyInitial = {
   hasKey: boolean;
@@ -38,8 +37,6 @@ type Props = {
   extensionKeyInitial: ExtensionKeyInitial;
 };
 
-const SESSION_REVEAL_KEY = "bt_ext_api_key_revealed";
-
 const primaryBtnClass =
   "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-bt-cyan/40 bg-bt-cyan/20 px-5 py-2.5 text-sm font-semibold text-bt-cyan transition hover:bg-bt-cyan/30 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
 
@@ -48,53 +45,19 @@ const secondaryBtnClass =
 
 export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
   const [hasExtensionKey, setHasExtensionKey] = useState(extensionKeyInitial.hasKey);
-  const [maskedKey, setMaskedKey] = useState<string | null>(extensionKeyInitial.masked);
   const [canReveal, setCanReveal] = useState(extensionKeyInitial.canReveal);
-  const [newApiKey, setNewApiKey] = useState<string | null>(null);
-  const [revealedKey, setRevealedKey] = useState<string | null>(null);
-  const [sessionRevealed, setSessionRevealed] = useState(false);
   const [keyLoading, setKeyLoading] = useState(false);
-  const [revealLoading, setRevealLoading] = useState(false);
+  const [copyLoading, setCopyLoading] = useState(false);
   const [keyError, setKeyError] = useState<string | null>(null);
   const [copyDone, setCopyDone] = useState(false);
 
   const storeReady = isChromeExtensionStoreUrlReady();
 
-  useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem(SESSION_REVEAL_KEY);
-      if (stored) {
-        setRevealedKey(stored);
-        setSessionRevealed(true);
-      }
-    } catch {
-      /* sessionStorage indisponible */
-    }
-  }, []);
+  async function handleCopyKey() {
+    if (!canReveal) return;
 
-  async function copyToClipboard(text: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopyDone(true);
-      window.setTimeout(() => setCopyDone(false), 1500);
-    } catch {
-      setKeyError("Copie impossible — copiez manuellement.");
-    }
-  }
-
-  function persistRevealedKey(apiKey: string) {
-    setRevealedKey(apiKey);
-    setSessionRevealed(true);
-    try {
-      sessionStorage.setItem(SESSION_REVEAL_KEY, apiKey);
-    } catch {
-      /* sessionStorage indisponible */
-    }
-  }
-
-  async function fetchRevealedKey(): Promise<string | null> {
     setKeyError(null);
-    setRevealLoading(true);
+    setCopyLoading(true);
     try {
       const res = await fetch("/api/extension/api-key", {
         method: "POST",
@@ -107,48 +70,23 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
         if (data.error === "legacy_key") {
           setCanReveal(false);
         }
-        setKeyError(data.message ?? data.error ?? "Impossible d'afficher la clé.");
-        return null;
+        setKeyError(data.message ?? data.error ?? "Impossible de copier la clé.");
+        return;
       }
-      if (data.apiKey) {
-        persistRevealedKey(data.apiKey);
-        if (data.masked) setMaskedKey(data.masked);
-        setCanReveal(true);
-        return data.apiKey;
+      if (!data.apiKey) {
+        setKeyError("Impossible de copier la clé.");
+        return;
       }
-      return null;
+
+      try {
+        await navigator.clipboard.writeText(data.apiKey);
+        setCopyDone(true);
+        window.setTimeout(() => setCopyDone(false), 2000);
+      } catch {
+        setKeyError("Copie impossible — vérifiez les permissions du navigateur.");
+      }
     } finally {
-      setRevealLoading(false);
-    }
-  }
-
-  async function handleRevealKey() {
-    if (sessionRevealed && revealedKey) return;
-    if (
-      !window.confirm(
-        "Afficher la clé complète ? Ne la partagez jamais. Sur un poste partagé, fermez l'onglet après usage."
-      )
-    ) {
-      return;
-    }
-    await fetchRevealedKey();
-  }
-
-  async function handleCopyFullKey() {
-    if (revealedKey) {
-      await copyToClipboard(revealedKey);
-      return;
-    }
-    if (
-      !window.confirm(
-        "Copier la clé complète dans le presse-papiers ? Ne la partagez jamais avec un tiers."
-      )
-    ) {
-      return;
-    }
-    const apiKey = await fetchRevealedKey();
-    if (apiKey) {
-      await copyToClipboard(apiKey);
+      setCopyLoading(false);
     }
   }
 
@@ -165,16 +103,10 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
         setKeyError(data.message ?? data.error ?? "Erreur lors de la génération.");
         return;
       }
-      if (data.apiKey) {
-        setNewApiKey(data.apiKey);
+      if (data.apiKey || data.hasKey) {
         setHasExtensionKey(true);
-        setMaskedKey(data.masked ?? null);
         setCanReveal(true);
         return;
-      }
-      if (data.hasKey) {
-        setHasExtensionKey(true);
-        setMaskedKey(data.masked ?? null);
       }
     } finally {
       setKeyLoading(false);
@@ -190,14 +122,7 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
       return;
     }
     setKeyError(null);
-    setNewApiKey(null);
-    setRevealedKey(null);
-    setSessionRevealed(false);
-    try {
-      sessionStorage.removeItem(SESSION_REVEAL_KEY);
-    } catch {
-      /* ignore */
-    }
+    setCopyDone(false);
     setKeyLoading(true);
     try {
       const res = await fetch("/api/extension/api-key", {
@@ -212,9 +137,7 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
         return;
       }
       if (data.apiKey) {
-        setNewApiKey(data.apiKey);
         setHasExtensionKey(true);
-        setMaskedKey(data.masked ?? null);
         setCanReveal(true);
       }
     } finally {
@@ -299,68 +222,65 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
           </p>
         ) : null}
 
-        {newApiKey ? (
-          <div className="mb-5 rounded-lg border border-amber-500/30 bg-black/25 p-4">
-            <p className="mb-3 flex items-start gap-2 text-xs text-amber-300">
-              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
-              Copiez cette clé maintenant ou retrouvez-la plus tard via « Afficher la clé ».
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <code className="min-w-0 flex-1 break-all rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 font-mono text-xs text-white/85">
-                {newApiKey}
+        {hasExtensionKey ? (
+          <div className="mb-5 space-y-3">
+            <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-black/20 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <code className="min-w-0 break-all font-mono text-xs text-white/70">
+                {EXTENSION_API_KEY_MASKED_DISPLAY}
               </code>
-              <button
-                type="button"
-                onClick={() => void copyToClipboard(newApiKey)}
-                className={primaryBtnClass}
-              >
-                {copyDone ? (
-                  <>
-                    <Check className="h-4 w-4 text-emerald-400" aria-hidden />
-                    Copié
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4" aria-hidden />
-                    Copier
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        ) : null}
-
-        {hasExtensionKey && !newApiKey ? (
-          <div className="mb-5 space-y-3 rounded-lg border border-white/10 bg-black/20 p-3">
-            <code className="block break-all font-mono text-xs text-white/70">
-              {maskedKey ?? "Clé active (masquée)"}
-            </code>
-
-            {revealedKey ? (
-              <div className="rounded-lg border border-white/10 bg-[#0a1628] p-3">
-                <p className="mb-2 text-xs text-white/45">
-                  Clé affichée pour cette session de navigation uniquement.
-                </p>
-                <code className="block break-all font-mono text-xs text-white/85">{revealedKey}</code>
+              <div className="flex flex-col gap-3 sm:flex-row sm:shrink-0">
+                <button
+                  type="button"
+                  onClick={() => void handleCopyKey()}
+                  disabled={!canReveal || copyLoading || keyLoading}
+                  className={primaryBtnClass}
+                  title={canReveal ? undefined : "Régénérez la clé pour activer la copie sécurisée"}
+                >
+                  {copyDone ? (
+                    <>
+                      <Check className="h-4 w-4 text-emerald-400" aria-hidden />
+                      Copiée !
+                    </>
+                  ) : copyLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      Copie…
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" aria-hidden />
+                      Copier la clé
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleRegenerateKey()}
+                  disabled={keyLoading || copyLoading}
+                  className={secondaryBtnClass}
+                >
+                  {keyLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                      Régénération…
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4" aria-hidden />
+                      Régénérer
+                    </>
+                  )}
+                </button>
               </div>
+            </div>
+            {!canReveal ? (
+              <p className="text-xs text-amber-300/90">
+                Régénérez votre clé une dernière fois pour activer la copie sécurisée.
+              </p>
             ) : null}
-
-            {canReveal ? (
-              <p className="text-xs text-white/45">
-                Les 8 premiers et 4 derniers caractères sont affichés par défaut. Utilisez les
-                boutons ci-dessous pour revoir ou copier la clé complète.
-              </p>
-            ) : (
-              <p className="text-xs text-white/45">
-                Cette clé a été créée avant la fonctionnalité de réaffichage. Régénérez-la une fois
-                pour pouvoir la revoir ensuite sans invalider vos autres services à chaque perte.
-              </p>
-            )}
           </div>
-        ) : null}
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          {!hasExtensionKey ? (
+        ) : (
+          <div className="mb-5">
             <button
               type="button"
               onClick={() => void handleGenerateKey()}
@@ -379,76 +299,8 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
                 </>
               )}
             </button>
-          ) : (
-            <>
-              {canReveal && !newApiKey ? (
-                <>
-                  {!sessionRevealed ? (
-                    <button
-                      type="button"
-                      onClick={() => void handleRevealKey()}
-                      disabled={revealLoading || keyLoading}
-                      className={secondaryBtnClass}
-                    >
-                      {revealLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                          Chargement…
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-4 w-4" aria-hidden />
-                          Afficher la clé
-                        </>
-                      )}
-                    </button>
-                  ) : null}
-                  <button
-                    type="button"
-                    onClick={() => void handleCopyFullKey()}
-                    disabled={revealLoading || keyLoading}
-                    className={primaryBtnClass}
-                  >
-                    {copyDone ? (
-                      <>
-                        <Check className="h-4 w-4 text-emerald-400" aria-hidden />
-                        Copié
-                      </>
-                    ) : revealLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                        Chargement…
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-4 w-4" aria-hidden />
-                        Copier la clé complète
-                      </>
-                    )}
-                  </button>
-                </>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => void handleRegenerateKey()}
-                disabled={keyLoading || revealLoading}
-                className={secondaryBtnClass}
-              >
-                {keyLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                    Régénération…
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-4 w-4" aria-hidden />
-                    Régénérer la clé
-                  </>
-                )}
-              </button>
-            </>
-          )}
-        </div>
+          </div>
+        )}
       </section>
 
       <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4 sm:p-6">
@@ -473,7 +325,7 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
           </li>
           <li className="flex gap-3">
             <span className="font-mono text-xs font-semibold text-bt-cyan">2</span>
-            <span>Générez votre clé API ci-dessus, puis copiez-la ou affichez-la.</span>
+            <span>Générez votre clé API ci-dessus, puis cliquez sur « Copier la clé ».</span>
           </li>
           <li className="flex gap-3">
             <span className="font-mono text-xs font-semibold text-bt-cyan">3</span>
