@@ -40,7 +40,9 @@ async function main() {
 
     console.log(
       `[${email}] → Premium Trial jusqu'au ${formatTrialEndFr(result.trialEndsAt)}` +
-        (result.welcomeEmailSent ? ' (email bienvenue envoyé)' : ' (email déjà envoyé)'),
+        (result.welcomeEmailSent ? ' (email bienvenue envoyé)' : ' (email déjà envoyé)') +
+        (result.badgeJwtStored ? ' · badge JWT OK' : ' · ⚠️ badge JWT manquant (vérifier BLOCKTRUST_JWT_PRIVATE_KEY)') +
+        (result.entityLinked ? ' · entity reliée' : ''),
     )
   }
 

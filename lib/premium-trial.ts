@@ -78,6 +78,25 @@ function entityDisplayName(
   return emailLocalDisplayName(email)
 }
 
+async function linkEntityByEmailToUser(email: string, userId: string): Promise<boolean> {
+  const entity = await prisma.entity.findFirst({
+    where: { email: { equals: email, mode: 'insensitive' } },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true, userId: true },
+  })
+
+  if (!entity || entity.userId === userId) {
+    return false
+  }
+
+  await prisma.entity.update({
+    where: { id: entity.id },
+    data: { userId },
+  })
+
+  return true
+}
+
 async function ensureUserForPremiumTrial(email: string) {
   const existingUser = await prisma.user.findFirst({
     where: { email: { equals: email, mode: 'insensitive' } },
@@ -85,7 +104,8 @@ async function ensureUserForPremiumTrial(email: string) {
   })
 
   if (existingUser) {
-    return { user: existingUser, userCreated: false as const }
+    const linkedEntity = await linkEntityByEmailToUser(email, existingUser.id)
+    return { user: existingUser, userCreated: false as const, linkedEntity }
   }
 
   const existingEntity = await prisma.entity.findFirst({
@@ -122,6 +142,51 @@ async function ensureUserForPremiumTrial(email: string) {
   return { user, userCreated: true as const, linkedEntity: existingEntity != null }
 }
 
+async function resolveTrialEntity(email: string, userId: string) {
+  let linkedEntity = await linkEntityByEmailToUser(email, userId)
+
+  let entity = await prisma.entity.findFirst({
+    where: {
+      OR: [{ userId }, { email: { equals: email, mode: 'insensitive' } }],
+    },
+    orderBy: { createdAt: 'asc' },
+  })
+
+  if (entity && entity.userId !== userId) {
+    await prisma.entity.update({
+      where: { id: entity.id },
+      data: { userId },
+    })
+    linkedEntity = true
+    entity = await prisma.entity.findUniqueOrThrow({ where: { id: entity.id } })
+  }
+
+  return { entity, linkedEntity }
+}
+
+async function syncTrialAmbassadorUser(
+  userId: string,
+  email: string,
+  entity: { kycStatus: string; firstName: string | null; lastName: string | null } | null,
+  displayName: string,
+): Promise<void> {
+  const entityVerified = entity?.kycStatus === 'VERIFIED'
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      name: displayName,
+      ...(entityVerified
+        ? {
+            kycStatus: 'VERIFIED',
+            kycVerifiedAt: new Date(),
+          }
+        : {}),
+      certifiedEmails: [email],
+    },
+  })
+}
+
 function splitDisplayName(userName: string, email: string): { firstName: string; lastName: string | null } {
   const trimmed = userName.trim()
   if (trimmed) {
@@ -138,7 +203,15 @@ function formatTrialEndFr(date: Date): string {
 }
 
 export type GrantPremiumTrialResult =
-  | { ok: true; userId: string; trialEndsAt: Date; welcomeEmailSent: boolean; skipped?: false }
+  | {
+      ok: true
+      userId: string
+      trialEndsAt: Date
+      welcomeEmailSent: boolean
+      badgeJwtStored: boolean
+      entityLinked: boolean
+      skipped?: false
+    }
   | { ok: false; skipped: true; reason: string }
   | { ok: false; skipped?: false; reason: string }
 
@@ -171,13 +244,22 @@ export async function grantPremiumTrial(params: {
 
   const premiumPlan = await prisma.plan.findFirst({
     where: { type: PREMIUM_PLAN_TYPE, isActive: true },
-    orderBy: { createdAt: 'asc' },
+    orderBy: [{ maxEntities: 'desc' }, { createdAt: 'asc' }],
     select: { id: true },
   })
 
   if (!premiumPlan) {
     return { ok: false, reason: 'Plan B2C_PREMIUM introuvable en base' }
   }
+
+  await prisma.plan.update({
+    where: { id: premiumPlan.id },
+    data: {
+      maxEntities: 100,
+      trustCircleEnabled: true,
+      blockchainAnchor: true,
+    },
+  })
 
   await prisma.user.update({
     where: { id: user.id },
@@ -199,12 +281,14 @@ export async function grantPremiumTrial(params: {
     },
   })
 
-  let entity = await prisma.entity.findFirst({
-    where: { userId: user.id },
-    orderBy: { createdAt: 'asc' },
-  })
+  const { entity: resolvedEntity, linkedEntity } = await resolveTrialEntity(email, user.id)
 
-  const displayName = user.name ?? email
+  let entity = resolvedEntity
+
+  const displayName =
+    entity != null
+      ? entityDisplayName(entity, email)
+      : (user.name ?? emailLocalDisplayName(email))
   const { firstName, lastName } = splitDisplayName(displayName, email)
 
   if (!entity) {
@@ -221,12 +305,24 @@ export async function grantPremiumTrial(params: {
         emailVerified: true,
       },
     })
-  } else if (entity.validationLevel !== PREMIUM_VALIDATION) {
+  } else {
     await prisma.entity.update({
       where: { id: entity.id },
-      data: { validationLevel: PREMIUM_VALIDATION },
+      data: {
+        validationLevel: PREMIUM_VALIDATION,
+        kycStatus: 'VERIFIED',
+        emailVerified: true,
+        certifiedEmails: entity.certifiedEmails.includes(email)
+          ? entity.certifiedEmails
+          : [...entity.certifiedEmails, email],
+        ...(entity.firstName ? {} : { firstName }),
+        ...(entity.lastName ? {} : { lastName }),
+      },
     })
+    entity = await prisma.entity.findUniqueOrThrow({ where: { id: entity.id } })
   }
+
+  await syncTrialAmbassadorUser(user.id, email, entity, displayName)
 
   let certificate = await prisma.certificate.findFirst({
     where: {
@@ -263,14 +359,23 @@ export async function grantPremiumTrial(params: {
     })
   }
 
-  await ensureBadgeSignature(certificate.id, user.id).catch(() => null)
+  const badgeResult = await ensureBadgeSignature(certificate.id, user.id).catch(() => ({
+    jwtStored: false,
+  }))
 
   let welcomeEmailSent = false
   if (params.sendWelcomeEmail) {
     welcomeEmailSent = await sendPremiumTrialWelcomeIfNeeded(user.id, email, firstName, trialEndsAt)
   }
 
-  return { ok: true, userId: user.id, trialEndsAt, welcomeEmailSent }
+  return {
+    ok: true,
+    userId: user.id,
+    trialEndsAt,
+    welcomeEmailSent,
+    badgeJwtStored: badgeResult.jwtStored,
+    entityLinked: linkedEntity,
+  }
 }
 
 export async function sendPremiumTrialWelcomeIfNeeded(
