@@ -4,7 +4,8 @@
  */
 import * as dotenv from 'dotenv'
 
-dotenv.config({ path: '.env.local' })
+const useProd = process.argv.includes('--prod')
+dotenv.config({ path: useProd ? '.env.production.local' : '.env.local', override: useProd })
 dotenv.config()
 
 import { prisma } from '@/app/lib/db'
@@ -12,7 +13,7 @@ import { resolveEffectivePlan } from '@/lib/plan-features'
 import { PREMIUM_TRIAL_AMBASSADOR_EMAILS } from '@/lib/premium-trial'
 
 async function main() {
-  const args = process.argv.slice(2)
+  const args = process.argv.slice(2).filter((a) => a !== '--prod')
   const emails =
     args.length > 0 ? args.map((e) => e.trim().toLowerCase()) : [...PREMIUM_TRIAL_AMBASSADOR_EMAILS]
 

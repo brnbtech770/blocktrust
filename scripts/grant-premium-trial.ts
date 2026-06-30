@@ -4,7 +4,8 @@
  */
 import * as dotenv from 'dotenv'
 
-dotenv.config({ path: '.env.local' })
+const useProd = process.argv.includes('--prod')
+dotenv.config({ path: useProd ? '.env.production.local' : '.env.local', override: useProd })
 dotenv.config()
 
 import { prisma } from '@/app/lib/db'
