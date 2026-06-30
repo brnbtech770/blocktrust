@@ -100,6 +100,35 @@ describe('plan-features — resolveEffectivePlan', () => {
     ).toBe('DISCOVERY')
   })
 
+  it('trial Premium actif sans currentPeriodEnd → PREMIUM (sync partielle)', () => {
+    expect(
+      resolveEffectivePlan({
+        subscription: {
+          plan: 'PREMIUM',
+          status: 'active',
+          stripeSubscriptionId: null,
+          currentPeriodEnd: null,
+        },
+        email: 'jimacoca@gmail.com',
+      }),
+    ).toBe('PREMIUM')
+  })
+
+  it('Subscription.plan DISCOVERY + User.plan Premium + trial en cours → PREMIUM', () => {
+    expect(
+      resolveEffectivePlan({
+        subscription: {
+          plan: 'DISCOVERY',
+          status: 'active',
+          stripeSubscriptionId: null,
+          currentPeriodEnd: future,
+        },
+        planType: 'B2C_PREMIUM',
+        email: 'jusaadoun@gmail.com',
+      }),
+    ).toBe('PREMIUM')
+  })
+
   it('compte interne → Enterprise', () => {
     expect(
       resolveEffectivePlan({

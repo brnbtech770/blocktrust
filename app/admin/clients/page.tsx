@@ -171,6 +171,7 @@ export default async function AdminClientsPage({
       trustScore: true,
       createdAt: true,
       kycStatus: true,
+      plan: { select: { type: true } },
       subscription: {
         select: {
           plan: true,
@@ -212,6 +213,7 @@ export default async function AdminClientsPage({
       const effectivePlan = resolveEffectivePlan({
         subscription: u.subscription,
         email: u.email,
+        planType: u.plan?.type,
       })
       const planCode = effectivePlan
       const billingLabel = isDiscoveryPlan(effectivePlan)

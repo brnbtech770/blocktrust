@@ -30,7 +30,11 @@ export async function checkEntityQuota(userId: string): Promise<QuotaCheckResult
   }
 
   // Plan effectif : statut Stripe inclus (abonnement inactif → DISCOVERY ; admin → Enterprise)
-  const plan = resolveEffectivePlan({ subscription: user.subscription, email: user.email })
+  const plan = resolveEffectivePlan({
+    subscription: user.subscription,
+    email: user.email,
+    planType: user.plan?.type,
+  })
   const fromPlanRow = user.plan?.maxEntities
   const maxEntities =
     fromPlanRow != null && fromPlanRow > 0 ? fromPlanRow : getMaxEntities(plan)
@@ -73,7 +77,11 @@ export async function checkCertificateQuota(userId: string): Promise<QuotaCheckR
   }
 
   // Plan effectif : statut Stripe inclus (abonnement inactif → DISCOVERY ; admin → Enterprise)
-  const plan = resolveEffectivePlan({ subscription: user.subscription, email: user.email })
+  const plan = resolveEffectivePlan({
+    subscription: user.subscription,
+    email: user.email,
+    planType: user.plan?.type,
+  })
   const maxCertificates = getMaxCertificates(plan)
 
   // Compter les certificats actifs
@@ -123,7 +131,11 @@ export async function getEntityQuotaSnapshot(userId: string): Promise<{
 
   if (!user) return null
 
-  const planStr = resolveEffectivePlan({ subscription: user.subscription, email: user.email })
+  const planStr = resolveEffectivePlan({
+    subscription: user.subscription,
+    email: user.email,
+    planType: user.plan?.type,
+  })
   const fromPlanRow = user.plan?.maxEntities
   const max = fromPlanRow != null && fromPlanRow > 0 ? fromPlanRow : getMaxEntities(planStr)
 

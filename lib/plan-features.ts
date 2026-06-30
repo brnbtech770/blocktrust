@@ -76,13 +76,25 @@ function resolveActiveSubscriptionPlan(sub: PlanResolutionSubscription): string 
   // Abonnement Stripe payant : inchangé (active / trialing suffit).
   if (sub.stripeSubscriptionId) return plan
 
-  // Trial interne sans Stripe : période en cours requise.
+  // Trial interne sans Stripe.
   const periodEnd = sub.currentPeriodEnd
   if (periodEnd instanceof Date) {
     return periodEnd.getTime() > Date.now() ? plan : null
   }
 
+  // Actif sans Stripe ni date de fin : plan payant explicite (trial ambassadeur / sync partielle).
+  if (!isDiscoveryPlan(plan)) return plan
+
   return null
+}
+
+function planTypeToEffectivePlan(planType?: string | null): string | null {
+  const key = normalizePlan(planType)
+  if (!key || key === DISCOVERY_PLAN || key === DISCOVERY_EXPIRED_PLAN) return null
+  if (key.startsWith('B2C_') || key.startsWith('B2B_')) {
+    return key.replace(/^B2C_/, '').replace(/^B2B_/, '') || null
+  }
+  return key
 }
 
 /**
@@ -99,12 +111,29 @@ export function resolveEffectivePlan(params: {
   email?: string | null
   /** Court-circuit explicite (déjà calculé en amont). Sinon dérivé de `email`. */
   isAdmin?: boolean
+  /** User.plan.type — filet si Subscription.plan reste DISCOVERY alors que planId Premium est lié. */
+  planType?: string | null
 }): string {
   if (params.isAdmin || isInternalAccount(params.email)) return 'B2B_ENTERPRISE'
   const sub = params.subscription
   if (!sub) return DEFAULT_B2C_PLAN
+
   const activePlan = resolveActiveSubscriptionPlan(sub)
-  return activePlan ?? DEFAULT_B2C_PLAN
+  if (activePlan && !isDiscoveryPlan(activePlan)) return activePlan
+
+  // Trial interne : Subscription.plan peut rester DISCOVERY (défaut Prisma) avec User.planId Premium.
+  if (
+    isActiveBillingStatus(sub.status) &&
+    !sub.stripeSubscriptionId &&
+    sub.currentPeriodEnd instanceof Date &&
+    sub.currentPeriodEnd.getTime() > Date.now()
+  ) {
+    const fromPlanType = planTypeToEffectivePlan(params.planType)
+    if (fromPlanType) return fromPlanType
+  }
+
+  if (activePlan) return activePlan
+  return DEFAULT_B2C_PLAN
 }
 
 /**

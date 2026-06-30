@@ -133,7 +133,7 @@ export const authOptions: NextAuthConfig = {
 
         const user = await prisma.user.findUnique({
           where: { email },
-          include: { subscription: true },
+          include: { subscription: true, plan: { select: { type: true } } },
         });
 
         if (!user || !user.password) {
@@ -176,6 +176,7 @@ export const authOptions: NextAuthConfig = {
         const plan = resolveEffectivePlan({
           subscription: user.subscription,
           email: user.email,
+          planType: user.plan?.type,
         });
 
         return {
@@ -263,11 +264,24 @@ export const authOptions: NextAuthConfig = {
                 const subscription = await prisma.subscription
                   .findUnique({
                     where: { userId: dbUser.id },
-                    select: { plan: true, status: true, stripeSubscriptionId: true, currentPeriodEnd: true },
+                    select: {
+                      plan: true,
+                      status: true,
+                      stripeSubscriptionId: true,
+                      currentPeriodEnd: true,
+                    },
                   })
                   .catch(() => null);
-                // Statut Stripe inclus : un abonnement résiduel non actif → Découverte.
-                token.plan = resolveEffectivePlan({ subscription, email: oauthEmail });
+                const planRow = dbUser.planId
+                  ? await prisma.plan
+                      .findUnique({ where: { id: dbUser.planId }, select: { type: true } })
+                      .catch(() => null)
+                  : null;
+                token.plan = resolveEffectivePlan({
+                  subscription,
+                  email: oauthEmail,
+                  planType: planRow?.type,
+                });
                 token.planFetchedAt = Date.now();
               }
             } else {
@@ -299,6 +313,7 @@ export const authOptions: NextAuthConfig = {
                   kycStatus: true,
                   accountType: true,
                   cookieConsent: true,
+                  plan: { select: { type: true } },
                   subscription: {
                     select: {
                       plan: true,
@@ -311,11 +326,10 @@ export const authOptions: NextAuthConfig = {
               })
               .catch(() => null);
 
-            // Plan effectif : statut Stripe inclus (un abonnement inactif/canceled
-            // avec un plan résiduel ne donne JAMAIS de droits payants → Découverte).
             token.plan = resolveEffectivePlan({
               subscription: dbUser?.subscription,
               email: dbUser?.email ?? email,
+              planType: dbUser?.plan?.type,
             });
             if (dbUser) {
               if (dbUser.email) {
