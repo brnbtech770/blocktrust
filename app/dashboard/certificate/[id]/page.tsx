@@ -98,7 +98,15 @@ export default async function CertificateDetailPage({
 
     // Pastille = plan RÉEL résolu (composant partagé PlanBadge — jamais de palier codé en dur).
     const sub = await prisma.subscription
-      .findUnique({ where: { userId: session.user.id }, select: { plan: true } })
+      .findUnique({
+        where: { userId: session.user.id },
+        select: {
+          plan: true,
+          status: true,
+          stripeSubscriptionId: true,
+          currentPeriodEnd: true,
+        },
+      })
       .catch(() => null);
     const isPolygonAnchored =
       certificate.blockchainStatus === "ANCHORED" ||
@@ -133,7 +141,7 @@ export default async function CertificateDetailPage({
               <span className={`px-4 py-2 rounded-full text-sm font-medium border ${statusColor}`}>
                 {certificate.status}
               </span>
-              <PlanBadge subscriptionPlan={sub?.plan} email={session.user.email} className="px-4 py-2 text-sm" />
+              <PlanBadge subscription={sub} email={session.user.email} className="px-4 py-2 text-sm" />
             </div>
           </div>
         </div>

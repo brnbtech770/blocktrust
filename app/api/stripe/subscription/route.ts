@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
     // Plan réel résolu (source unique) + libellé affiché (Compte interne pour admins/Johanna).
     const subForLabel = await prisma.subscription.findUnique({
       where: { userId: user.id },
-      select: { plan: true, status: true },
+      select: { plan: true, status: true, stripeSubscriptionId: true, currentPeriodEnd: true },
     })
     const planCode = resolveEffectivePlan({
       subscription: subForLabel,

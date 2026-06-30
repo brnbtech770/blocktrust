@@ -263,7 +263,7 @@ export const authOptions: NextAuthConfig = {
                 const subscription = await prisma.subscription
                   .findUnique({
                     where: { userId: dbUser.id },
-                    select: { plan: true, status: true },
+                    select: { plan: true, status: true, stripeSubscriptionId: true, currentPeriodEnd: true },
                   })
                   .catch(() => null);
                 // Statut Stripe inclus : un abonnement résiduel non actif → Découverte.
@@ -300,7 +300,12 @@ export const authOptions: NextAuthConfig = {
                   accountType: true,
                   cookieConsent: true,
                   subscription: {
-                    select: { plan: true, status: true },
+                    select: {
+                      plan: true,
+                      status: true,
+                      stripeSubscriptionId: true,
+                      currentPeriodEnd: true,
+                    },
                   },
                 },
               })

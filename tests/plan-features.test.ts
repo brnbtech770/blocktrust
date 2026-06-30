@@ -7,6 +7,7 @@ import {
   isDiscoveryPlan,
   isDiscoveryExpired,
   resolveAccountPlan,
+  resolveEffectivePlan,
   getPlanDisplayLabel,
   planAllowsPolygonAnchoring,
   planAllowsTrustCircle,
@@ -44,15 +45,101 @@ describe('plan-features — détection du plan Découverte', () => {
   })
 })
 
+describe('plan-features — resolveEffectivePlan', () => {
+  const future = new Date('2099-01-01T00:00:00.000Z')
+  const past = new Date('2020-01-01T00:00:00.000Z')
+
+  it('trial Premium sans Stripe avec période en cours → PREMIUM', () => {
+    expect(
+      resolveEffectivePlan({
+        subscription: {
+          plan: 'PREMIUM',
+          status: 'active',
+          stripeSubscriptionId: null,
+          currentPeriodEnd: future,
+        },
+        email: 'jimacoca@gmail.com',
+      }),
+    ).toBe('PREMIUM')
+  })
+
+  it('trial Premium sans Stripe expiré → Découverte', () => {
+    expect(
+      resolveEffectivePlan({
+        subscription: {
+          plan: 'PREMIUM',
+          status: 'active',
+          stripeSubscriptionId: null,
+          currentPeriodEnd: past,
+        },
+        email: 'jusaadoun@gmail.com',
+      }),
+    ).toBe('DISCOVERY')
+  })
+
+  it('abonnement Stripe actif → plan conservé (sans exiger currentPeriodEnd)', () => {
+    expect(
+      resolveEffectivePlan({
+        subscription: {
+          plan: 'ESSENTIEL',
+          status: 'active',
+          stripeSubscriptionId: 'sub_123',
+          currentPeriodEnd: null,
+        },
+        email: 'client@example.com',
+      }),
+    ).toBe('ESSENTIEL')
+  })
+
+  it('abonnement inactif avec plan résiduel → Découverte', () => {
+    expect(
+      resolveEffectivePlan({
+        subscription: { plan: 'PREMIUM', status: 'canceled' },
+        email: 'client@example.com',
+      }),
+    ).toBe('DISCOVERY')
+  })
+
+  it('compte interne → Enterprise', () => {
+    expect(
+      resolveEffectivePlan({
+        subscription: { plan: 'DISCOVERY', status: 'inactive' },
+        email: 'brnbtech@gmail.com',
+      }),
+    ).toBe('B2B_ENTERPRISE')
+  })
+})
+
 describe('plan-features — resolveAccountPlan', () => {
+  const future = new Date('2099-01-01T00:00:00.000Z')
+
   it('admin → Enterprise, jamais écrasé par un abonnement', () => {
     expect(resolveAccountPlan('ESSENTIEL', { isAdmin: true })).toBe('B2B_ENTERPRISE')
     expect(resolveAccountPlan(null, { isAdmin: true })).toBe('B2B_ENTERPRISE')
   })
 
   it("retourne l'abonnement Stripe s'il existe", () => {
-    expect(resolveAccountPlan('B2B_TEAM')).toBe('B2B_TEAM')
-    expect(resolveAccountPlan('PREMIUM')).toBe('PREMIUM')
+    expect(
+      resolveAccountPlan('B2B_TEAM', {
+        subscriptionStatus: 'active',
+        stripeSubscriptionId: 'sub_123',
+      }),
+    ).toBe('B2B_TEAM')
+    expect(
+      resolveAccountPlan('PREMIUM', {
+        subscriptionStatus: 'active',
+        stripeSubscriptionId: 'sub_456',
+      }),
+    ).toBe('PREMIUM')
+  })
+
+  it('trial sans Stripe avec période future', () => {
+    expect(
+      resolveAccountPlan('PREMIUM', {
+        subscriptionStatus: 'active',
+        currentPeriodEnd: future,
+      }),
+    ).toBe('PREMIUM')
   })
 
   it('sans abonnement → plan gratuit Découverte (jamais Essentiel)', () => {

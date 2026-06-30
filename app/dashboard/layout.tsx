@@ -68,7 +68,7 @@ export default async function DashboardSegmentLayout({
     const user = await prisma.user
       .findUnique({
         where: { email: session.user.email },
-        include: { plan: true, subscription: { select: { plan: true, status: true } } },
+        include: { plan: true, subscription: { select: { plan: true, status: true, stripeSubscriptionId: true, currentPeriodEnd: true } } },
       })
       .catch(() => null)
 

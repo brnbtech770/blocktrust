@@ -4,25 +4,43 @@
 // Aucun libellé de plan codé en dur par défaut (jamais de plan "par défaut" trompeur).
 // ============================================================
 
-import { getPlanDisplayLabel, resolveEffectivePlan } from '@/lib/plan-features'
+import { getPlanDisplayLabel, resolveEffectivePlan, type PlanResolutionSubscription } from '@/lib/plan-features'
 
 type PlanBadgeProps = {
   /** Subscription.plan brut (peut être null/undefined → plan gratuit Découverte). */
   subscriptionPlan?: string | null
   /** Subscription.status (active/trialing → payant). Absent → comportement legacy (supposé actif). */
   subscriptionStatus?: string | null
+  stripeSubscriptionId?: string | null
+  currentPeriodEnd?: Date | null
+  /** Objet subscription complet (prioritaire sur les champs individuels). */
+  subscription?: PlanResolutionSubscription | null
   /** Email du compte affiché : admins (ADMIN_EMAILS) + Johanna → "Compte interne". */
   email?: string | null
   className?: string
 }
 
-export default function PlanBadge({ subscriptionPlan, subscriptionStatus, email, className }: PlanBadgeProps) {
-  // Statut absent → on suppose « active » pour préserver l'affichage existant ;
-  // les appelants disposant du statut le transmettent pour un libellé exact.
-  const code = resolveEffectivePlan({
-    subscription: subscriptionPlan ? { plan: subscriptionPlan, status: subscriptionStatus ?? 'active' } : null,
-    email,
-  })
+export default function PlanBadge({
+  subscriptionPlan,
+  subscriptionStatus,
+  stripeSubscriptionId,
+  currentPeriodEnd,
+  subscription,
+  email,
+  className,
+}: PlanBadgeProps) {
+  const sub: PlanResolutionSubscription | null =
+    subscription ??
+    (subscriptionPlan
+      ? {
+          plan: subscriptionPlan,
+          status: subscriptionStatus ?? 'active',
+          stripeSubscriptionId: stripeSubscriptionId ?? null,
+          currentPeriodEnd: currentPeriodEnd ?? null,
+        }
+      : null)
+
+  const code = resolveEffectivePlan({ subscription: sub, email })
   const label = getPlanDisplayLabel(code, { email })
 
   return (

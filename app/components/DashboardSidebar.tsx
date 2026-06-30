@@ -41,7 +41,12 @@ export default async function DashboardSidebar() {
     const subscription = user
       ? await prisma.subscription.findUnique({
           where: { userId: user.id },
-          select: { plan: true, status: true },
+          select: {
+            plan: true,
+            status: true,
+            stripeSubscriptionId: true,
+            currentPeriodEnd: true,
+          },
         })
       : null
 

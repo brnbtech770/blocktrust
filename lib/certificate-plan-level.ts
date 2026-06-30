@@ -3,7 +3,7 @@
 // ============================================================
 
 import type { ValidationLevel } from '@prisma/client'
-import { getPlanDisplayLabel, resolveEffectivePlan } from '@/lib/plan-features'
+import { getPlanDisplayLabel, resolveEffectivePlan, type PlanResolutionSubscription } from '@/lib/plan-features'
 
 /** Normalise un code plan (court ou préfixé) vers un ValidationLevel Prisma. */
 export function normalizePlanToCertificateLevel(plan?: string | null): ValidationLevel {
@@ -44,7 +44,7 @@ export function deriveCertificateLevelFromPlan(plan?: string | null): Validation
 }
 
 export function deriveCertificateLevelForUser(params: {
-  subscription?: { plan?: string | null; status?: string | null } | null
+  subscription?: PlanResolutionSubscription | null
   email?: string | null
 }): ValidationLevel {
   const effective = resolveEffectivePlan(params)

@@ -176,6 +176,8 @@ export default async function AdminClientsPage({
           plan: true,
           status: true,
           stripePriceId: true,
+          stripeSubscriptionId: true,
+          currentPeriodEnd: true,
         },
       },
       entities: {
