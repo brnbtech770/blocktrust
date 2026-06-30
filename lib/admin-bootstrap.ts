@@ -7,7 +7,7 @@ import { SignJWT } from 'jose'
 import { prisma } from '@/app/lib/db'
 import { getAdminEmailList, getAllInternalEmails, isDashboardAdmin, isInternalAccount } from '@/lib/admin-utils'
 import { syncInternalAccountKycByUserId } from '@/lib/internal-kyc-verified'
-import { importEs256PrivateKeyFromEnv } from '@/lib/jwt-pem'
+import { importJwtPrivateKeyFromEnv } from '@/lib/jwt-pem'
 
 async function upsertMutualAdminEdge(fromUserId: string, toUserId: string): Promise<void> {
   await prisma.userTrustRelation
@@ -48,14 +48,16 @@ async function signBadgeJwt(params: {
   jti: string
 }): Promise<string | null> {
   try {
-    const privateKey = await importEs256PrivateKeyFromEnv(process.env.BLOCKTRUST_JWT_PRIVATE_KEY)
+    const { key: privateKey, alg } = await importJwtPrivateKeyFromEnv(
+      process.env.BLOCKTRUST_JWT_PRIVATE_KEY,
+    )
     return await new SignJWT({
       sub: params.publicId,
       entityId: params.entityId,
       userId: params.userId,
       purpose: 'badge',
     })
-      .setProtectedHeader({ alg: 'ES256', typ: 'JWT' })
+      .setProtectedHeader({ alg, typ: 'JWT' })
       .setIssuedAt()
       .setJti(params.jti)
       .setIssuer('blocktrust')

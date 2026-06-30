@@ -4,12 +4,10 @@
  */
 import { SignJWT, jwtVerify } from "jose";
 import {
-  importEs256PrivateKeyFromEnv,
-  importEs256PublicKeyFromEnv,
+  importJwtPrivateKeyFromEnv,
+  importJwtPublicKeyFromEnv,
   normalizeJwtPemFromEnv,
 } from "@/lib/jwt-pem";
-
-const ALG = "ES256"; // Simple default. You can switch to Ed25519 later.
 
 /**
  * Requires:
@@ -18,11 +16,13 @@ const ALG = "ES256"; // Simple default. You can switch to Ed25519 later.
  */
 export async function signToken(payload: Record<string, unknown>, expiresInSeconds: number) {
   try {
-    const privateKey = await importEs256PrivateKeyFromEnv(process.env.BLOCKTRUST_JWT_PRIVATE_KEY);
+    const { key: privateKey, alg } = await importJwtPrivateKeyFromEnv(
+      process.env.BLOCKTRUST_JWT_PRIVATE_KEY,
+    );
 
     const now = Math.floor(Date.now() / 1000);
     return await new SignJWT(payload)
-      .setProtectedHeader({ alg: ALG, typ: "JWT" })
+      .setProtectedHeader({ alg, typ: "JWT" })
       .setIssuedAt(now)
       .setExpirationTime(now + expiresInSeconds)
       .setIssuer("blocktrust")
@@ -39,7 +39,7 @@ export async function signToken(payload: Record<string, unknown>, expiresInSecon
 
 export async function verifyToken(token: string) {
   try {
-    const publicKey = await importEs256PublicKeyFromEnv(process.env.BLOCKTRUST_JWT_PUBLIC_KEY);
+    const { key: publicKey } = await importJwtPublicKeyFromEnv(process.env.BLOCKTRUST_JWT_PUBLIC_KEY);
     const { payload } = await jwtVerify(token, publicKey, {
       issuer: "blocktrust",
       audience: "blocktrust.verify",
