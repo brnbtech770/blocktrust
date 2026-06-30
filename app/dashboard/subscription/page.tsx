@@ -10,6 +10,11 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import SubscriptionClient from '@/app/components/dashboard/SubscriptionClient'
 import { getPlanDisplayLabel, resolveEffectivePlan } from '@/lib/plan-features'
+import {
+  formatPremiumTrialEndFr,
+  getPremiumTrialBillingLabel,
+  isPremiumTrialSubscription,
+} from '@/lib/premium-trial'
 import { btErrorDevDetails } from '@/lib/prodLog'
 
 export default async function SubscriptionPage() {
@@ -40,10 +45,12 @@ export default async function SubscriptionPage() {
     }
 
     const subscription = user.subscription
+    const premiumTrial = isPremiumTrialSubscription(subscription)
     // Plan affiché = plan réel résolu (source unique : resolveEffectivePlan, statut Stripe inclus).
     const resolvedPlan = resolveEffectivePlan({
       subscription,
       email: session.user.email,
+      planType: user.plan?.type,
     })
     const planName = getPlanDisplayLabel(resolvedPlan, { email: session.user.email })
     const currentPeriodEnd = subscription?.currentPeriodEnd
@@ -80,28 +87,33 @@ export default async function SubscriptionPage() {
             </div>
             <span className={`px-4 py-2 rounded-full text-sm font-medium ${
               status === 'active' 
-                ? 'bg-green-500/20 text-green-400 border border-green-500/50'
+                ? premiumTrial
+                  ? 'bg-[#BDA76B]/20 text-[#BDA76B] border border-[#BDA76B]/40'
+                  : 'bg-green-500/20 text-green-400 border border-green-500/50'
                 : 'bg-gray-500/20 text-gray-400 border border-gray-500/50'
             }`}>
-              {status === 'active' ? 'Actif' : 'Inactif'}
+              {status === 'active' ? (premiumTrial ? 'Essai Premium offert' : 'Actif') : 'Inactif'}
             </span>
           </div>
 
           {currentPeriodEnd && status === 'active' && (
             <div className="mb-6">
-              <p className="text-gray-400 text-sm mb-1">Prochain renouvellement</p>
-              <p className="text-white font-semibold text-lg">
-                {new Date(currentPeriodEnd).toLocaleDateString('fr-FR', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+              <p className="text-gray-400 text-sm mb-1">
+                {premiumTrial ? 'Fin de l\'essai offert' : 'Prochain renouvellement'}
               </p>
+              <p className="text-white font-semibold text-lg">
+                {formatPremiumTrialEndFr(new Date(currentPeriodEnd))}
+              </p>
+              {premiumTrial ? (
+                <p className="mt-2 text-sm text-white/55">
+                  {getPremiumTrialBillingLabel()} — sans engagement Stripe
+                </p>
+              ) : null}
             </div>
           )}
 
           <div className="flex gap-4">
-            {status === 'active' ? (
+            {status === 'active' && !premiumTrial ? (
               <>
                 <SubscriptionClient />
                 <Link
@@ -111,6 +123,13 @@ export default async function SubscriptionPage() {
                   Changer de plan
                 </Link>
               </>
+            ) : status === 'active' && premiumTrial ? (
+              <Link
+                href="/pricing"
+                className="rounded-lg border border-[#BDA76B]/40 bg-[#BDA76B]/10 py-3 px-6 font-sans font-semibold text-[#BDA76B] transition-all hover:bg-[#BDA76B]/20"
+              >
+                Voir les offres après l&apos;essai
+              </Link>
             ) : (
               <Link
                 href="/pricing"
@@ -133,7 +152,13 @@ export default async function SubscriptionPage() {
             <div className="flex justify-between">
               <span className="text-gray-400">Statut :</span>
               <span className="text-white font-semibold">
-                {status === 'active' ? 'Actif' : status === 'canceled' ? 'Annulé' : 'Inactif'}
+                {premiumTrial
+                  ? 'Essai Premium offert'
+                  : status === 'active'
+                    ? 'Actif'
+                    : status === 'canceled'
+                      ? 'Annulé'
+                      : 'Inactif'}
               </span>
             </div>
             {subscription?.stripeSubscriptionId && (

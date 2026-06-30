@@ -20,6 +20,11 @@ import {
   planAllowsPolygonAnchoring,
   resolveEffectivePlan,
 } from '@/lib/plan-features'
+import {
+  getPremiumTrialBillingLabel,
+  getPremiumTrialPeriodLabel,
+  isPremiumTrialSubscription,
+} from '@/lib/premium-trial'
 import { formatCertificateLabel } from '@/lib/format-certificate-label'
 
 export const dynamic = 'force-dynamic'
@@ -215,12 +220,16 @@ export default async function AdminClientsPage({
         email: u.email,
         planType: u.plan?.type,
       })
+      const sub = u.subscription
+      const premiumTrial = isPremiumTrialSubscription(sub)
       const planCode = effectivePlan
       const billingLabel = isDiscoveryPlan(effectivePlan)
         ? 'Gratuit'
-        : u.subscription?.plan
-          ? formatPlanBillingLabel(planCode, isYearly)
-          : '—'
+        : premiumTrial
+          ? getPremiumTrialBillingLabel()
+          : sub?.plan
+            ? formatPlanBillingLabel(planCode, isYearly)
+            : '—'
       const b = badgeUi(cert)
       const a = anchorUi(cert, effectivePlan)
       const canAnchorCertificate =
@@ -263,7 +272,14 @@ export default async function AdminClientsPage({
         canAnchorCertificate,
         planCode,
         billingLabel,
-        periodLabel: period === 'YEARLY' ? 'Annuel' : period === 'MONTHLY' ? 'Mensuel' : '—',
+        periodLabel:
+          premiumTrial && sub?.currentPeriodEnd
+            ? getPremiumTrialPeriodLabel(sub.currentPeriodEnd)
+            : period === 'YEARLY'
+              ? 'Annuel'
+              : period === 'MONTHLY'
+                ? 'Mensuel'
+                : '—',
         kycText: k.text,
         kycClassName: k.className,
         trustScore: u.trustScore ?? 0,

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  formatPremiumTrialEndFr,
+  getPremiumTrialBillingLabel,
   isExpiredPremiumTrial,
   isPremiumTrialSubscription,
   PREMIUM_TRIAL_END,
@@ -27,6 +29,12 @@ describe('premium-trial', () => {
         currentPeriodEnd: PREMIUM_TRIAL_END,
       }),
     ).toBe(false)
+  })
+
+  it('expose les libellés essai Premium admin', () => {
+    expect(getPremiumTrialBillingLabel()).toBe('Gratuit (essai Premium)')
+    const end = new Date('2026-09-29T21:59:59.999Z')
+    expect(formatPremiumTrialEndFr(end)).toMatch(/29/)
   })
 
   it('detects expired trial', () => {

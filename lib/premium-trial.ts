@@ -55,6 +55,19 @@ export function isExpiredPremiumTrial(sub: PremiumTrialSubscription | null | und
   return sub.currentPeriodEnd.getTime() < Date.now()
 }
 
+/** Libellé facturation admin / dashboard pour un trial Premium sans Stripe. */
+export function getPremiumTrialBillingLabel(): string {
+  return 'Gratuit (essai Premium)'
+}
+
+export function formatPremiumTrialEndFr(date: Date): string {
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+export function getPremiumTrialPeriodLabel(end: Date): string {
+  return `Essai · fin ${formatPremiumTrialEndFr(end)}`
+}
+
 function emailLocalDisplayName(email: string): string {
   const local = email.split('@')[0] ?? 'Utilisateur'
   return local.charAt(0).toUpperCase() + local.slice(1)
