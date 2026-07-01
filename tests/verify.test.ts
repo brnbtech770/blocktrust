@@ -74,6 +74,11 @@ vi.mock('@/lib/trust-engine', () => ({
   computeTrustEngineScore: trustEngineMock,
 }))
 
+vi.mock('@/lib/trust-engine-cache', () => ({
+  getTrustEngineResultForApi: trustEngineMock,
+  invalidateTrustEngineCacheForCertificate: vi.fn(),
+}))
+
 vi.mock('@/lib/trustscore', () => ({
   persistUserTrustScore: vi.fn().mockResolvedValue(undefined),
 }))

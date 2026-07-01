@@ -9,7 +9,6 @@
 // ============================================================
 
 import { createHash } from 'node:crypto'
-import { ethers } from 'ethers'
 import { prisma } from '@/app/lib/db'
 import { createAdminAlert } from '@/lib/admin-alerts'
 import { sendCertificateAnchoredEmail } from '@/lib/email'
@@ -24,7 +23,16 @@ const CHAIN_ID = parseInt(process.env.POLYGON_CHAIN_ID?.trim() || '137', 10)
 // `from === to` ; on envoie donc systématiquement vers une autre adresse.
 const DEFAULT_BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD'
 
-function resolveAnchorRecipient(walletAddress: string): string {
+type EthersModule = typeof import('ethers')
+let ethersPromise: Promise<EthersModule> | null = null
+
+async function getEthers(): Promise<EthersModule> {
+  if (!ethersPromise) ethersPromise = import('ethers')
+  return ethersPromise
+}
+
+async function resolveAnchorRecipient(walletAddress: string): Promise<string> {
+  const ethers = await getEthers()
   const raw = process.env.POLYGON_CONTRACT_ADDRESS?.trim()
   let candidate = raw && raw.length > 0 ? raw : DEFAULT_BURN_ADDRESS
 
@@ -86,14 +94,17 @@ export function computeCertificateAnchorHash(cert: {
     .digest('hex')
 }
 
-function getProvider(): ethers.JsonRpcProvider {
+async function getProvider(): Promise<import('ethers').JsonRpcProvider> {
   if (!RPC_URL) throw new Error('POLYGON_RPC_URL manquante')
+  const ethers = await getEthers()
   return new ethers.JsonRpcProvider(RPC_URL)
 }
 
-function getWallet(): ethers.Wallet {
+async function getWallet(): Promise<import('ethers').Wallet> {
   if (!PRIVATE_KEY) throw new Error('POLYGON_PRIVATE_KEY manquante')
-  return new ethers.Wallet(PRIVATE_KEY, getProvider())
+  const ethers = await getEthers()
+  const provider = await getProvider()
+  return new ethers.Wallet(PRIVATE_KEY, provider)
 }
 
 /**
@@ -111,8 +122,9 @@ export async function anchorToPolygon(
     throw new Error('Polygon non configuré (RPC_URL ou PRIVATE_KEY manquants)')
   }
 
-  const wallet = getWallet()
-  const recipient = resolveAnchorRecipient(wallet.address)
+  const wallet = await getWallet()
+  const recipient = await resolveAnchorRecipient(wallet.address)
+  const ethers = await getEthers()
 
   const payload = `BLOCKTRUST:${certificateId}:${hash}`
   const data = ethers.hexlify(ethers.toUtf8Bytes(payload))
@@ -254,8 +266,10 @@ export async function retryFailedAnchors(max = 25): Promise<RetryAnchorsResult> 
   let anchored = 0
   let failed = 0
   const noHash = 0
+  let processedOne = false
 
   for (const cert of candidates) {
+    if (processedOne) break
     if (!(await certificateOwnerAllowsPolygonAnchor(cert.entityId))) continue
     const hash = computeCertificateAnchorHash(cert)
     try {
@@ -285,6 +299,7 @@ export async function retryFailedAnchors(max = 25): Promise<RetryAnchorsResult> 
       }).catch(() => undefined)
       notifyAnchorSuccess(cert.id, anchor).catch(() => undefined)
       anchored += 1
+      processedOne = true
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       console.error('[Polygon] retry échec', cert.id, ':', message)
@@ -295,7 +310,15 @@ export async function retryFailedAnchors(max = 25): Promise<RetryAnchorsResult> 
         })
         .catch(() => undefined)
       failed += 1
+      processedOne = true
     }
+  }
+
+  const remaining = Math.max(0, candidates.length - (processedOne ? 1 : 0))
+  if (candidates.length > 0) {
+    console.log(
+      `[Polygon] retryFailedAnchors: ${processedOne ? '1 ancrage traité' : '0 ancrage (plans non éligibles)'}, ${remaining} restant(s) → prochain run`,
+    )
   }
 
   return {
@@ -344,8 +367,10 @@ export async function retryStalePendingAnchors(
   let anchored = 0
   let failed = 0
   const noHash = 0
+  let processedOne = false
 
   for (const cert of candidates) {
+    if (processedOne) break
     if (!(await certificateOwnerAllowsPolygonAnchor(cert.entityId))) continue
     const hash = computeCertificateAnchorHash(cert)
     try {
@@ -375,6 +400,7 @@ export async function retryStalePendingAnchors(
       }).catch(() => undefined)
       notifyAnchorSuccess(cert.id, anchor).catch(() => undefined)
       anchored += 1
+      processedOne = true
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
       console.error('[Polygon] stale pending retry échec', cert.id, ':', message)
@@ -385,7 +411,15 @@ export async function retryStalePendingAnchors(
         })
         .catch(() => undefined)
       failed += 1
+      processedOne = true
     }
+  }
+
+  const remaining = Math.max(0, candidates.length - (processedOne ? 1 : 0))
+  if (candidates.length > 0) {
+    console.log(
+      `[Polygon] retryStalePendingAnchors: ${processedOne ? '1 ancrage traité' : '0 ancrage (plans non éligibles)'}, ${remaining} restant(s) → prochain run`,
+    )
   }
 
   return {
@@ -405,7 +439,7 @@ export async function verifyAnchor(txHash: string): Promise<VerifyAnchorResult> 
   if (!RPC_URL) return { verified: false }
 
   try {
-    const provider = getProvider()
+    const provider = await getProvider()
     const receipt = await provider.getTransactionReceipt(txHash)
     if (!receipt) return { verified: false }
 

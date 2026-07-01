@@ -7,6 +7,7 @@ import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import { redactEmailRecipient, sendEmail } from '@/lib/email'
+import { invalidateTrustEngineCacheForCertificate } from '@/lib/trust-engine-cache'
 import { CertificateRevokedEmail, subject as certificateRevokedSubject } from '@/emails/CertificateRevokedEmail'
 
 const certificateIdSchema = z.string().cuid()
@@ -86,6 +87,11 @@ export async function POST(
 
     // Logger l'événement
     console.log(`[REVOKE] Certificat ${certificateId.slice(0, 8)}… révoqué par userId=${userId.slice(0, 8)}`)
+
+    void invalidateTrustEngineCacheForCertificate(
+      certificateId,
+      certificate.publicId,
+    )
 
     // Email transactionnel : certificat révoqué
     const entityName = certificate.entity.entityType === 'INDIVIDUAL'

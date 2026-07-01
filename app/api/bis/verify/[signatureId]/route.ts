@@ -9,7 +9,7 @@ import {
   computeBisDisplayLevel,
   verifyBisSignature,
 } from '@/lib/bis-sign'
-import { computeTrustEngineScore } from '@/lib/trust-engine'
+import { getTrustEngineResultForApi } from '@/lib/trust-engine-cache'
 import {
   checkPublicBisVerifyRateLimit,
   PUBLIC_RATE_LIMIT_503_BODY,
@@ -91,7 +91,7 @@ export async function GET(req: NextRequest, context: RouteContext) {
     }
 
     const senderUser = record.senderCert.entity.user
-    const trustEngine = await computeTrustEngineScore(record.senderCertId).catch(
+    const trustEngine = await getTrustEngineResultForApi(record.senderCertId).catch(
       () => null,
     )
 

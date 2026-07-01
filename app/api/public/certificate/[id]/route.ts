@@ -14,7 +14,7 @@ import {
   notifyCertificateOwnerFraudAlertFireAndForget,
 } from "@/lib/verify-fraud";
 import { persistUserTrustScore } from "@/lib/trustscore";
-import { computeTrustEngineScore } from "@/lib/trust-engine";
+import { getTrustEngineResultForApi } from "@/lib/trust-engine-cache";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -331,7 +331,7 @@ export async function GET(
   // Anonyme → badge visible ; score/sous-scores/signaux masqués (defense-in-depth serveur).
   let trustEngine = null;
   if (verdict === "VALID" && authenticated) {
-    trustEngine = await computeTrustEngineScore(
+    trustEngine = await getTrustEngineResultForApi(
       certificatePublicId,
       session?.user?.id,
       { contextIp: getIp(req) },
