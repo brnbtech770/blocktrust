@@ -91,7 +91,8 @@ function isProtectedApi(pathname: string): boolean {
   if (
     pathname === '/api/extension/me' ||
     pathname === '/api/extension/verify-sender' ||
-    pathname === '/api/extension/add-contact'
+    pathname === '/api/extension/add-contact' ||
+    pathname === '/api/bis/sign'
   ) {
     return false
   }
@@ -115,7 +116,6 @@ function isProtectedApi(pathname: string): boolean {
     '/api/verify/',
     '/api/v2/issue',
     '/api/v2/sign',
-    '/api/bis/sign',
     '/api/bis/my-signatures',
     '/api/bis/received',
     '/api/extension/api-key',
@@ -301,7 +301,6 @@ export const config = {
     '/api/verify/:path*',
     '/api/v2/issue',
     '/api/v2/sign',
-    '/api/bis/sign',
     '/api/bis/my-signatures',
     '/api/bis/received',
     '/api/extension/api-key',

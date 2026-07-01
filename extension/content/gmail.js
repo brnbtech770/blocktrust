@@ -887,6 +887,14 @@ function observeGmail() {
 function bootstrapBlockTrust() {
   injectGlobalStyles();
   observeGmail();
+
+  if (globalThis.BlockTrustGmailCompose) {
+    globalThis.BlockTrustGmailCompose.init({
+      apiBase: API_BASE,
+      getApiKey,
+      escapeHtml,
+    });
+  }
 }
 
 if (document.body) {

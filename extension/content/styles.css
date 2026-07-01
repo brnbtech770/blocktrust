@@ -1,0 +1,111 @@
+/**
+ * BLOCKTRUST™ — styles composeur Gmail (Phase 3 BIS)
+ */
+
+.bt-compose-bis-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 52px !important;
+  height: 28px !important;
+  margin: 0 4px 0 8px !important;
+  padding: 0 10px !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(100, 116, 139, 0.35) !important;
+  background: rgba(100, 116, 139, 0.12) !important;
+  color: #64748b !important;
+  font-family: Inter, Arial, sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  cursor: pointer !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    transform 0.15s ease !important;
+}
+
+.bt-compose-bis-btn:hover:not(:disabled) {
+  transform: translateY(-1px) !important;
+}
+
+.bt-compose-bis-btn-ready {
+  border-color: rgba(0, 212, 255, 0.55) !important;
+  background: rgba(0, 212, 255, 0.12) !important;
+  color: #0099bb !important;
+}
+
+.bt-compose-bis-btn-ready:hover:not(:disabled) {
+  background: rgba(0, 212, 255, 0.22) !important;
+  border-color: #00d4ff !important;
+  color: #007a99 !important;
+}
+
+.bt-compose-bis-btn-signed {
+  border-color: rgba(16, 185, 129, 0.55) !important;
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #059669 !important;
+  cursor: default !important;
+  animation: bt-compose-signed-pulse 0.45s ease !important;
+}
+
+.bt-compose-bis-btn-disabled {
+  opacity: 0.65 !important;
+  cursor: not-allowed !important;
+}
+
+.bt-compose-bis-btn-signing {
+  border-color: rgba(0, 212, 255, 0.35) !important;
+  color: #00a3cc !important;
+  cursor: wait !important;
+}
+
+@keyframes bt-compose-signed-pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.bt-compose-toast {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 2147483647 !important;
+  max-width: min(360px, calc(100vw - 32px)) !important;
+  padding: 12px 16px !important;
+  border-radius: 10px !important;
+  background: #0a1628 !important;
+  border: 1px solid rgba(0, 212, 255, 0.35) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+  color: #ffffff !important;
+  font-family: Inter, Arial, sans-serif !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+  opacity: 0 !important;
+  transform: translateY(8px) !important;
+  transition: opacity 0.2s ease, transform 0.2s ease !important;
+  pointer-events: none !important;
+}
+
+.bt-compose-toast-visible {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+.bt-compose-toast-success {
+  border-color: rgba(16, 185, 129, 0.45) !important;
+}
+
+.bt-compose-toast-error {
+  border-color: rgba(224, 82, 82, 0.45) !important;
+}
+
+.bt-compose-toast-info {
+  border-color: rgba(245, 158, 11, 0.45) !important;
+}
