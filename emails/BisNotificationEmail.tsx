@@ -1,5 +1,5 @@
 // emails/BisNotificationEmail.tsx
-// Notification destinataire — signature BIS type EMAIL
+// Notification destinataire — signature BIS (tous types)
 // ============================================================
 
 import {
@@ -17,47 +17,54 @@ import {
 } from '@react-email/components'
 import * as React from 'react'
 import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
+import { getBisInteractionLabel } from '@/lib/bis-interaction-labels'
 
 export type BisNotificationEmailProps = {
   senderDisplayName: string
   senderEmail: string
+  interactionType: string
   contextLabel?: string | null
   bisLevel: number
   signedAtLabel: string
   expiresAtLabel: string
   verifyUrl: string
+  marketingUrl?: string
 }
 
 export function buildBisNotificationSubject(senderDisplayName: string): string {
-  return `[${senderDisplayName}] vous a envoyé une interaction signée BLOCKTRUST™`
+  return `${senderDisplayName} a signé une interaction vérifiable`
 }
 
 export function BisNotificationEmail({
   senderDisplayName,
   senderEmail,
+  interactionType,
   contextLabel,
   bisLevel,
   signedAtLabel,
   expiresAtLabel,
   verifyUrl,
+  marketingUrl = 'https://blocktrust.tech',
 }: BisNotificationEmailProps) {
+  const typeLabel = getBisInteractionLabel(interactionType)
+
   return (
     <Html>
       <Head />
       <Preview>
-        {senderDisplayName} vous a envoyé une interaction email signée BLOCKTRUST™
+        {senderDisplayName} a signé une interaction {typeLabel} vérifiable BLOCKTRUST™
       </Preview>
       <Body style={main}>
         <Container style={container}>
           <Heading style={h1}>Interaction signée BLOCKTRUST™</Heading>
           <Text style={text}>
-            <strong>{senderDisplayName}</strong> ({senderEmail}) vous a envoyé une interaction
-            certifiée.
+            <strong>{senderDisplayName}</strong> ({senderEmail}) — identité certifiée BLOCKTRUST™ —
+            a signé une interaction vérifiable.
           </Text>
 
           <Section style={infoBlock}>
             <Text style={infoRow}>
-              <strong>Type :</strong> EMAIL
+              <strong>Type :</strong> {typeLabel}
             </Text>
             {contextLabel ? (
               <Text style={infoRow}>
@@ -71,7 +78,7 @@ export function BisNotificationEmail({
               <strong>Signé le :</strong> {signedAtLabel}
             </Text>
             <Text style={infoRow}>
-              <strong>Expire le :</strong> {expiresAtLabel}
+              <strong>Expire le :</strong> {expiresAtLabel} (7 jours)
             </Text>
           </Section>
 
@@ -82,8 +89,15 @@ export function BisNotificationEmail({
           </Section>
 
           <Text style={note}>
-            Cette signature cryptographique prouve que {senderDisplayName} a bien envoyé cette
-            interaction. Elle est infalsifiable et vérifiable par tous.
+            Cette signature cryptographique est infalsifiable et vérifiable par tous — même sans
+            compte BLOCKTRUST.
+          </Text>
+
+          <Text style={muted}>
+            Protégez vos propres interactions →{' '}
+            <Link href={marketingUrl} style={link}>
+              blocktrust.tech
+            </Link>
           </Text>
 
           <Text style={muted}>
@@ -159,10 +173,9 @@ const note = {
 }
 const muted = {
   color: '#6b7280',
-  fontSize: '12px',
-  lineHeight: '18px',
-  margin: '0 0 14px',
-  wordBreak: 'break-all' as const,
+  fontSize: '13px',
+  lineHeight: '20px',
+  margin: '0 0 10px',
 }
 const link = {
   color: '#0a1628',

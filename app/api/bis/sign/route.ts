@@ -11,7 +11,7 @@ import {
   resolveSenderBisCertificate,
 } from '@/lib/bis-sign'
 import {
-  notifyBisEmailRecipientFireAndForget,
+  notifyBisRecipientFireAndForget,
   resolveBisSenderDisplayName,
 } from '@/lib/bis-email-notify'
 import {
@@ -26,6 +26,7 @@ const signBodySchema = z.object({
   interactionType: z.enum(BIS_INTERACTION_TYPES),
   contextLabel: z.string().max(200).optional(),
   contentHash: z.string().min(64).max(64),
+  notifyRecipient: z.boolean().optional().default(true),
 })
 
 function safeSignErrorMessage(error: unknown): string {
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { recipientEmail, interactionType, contextLabel, contentHash } =
+    const { recipientEmail, interactionType, contextLabel, contentHash, notifyRecipient } =
       parsed.data
 
     if (!isValidContentHash(contentHash)) {
@@ -98,16 +99,20 @@ export async function POST(req: NextRequest) {
       contentHash: contentHash.toLowerCase(),
     })
 
-    if (interactionType === 'EMAIL') {
-      notifyBisEmailRecipientFireAndForget({
+    const normalizedRecipient = normalizeEmail(recipientEmail)
+    const notificationRequested = notifyRecipient && Boolean(normalizedRecipient)
+
+    if (notificationRequested) {
+      notifyBisRecipientFireAndForget({
         signatureId: result.signatureId,
         senderUserId: session.user.id,
-        recipientEmail: normalizeEmail(recipientEmail),
+        recipientEmail: normalizedRecipient,
         senderDisplayName: resolveBisSenderDisplayName(
           session.user.name,
           session.user.email,
         ),
         senderEmail: session.user.email,
+        interactionType,
         contextLabel: safeContextLabel ?? null,
         bisLevel: result.bisLevel,
         signedAt: new Date(result.payload.iat * 1000),
@@ -122,6 +127,7 @@ export async function POST(req: NextRequest) {
       bisLevel: result.bisLevel,
       verifyUrl: result.verifyUrl,
       expiresAt: result.expiresAt,
+      notificationRequested,
       payload: {
         sender: result.payload.sender,
         recipient: result.payload.recipient,

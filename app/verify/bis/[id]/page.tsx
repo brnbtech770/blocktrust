@@ -43,13 +43,8 @@ const BIS_LEVEL_COLORS: Record<number, string> = {
   4: '#BDA76B',
 }
 
-const INTERACTION_LABELS: Record<string, string> = {
-  EMAIL: 'Email',
-  DOCUMENT: 'Document',
-  PAYMENT_REQUEST: 'Demande de paiement',
-  CONTRACT: 'Contrat',
-  MARKETPLACE: 'Marketplace',
-}
+import { getBisInteractionLabel } from '@/lib/bis-interaction-labels'
+import { BisDocumentIntegrityCheck } from '@/app/components/bis/BisDocumentIntegrityCheck'
 
 function formatDate(iso: string): string {
   return new Intl.DateTimeFormat('fr-FR', {
@@ -140,7 +135,7 @@ export default async function BisVerifyPage({ params }: PageProps) {
         title={valid ? levelLabel : expired ? 'Signature expirée' : (crypto.reason ?? 'Signature invalide')}
         subtitle={
           valid
-            ? `Interaction ${INTERACTION_LABELS[record.interactionType] ?? record.interactionType} signée cryptographiquement`
+            ? `Interaction ${getBisInteractionLabel(record.interactionType)} signée cryptographiquement`
             : 'La vérification cryptographique a échoué ou le certificat n\'est plus valide.'
         }
         levelColor={levelColor}
@@ -198,7 +193,7 @@ export default async function BisVerifyPage({ params }: PageProps) {
               <DetailRow label="Destinataire" value={record.recipientEmail} />
               <DetailRow
                 label="Type"
-                value={INTERACTION_LABELS[record.interactionType] ?? record.interactionType}
+                value={getBisInteractionLabel(record.interactionType)}
               />
               <DetailRow label="Contexte" value={record.contextLabel ?? '—'} />
               <DetailRow label="Signé le" value={formatDate(record.createdAt.toISOString())} />
@@ -216,6 +211,13 @@ export default async function BisVerifyPage({ params }: PageProps) {
               />
             </dl>
           </DetailCard>
+
+          {record.contentHash ? (
+            <BisDocumentIntegrityCheck
+              expectedHash={record.contentHash}
+              signedAtIso={record.createdAt.toISOString()}
+            />
+          ) : null}
 
           {polygonAnchored && polygonUrl ? (
             <DetailCard title="Ancrage blockchain">

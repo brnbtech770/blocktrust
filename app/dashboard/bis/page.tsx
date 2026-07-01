@@ -8,7 +8,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import {
-  Check,
   Copy,
   FileSignature,
   FileUp,
@@ -16,7 +15,20 @@ import {
   Send,
   X,
 } from 'lucide-react'
+import {
+  BisSignSuccessPanel,
+  type BisSignSuccessData,
+} from '@/app/components/bis/BisSignSuccessPanel'
 import { BIS_INTERACTION_TYPES, isValidContentHash } from '@/lib/bis-access'
+import {
+  BIS_FILE_ACCEPT_ATTR,
+  BIS_MAX_FILE_BYTES,
+  formatBisFileSize,
+  isAcceptedBisFile,
+  sha256File,
+  sha256Text,
+} from '@/lib/bis-content-hash'
+import { getBisInteractionLabel } from '@/lib/bis-interaction-labels'
 
 type BisListItem = {
   id: string
@@ -34,52 +46,13 @@ type BisListItem = {
   signature?: string
 }
 
-type SignResult = {
-  signatureId: string
-  signature: string
-  bisLevel: number
-  verifyUrl: string
-  expiresAt: string
-}
-
-const TYPE_LABELS: Record<string, string> = {
-  EMAIL: 'Email',
-  DOCUMENT: 'Document',
-  PAYMENT_REQUEST: 'Demande de paiement',
-  CONTRACT: 'Contrat',
-  MARKETPLACE: 'Marketplace',
-}
-
-const MAX_FILE_BYTES = 10 * 1024 * 1024
-const ACCEPTED_FILE_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg', '.docx']
-const ACCEPTED_FILE_MIME = [
-  'application/pdf',
-  'image/png',
-  'image/jpeg',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-]
-
-async function sha256Hex(text: string): Promise<string> {
-  const data = new TextEncoder().encode(text)
-  const hash = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-}
-
-async function sha256File(file: File): Promise<string> {
-  const buffer = await file.arrayBuffer()
-  const hash = await crypto.subtle.digest('SHA-256', buffer)
-  return Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-}
-
-function isAcceptedFile(file: File): boolean {
-  const name = file.name.toLowerCase()
-  const extOk = ACCEPTED_FILE_EXTENSIONS.some((ext) => name.endsWith(ext))
-  const mimeOk = !file.type || ACCEPTED_FILE_MIME.includes(file.type)
-  return extOk && mimeOk
+const INITIAL_FORM = {
+  recipientEmail: '',
+  interactionType: 'EMAIL',
+  contextLabel: '',
+  content: '',
+  manualHash: '',
+  notifyRecipient: true,
 }
 
 export default function BisDashboardPage() {
@@ -91,16 +64,16 @@ export default function BisDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [signing, setSigning] = useState(false)
-  const [signResult, setSignResult] = useState<SignResult | null>(null)
+  const [signResult, setSignResult] = useState<BisSignSuccessData | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
 
-  const [recipientEmail, setRecipientEmail] = useState('')
-  const [interactionType, setInteractionType] = useState<string>('EMAIL')
-  const [contextLabel, setContextLabel] = useState('')
-  const [content, setContent] = useState('')
-  const [manualHash, setManualHash] = useState('')
+  const [recipientEmail, setRecipientEmail] = useState(INITIAL_FORM.recipientEmail)
+  const [interactionType, setInteractionType] = useState(INITIAL_FORM.interactionType)
+  const [contextLabel, setContextLabel] = useState(INITIAL_FORM.contextLabel)
+  const [content, setContent] = useState(INITIAL_FORM.content)
+  const [manualHash, setManualHash] = useState(INITIAL_FORM.manualHash)
+  const [notifyRecipient, setNotifyRecipient] = useState(INITIAL_FORM.notifyRecipient)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [fileHash, setFileHash] = useState('')
   const [hashingFile, setHashingFile] = useState(false)
   const [fileError, setFileError] = useState('')
 
@@ -141,19 +114,26 @@ export default function BisDashboardPage() {
     if (sessionStatus === 'authenticated') loadLists()
   }, [sessionStatus, router, loadLists])
 
+  const clearSelectedFile = () => {
+    setSelectedFile(null)
+    setFileError('')
+    const input = document.getElementById('bisDocumentFile') as HTMLInputElement | null
+    if (input) input.value = ''
+  }
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     setFileError('')
     setSelectedFile(null)
-    setFileHash('')
+    setManualHash('')
     if (!file) return
 
-    if (!isAcceptedFile(file)) {
-      setFileError('Format non accepté. Utilisez PDF, PNG, JPG ou DOCX.')
+    if (!isAcceptedBisFile(file)) {
+      setFileError('Format non accepté. Utilisez PDF, PNG, JPG, DOCX, XLSX ou TXT.')
       e.target.value = ''
       return
     }
-    if (file.size > MAX_FILE_BYTES) {
+    if (file.size > BIS_MAX_FILE_BYTES) {
       setFileError('Fichier trop volumineux (max 10 Mo).')
       e.target.value = ''
       return
@@ -163,8 +143,7 @@ export default function BisDashboardPage() {
     try {
       const hash = await sha256File(file)
       setSelectedFile(file)
-      setFileHash(hash)
-      setManualHash('')
+      setManualHash(hash)
       setContent('')
       setInteractionType('DOCUMENT')
     } catch {
@@ -175,16 +154,7 @@ export default function BisDashboardPage() {
     }
   }
 
-  const clearSelectedFile = () => {
-    setSelectedFile(null)
-    setFileHash('')
-    setFileError('')
-    const input = document.getElementById('bisDocumentFile') as HTMLInputElement | null
-    if (input) input.value = ''
-  }
-
   const resolveContentHash = async (): Promise<string> => {
-    if (selectedFile && fileHash) return fileHash.toLowerCase()
     const manual = manualHash.trim().toLowerCase()
     if (manual) {
       if (!isValidContentHash(manual)) {
@@ -192,8 +162,20 @@ export default function BisDashboardPage() {
       }
       return manual
     }
-    if (content.trim()) return sha256Hex(content)
+    if (content.trim()) return sha256Text(content)
     throw new Error('Ajoutez un document, une empreinte SHA-256 ou un contenu texte à signer')
+  }
+
+  const resetSignForm = () => {
+    setRecipientEmail(INITIAL_FORM.recipientEmail)
+    setInteractionType(INITIAL_FORM.interactionType)
+    setContextLabel(INITIAL_FORM.contextLabel)
+    setContent(INITIAL_FORM.content)
+    setManualHash(INITIAL_FORM.manualHash)
+    setNotifyRecipient(INITIAL_FORM.notifyRecipient)
+    clearSelectedFile()
+    setSignResult(null)
+    setError('')
   }
 
   const handleSign = async (e: React.FormEvent) => {
@@ -212,6 +194,7 @@ export default function BisDashboardPage() {
           interactionType,
           contextLabel: contextLabel.trim() || undefined,
           contentHash,
+          notifyRecipient,
         }),
       })
       const data = await res.json()
@@ -224,12 +207,17 @@ export default function BisDashboardPage() {
         }
         throw new Error(data.error ?? 'Erreur de signature')
       }
-      setSignResult(data as SignResult)
-      setContent('')
-      setManualHash('')
-      clearSelectedFile()
+      setSignResult({
+        signatureId: data.signatureId,
+        signature: data.signature,
+        bisLevel: data.bisLevel,
+        verifyUrl: data.verifyUrl,
+        expiresAt: data.expiresAt,
+        notificationRequested: Boolean(data.notificationRequested),
+        interactionType,
+        recipientEmail,
+      })
       await loadLists()
-      setTab('sent')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur de signature')
     } finally {
@@ -257,7 +245,10 @@ export default function BisDashboardPage() {
         </div>
         <button
           type="button"
-          onClick={() => setTab('sign')}
+          onClick={() => {
+            setTab('sign')
+            setSignResult(null)
+          }}
           className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-bt-cyan px-4 py-2.5 text-sm font-semibold text-[#0a1628] transition hover:bg-bt-cyan/90"
         >
           <Send className="h-4 w-4" aria-hidden />
@@ -295,215 +286,185 @@ export default function BisDashboardPage() {
       ) : null}
 
       {tab === 'sign' ? (
-        <form
-          onSubmit={handleSign}
-          className="space-y-4 rounded-xl border border-white/10 bg-[#0d1f3c] p-6"
-        >
-          <p className="text-xs text-white/45">
-            Le contenu n&apos;est jamais envoyé au serveur — seul le hash SHA-256 est calculé dans votre
-            navigateur avant signature.
-          </p>
-          <div>
-            <label htmlFor="recipientEmail" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
-              Email du destinataire
-            </label>
-            <input
-              id="recipientEmail"
-              type="email"
-              required
-              value={recipientEmail}
-              onChange={(e) => setRecipientEmail(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 text-white outline-none focus:border-bt-cyan"
-            />
-          </div>
-          <div>
-            <label htmlFor="interactionType" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
-              Type d&apos;interaction
-            </label>
-            <select
-              id="interactionType"
-              value={interactionType}
-              onChange={(e) => setInteractionType(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 text-white outline-none focus:border-bt-cyan"
-            >
-              {BIS_INTERACTION_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {TYPE_LABELS[t] ?? t}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="contextLabel" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
-              Contexte (optionnel)
-            </label>
-            <input
-              id="contextLabel"
-              type="text"
-              maxLength={200}
-              value={contextLabel}
-              onChange={(e) => setContextLabel(e.target.value)}
-              placeholder="Ex. Mandat de vente, Facture Q2…"
-              className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 text-white outline-none focus:border-bt-cyan"
-            />
-          </div>
-          <div>
-            <label htmlFor="bisDocumentFile" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
-              Document (optionnel)
-            </label>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <label
-                htmlFor="bisDocumentFile"
-                className="inline-flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-[#0a1628] px-4 py-2.5 text-sm text-white/80 transition hover:border-bt-cyan/50 hover:text-white"
-              >
-                {hashingFile ? (
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                ) : (
-                  <FileUp className="h-4 w-4 shrink-0" aria-hidden />
-                )}
-                {hashingFile ? 'Calcul SHA-256…' : 'Choisir un fichier'}
+        signResult ? (
+          <BisSignSuccessPanel result={signResult} onNewSignature={resetSignForm} />
+        ) : (
+          <form
+            onSubmit={handleSign}
+            className="space-y-4 rounded-xl border border-white/10 bg-[#0d1f3c] p-6"
+          >
+            <p className="text-xs text-white/45">
+              Le contenu n&apos;est jamais envoyé au serveur — seul le hash SHA-256 est calculé dans votre
+              navigateur avant signature.
+            </p>
+            <div>
+              <label htmlFor="recipientEmail" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
+                Email du destinataire
               </label>
               <input
-                id="bisDocumentFile"
-                type="file"
-                accept=".pdf,.png,.jpg,.jpeg,.docx,application/pdf,image/png,image/jpeg,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                className="sr-only"
-                onChange={handleFileChange}
-                disabled={hashingFile || signing}
+                id="recipientEmail"
+                type="email"
+                required
+                value={recipientEmail}
+                onChange={(e) => setRecipientEmail(e.target.value)}
+                className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 text-white outline-none focus:border-bt-cyan"
               />
-              {selectedFile ? (
-                <div className="flex min-h-[44px] flex-1 items-center justify-between gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm text-emerald-200">{selectedFile.name}</p>
-                    <p className="font-mono text-[10px] text-white/45">
-                      {fileHash.slice(0, 16)}…
-                    </p>
+            </div>
+            <label className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={notifyRecipient}
+                onChange={(e) => setNotifyRecipient(e.target.checked)}
+                className="h-4 w-4 rounded border-white/20 accent-[#00d4ff]"
+              />
+              <span className="text-sm text-white/80">Notifier le destinataire par email</span>
+            </label>
+            <div>
+              <label htmlFor="interactionType" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
+                Type d&apos;interaction
+              </label>
+              <select
+                id="interactionType"
+                value={interactionType}
+                onChange={(e) => setInteractionType(e.target.value)}
+                className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 text-white outline-none focus:border-bt-cyan"
+              >
+                {BIS_INTERACTION_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {getBisInteractionLabel(t)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="contextLabel" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
+                Contexte (optionnel)
+              </label>
+              <input
+                id="contextLabel"
+                type="text"
+                maxLength={200}
+                value={contextLabel}
+                onChange={(e) => setContextLabel(e.target.value)}
+                placeholder="Ex. Mandat de vente, Facture Q2…"
+                className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 text-white outline-none focus:border-bt-cyan"
+              />
+            </div>
+            <div>
+              <label htmlFor="bisDocumentFile" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
+                Document (optionnel)
+              </label>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <label
+                  htmlFor="bisDocumentFile"
+                  className="inline-flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-[#0a1628] px-4 py-2.5 text-sm text-white/80 transition hover:border-bt-cyan/50 hover:text-white"
+                >
+                  {hashingFile ? (
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  ) : (
+                    <FileUp className="h-4 w-4 shrink-0" aria-hidden />
+                  )}
+                  {hashingFile ? 'Calcul SHA-256…' : 'Choisir un fichier'}
+                </label>
+                <input
+                  id="bisDocumentFile"
+                  type="file"
+                  accept={BIS_FILE_ACCEPT_ATTR}
+                  className="sr-only"
+                  onChange={handleFileChange}
+                  disabled={hashingFile || signing}
+                />
+                {selectedFile ? (
+                  <div className="flex min-h-[44px] flex-1 items-center justify-between gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm text-emerald-200">
+                        {selectedFile.name} · {formatBisFileSize(selectedFile.size)}
+                      </p>
+                      <p className="font-mono text-[10px] text-white/45">
+                        {manualHash.slice(0, 8)}…
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearSelectedFile()
+                        setManualHash('')
+                      }}
+                      className="shrink-0 rounded p-1 text-white/50 hover:bg-white/10 hover:text-white"
+                      aria-label="Retirer le fichier"
+                    >
+                      <X className="h-4 w-4" aria-hidden />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={clearSelectedFile}
-                    className="shrink-0 rounded p-1 text-white/50 hover:bg-white/10 hover:text-white"
-                    aria-label="Retirer le fichier"
-                  >
-                    <X className="h-4 w-4" aria-hidden />
-                  </button>
-                </div>
+                ) : null}
+              </div>
+              <p className="mt-2 text-xs text-white/40">
+                PDF, PNG, JPG, DOCX, XLSX, TXT — max 10 Mo. Le fichier reste sur votre appareil.
+                Seule l&apos;empreinte numérique (SHA-256) est enregistrée.
+              </p>
+              {fileError ? (
+                <p className="mt-1 text-xs text-red-300">{fileError}</p>
               ) : null}
             </div>
-            <p className="mt-2 text-xs text-white/40">
-              PDF, PNG, JPG ou DOCX — max 10 Mo. Le fichier reste sur votre appareil. Seule
-              l&apos;empreinte cryptographique (SHA-256) est enregistrée.
-            </p>
-            {fileError ? (
-              <p className="mt-1 text-xs text-red-300">{fileError}</p>
-            ) : null}
-          </div>
-          <div>
-            <label htmlFor="manualHash" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
-              Empreinte SHA-256 (optionnel)
-            </label>
-            <input
-              id="manualHash"
-              type="text"
-              inputMode="text"
-              autoComplete="off"
-              spellCheck={false}
-              maxLength={64}
-              value={manualHash}
-              onChange={(e) => {
-                setManualHash(e.target.value.replace(/[^a-fA-F0-9]/g, ''))
-                if (e.target.value.trim()) {
-                  clearSelectedFile()
-                }
-              }}
-              disabled={Boolean(selectedFile)}
-              placeholder="64 caractères hexadécimaux…"
-              className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 font-mono text-sm text-white outline-none focus:border-bt-cyan disabled:opacity-50"
-            />
-            <p className="mt-1 text-xs text-white/35">
-              Si vous avez déjà calculé le hash ailleurs, saisissez-le ici sans joindre le fichier.
-            </p>
-          </div>
-          <div>
-            <label htmlFor="content" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
-              Contenu texte à signer (optionnel)
-            </label>
-            <textarea
-              id="content"
-              rows={6}
-              value={content}
-              onChange={(e) => {
-                setContent(e.target.value)
-                if (e.target.value.trim()) {
-                  clearSelectedFile()
-                  setManualHash('')
-                }
-              }}
-              disabled={Boolean(selectedFile) || Boolean(manualHash.trim())}
-              className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 font-mono text-sm text-white outline-none focus:border-bt-cyan disabled:opacity-50"
-              placeholder="Collez ici le texte de l'interaction (email, message…) si vous ne joignez pas de document."
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={signing || hashingFile}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-bt-cyan px-5 py-2.5 text-sm font-semibold text-[#0a1628] disabled:opacity-50"
-          >
-            {signing ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-            ) : (
-              <FileSignature className="h-4 w-4" aria-hidden />
-            )}
-            {signing ? 'Signature en cours…' : 'Signer'}
-          </button>
-
-          {signResult ? (
-            <div className="mt-4 space-y-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4">
-              <p className="flex items-center gap-2 text-sm font-semibold text-emerald-300">
-                <Check className="h-4 w-4" aria-hidden />
-                Interaction signée — niveau BIS {signResult.bisLevel}
+            <div>
+              <label htmlFor="manualHash" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
+                Empreinte SHA-256 (optionnel)
+              </label>
+              <input
+                id="manualHash"
+                type="text"
+                inputMode="text"
+                autoComplete="off"
+                spellCheck={false}
+                maxLength={64}
+                value={manualHash}
+                onChange={(e) => {
+                  setManualHash(e.target.value.replace(/[^a-fA-F0-9]/g, ''))
+                  if (e.target.value.trim()) {
+                    clearSelectedFile()
+                  }
+                }}
+                placeholder="64 caractères hexadécimaux…"
+                className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 font-mono text-sm text-white outline-none focus:border-bt-cyan"
+              />
+              <p className="mt-1 text-xs text-white/35">
+                Si vous avez déjà calculé le hash ailleurs, saisissez-le ici sans joindre le fichier.
               </p>
-              <div>
-                <p className="text-xs text-white/50">Lien de vérification</p>
-                <div className="mt-1 flex flex-wrap items-center gap-2">
-                  <a
-                    href={signResult.verifyUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="break-all text-sm text-bt-cyan hover:underline"
-                  >
-                    {signResult.verifyUrl}
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => copyText(signResult.verifyUrl, 'url')}
-                    className="inline-flex items-center gap-1 rounded border border-white/10 px-2 py-1 text-xs text-white/70 hover:bg-white/5"
-                  >
-                    <Copy className="h-3 w-3" aria-hidden />
-                    {copied === 'url' ? 'Copié' : 'Copier'}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-white/50">Signature JWS (à intégrer dans l&apos;email ou document)</p>
-                <textarea
-                  readOnly
-                  rows={3}
-                  value={signResult.signature}
-                  className="mt-1 w-full rounded border border-white/10 bg-[#0a1628] p-2 font-mono text-xs text-white/80"
-                />
-                <button
-                  type="button"
-                  onClick={() => copyText(signResult.signature, 'jws')}
-                  className="mt-2 inline-flex items-center gap-1 rounded border border-white/10 px-2 py-1 text-xs text-white/70 hover:bg-white/5"
-                >
-                  <Copy className="h-3 w-3" aria-hidden />
-                  {copied === 'jws' ? 'Copié' : 'Copier la signature'}
-                </button>
-              </div>
             </div>
-          ) : null}
-        </form>
+            <div>
+              <label htmlFor="content" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
+                Contenu texte à signer (optionnel)
+              </label>
+              <textarea
+                id="content"
+                rows={6}
+                value={content}
+                onChange={(e) => {
+                  setContent(e.target.value)
+                  if (e.target.value.trim()) {
+                    clearSelectedFile()
+                    setManualHash('')
+                  }
+                }}
+                disabled={Boolean(manualHash.trim())}
+                className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 font-mono text-sm text-white outline-none focus:border-bt-cyan disabled:opacity-50"
+                placeholder="Collez ici le texte de l'interaction (email, message…) si vous ne joignez pas de document."
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={signing || hashingFile}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-bt-cyan px-5 py-2.5 text-sm font-semibold text-[#0a1628] disabled:opacity-50"
+            >
+              {signing ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              ) : (
+                <FileSignature className="h-4 w-4" aria-hidden />
+              )}
+              {signing ? 'Signature en cours…' : 'Signer'}
+            </button>
+          </form>
+        )
       ) : loading ? (
         <div className="flex items-center justify-center py-16 text-white/50">
           <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
@@ -551,7 +512,7 @@ function SignatureList({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="font-medium text-white">
-                {TYPE_LABELS[item.interactionType] ?? item.interactionType}
+                {getBisInteractionLabel(item.interactionType)}
                 {item.contextLabel ? (
                   <span className="text-white/50"> — {item.contextLabel}</span>
                 ) : null}
@@ -562,7 +523,7 @@ function SignatureList({
                   : `De ${item.senderEmail}`}
               </p>
               <p className="mt-1 font-mono text-xs text-white/35">
-                {item.contentHash.slice(0, 16)}…
+                {item.contentHash.slice(0, 8)}…
               </p>
             </div>
             <div className="text-right text-xs">

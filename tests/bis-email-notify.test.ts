@@ -10,7 +10,7 @@ describe('bis-email-notify', () => {
 
   it('construit le sujet email BIS', () => {
     expect(buildBisNotificationSubject('Jim Acoca')).toBe(
-      '[Jim Acoca] vous a envoyé une interaction signée BLOCKTRUST™',
+      'Jim Acoca a signé une interaction vérifiable',
     )
   })
 })
