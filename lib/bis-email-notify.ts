@@ -20,6 +20,7 @@ export type BisEmailNotificationParams = {
   senderEmail: string
   interactionType: string
   contextLabel?: string | null
+  contentHash: string
   bisLevel: number
   signedAt: Date
   expiresAt: Date
@@ -86,6 +87,7 @@ export async function notifyBisRecipient(
       senderEmail: params.senderEmail,
       interactionType: params.interactionType,
       contextLabel: params.contextLabel,
+      contentHash: params.contentHash,
       bisLevel: params.bisLevel,
       signedAtLabel,
       expiresAtLabel,

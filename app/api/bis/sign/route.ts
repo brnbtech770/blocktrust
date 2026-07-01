@@ -114,6 +114,7 @@ export async function POST(req: NextRequest) {
         senderEmail: session.user.email,
         interactionType,
         contextLabel: safeContextLabel ?? null,
+        contentHash: contentHash.toLowerCase(),
         bisLevel: result.bisLevel,
         signedAt: new Date(result.payload.iat * 1000),
         expiresAt: new Date(result.expiresAt),

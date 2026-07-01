@@ -18,12 +18,17 @@ import {
 import * as React from 'react'
 import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
 import { getBisInteractionLabel } from '@/lib/bis-interaction-labels'
+import {
+  formatTruncatedContentHash,
+  isDocumentLikeBisType,
+} from '@/lib/bis-content-hash'
 
 export type BisNotificationEmailProps = {
   senderDisplayName: string
   senderEmail: string
   interactionType: string
   contextLabel?: string | null
+  contentHash?: string | null
   bisLevel: number
   signedAtLabel: string
   expiresAtLabel: string
@@ -40,6 +45,7 @@ export function BisNotificationEmail({
   senderEmail,
   interactionType,
   contextLabel,
+  contentHash,
   bisLevel,
   signedAtLabel,
   expiresAtLabel,
@@ -47,28 +53,49 @@ export function BisNotificationEmail({
   marketingUrl = 'https://blocktrust.tech',
 }: BisNotificationEmailProps) {
   const typeLabel = getBisInteractionLabel(interactionType)
+  const isDocumentLike = isDocumentLikeBisType(interactionType)
+  const truncatedHash =
+    isDocumentLike && contentHash ? formatTruncatedContentHash(contentHash) : null
+  const ctaLabel = isDocumentLike ? 'Vérifier ce document' : 'Vérifier cette signature'
 
   return (
     <Html>
       <Head />
       <Preview>
-        {senderDisplayName} a signé une interaction {typeLabel} vérifiable BLOCKTRUST™
+        {isDocumentLike && contextLabel
+          ? `${senderDisplayName} a signé le document « ${contextLabel} » — BLOCKTRUST™`
+          : `${senderDisplayName} a signé une interaction ${typeLabel} vérifiable BLOCKTRUST™`}
       </Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={h1}>Interaction signée BLOCKTRUST™</Heading>
+          <Heading style={h1}>
+            {isDocumentLike ? 'Document signé BLOCKTRUST™' : 'Interaction signée BLOCKTRUST™'}
+          </Heading>
           <Text style={text}>
             <strong>{senderDisplayName}</strong> ({senderEmail}) — identité certifiée BLOCKTRUST™ —
-            a signé une interaction vérifiable.
+            {isDocumentLike
+              ? ' a signé un document vérifiable.'
+              : ' a signé une interaction vérifiable.'}
           </Text>
 
           <Section style={infoBlock}>
             <Text style={infoRow}>
               <strong>Type :</strong> {typeLabel}
             </Text>
-            {contextLabel ? (
+            {isDocumentLike && contextLabel ? (
+              <Text style={infoRow}>
+                <strong>Document :</strong> {contextLabel}
+              </Text>
+            ) : null}
+            {!isDocumentLike && contextLabel ? (
               <Text style={infoRow}>
                 <strong>Contexte :</strong> {contextLabel}
+              </Text>
+            ) : null}
+            {truncatedHash ? (
+              <Text style={infoRow}>
+                <strong>Empreinte du document :</strong>{' '}
+                <span style={mono}>{truncatedHash}</span>
               </Text>
             ) : null}
             <Text style={infoRow}>
@@ -82,9 +109,24 @@ export function BisNotificationEmail({
             </Text>
           </Section>
 
+          {isDocumentLike ? (
+            <Section style={instructionsBlock}>
+              <Text style={instructionsTitle}>
+                Pour vérifier que le document que vous avez reçu n&apos;a pas été modifié :
+              </Text>
+              <Text style={instructionsStep}>1. Ouvrez le lien de vérification ci-dessous</Text>
+              <Text style={instructionsStep}>
+                2. Déposez le fichier reçu dans la zone prévue
+              </Text>
+              <Text style={instructionsStep}>
+                3. BLOCKTRUST™ comparera l&apos;empreinte automatiquement
+              </Text>
+            </Section>
+          ) : null}
+
           <Section style={buttonContainer}>
             <Button href={verifyUrl} style={button}>
-              Vérifier cette signature
+              {ctaLabel}
             </Button>
           </Section>
 
@@ -151,6 +193,30 @@ const infoRow = {
   fontSize: '14px',
   lineHeight: '22px',
   margin: '0 0 8px',
+}
+const mono = {
+  fontFamily: 'IBM Plex Mono, Menlo, Monaco, Consolas, monospace',
+  fontSize: '13px',
+}
+const instructionsBlock = {
+  margin: '16px 0',
+  padding: '14px 16px',
+  backgroundColor: '#f0fdf4',
+  borderRadius: '8px',
+  borderLeft: '3px solid #10b981',
+}
+const instructionsTitle = {
+  color: '#166534',
+  fontSize: '14px',
+  fontWeight: '600',
+  lineHeight: '22px',
+  margin: '0 0 10px',
+}
+const instructionsStep = {
+  color: '#374151',
+  fontSize: '13px',
+  lineHeight: '20px',
+  margin: '0 0 6px',
 }
 const buttonContainer = {
   textAlign: 'center' as const,

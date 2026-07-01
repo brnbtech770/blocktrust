@@ -56,3 +56,14 @@ export function formatBisFileSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} Ko`
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`
 }
+
+/** Empreinte SHA-256 tronquée pour affichage email (8 premiers + 4 derniers). */
+export function formatTruncatedContentHash(hash: string): string {
+  const normalized = hash.toLowerCase()
+  if (normalized.length <= 12) return normalized
+  return `${normalized.slice(0, 8)}...${normalized.slice(-4)}`
+}
+
+export function isDocumentLikeBisType(interactionType: string): boolean {
+  return interactionType === 'DOCUMENT' || interactionType === 'CONTRACT'
+}
