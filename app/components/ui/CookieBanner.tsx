@@ -7,7 +7,6 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { useSession } from 'next-auth/react'
 import { Cookie, ShieldCheck, BarChart3 } from 'lucide-react'
 import {
   CONSENT_CHANGED_EVENT,
@@ -17,7 +16,6 @@ import {
 } from '@/app/lib/cookie-consent'
 
 export default function CookieBanner() {
-  const { data: session, status, update } = useSession()
   const [mounted, setMounted] = useState(false)
   const [visible, setVisible] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -54,21 +52,18 @@ export default function CookieBanner() {
   }, [])
 
   // Trace serveur : enregistre le consentement mesure d'audience pour l'utilisateur connecté.
-  const persistServer = useCallback(
-    async (analytics: boolean) => {
-      try {
-        await fetch('/api/user/cookie-consent', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ accepted: analytics }),
-        })
-        if (status === 'authenticated') await update?.()
-      } catch {
-        /* localStorage + event suffisent au gating côté client */
-      }
-    },
-    [status, update],
-  )
+  const persistServer = useCallback(async (analytics: boolean) => {
+    try {
+      await fetch('/api/user/cookie-consent', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ accepted: analytics }),
+      })
+    } catch {
+      /* localStorage + event suffisent au gating côté client */
+    }
+  }, [])
 
   const applyChoice = useCallback(
     (analytics: boolean) => {

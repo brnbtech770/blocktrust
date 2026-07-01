@@ -1,7 +1,4 @@
-"use client";
-
 import { Award, Anchor, ShieldCheck, KeyRound, type LucideIcon } from "lucide-react";
-import Reveal from "./Reveal";
 
 const proofs: { icon: LucideIcon; text: string }[] = [
   { icon: Award, text: "BLOCKTRUST™ — INPI n°5253718" },
@@ -16,7 +13,7 @@ export default function Proofs() {
       id="proofs"
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pb-16"
     >
-      <Reveal className="mx-auto grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+      <div className="mx-auto grid max-w-3xl grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
         {proofs.map((p) => {
           const Icon = p.icon;
           return (
@@ -29,7 +26,7 @@ export default function Proofs() {
             </span>
           );
         })}
-      </Reveal>
+      </div>
     </section>
   );
 }

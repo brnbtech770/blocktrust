@@ -8,6 +8,7 @@ import type { Metadata } from 'next'
 import { prisma } from '@/app/lib/db'
 import DashboardSidebar from '@/app/components/DashboardSidebar'
 import DashboardSidebarBoundary from '@/app/components/DashboardSidebarBoundary'
+import { AuthenticatedProviders } from '@/app/authenticated-providers'
 import DashboardChrome from '@/app/components/DashboardChrome'
 import DashboardPageChrome from '@/app/components/dashboard/DashboardLayout'
 import { DiscoveryExpiredWall } from '@/app/components/dashboard/DiscoveryExpiredWall'
@@ -85,15 +86,17 @@ export default async function DashboardSegmentLayout({
     const discoveryExpired = isDiscoveryExpired(effectivePlan)
 
     return (
-      <DashboardChrome>
-        <DashboardSidebarBoundary>
-          <DashboardSidebar />
-        </DashboardSidebarBoundary>
-        <DashboardPageChrome>
-          {discoveryExpired ? <DiscoveryExpiredWall /> : null}
-          {children}
-        </DashboardPageChrome>
-      </DashboardChrome>
+      <AuthenticatedProviders>
+        <DashboardChrome>
+          <DashboardSidebarBoundary>
+            <DashboardSidebar />
+          </DashboardSidebarBoundary>
+          <DashboardPageChrome>
+            {discoveryExpired ? <DiscoveryExpiredWall /> : null}
+            {children}
+          </DashboardPageChrome>
+        </DashboardChrome>
+      </AuthenticatedProviders>
     )
   } catch (error) {
     rethrowIfRedirect(error)

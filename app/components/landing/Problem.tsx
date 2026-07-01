@@ -1,7 +1,4 @@
-"use client";
-
 import { User, Building2, X } from "lucide-react";
-import Reveal from "./Reveal";
 
 const particuliers: string[] = [
   "Faux SMS / faux emails",
@@ -25,7 +22,7 @@ export default function Problem() {
       id="probleme"
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pt-12 pb-16 sm:pt-16 sm:pb-24 lg:py-24"
     >
-      <Reveal className="mx-auto max-w-3xl text-center">
+      <div className="mx-auto max-w-3xl text-center">
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-red">
           Le problème
         </p>
@@ -39,10 +36,10 @@ export default function Problem() {
           <br />
           Le problème n&apos;est pas l&apos;identité — c&apos;est la confiance.
         </p>
-      </Reveal>
+      </div>
 
       <div className="mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-5 sm:grid-cols-2 lg:gap-6">
-        <Reveal className="rounded-xl border border-red-500/20 bg-white/5 p-6 backdrop-blur-sm">
+        <div className="rounded-xl border border-red-500/20 bg-white/5 p-6 backdrop-blur-sm">
           <div className="mb-5 flex items-center gap-3">
             <div
               className="inline-flex h-11 w-11 items-center justify-center rounded-lg"
@@ -60,9 +57,9 @@ export default function Problem() {
               </li>
             ))}
           </ul>
-        </Reveal>
+        </div>
 
-        <Reveal delay={150} className="rounded-xl border border-red-500/20 bg-white/5 p-6 backdrop-blur-sm">
+        <div className="rounded-xl border border-red-500/20 bg-white/5 p-6 backdrop-blur-sm">
           <div className="mb-5 flex items-center gap-3">
             <div
               className="inline-flex h-11 w-11 items-center justify-center rounded-lg"
@@ -80,17 +77,17 @@ export default function Problem() {
               </li>
             ))}
           </ul>
-        </Reveal>
+        </div>
       </div>
 
-      <Reveal delay={250} className="mx-auto mt-12 max-w-2xl text-center">
+      <div className="mx-auto mt-12 max-w-2xl text-center">
         <p className="mb-3 text-sm font-medium uppercase tracking-[0.2em] text-white/45">
           La question
         </p>
         <p className="font-syne mx-auto max-w-3xl text-balance text-xl font-semibold italic leading-snug text-bt-cyan sm:text-2xl">
           Puis-je faire confiance à cette interaction ?
         </p>
-      </Reveal>
+      </div>
     </section>
   );
 }

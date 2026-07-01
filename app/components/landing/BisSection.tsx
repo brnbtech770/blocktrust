@@ -1,8 +1,5 @@
-"use client";
-
 import Link from "next/link";
 import { ArrowRight, FileSignature } from "lucide-react";
-import Reveal from "./Reveal";
 
 export default function BisSection() {
   return (
@@ -11,7 +8,7 @@ export default function BisSection() {
       aria-labelledby="bis-heading"
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12"
     >
-      <Reveal className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-4xl">
         <div className="rounded-2xl border border-bt-cyan/25 bg-gradient-to-br from-bt-cyan/10 via-white/[0.02] to-gold/5 p-6 sm:p-8">
           <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
             <div
@@ -49,7 +46,7 @@ export default function BisSection() {
             </div>
           </div>
         </div>
-      </Reveal>
+      </div>
     </section>
   );
 }

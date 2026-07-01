@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { RotateCcw } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession } from "next-auth/react";
 import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
 import VerifyForm from "@/app/components/verify/VerifyForm";
 import VerifyBanner from "@/app/components/verify/VerifyBanner";
@@ -27,6 +26,7 @@ import type { TrustEngineResult } from "@/lib/trust-engine";
 type VerifyPageClientProps = {
   initialCertId?: string;
   initialCertData?: VerifyApiSuccess | null;
+  sessionUser?: { id?: string; email?: string | null; name?: string | null } | null;
 };
 
 function applyVerifyApiPayload(
@@ -65,8 +65,8 @@ function applyVerifyApiPayload(
 function VerifyContent({
   initialCertId,
   initialCertData,
+  sessionUser,
 }: VerifyPageClientProps) {
-  const { data: session } = useSession();
   const router = useRouter();
   const sp = useSearchParams();
   const certIdQuery = sp.get("certId")?.trim() ?? "";
@@ -458,7 +458,7 @@ function VerifyContent({
 
   useEffect(() => {
     setVaultMatchBanner(null);
-    if (!showSuccess || !session?.user) return;
+    if (!showSuccess || !sessionUser) return;
     if (certifiedEmails.length === 0 && certifiedDomains.length === 0) return;
 
     let cancelled = false;
@@ -482,7 +482,7 @@ function VerifyContent({
     return () => {
       cancelled = true;
     };
-  }, [showSuccess, session?.user, certifiedEmails, certifiedDomains]);
+  }, [showSuccess, sessionUser, certifiedEmails, certifiedDomains]);
 
   const activeQuery = Boolean(
     hasValidToken ||
@@ -580,13 +580,13 @@ function VerifyContent({
             certifiedDomains={certifiedDomains}
             certifiedEmails={certifiedEmails}
             certifiedPhones={certifiedPhones}
-            sessionUser={session?.user ?? null}
+            sessionUser={sessionUser ?? null}
             vaultMatchBanner={vaultMatchBanner}
             contactAddState={contactAddState}
             contactAddMessage={contactAddMessage}
             onAddContact={async () => {
               const email = certifiedEmails[0]?.trim();
-              if (!email || !session?.user) return;
+              if (!email || !sessionUser) return;
               setContactAddState("loading");
               setContactAddMessage(null);
               try {

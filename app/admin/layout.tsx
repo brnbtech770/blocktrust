@@ -8,6 +8,7 @@ import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
 import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
 import { rethrowIfRedirect } from '@/app/lib/is-redirect-error'
 import { redirect } from 'next/navigation'
+import { AuthenticatedProviders } from '@/app/authenticated-providers'
 import SignOutButton from '@/app/components/SignOutButton'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
 import Link from 'next/link'
@@ -106,6 +107,7 @@ export default async function AdminLayout({
     .catch(() => 0)
 
   return (
+    <AuthenticatedProviders>
     <div
       className="flex h-screen overflow-hidden overflow-x-hidden font-sans"
       style={{ background: 'var(--bt-navy)' }}
@@ -193,6 +195,7 @@ export default async function AdminLayout({
         </div>
       </div>
     </div>
+    </AuthenticatedProviders>
   )
   } catch (error) {
     rethrowIfRedirect(error)

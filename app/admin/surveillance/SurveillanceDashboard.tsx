@@ -1,21 +1,18 @@
 'use client'
 
-// app/admin/surveillance/SurveillanceDashboard.tsx
-// KPIs temps réel + graphique + lancement manuel de l’agent
-// ============================================================
-
+import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useState } from 'react'
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
 import { Activity, Bot, Clock, ShieldAlert } from 'lucide-react'
 import { formatDistanceToNow } from '@/lib/format-relative-fr'
+
+const SurveillanceChart = dynamic(() => import('./SurveillanceChart'), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full min-h-[220px] items-center justify-center text-sm text-white/40">
+      Chargement du graphique…
+    </div>
+  ),
+})
 
 type AgentKey = 'fraud' | 'security' | 'subscription' | 'onboarding'
 
@@ -398,26 +395,7 @@ export default function SurveillanceDashboard() {
         </h2>
         <div className="h-72 w-full min-w-0">
           {data && data.chart.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.chart} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                <XAxis
-                  dataKey="hour"
-                  tick={{ fill: 'var(--bt-muted)', fontSize: 10 }}
-                  interval="preserveStartEnd"
-                />
-                <YAxis tick={{ fill: 'var(--bt-muted)', fontSize: 11 }} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{
-                    background: '#0a1628',
-                    border: '1px solid var(--bt-border)',
-                    borderRadius: 8,
-                  }}
-                  labelStyle={{ color: 'var(--bt-muted)' }}
-                />
-                <Bar dataKey="count" fill="#00d4ff" radius={[4, 4, 0, 0]} name="Vérifications" />
-              </BarChart>
-            </ResponsiveContainer>
+            <SurveillanceChart data={data.chart} />
           ) : (
             <p className="text-sm" style={{ color: 'var(--bt-muted)' }}>
               Aucune donnée sur la période.

@@ -1,17 +1,12 @@
-"use client";
-
 import { UserPlus, ShieldCheck, CheckCircle2, type LucideIcon } from "lucide-react";
-import Reveal from "./Reveal";
-import TechTermTooltip from "@/app/components/ui/TechTermTooltip";
-import type { ReactNode } from "react";
 
 type Step = {
   icon: LucideIcon;
   iconColor: string;
   ringColor: string;
   step: string;
-  title: ReactNode;
-  text: ReactNode;
+  title: string;
+  text: string;
 };
 
 const steps: Step[] = [
@@ -28,18 +23,8 @@ const steps: Step[] = [
     iconColor: "#BDA76B",
     ringColor: "rgba(189,167,107,0.4)",
     step: "Étape 2",
-    title: (
-      <>
-        Obtenez votre badge certifié{" "}
-        <TechTermTooltip term="blockchain">blockchain</TechTermTooltip>
-      </>
-    ),
-    text: (
-      <>
-        Un <TechTermTooltip term="qr-rotatif">QR rotatif</TechTermTooltip> unique, ancré sur{" "}
-        <TechTermTooltip term="polygon">Polygon</TechTermTooltip>, impossible à copier ou falsifier.
-      </>
-    ),
+    title: "Obtenez votre badge certifié blockchain",
+    text: "Un QR rotatif unique, ancré sur Polygon, impossible à copier ou falsifier.",
   },
   {
     icon: CheckCircle2,
@@ -57,14 +42,14 @@ export default function Solution() {
       id="comment"
       className="relative z-10 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-16 sm:py-24"
     >
-      <Reveal className="mx-auto max-w-3xl text-center">
+      <div className="mx-auto max-w-3xl text-center">
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] neon-cyan">
           La solution
         </p>
         <h2 className="font-syne mx-auto max-w-3xl text-balance text-2xl font-semibold leading-snug text-white sm:text-3xl">
           3 étapes pour sécuriser votre <span className="text-bt-cyan">identité</span>
         </h2>
-      </Reveal>
+      </div>
 
       <div className="relative mt-14 mx-auto max-w-3xl">
         <ol className="space-y-10 sm:space-y-12">
@@ -72,13 +57,7 @@ export default function Solution() {
             const Icon = step.icon;
             const isLast = i === steps.length - 1;
             return (
-              <Reveal
-                as="li"
-                key={step.step}
-                delay={200 * i}
-                className="relative pl-16 sm:pl-20"
-              >
-                {/* Connecteur vertical vers l'étape suivante (masqué sur le dernier item) */}
+              <li key={step.step} className="relative pl-16 sm:pl-20">
                 {!isLast && (
                   <span
                     aria-hidden
@@ -105,10 +84,8 @@ export default function Solution() {
                   </span>
                   <span>{step.title}</span>
                 </h3>
-                <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/70">
-                  {step.text}
-                </p>
-              </Reveal>
+                <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/70">{step.text}</p>
+              </li>
             );
           })}
         </ol>

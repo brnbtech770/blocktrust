@@ -9,6 +9,7 @@ import { prisma } from "@/app/lib/db";
 import { auth } from "@/app/lib/auth-server";
 import { isAdmin } from "@/app/lib/admin";
 import { getVerifyQuotaDisplay } from "@/lib/verify-quotas";
+import { getDashboardStats } from "@/lib/dashboard-stats";
 import Link from "next/link";
 import { Plus, Shield, ShieldAlert, Sparkles, Check } from "lucide-react";
 import VerifyBadgeCard from "@/app/components/dashboard/VerifyBadgeCard";
@@ -74,13 +75,16 @@ export default async function Dashboard({
     const userIsAdmin = isAdmin(session.user.email);
 
     const fraudWeekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const fraudAlertsWeek = await prisma.verification.count({
-      where: {
-        result: "FRAUD_ALERT",
-        verifiedAt: { gte: fraudWeekStart },
-        certificate: { entity: { userId: user.id } },
-      },
-    });
+    const [fraudAlertsWeek, dashboardStats] = await Promise.all([
+      prisma.verification.count({
+        where: {
+          result: "FRAUD_ALERT",
+          verifiedAt: { gte: fraudWeekStart },
+          certificate: { entity: { userId: user.id } },
+        },
+      }),
+      getDashboardStats(user.id),
+    ]);
 
     const subscription = await prisma.subscription.findUnique({
       where: { userId: user.id },
@@ -303,7 +307,7 @@ export default async function Dashboard({
         )}
 
         <Suspense fallback={<KpiGridSkeleton />}>
-          <StatsBlock />
+          <StatsBlock stats={dashboardStats} />
         </Suspense>
 
         {fraudAlertsWeek > 0 ? (

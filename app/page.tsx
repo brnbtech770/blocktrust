@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import LandingPageClient from "@/app/components/LandingPageClient";
+import LandingShellClient from "@/app/components/LandingShellClient";
+import LandingBelowFold from "@/app/components/landing/LandingBelowFold";
 import ThreatAlert from "@/app/components/landing/ThreatAlert";
 import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "@/lib/site-metadata";
 
@@ -18,5 +19,15 @@ export const metadata: Metadata = {
 
 /** Landing publique (statique). Redirection admin : proxy.ts sur `/`. */
 export default function HomePage() {
-  return <LandingPageClient threatAlert={<ThreatAlert />} />;
+  return (
+    <div
+      className="min-h-screen overflow-x-hidden"
+      style={{ background: "var(--bt-navy)" }}
+    >
+      <LandingShellClient />
+      <main>
+        <LandingBelowFold threatAlert={<ThreatAlert />} />
+      </main>
+    </div>
+  );
 }

@@ -576,6 +576,7 @@ model Certificate {
 
   @@index([entityId])
   @@index([status])
+  @@index([status, blockchainStatus, issuedAt])
   @@index([publicId])
   @@index([blockchainStatus])
 }
@@ -1079,6 +1080,7 @@ model InteractionSignature {
 
   @@index([senderEmail])
   @@index([recipientEmail])
+  @@index([recipientEmail, senderEmail])
   @@index([senderCertId])
   @@index([contentHash])
   @@index([senderId])
