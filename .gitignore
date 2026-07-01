@@ -48,3 +48,14 @@ next-env.d.ts
 # Sentry Config File
 .env.sentry-build-plugin
 blocktrust-trustscan.zip
+
+# Scripts SQL ad hoc locaux (unsafe — ne pas versionner)
+/check-plans.js
+/check-trial.js
+/fix-trial.js
+
+# Builds extension Chrome (générer à la release, pas versionner)
+/extension/dist/
+
+# Binaire MCP local
+/mcp-publisher
