@@ -73,6 +73,45 @@
         <div class="divider"></div>
         <button type="button" id="disconnect-btn" class="btn-secondary">Déconnecter</button>
       </div>
+
+      <section id="bis-mode-section" class="bis-mode-section" aria-labelledby="bis-mode-heading">
+        <h2 id="bis-mode-heading" class="bis-mode-heading">Signature BIS</h2>
+        <fieldset class="bis-mode-fieldset">
+          <legend class="sr-only">Mode de signature BIS</legend>
+
+          <label class="bis-mode-option">
+            <input type="radio" name="bisMode" value="auto" />
+            <span class="bis-mode-option-body">
+              <span class="bis-mode-option-title">Automatique</span>
+              <span class="bis-mode-option-desc">
+                Tous mes emails sont signés BLOCKTRUST™. Chaque email envoyé contient
+                automatiquement votre signature cryptographique.
+              </span>
+            </span>
+          </label>
+
+          <label class="bis-mode-option">
+            <input type="radio" name="bisMode" value="selective" checked />
+            <span class="bis-mode-option-body">
+              <span class="bis-mode-option-title">Sélectif <span class="bis-mode-default">(défaut)</span></span>
+              <span class="bis-mode-option-desc">
+                Un bouton BIS apparaît dans le composeur Gmail. Cliquez pour signer
+                un email avant de l'envoyer.
+              </span>
+            </span>
+          </label>
+
+          <label class="bis-mode-option">
+            <input type="radio" name="bisMode" value="off" />
+            <span class="bis-mode-option-body">
+              <span class="bis-mode-option-title">Désactivé</span>
+              <span class="bis-mode-option-desc">
+                L'extension vérifie les emails reçus mais ne signe pas les emails sortants.
+              </span>
+            </span>
+          </label>
+        </fieldset>
+      </section>
     </div>
     <script src="popup.js"></script>
   </body>

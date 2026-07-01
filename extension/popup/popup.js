@@ -4,6 +4,9 @@
 
 const API_BASE = "https://blocktrust.tech";
 
+const BIS_MODES = ["auto", "selective", "off"];
+const DEFAULT_BIS_MODE = "selective";
+
 const el = {
   statusBar: document.getElementById("extension-status-bar"),
   loading: document.getElementById("loading"),
@@ -17,6 +20,7 @@ const el = {
   userPlan: document.getElementById("user-plan"),
   userScore: document.getElementById("user-score"),
   userContacts: document.getElementById("user-contacts"),
+  bisModeRadios: document.querySelectorAll('input[name="bisMode"]'),
 };
 
 function showStatus(message, isError) {
@@ -104,6 +108,46 @@ function refreshStatusBar(isConnected) {
 function getStoredApiKey() {
   return new Promise((resolve) => {
     chrome.storage.local.get(["apiKey"], (r) => resolve(r.apiKey || null));
+  });
+}
+
+function getStoredBisMode() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["bisMode"], (r) => {
+      const mode = r.bisMode;
+      resolve(BIS_MODES.includes(mode) ? mode : DEFAULT_BIS_MODE);
+    });
+  });
+}
+
+function saveBisMode(mode) {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ bisMode: mode }, () => resolve());
+  });
+}
+
+function applyBisModeToUI(mode) {
+  el.bisModeRadios.forEach((radio) => {
+    radio.checked = radio.value === mode;
+  });
+}
+
+async function initBisModeSettings() {
+  let mode = await getStoredBisMode();
+  const stored = await new Promise((resolve) => {
+    chrome.storage.local.get(["bisMode"], (r) => resolve(r.bisMode));
+  });
+  if (!BIS_MODES.includes(stored)) {
+    await saveBisMode(DEFAULT_BIS_MODE);
+    mode = DEFAULT_BIS_MODE;
+  }
+  applyBisModeToUI(mode);
+
+  el.bisModeRadios.forEach((radio) => {
+    radio.addEventListener("change", async () => {
+      if (!radio.checked || !BIS_MODES.includes(radio.value)) return;
+      await saveBisMode(radio.value);
+    });
   });
 }
 
@@ -224,6 +268,7 @@ function onDisconnect() {
 
 document.addEventListener("DOMContentLoaded", () => {
   showLoadingState();
+  void initBisModeSettings();
 
   chrome.storage.local.get(["apiKey"], async (data) => {
     const key = data.apiKey;
