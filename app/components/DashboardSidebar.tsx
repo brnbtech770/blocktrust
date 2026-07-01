@@ -13,6 +13,7 @@ import DashboardSidebarNav, { type SidebarSection } from './DashboardSidebarNav'
 import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
 import { hasOrgAccess } from '@/lib/vault-utils'
 import { getPlanWording, resolvePlanKeyForWording } from '@/lib/plan-wording'
+import { planAllowsTrustCircle, resolveEffectivePlan } from '@/lib/plan-features'
 
 function shellClass() {
   return 'flex h-full min-h-0 flex-col p-4 md:p-6'
@@ -109,7 +110,14 @@ export default async function DashboardSidebar() {
 
     const showB2BOrgVault = hasB2BSubscription || Boolean(isMemberOfOrg)
 
-    const trustCircleItem = plan?.trustCircleEnabled
+    const effectivePlan = resolveEffectivePlan({
+      subscription,
+      email: session.user.email,
+      planType: plan?.type,
+    })
+    const trustCircleAllowed = planAllowsTrustCircle(effectivePlan)
+
+    const trustCircleItem = trustCircleAllowed
       ? { name: 'Trust Circle', href: '/dashboard/trust-circle', icon: 'Users' as const }
       : {
           name: 'Trust Circle',

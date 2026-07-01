@@ -113,9 +113,7 @@ function isProtectedApi(pathname: string): boolean {
     '/api/quota',
     '/api/qr/generate',
     '/api/qr/settings',
-    '/api/verify/',
-    '/api/v2/issue',
-    '/api/v2/sign',
+    '/api/verify',
     '/api/bis/my-signatures',
     '/api/bis/received',
     '/api/extension/api-key',
@@ -123,11 +121,18 @@ function isProtectedApi(pathname: string): boolean {
     '/api/activity',
   ]
 
-  if (protectedPrefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+  if (protectedPrefixes.some((prefix) => apiPathMatchesPrefix(pathname, prefix))) {
     return true
   }
 
   return pathname.startsWith('/api/stripe') && !pathname.includes('/webhook')
+}
+
+/** Préfixe API protégé — gère `/api/verify` et `/api/verify/…` sans double slash. */
+function apiPathMatchesPrefix(pathname: string, prefix: string): boolean {
+  if (pathname === prefix) return true
+  const base = prefix.endsWith('/') ? prefix.slice(0, -1) : prefix
+  return pathname.startsWith(`${base}/`)
 }
 
 export async function proxy(request: NextRequest) {
@@ -299,8 +304,6 @@ export const config = {
     '/api/qr/generate/:path*',
     '/api/qr/settings/:path*',
     '/api/verify/:path*',
-    '/api/v2/issue',
-    '/api/v2/sign',
     '/api/bis/my-signatures',
     '/api/bis/received',
     '/api/extension/api-key',

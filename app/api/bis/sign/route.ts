@@ -33,6 +33,7 @@ import {
   rejectForbiddenExtensionOrigin,
 } from '@/lib/extension-cors'
 import { checkRateLimitExtensionAsync } from '@/lib/rate-limit-extension'
+import { btErrorDevDetails } from '@/lib/prodLog'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -62,6 +63,9 @@ type BisSignActor = {
 
 function safeSignErrorMessage(error: unknown): string {
   if (error instanceof BisSignError) return error.message
+  if (process.env.NODE_ENV === 'production') {
+    return 'Erreur serveur lors de la signature'
+  }
   if (error instanceof Error) {
     if (error.message.includes('Invalid key type')) {
       return 'Configuration serveur : BLOCKTRUST_JWT_PRIVATE_KEY incompatible (RSA attendu RS256, EC attendu ES256 — vérifiez le format PEM sur Vercel)'
@@ -83,6 +87,10 @@ function bisJson(req: NextRequest, body: unknown, status = 200): NextResponse {
 async function resolveBisSignActor(req: NextRequest): Promise<BisSignActor | null> {
   const session = await auth()
   if (session?.user?.id && session.user.email) {
+    const rate = await checkRateLimitExtensionAsync('write', session.user.id)
+    if (!rate.ok) {
+      throw new BisSignError('Trop de requêtes. Réessayez plus tard.', 429)
+    }
     return {
       userId: session.user.id,
       userEmail: session.user.email,
@@ -236,7 +244,7 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('[BIS] Sign error:', error)
+    btErrorDevDetails(error, '[BIS] Sign error')
     if (error instanceof BisSignError) {
       return bisJson(req, { error: error.message }, error.status)
     }

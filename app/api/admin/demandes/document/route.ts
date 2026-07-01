@@ -15,6 +15,26 @@ import { isAdmin } from '@/app/lib/admin'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+const ALLOWED_LEGACY_DOCUMENT_HOSTS = new Set([
+  'blob.vercel-storage.com',
+  'public.blob.vercel-storage.com',
+])
+
+function isAllowedLegacyDocumentUrl(raw: string): boolean {
+  try {
+    const url = new URL(raw)
+    if (url.protocol !== 'https:') return false
+    const host = url.hostname.toLowerCase()
+    return (
+      ALLOWED_LEGACY_DOCUMENT_HOSTS.has(host) ||
+      host.endsWith('.blob.vercel-storage.com') ||
+      host.endsWith('.public.blob.vercel-storage.com')
+    )
+  } catch {
+    return false
+  }
+}
+
 export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.email || !isAdmin(session.user.email)) {
@@ -26,8 +46,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Paramètre `path` manquant' }, { status: 400 })
   }
 
-  // Rétro-compat : anciens documents stockés en URL publique → redirection directe.
+  // Rétro-compat : anciens documents stockés en URL publique Vercel Blob uniquement.
   if (/^https?:\/\//i.test(path)) {
+    if (!isAllowedLegacyDocumentUrl(path)) {
+      return NextResponse.json({ error: 'URL de document non autorisée' }, { status: 400 })
+    }
     return NextResponse.redirect(path)
   }
 

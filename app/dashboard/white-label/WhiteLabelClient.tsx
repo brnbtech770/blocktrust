@@ -104,6 +104,54 @@ export default function WhiteLabelClient() {
   const [webhookUrl, setWebhookUrl] = useState('')
 
   const widgetPreviewRef = useRef<HTMLImageElement | null>(null)
+  const [widgetPreviewUrl, setWidgetPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!revealedKey || revealedKey === 'preview') {
+      setWidgetPreviewUrl(null)
+      return
+    }
+
+    const sampleCertId = 'YOUR_CERTIFICATE_ID'
+    const params = new URLSearchParams({
+      primaryColor,
+      secondaryColor,
+      size: '160',
+    })
+    const controller = new AbortController()
+
+    fetch(`/api/public/widget/${sampleCertId}?${params.toString()}`, {
+      headers: { 'X-API-Key': revealedKey },
+      signal: controller.signal,
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('preview_failed')
+        return res.blob()
+      })
+      .then((blob) => {
+        const url = URL.createObjectURL(blob)
+        setWidgetPreviewUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev)
+          return url
+        })
+      })
+      .catch(() => {
+        setWidgetPreviewUrl((prev) => {
+          if (prev) URL.revokeObjectURL(prev)
+          return null
+        })
+      })
+
+    return () => {
+      controller.abort()
+    }
+  }, [revealedKey, primaryColor, secondaryColor])
+
+  useEffect(() => {
+    return () => {
+      if (widgetPreviewUrl) URL.revokeObjectURL(widgetPreviewUrl)
+    }
+  }, [widgetPreviewUrl])
 
   useEffect(() => {
     fetch('/api/whitelabel/config')
@@ -243,11 +291,7 @@ export default function WhiteLabelClient() {
 const data = await res.json()
 console.log(data.verdict, data.entity.name)`
 
-  const previewSrc = `/api/public/widget/${sampleCertId}?apiKey=${encodeURIComponent(
-    revealedKey ?? 'preview'
-  )}&primaryColor=${encodeURIComponent(primaryColor)}&secondaryColor=${encodeURIComponent(
-    secondaryColor
-  )}&size=160`
+  const previewSrc = widgetPreviewUrl ?? undefined
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
@@ -448,7 +492,9 @@ console.log(data.verdict, data.entity.name)`
                 className="rounded-md"
               />
               <span className="font-mono text-[10px] text-white/40">
-                Widget 160×160 SVG
+                {previewSrc
+                  ? 'Widget 160×160 SVG'
+                  : 'Révélez la clé API pour l’aperçu widget'}
               </span>
             </div>
           </div>

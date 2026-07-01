@@ -66,9 +66,10 @@ export async function GET(
   const { id } = await params
   const sp = req.nextUrl.searchParams
 
-  const apiKey = sp.get('apiKey') ?? req.headers.get('x-api-key')
+  const apiKey =
+    req.headers.get('x-api-key')?.trim() ?? req.headers.get('X-API-Key')?.trim() ?? null
   if (!isValidApiKeyShape(apiKey)) {
-    return svgError(401, 'API key requise')
+    return svgError(401, 'API key requise (header X-API-Key)')
   }
 
   const apiKeyHash = hashApiKey(apiKey)

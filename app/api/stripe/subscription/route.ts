@@ -6,14 +6,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUser } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/db'
 import { stripe } from '@/lib/stripe'
-import { getPlanDisplayLabel, resolveEffectivePlan } from '@/lib/plan-features'
+import { getPlanDisplayLabel, planAllowsTrustCircle, resolveEffectivePlan } from '@/lib/plan-features'
 
 export async function GET(req: NextRequest) {
   try {
     // Vérifier l'authentification
     // TODO: Remplacer par getServerSession(authOptions) quand NextAuth sera implémenté
     const user = await getAuthUser(req)
-    
     if (!user) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
@@ -66,11 +65,10 @@ export async function GET(req: NextRequest) {
     let limits: { maxEntities: number; maxCertificates: number; trustCircleEnabled: boolean; blockchainAnchor: boolean }
     
     if (userWithPlan.plan) {
-      // Nouveau modèle Plan
       limits = {
         maxEntities: userWithPlan.plan.maxEntities,
         maxCertificates: userWithPlan.plan.maxCertificates,
-        trustCircleEnabled: userWithPlan.plan.trustCircleEnabled,
+        trustCircleEnabled: planAllowsTrustCircle(planCode),
         blockchainAnchor: userWithPlan.plan.blockchainAnchor,
       }
     } else {
@@ -98,6 +96,10 @@ export async function GET(req: NextRequest) {
           })
         )?.plan ?? 'ESSENTIEL'
       limits = planLimits[planName] || planLimits.ESSENTIEL
+      limits = {
+        ...limits,
+        trustCircleEnabled: planAllowsTrustCircle(planCode),
+      }
     }
 
     // Si pas de stripeCustomerId, pas d'abonnement

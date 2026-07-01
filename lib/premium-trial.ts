@@ -265,15 +265,6 @@ export async function grantPremiumTrial(params: {
     return { ok: false, reason: 'Plan B2C_PREMIUM introuvable en base' }
   }
 
-  await prisma.plan.update({
-    where: { id: premiumPlan.id },
-    data: {
-      maxEntities: 100,
-      trustCircleEnabled: true,
-      blockchainAnchor: true,
-    },
-  })
-
   await prisma.user.update({
     where: { id: user.id },
     data: { planId: premiumPlan.id },

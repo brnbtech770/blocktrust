@@ -77,11 +77,26 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'identity.verification_session.verified': {
         const vs = event.data.object as { id: string; metadata?: { userId?: string } }
-        const userId = vs.metadata?.userId
-        if (!userId) break
+        const metadataUserId = vs.metadata?.userId?.trim()
+        if (!metadataUserId) break
+
+        const kycRecord = await prisma.kYCVerification.findFirst({
+          where: { stripeSessionId: vs.id },
+          select: { userId: true },
+        })
+        if (!kycRecord) break
+        if (kycRecord.userId !== metadataUserId) {
+          btErrorDevDetails(
+            { sessionId: vs.id, metadataUserId, recordUserId: kycRecord.userId },
+            'Identity webhook userId mismatch — ignored',
+          )
+          break
+        }
+
+        const userId = kycRecord.userId
 
         await prisma.kYCVerification.updateMany({
-          where: { stripeSessionId: vs.id },
+          where: { stripeSessionId: vs.id, userId },
           data: { status: 'VERIFIED' },
         })
         await prisma.user.update({
