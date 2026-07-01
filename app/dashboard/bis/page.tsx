@@ -11,10 +11,12 @@ import {
   Check,
   Copy,
   FileSignature,
+  FileUp,
   Loader2,
   Send,
+  X,
 } from 'lucide-react'
-import { BIS_INTERACTION_TYPES } from '@/lib/bis-access'
+import { BIS_INTERACTION_TYPES, isValidContentHash } from '@/lib/bis-access'
 
 type BisListItem = {
   id: string
@@ -48,12 +50,36 @@ const TYPE_LABELS: Record<string, string> = {
   MARKETPLACE: 'Marketplace',
 }
 
+const MAX_FILE_BYTES = 10 * 1024 * 1024
+const ACCEPTED_FILE_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg', '.docx']
+const ACCEPTED_FILE_MIME = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]
+
 async function sha256Hex(text: string): Promise<string> {
   const data = new TextEncoder().encode(text)
   const hash = await crypto.subtle.digest('SHA-256', data)
   return Array.from(new Uint8Array(hash))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('')
+}
+
+async function sha256File(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer()
+  const hash = await crypto.subtle.digest('SHA-256', buffer)
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+
+function isAcceptedFile(file: File): boolean {
+  const name = file.name.toLowerCase()
+  const extOk = ACCEPTED_FILE_EXTENSIONS.some((ext) => name.endsWith(ext))
+  const mimeOk = !file.type || ACCEPTED_FILE_MIME.includes(file.type)
+  return extOk && mimeOk
 }
 
 export default function BisDashboardPage() {
@@ -72,6 +98,11 @@ export default function BisDashboardPage() {
   const [interactionType, setInteractionType] = useState<string>('EMAIL')
   const [contextLabel, setContextLabel] = useState('')
   const [content, setContent] = useState('')
+  const [manualHash, setManualHash] = useState('')
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [fileHash, setFileHash] = useState('')
+  const [hashingFile, setHashingFile] = useState(false)
+  const [fileError, setFileError] = useState('')
 
   const loadLists = useCallback(async () => {
     setLoading(true)
@@ -110,13 +141,68 @@ export default function BisDashboardPage() {
     if (sessionStatus === 'authenticated') loadLists()
   }, [sessionStatus, router, loadLists])
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    setFileError('')
+    setSelectedFile(null)
+    setFileHash('')
+    if (!file) return
+
+    if (!isAcceptedFile(file)) {
+      setFileError('Format non accepté. Utilisez PDF, PNG, JPG ou DOCX.')
+      e.target.value = ''
+      return
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      setFileError('Fichier trop volumineux (max 10 Mo).')
+      e.target.value = ''
+      return
+    }
+
+    setHashingFile(true)
+    try {
+      const hash = await sha256File(file)
+      setSelectedFile(file)
+      setFileHash(hash)
+      setManualHash('')
+      setContent('')
+      setInteractionType('DOCUMENT')
+    } catch {
+      setFileError('Impossible de calculer l’empreinte du fichier.')
+      e.target.value = ''
+    } finally {
+      setHashingFile(false)
+    }
+  }
+
+  const clearSelectedFile = () => {
+    setSelectedFile(null)
+    setFileHash('')
+    setFileError('')
+    const input = document.getElementById('bisDocumentFile') as HTMLInputElement | null
+    if (input) input.value = ''
+  }
+
+  const resolveContentHash = async (): Promise<string> => {
+    if (selectedFile && fileHash) return fileHash.toLowerCase()
+    const manual = manualHash.trim().toLowerCase()
+    if (manual) {
+      if (!isValidContentHash(manual)) {
+        throw new Error('Empreinte SHA-256 invalide (64 caractères hexadécimaux attendus)')
+      }
+      return manual
+    }
+    if (content.trim()) return sha256Hex(content)
+    throw new Error('Ajoutez un document, une empreinte SHA-256 ou un contenu texte à signer')
+  }
+
   const handleSign = async (e: React.FormEvent) => {
     e.preventDefault()
     setSigning(true)
     setError('')
     setSignResult(null)
     try {
-      const contentHash = await sha256Hex(content)
+      const contentHash = await resolveContentHash()
       const res = await fetch('/api/bis/sign', {
         method: 'POST',
         credentials: 'include',
@@ -140,6 +226,8 @@ export default function BisDashboardPage() {
       }
       setSignResult(data as SignResult)
       setContent('')
+      setManualHash('')
+      clearSelectedFile()
       await loadLists()
       setTab('sent')
     } catch (err) {
@@ -260,22 +348,105 @@ export default function BisDashboardPage() {
             />
           </div>
           <div>
+            <label htmlFor="bisDocumentFile" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
+              Document (optionnel)
+            </label>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <label
+                htmlFor="bisDocumentFile"
+                className="inline-flex min-h-[44px] cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 bg-[#0a1628] px-4 py-2.5 text-sm text-white/80 transition hover:border-bt-cyan/50 hover:text-white"
+              >
+                {hashingFile ? (
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                ) : (
+                  <FileUp className="h-4 w-4 shrink-0" aria-hidden />
+                )}
+                {hashingFile ? 'Calcul SHA-256…' : 'Choisir un fichier'}
+              </label>
+              <input
+                id="bisDocumentFile"
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.docx,application/pdf,image/png,image/jpeg,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                className="sr-only"
+                onChange={handleFileChange}
+                disabled={hashingFile || signing}
+              />
+              {selectedFile ? (
+                <div className="flex min-h-[44px] flex-1 items-center justify-between gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm text-emerald-200">{selectedFile.name}</p>
+                    <p className="font-mono text-[10px] text-white/45">
+                      {fileHash.slice(0, 16)}…
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearSelectedFile}
+                    className="shrink-0 rounded p-1 text-white/50 hover:bg-white/10 hover:text-white"
+                    aria-label="Retirer le fichier"
+                  >
+                    <X className="h-4 w-4" aria-hidden />
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <p className="mt-2 text-xs text-white/40">
+              PDF, PNG, JPG ou DOCX — max 10 Mo. Le fichier reste sur votre appareil. Seule
+              l&apos;empreinte cryptographique (SHA-256) est enregistrée.
+            </p>
+            {fileError ? (
+              <p className="mt-1 text-xs text-red-300">{fileError}</p>
+            ) : null}
+          </div>
+          <div>
+            <label htmlFor="manualHash" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
+              Empreinte SHA-256 (optionnel)
+            </label>
+            <input
+              id="manualHash"
+              type="text"
+              inputMode="text"
+              autoComplete="off"
+              spellCheck={false}
+              maxLength={64}
+              value={manualHash}
+              onChange={(e) => {
+                setManualHash(e.target.value.replace(/[^a-fA-F0-9]/g, ''))
+                if (e.target.value.trim()) {
+                  clearSelectedFile()
+                }
+              }}
+              disabled={Boolean(selectedFile)}
+              placeholder="64 caractères hexadécimaux…"
+              className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 font-mono text-sm text-white outline-none focus:border-bt-cyan disabled:opacity-50"
+            />
+            <p className="mt-1 text-xs text-white/35">
+              Si vous avez déjà calculé le hash ailleurs, saisissez-le ici sans joindre le fichier.
+            </p>
+          </div>
+          <div>
             <label htmlFor="content" className="mb-1 block text-xs uppercase tracking-wider text-white/50">
-              Contenu à signer
+              Contenu texte à signer (optionnel)
             </label>
             <textarea
               id="content"
-              required
               rows={6}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 font-mono text-sm text-white outline-none focus:border-bt-cyan"
-              placeholder="Collez ici le texte ou le contenu de l'interaction…"
+              onChange={(e) => {
+                setContent(e.target.value)
+                if (e.target.value.trim()) {
+                  clearSelectedFile()
+                  setManualHash('')
+                }
+              }}
+              disabled={Boolean(selectedFile) || Boolean(manualHash.trim())}
+              className="w-full rounded-lg border border-white/10 bg-[#0a1628] px-3 py-2.5 font-mono text-sm text-white outline-none focus:border-bt-cyan disabled:opacity-50"
+              placeholder="Collez ici le texte de l'interaction (email, message…) si vous ne joignez pas de document."
             />
           </div>
           <button
             type="submit"
-            disabled={signing}
+            disabled={signing || hashingFile}
             className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-bt-cyan px-5 py-2.5 text-sm font-semibold text-[#0a1628] disabled:opacity-50"
           >
             {signing ? (

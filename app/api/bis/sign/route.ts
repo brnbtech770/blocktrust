@@ -11,6 +11,10 @@ import {
   resolveSenderBisCertificate,
 } from '@/lib/bis-sign'
 import {
+  notifyBisEmailRecipientFireAndForget,
+  resolveBisSenderDisplayName,
+} from '@/lib/bis-email-notify'
+import {
   BIS_INTERACTION_TYPES,
   isValidContentHash,
   normalizeEmail,
@@ -93,6 +97,24 @@ export async function POST(req: NextRequest) {
       contextLabel: safeContextLabel,
       contentHash: contentHash.toLowerCase(),
     })
+
+    if (interactionType === 'EMAIL') {
+      notifyBisEmailRecipientFireAndForget({
+        signatureId: result.signatureId,
+        senderUserId: session.user.id,
+        recipientEmail: normalizeEmail(recipientEmail),
+        senderDisplayName: resolveBisSenderDisplayName(
+          session.user.name,
+          session.user.email,
+        ),
+        senderEmail: session.user.email,
+        contextLabel: safeContextLabel ?? null,
+        bisLevel: result.bisLevel,
+        signedAt: new Date(result.payload.iat * 1000),
+        expiresAt: new Date(result.expiresAt),
+        verifyUrl: result.verifyUrl,
+      })
+    }
 
     return NextResponse.json({
       signatureId: result.signatureId,
