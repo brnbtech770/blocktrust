@@ -6,7 +6,7 @@ import Navbar from "@/app/components/landing/Navbar"
 import Footer from "@/app/components/landing/Footer"
 import { ThreatRelevanceBadge, ThreatSourceBadge } from "@/app/components/menaces/ThreatArticleBadges"
 
-export const dynamic = "force-dynamic"
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: "Veille cyber — BLOCKTRUST™",

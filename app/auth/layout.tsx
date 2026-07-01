@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
-
 /** Connexion / inscription : non indexées pour éviter le bruit SEO et les extraits hors contexte. */
 export const metadata: Metadata = {
   robots: {

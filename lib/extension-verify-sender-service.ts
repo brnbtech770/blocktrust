@@ -21,7 +21,7 @@ const DEFAULT_BASE_URL =
   "https://blocktrust.tech";
 
 const entityInclude = {
-  certificates: { orderBy: { issuedAt: "desc" as const } },
+  certificates: { take: 1, orderBy: { issuedAt: "desc" as const } },
   trustScore: { select: { score: true } },
 };
 

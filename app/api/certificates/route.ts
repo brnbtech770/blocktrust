@@ -13,7 +13,7 @@ import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import QRCode from 'qrcode'
 import { checkCertificateQuota } from '@/lib/checkQuota'
-import { redactEmailRecipient, sendEmail } from '@/lib/email'
+import { sendEmailFireAndForget } from '@/lib/email'
 import { CertificateCreatedEmail, subject as certificateCreatedSubject } from '@/emails/CertificateCreatedEmail'
 import { createAdminAlert } from '@/lib/admin-alerts'
 import { getRedis } from '@/lib/rate-limit-redis'
@@ -420,7 +420,7 @@ export async function POST(req: NextRequest) {
     // Email transactionnel : certificat créé (fire-and-forget)
     const recipientEmail = session.user.email
     if (recipientEmail) {
-      await sendEmail({
+      sendEmailFireAndForget({
         to: recipientEmail,
         subject: certificateCreatedSubject,
         react: CertificateCreatedEmail({
@@ -432,13 +432,6 @@ export async function POST(req: NextRequest) {
           ownerVerifyUrl: verifyUrl,
           ownerDisplayName,
         }),
-      }).then(({ error }) => {
-        if (error)
-          console.error('[Certificate] Created email échoué:', {
-            to: redactEmailRecipient(recipientEmail),
-            error,
-          })
-        else console.log('[Certificate] Created certificateId=', certificate.id.slice(0, 8))
       })
     }
 

@@ -11,7 +11,7 @@ import type Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/app/lib/db'
 import { btError, btErrorDevDetails, btLog } from '@/lib/prodLog'
-import { sendEmail } from '@/lib/email'
+import { sendEmailFireAndForget } from '@/lib/email'
 import { PaymentConfirmationEmail } from '@/emails/PaymentConfirmationEmail'
 import {
   createKycSubmittedAdminAlertIfNew,
@@ -248,7 +248,7 @@ async function sendPaymentConfirmationEmailForSubscription(
     opts?.invoiceUrl ??
     (await hostedInvoiceUrlFromSubscription(sub))
 
-  const { error: emailErr } = await sendEmail({
+  sendEmailFireAndForget({
     to: user.email,
     subject: `✓ Votre abonnement BLOCKTRUST™ ${planName} est activé`,
     react: PaymentConfirmationEmail({
@@ -262,17 +262,10 @@ async function sendPaymentConfirmationEmailForSubscription(
     }),
   })
 
-  if (emailErr) {
-    btErrorDevDetails(
-      { context: 'PaymentConfirmation email', to: user.email, error: emailErr },
-      'Payment confirmation email failed'
-    )
-  } else {
-    btLog(
-      `[Stripe] PaymentConfirmation email → ${user.email}`,
-      'Payment confirmation email sent'
-    )
-  }
+  btLog(
+    `[Stripe] PaymentConfirmation email → ${user.email}`,
+    'Payment confirmation email queued'
+  )
 }
 
 export async function POST(req: NextRequest) {
