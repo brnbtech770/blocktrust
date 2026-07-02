@@ -155,8 +155,8 @@ model User {
 
   /// Clé API extension Chrome (TrustScan) — jamais la valeur secrète complète : hash SHA-256 uniquement.
   extensionApiKeyHash String? @unique
-  /// Indice affichage tableau de bord (ex. bt_ext_a88b...3746), optionnel.
-  extensionApiKey     String? @unique
+  /// Libellé masqué dashboard (constante partagée — pas d’unicité, voir EXTENSION_API_KEY_MASKED_DISPLAY).
+  extensionApiKey     String?
   /// Clé complète chiffrée AES-256-GCM (révélation dashboard uniquement).
   extensionApiKeyEnc  String? @db.Text
 

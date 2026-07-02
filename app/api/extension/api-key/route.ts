@@ -57,8 +57,19 @@ async function writeNewExtensionKey(userId: string): Promise<
         })
         .catch(() => null);
       return { ok: true, apiKey, masked: maskedDisplay };
-    } catch {
-      /* collision rare sur maskedDisplay unique */
+    } catch (err) {
+      const code =
+        err && typeof err === "object" && "code" in err ? String((err as { code: string }).code) : "";
+      if (code === "P2002" && attempt < 4) {
+        /* collision astronomiquement rare sur extensionApiKeyHash */
+        continue;
+      }
+      console.error("[extension/api-key] write failed", {
+        userId: userId.slice(0, 8),
+        attempt,
+        code: code || "unknown",
+      });
+      break;
     }
   }
   return { ok: false, error: "Impossible de générer une clé." };
