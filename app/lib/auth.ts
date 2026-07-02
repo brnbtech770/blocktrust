@@ -400,6 +400,19 @@ export const authOptions: NextAuthConfig = {
   session: {
     strategy: "jwt",
   },
+  events: {
+    async createUser({ user }) {
+      if (!user.id || !user.email) return;
+      const { sendWelcomeEmailIfNeeded, resolveWelcomeFirstName } = await import(
+        "@/lib/welcome-email"
+      );
+      void sendWelcomeEmailIfNeeded(
+        user.id,
+        user.email,
+        resolveWelcomeFirstName(user.name, user.email),
+      );
+    },
+  },
   cookies: {
     sessionToken: {
       name:

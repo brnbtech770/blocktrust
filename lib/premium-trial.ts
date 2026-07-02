@@ -6,6 +6,7 @@ import { prisma } from '@/app/lib/db'
 import { ensureBadgeSignature } from '@/lib/admin-bootstrap'
 import { appBaseUrl, recentAuditLogExists } from '@/lib/agents/agent-utils'
 import { sendEmailFireAndForget } from '@/lib/email'
+import { getLatestUserBadgeVerifyUrl } from '@/lib/welcome-email'
 import { isActiveBillingStatus } from '@/lib/plan-features'
 import type { PlanType, ValidationLevel } from '@prisma/client'
 import * as React from 'react'
@@ -392,6 +393,7 @@ export async function sendPremiumTrialWelcomeIfNeeded(
   if (alreadySent) return false
 
   const base = appBaseUrl()
+  const badgeVerifyUrl = await getLatestUserBadgeVerifyUrl(userId)
   sendEmailFireAndForget({
     to: email,
     from: CONTACT_FROM,
@@ -401,6 +403,7 @@ export async function sendPremiumTrialWelcomeIfNeeded(
       trialEndsAt: formatTrialEndFr(trialEndsAt),
       dashboardUrl: `${base}/dashboard`,
       pricingUrl: `${base}/pricing`,
+      badgeVerifyUrl,
     }),
   })
 

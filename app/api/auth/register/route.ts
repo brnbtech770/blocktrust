@@ -10,6 +10,10 @@ import {
   validateRegisterNames,
 } from "@/lib/register-anti-bot";
 import { hashIp } from "@/app/lib/auth";
+import {
+  resolveWelcomeFirstName,
+  sendWelcomeEmailIfNeeded,
+} from "@/lib/welcome-email";
 
 const MIN_FORM_MS = 3000;
 
@@ -157,6 +161,12 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       metadata: { suspicious: false },
     });
+
+    void sendWelcomeEmailIfNeeded(
+      user.id,
+      user.email ?? emailNorm,
+      resolveWelcomeFirstName(user.name, emailNorm),
+    );
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (err) {

@@ -8,6 +8,11 @@ import { sendEmail, sendEmailFireAndForget } from '@/lib/email'
 import { KYCRetryEmail, subject as kycRetrySubject } from '@/emails/KYCRetryEmail'
 import { WelcomeEmail } from '@/emails/WelcomeEmail'
 import {
+  getLatestUserBadgeVerifyUrl,
+  resolveWelcomeFirstName,
+  WELCOME_EMAIL_FROM,
+} from '@/lib/welcome-email'
+import {
   DiscoveryReminderJ7,
   subject as discoveryJ7Subject,
 } from '@/emails/DiscoveryReminderJ7'
@@ -277,12 +282,17 @@ export async function runOnboardingMonitor(): Promise<OnboardingMonitorResult> {
     )
     if (alreadyReminded) continue
 
+    const badgeVerifyUrl = await getLatestUserBadgeVerifyUrl(user.id)
+
     sendEmailFireAndForget({
       to: user.email,
+      from: WELCOME_EMAIL_FROM,
+      replyTo: 'contact@blocktrust.tech',
       subject: 'Activez votre compte BLOCKTRUST™',
       react: React.createElement(WelcomeEmail, {
-        userName: user.name,
+        firstName: resolveWelcomeFirstName(user.name, user.email),
         dashboardUrl: `${base}/dashboard`,
+        badgeVerifyUrl,
       }),
     })
 

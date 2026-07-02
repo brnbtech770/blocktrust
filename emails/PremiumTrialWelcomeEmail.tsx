@@ -17,6 +17,10 @@ import {
 } from '@react-email/components'
 import * as React from 'react'
 import { CertifiedEmailFooter } from './components/CertifiedEmailFooter'
+import {
+  CHROME_WEB_STORE_URL,
+  WelcomeUsageGuideSections,
+} from './components/WelcomeUsageGuideSections'
 
 export const premiumTrialWelcomeSubject =
   'Bienvenue dans BLOCKTRUST™ Premium — 3 mois offerts'
@@ -26,17 +30,21 @@ export type PremiumTrialWelcomeEmailProps = {
   trialEndsAt: string
   dashboardUrl: string
   pricingUrl: string
+  badgeVerifyUrl?: string | null
 }
-
-const CHROME_STORE_URL =
-  'https://chromewebstore.google.com/detail/bemcnlbifffejlijnndkdgcjpmijfaeg'
 
 export function PremiumTrialWelcomeEmail({
   firstName,
   trialEndsAt,
   dashboardUrl,
   pricingUrl,
+  badgeVerifyUrl,
 }: PremiumTrialWelcomeEmailProps) {
+  const base = dashboardUrl.replace(/\/dashboard\/?$/, '')
+  const extensionUrl = `${base}/dashboard/extension`
+  const contactsUrl = `${base}/dashboard/entities`
+  const bisUrl = `${base}/dashboard/bis`
+
   return (
     <Html>
       <Head />
@@ -86,24 +94,18 @@ export function PremiumTrialWelcomeEmail({
             </Text>
           </Section>
 
-          <Section style={featureBlock}>
-            <Text style={featureTitle}>Extension Chrome</Text>
-            <Text style={featureText}>
-              Installez l&apos;extension BLOCKTRUST TrustScan pour vérifier automatiquement
-              l&apos;identité de vos correspondants dans Gmail :{' '}
-              <Link href={CHROME_STORE_URL} style={link}>
-                Chrome Web Store
-              </Link>
-            </Text>
-          </Section>
-
           <Heading as="h2" style={h2}>
-            Comment démarrer
+            Guide de démarrage
           </Heading>
-          <Text style={list}>1. Connectez-vous sur https://blocktrust.tech</Text>
-          <Text style={list}>2. Accédez à votre tableau de bord</Text>
-          <Text style={list}>3. Partagez votre badge avec vos contacts</Text>
-          <Text style={list}>4. Installez l&apos;extension Chrome</Text>
+
+          <WelcomeUsageGuideSections
+            dashboardUrl={dashboardUrl}
+            chromeStoreUrl={CHROME_WEB_STORE_URL}
+            extensionUrl={extensionUrl}
+            contactsUrl={contactsUrl}
+            bisUrl={bisUrl}
+            badgeVerifyUrl={badgeVerifyUrl}
+          />
 
           <Section style={buttonContainer}>
             <Link href={dashboardUrl} style={button}>
@@ -189,12 +191,6 @@ const featureText = {
   fontSize: '14px',
   lineHeight: '22px',
   margin: '0',
-}
-const list = {
-  color: '#374151',
-  fontSize: '14px',
-  lineHeight: '22px',
-  margin: '0 0 6px',
 }
 const muted = {
   color: '#6b7280',
