@@ -11,6 +11,7 @@ import { UserPlus, Trash2, Link2, Check } from 'lucide-react'
 import TrustCircleInviteModal from '@/app/components/TrustCircleInviteModal'
 import TrustCircleManualModal from '@/app/components/TrustCircleManualModal'
 import { QuotaBanner } from '@/app/components/trust-circle/QuotaBanner'
+import FeatureOnboardingTooltip from '@/app/components/onboarding/FeatureOnboardingTooltip'
 
 type TrustCircleUserSummary = {
   id: string
@@ -230,6 +231,7 @@ export default function TrustCirclePage() {
 
   return (
     <>
+        <FeatureOnboardingTooltip feature="trust-circle" />
         <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-start mb-6">
           <div className="min-w-0">
             <h1 className="font-syne text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl mb-2">

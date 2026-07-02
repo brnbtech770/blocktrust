@@ -29,6 +29,7 @@ import {
   sha256Text,
 } from '@/lib/bis-content-hash'
 import { getBisInteractionLabel } from '@/lib/bis-interaction-labels'
+import FeatureOnboardingTooltip from '@/app/components/onboarding/FeatureOnboardingTooltip'
 
 type BisListItem = {
   id: string
@@ -233,6 +234,7 @@ export default function BisDashboardPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-6">
+      <FeatureOnboardingTooltip feature="bis" />
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="flex items-center gap-2 font-syne text-2xl font-bold text-white">

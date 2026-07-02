@@ -133,7 +133,7 @@ export default async function Dashboard({
     const kycVerified = user.kycStatus === "VERIFIED";
     const hasEntities = entitiesCount > 0;
     const hasCertificate = certificates.length > 0;
-    const showOnboardingGuide = certificates.length === 0;
+    const showOnboardingGuide = certificates.length === 0 && user.onboardingCompletedAt != null;
     // Le KYC ne concerne QUE les plans payants (ou admin). Un compte Découverte
     // gratuit n'est jamais poussé vers la vérification d'identité : on l'invite à upgrader.
     const canDoKyc = userIsAdmin || hasActiveSub;
@@ -422,7 +422,10 @@ export default async function Dashboard({
         </div>
 
         <div className="mb-6 space-y-4 sm:mb-8 sm:space-y-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-6">
+          <div
+            data-onboarding-target="badge-section"
+            className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-6"
+          >
             <div className="min-w-0 flex-1 basis-0 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
                 <BlockTrustBadge

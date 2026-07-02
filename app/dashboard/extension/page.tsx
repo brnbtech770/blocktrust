@@ -10,6 +10,7 @@ import { prisma } from "@/app/lib/db";
 import ExtensionChromePanel from "@/app/components/dashboard/ExtensionChromePanel";
 import ExtensionOutlookPanel from "@/app/components/dashboard/ExtensionOutlookPanel";
 import ExtensionMcpPanel from "@/app/components/dashboard/ExtensionMcpPanel";
+import FeatureOnboardingTooltip from "@/app/components/onboarding/FeatureOnboardingTooltip";
 import { userHasExtensionApiKey } from "@/lib/extension-api-key";
 
 export default async function ExtensionDashboardPage() {
@@ -41,6 +42,7 @@ export default async function ExtensionDashboardPage() {
           </h1>
           <p className="mt-2 text-sm text-white/65">Connectez BlockTrust à vos outils.</p>
         </header>
+        <FeatureOnboardingTooltip feature="extension" />
         <ExtensionChromePanel
           extensionKeyInitial={{
             hasKey: userHasExtensionApiKey(user.extensionApiKeyHash),

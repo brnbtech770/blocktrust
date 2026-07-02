@@ -6,12 +6,24 @@
 
 import BlockchainTicker from './BlockchainTicker'
 import DashboardHeader from './DashboardHeader'
+import OnboardingAssistant from '@/app/components/onboarding/OnboardingAssistant'
+
+export type DashboardOnboardingState = {
+  onboardingCompletedAt: string | null
+  lastLoginAt: string | null
+}
 
 interface DashboardLayoutProps {
   children: React.ReactNode
+  onboarding?: DashboardOnboardingState | null
+  showOnboardingAssistant?: boolean
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+export default function DashboardLayout({
+  children,
+  onboarding,
+  showOnboardingAssistant = true,
+}: DashboardLayoutProps) {
   return (
     <div className="min-h-screen overflow-x-hidden">
       <DashboardHeader />
@@ -22,6 +34,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       >
         {children}
       </div>
+      {showOnboardingAssistant && onboarding ? (
+        <OnboardingAssistant
+          onboardingCompletedAt={onboarding.onboardingCompletedAt}
+          lastLoginAt={onboarding.lastLoginAt}
+        />
+      ) : null}
     </div>
   )
 }

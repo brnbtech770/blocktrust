@@ -91,7 +91,13 @@ export default async function DashboardSegmentLayout({
           <DashboardSidebarBoundary>
             <DashboardSidebar />
           </DashboardSidebarBoundary>
-          <DashboardPageChrome>
+          <DashboardPageChrome
+            onboarding={{
+              onboardingCompletedAt: user.onboardingCompletedAt?.toISOString() ?? null,
+              lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+            }}
+            showOnboardingAssistant={!discoveryExpired}
+          >
             {discoveryExpired ? <DiscoveryExpiredWall /> : null}
             {children}
           </DashboardPageChrome>
