@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Plus, ShieldCheck } from 'lucide-react'
 import type { OrgRole } from '@prisma/client'
+import FeatureOnboardingTooltip from '@/app/components/onboarding/FeatureOnboardingTooltip'
 
 const MANAGE_VAULT_ROLES: OrgRole[] = ['OWNER', 'ADMIN', 'MANAGER']
 
@@ -33,6 +34,7 @@ export default async function VaultIndexPage() {
   if (orgIds.length === 0) {
     return (
       <div className="mx-auto max-w-3xl font-sans text-white/80">
+        <FeatureOnboardingTooltip feature="vault" />
         <h1 className="font-syne text-2xl font-bold text-white">BLOCKTRUST™ Vault</h1>
         <p className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] p-6 text-sm text-white/50">
           Vous n&apos;êtes membre d&apos;aucune organisation.{' '}
@@ -55,6 +57,7 @@ export default async function VaultIndexPage() {
 
   return (
     <div className="mx-auto max-w-3xl font-sans text-white/85">
+      <FeatureOnboardingTooltip feature="vault" />
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-6 w-6 text-bt-cyan/90" aria-hidden />

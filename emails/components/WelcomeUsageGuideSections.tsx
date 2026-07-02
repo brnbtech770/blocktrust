@@ -137,6 +137,75 @@ export function WelcomeUsageGuideSections({
 
       <Hr style={divider} />
 
+      <Section style={stepBlock}>
+        <Text style={stepTitle}>5️⃣ TrustScore &amp; réseau de confiance</Text>
+        <Text style={stepLead}>
+          Votre TrustScore (sur 100) reflète votre niveau de confiance numérique : identité,
+          réseau, comportement et signaux techniques.
+        </Text>
+        <Text style={stepItem}>→ Vérifiez votre identité (KYC) pour gagner des points</Text>
+        <Text style={stepItem}>→ Développez votre Trust Circle et signez avec BIS</Text>
+        <Text style={stepItem}>
+          → Consultez votre score sur{' '}
+          <Link href={dashboardUrl} style={link}>
+            votre dashboard
+          </Link>
+        </Text>
+        <Text style={useCase}>
+          <strong>Cas d&apos;usage :</strong> un TrustScore élevé rassure vos clients et partenaires
+          — identité vérifiée, réseau actif, interactions signées.
+        </Text>
+      </Section>
+
+      <Hr style={divider} />
+
+      <Section style={stepBlock}>
+        <Text style={stepTitle}>6️⃣ Vault — coffre-fort &amp; détection fraude RIB</Text>
+        <Text style={stepLead}>
+          Stockez vos RIB et données sensibles en référence sécurisée.
+        </Text>
+        <Text style={stepItem}>
+          → Stockez le RIB de vos fournisseurs dans le Vault
+        </Text>
+        <Text style={stepItem}>
+          → Comparez automatiquement tout « nouveau RIB » reçu par email
+        </Text>
+        <Text style={stepItem}>
+          →{' '}
+          <Link href={`${dashboardUrl.replace(/\/dashboard\/?$/, '')}/dashboard/vault`} style={link}>
+            Ouvrir le Vault
+          </Link>
+        </Text>
+        <Text style={useCase}>
+          <strong>Cas d&apos;usage :</strong> un email avec un RIB modifié ne correspond pas à la
+          référence Vault → alerte fraude, virement frauduleux évité.
+        </Text>
+      </Section>
+
+      <Hr style={divider} />
+
+      <Section style={stepBlock}>
+        <Text style={stepTitle}>7️⃣ Protection domaines &amp; sites web</Text>
+        <Text style={stepLead}>
+          BLOCKTRUST détecte le typosquatting et vérifie la réputation des domaines avant que vous
+          cliquiez.
+        </Text>
+        <Text style={stepItem}>→ Certifiez votre domaine pour prouver que votre site est le vrai</Text>
+        <Text style={stepItem}>→ L&apos;extension Chrome signale les domaines suspects</Text>
+        <Text style={stepItem}>
+          → Vérifiez un domaine sur{' '}
+          <Link href={`${dashboardUrl.replace(/\/dashboard\/?$/, '')}/verify`} style={link}>
+            blocktrust.tech/verify
+          </Link>
+        </Text>
+        <Text style={useCase}>
+          <strong>Cas d&apos;usage :</strong> un site miroir imite votre domaine — la vérification
+          BLOCKTRUST alerte et indique le domaine certifié authentique.
+        </Text>
+      </Section>
+
+      <Hr style={divider} />
+
       <Section style={dashboardBlock}>
         <Text style={stepTitle}>📱 Votre dashboard</Text>
         <Text style={stepItem}>

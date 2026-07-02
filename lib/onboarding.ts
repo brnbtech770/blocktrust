@@ -2,26 +2,54 @@
 // Contenu et clés localStorage — assistant onboarding dashboard
 // ============================================================
 
+export const CHROME_WEB_STORE_URL =
+  "https://chromewebstore.google.com/detail/bemcnlbifffejlijnndkdgcjpmijfaeg";
+
 export type OnboardingStepId =
   | "welcome"
   | "badge"
   | "extension"
   | "contacts"
+  | "trust-circle"
+  | "trustscore"
   | "bis"
-  | "finish";
+  | "domains"
+  | "vault"
+  | "kyc"
+  | "finish"
+  | "mcp"
+  | "extensions-api";
 
-export type OnboardingFeature = "bis" | "trust-circle" | "extension";
+export type OnboardingFeature =
+  | "bis"
+  | "trust-circle"
+  | "extension"
+  | "vault"
+  | "trustscore";
 
 export type OnboardingStep = {
   id: OnboardingStepId;
   title: string;
   body: string;
+  extraInfo?: string[];
   useCase?: string;
+  useCases?: string[];
   practicalSteps?: string[];
   bullets?: { label: string; description: string }[];
+  checklist?: string[];
+  tools?: string[];
   highlightTarget?: string;
   linkHref?: string;
   linkLabel?: string;
+  planNote?: string;
+  externalHref?: string;
+  externalLabel?: string;
+};
+
+export type EncyclopediaEntry = {
+  icon: string;
+  label: string;
+  stepId: OnboardingStepId;
 };
 
 export const ONBOARDING_AUTO_DISMISS_KEY = "bt_onboarding_auto_dismissed";
@@ -52,96 +80,335 @@ export const ONBOARDING_FEATURE_TOOLTIPS: Record<
     linkHref: "/dashboard/extension",
     linkLabel: "Ouvrir Extensions",
   },
+  vault: {
+    message:
+      "Coffre-fort sécurisé. Stockez vos RIB pour détecter les fraudes au faux virement.",
+    linkHref: "/dashboard/vault",
+    linkLabel: "Ouvrir le Vault",
+  },
+  trustscore: {
+    message:
+      "Votre score de confiance. Plus vous utilisez BLOCKTRUST, plus il monte.",
+    linkHref: "/dashboard",
+    linkLabel: "Voir mon TrustScore",
+  },
 };
 
-export const ONBOARDING_STEPS: OnboardingStep[] = [
-  {
+export const ONBOARDING_TOUR_STEP_IDS: OnboardingStepId[] = [
+  "welcome",
+  "badge",
+  "extension",
+  "contacts",
+  "trust-circle",
+  "trustscore",
+  "bis",
+  "domains",
+  "vault",
+  "kyc",
+  "finish",
+];
+
+export const ONBOARDING_ENCYCLOPEDIA: EncyclopediaEntry[] = [
+  { icon: "📌", label: "Mon badge certifié", stepId: "badge" },
+  { icon: "🧩", label: "Extension Chrome TrustScan", stepId: "extension" },
+  { icon: "👥", label: "Mes contacts", stepId: "contacts" },
+  { icon: "🛡️", label: "Trust Circle", stepId: "trust-circle" },
+  { icon: "📊", label: "TrustScore & Trust Graph", stepId: "trustscore" },
+  { icon: "✍️", label: "Signatures BIS", stepId: "bis" },
+  { icon: "🌐", label: "Protection domaines & sites web", stepId: "domains" },
+  { icon: "🔐", label: "Vault (coffre-fort)", stepId: "vault" },
+  { icon: "🪪", label: "KYC", stepId: "kyc" },
+  { icon: "🤖", label: "MCP & Agents IA", stepId: "mcp" },
+  { icon: "⚙️", label: "Extensions & API", stepId: "extensions-api" },
+];
+
+export const ONBOARDING_STEP_CONTENT: Record<OnboardingStepId, OnboardingStep> = {
+  welcome: {
     id: "welcome",
-    title: "Bienvenue",
-    body: "Bienvenue sur BLOCKTRUST™ ! En 3 minutes, vous allez comprendre comment protéger vos interactions numériques.",
+    title: "Bienvenue sur BLOCKTRUST™",
+    body: "BLOCKTRUST™ est votre infrastructure de confiance numérique. On certifie votre identité, on protège vos interactions, et on vous aide à vérifier à qui vous avez affaire — avant de répondre, signer ou payer.",
+    extraInfo: [
+      "Nous protégeons les personnes, les entreprises, les emails, les documents, les domaines et les sites web contre l'usurpation et la fraude.",
+    ],
   },
-  {
+  badge: {
     id: "badge",
     title: "Votre badge certifié",
-    body: "Votre badge est votre identité numérique vérifiable. Partagez-le avec vos contacts — ils pourront vérifier que c'est bien vous.",
+    body: "Votre badge est votre identité numérique vérifiable. Il contient votre nom, votre email certifié, et un ancrage cryptographique sur la blockchain Polygon (plans payants). Tout le monde peut le vérifier — même sans compte BLOCKTRUST.",
     useCase:
-      "Vous envoyez un email à un nouveau client. Ajoutez votre lien de vérification dans votre signature email. Le client clique → il voit que vous êtes certifié BLOCKTRUST™.",
-    highlightTarget: "badge-section",
-    linkHref: "/dashboard/certificates",
-    linkLabel: "Voir mes certificats",
-  },
-  {
-    id: "extension",
-    title: "L'extension Chrome",
-    body: "Installez l'extension TrustScan pour vérifier automatiquement l'identité de vos correspondants dans Gmail.",
+      "Vous êtes agent immobilier. Vous ajoutez votre lien de vérification dans votre signature email. Chaque client peut vérifier en un clic que vous êtes bien qui vous prétendez être — pas un usurpateur.",
     practicalSteps: [
-      'Cliquez « Installer l\'extension » (lien Chrome Web Store)',
-      'Dans le dashboard, allez dans « Extensions »',
-      'Cliquez « Générer ma clé API »',
-      'Cliquez « Copier la clé »',
-      "Dans Gmail, cliquez l'icône TrustScan",
-      "Collez votre clé API",
-      "C'est fait — les badges apparaissent dans Gmail",
+      "Allez dans votre Dashboard → votre badge est déjà actif",
+      "Copiez votre lien de vérification (permanent ou code rotatif)",
+      "Ajoutez-le dans votre signature email, site web, réseaux sociaux",
+      "Partagez le QR code pour les rencontres en personne",
+    ],
+    extraInfo: [
+      "Les codes rotatifs : par défaut, votre lien utilise un code qui change périodiquement — plus sécurisé contre le tracking. Vous pouvez aussi utiliser le lien permanent si vous préférez.",
+    ],
+    highlightTarget: "badge-section",
+    linkHref: "/dashboard",
+    linkLabel: "Voir mon badge",
+  },
+  extension: {
+    id: "extension",
+    title: "Protégez vos emails avec TrustScan",
+    body: "L'extension Chrome vérifie automatiquement l'identité de vos correspondants dans Gmail. Un badge vert ou gris apparaît à côté de chaque expéditeur.",
+    bullets: [
+      { label: "Automatique", description: "tous vos emails sortants sont signés (invisible)" },
+      { label: "Sélectif", description: "bouton ✓ BIS dans le composeur Gmail" },
+      { label: "Désactivé", description: "vérification entrante uniquement" },
     ],
     useCase:
-      "Vous recevez un email de votre banque. L'extension affiche un badge vert → c'est bien votre banque. Badge gris → méfiance.",
+      "Vous recevez un email de votre banque vous demandant de mettre à jour vos coordonnées. Badge vert → c'est bien votre banque. Badge gris → méfiance, c'est peut-être du phishing. Si votre contact signe habituellement avec BIS mais que cet email n'est PAS signé → alerte de compromission.",
+    practicalSteps: [
+      "Installez l'extension depuis le Chrome Web Store",
+      "Dashboard → Extensions → Générer ma clé API → Copier",
+      "Dans Gmail, icône TrustScan → collez votre clé",
+      "Les badges apparaissent dans Gmail",
+      "Options de l'extension → choisissez votre mode BIS",
+    ],
+    externalHref: CHROME_WEB_STORE_URL,
+    externalLabel: "Installer TrustScan",
     linkHref: "/dashboard/extension",
     linkLabel: "Configurer l'extension",
   },
-  {
+  contacts: {
     id: "contacts",
-    title: "Vos contacts",
-    body: "Ajoutez vos contacts pour suivre leur statut de certification. 3 types de contacts :",
+    title: "Gérez vos contacts de confiance",
+    body: "Ajoutez vos contacts pour suivre leur statut de certification et construire votre réseau de confiance.",
     bullets: [
       {
         label: "Contact simple",
-        description: "vous le référencez dans votre réseau",
+        description:
+          "vous le référencez dans votre réseau. Il apparaît dans votre liste mais n'a pas forcément de compte BLOCKTRUST.",
       },
       {
         label: "Contact vérifié",
-        description: "il est certifié BLOCKTRUST™",
+        description:
+          "il est certifié BLOCKTRUST™. Son badge est actif et ses interactions sont vérifiables.",
       },
       {
-        label: "Contact mutuel (Trust Circle)",
-        description: "confiance réciproque vérifiée",
+        label: "Contact Trust Circle",
+        description: "confiance réciproque vérifiée (voir l'étape Trust Circle).",
       },
     ],
     useCase:
-      "Votre notaire vous envoie un RIB pour un virement. S'il est dans votre Trust Circle, vous êtes sûr que le RIB est correct. S'il n'est pas certifié → vérifiez par un autre canal avant de payer.",
+      "Vous êtes notaire. Vous ajoutez vos clients, confrères et partenaires. Quand un client vous envoie un document, vous voyez immédiatement s'il est certifié. Un nouveau contact prétend être un confrère → vérifiez son badge avant de lui faire confiance.",
+    extraInfo: ["Vous pouvez supprimer un contact à tout moment."],
     linkHref: "/dashboard/entities",
     linkLabel: "Gérer mes contacts",
   },
-  {
-    id: "bis",
-    title: "Signatures BIS",
-    body: "Signez vos emails et documents importants avec BIS (BlockTrust Interaction Signature). C'est une preuve cryptographique infalsifiable que c'est bien vous qui avez envoyé ce contenu.",
+  "trust-circle": {
+    id: "trust-circle",
+    title: "Votre cercle de confiance",
+    body: "Le Trust Circle est votre réseau fermé de contacts vérifiés. Contrairement aux contacts simples, le Trust Circle établit des relations de confiance cryptographiquement prouvées.",
     bullets: [
       {
-        label: "Automatique",
-        description: "tous vos emails Gmail sont signés (extension)",
+        label: "Mutuelle",
+        description:
+          "les DEUX parties se sont ajoutées mutuellement. Niveau le plus fort. Badge vert « Contact mutuel certifié ».",
       },
       {
-        label: "Sélectif",
-        description: "vous choisissez quels emails signer (bouton dans Gmail)",
+        label: "Unilatérale",
+        description: "VOUS avez ajouté le contact mais il ne vous a pas encore ajouté. Statut « En attente ».",
       },
       {
-        label: "Manuel",
-        description: "signez depuis le dashboard (pour les documents)",
+        label: "Manuelle",
+        description: "ajout sans vérification (contacts sans compte BLOCKTRUST).",
       },
     ],
+    extraInfo: [
+      "Pourquoi c'est puissant : le Trust Circle n'est pas un simple carnet d'adresses. Chaque relation est PROUVÉE. Quand quelqu'un est dans votre Trust Circle : son TrustScore enrichit le vôtre, ses interactions sont marquées « réseau de confiance », l'extension affiche « Dans votre réseau », et toute anomalie (email non signé d'un contact qui signe d'habitude) déclenche une alerte.",
+    ],
     useCase:
-      "Vous envoyez un contrat à signer. Vous signez l'interaction avec BIS. Le destinataire reçoit une notification et peut vérifier que le contrat n'a pas été modifié et que c'est bien vous l'expéditeur.",
+      "Vous travaillez avec un cabinet d'avocats. Relation mutuelle établie. Vous recevez un email avec un RIB → le Trust Circle CONFIRME que c'est bien eux. Un escroc usurpe l'email du cabinet → il ne sera PAS dans votre Trust Circle → alerte immédiate.",
+    planNote: "Disponible à partir du plan Premium.",
+    linkHref: "/dashboard/trust-circle",
+    linkLabel: "Ouvrir le Trust Circle",
+  },
+  trustscore: {
+    id: "trustscore",
+    title: "Votre score et réseau de confiance",
+    body: "Le TrustScore est une note sur 100 qui reflète votre niveau de confiance numérique. Il est calculé automatiquement à partir de 4 dimensions.",
+    bullets: [
+      { label: "Identité (40 %)", description: "KYC vérifié, email confirmé, ancienneté du compte" },
+      {
+        label: "Réseau (30 %)",
+        description: "taille du Trust Circle, contacts mutuels certifiés",
+      },
+      {
+        label: "Comportement (20 %)",
+        description: "signatures BIS, interactions vérifiées, pas de signalements",
+      },
+      {
+        label: "Technique (10 %)",
+        description: "ancrage blockchain, âge du domaine, SPF/DKIM",
+      },
+    ],
+    extraInfo: [
+      "Le Trust Graph est le réseau invisible qui relie tous les utilisateurs BLOCKTRUST. Quand vous vérifiez quelqu'un, le graph prend en compte non seulement ses propres signaux mais aussi ceux de ses contacts certifiés. La confiance se propage dans le réseau — les concurrents vérifient l'identité, BLOCKTRUST vérifie la CONFIANCE.",
+    ],
+    practicalSteps: [
+      "Vérifiez votre identité (KYC) → +20 à 30 points",
+      "Faites ancrer votre badge blockchain → +10 points",
+      "Ajoutez des contacts au Trust Circle → +5 points par mutuel",
+      "Signez vos interactions avec BIS → +2 points par signature",
+      "Maintenez un historique propre → score stable dans le temps",
+    ],
+    useCase:
+      "Vous êtes freelance sur une marketplace. Votre TrustScore de 85/100 rassure vos clients — identité vérifiée, réseau actif, interactions signées. Un concurrent à 15/100 inspire moins confiance.",
+    highlightTarget: "trustscore-section",
+    linkHref: "/verify",
+    linkLabel: "Page de vérification publique",
+  },
+  bis: {
+    id: "bis",
+    title: "Signez vos interactions",
+    body: "BIS (BlockTrust Interaction Signature) est une signature cryptographique infalsifiable. Elle prouve que VOUS avez envoyé un email ou un document — et que le contenu n'a pas été modifié.",
+    bullets: [
+      { label: "EMAIL", description: "prouve que l'email vient bien de vous" },
+      { label: "DOCUMENT", description: "prouve que le fichier n'a pas été altéré (hash SHA-256)" },
+      { label: "CONTRAT", description: "signature contractuelle vérifiable" },
+      { label: "PAIEMENT", description: "preuve d'un ordre de paiement" },
+      { label: "MARKETPLACE", description: "preuve d'une transaction" },
+    ],
+    extraInfo: [
+      "3 façons de signer : extension Chrome (automatique), extension Chrome (sélectif — bouton ✓ BIS dans Gmail), dashboard BIS (documents et cas spéciaux).",
+      "Pour les documents : seule l'empreinte SHA-256 est enregistrée — le fichier ne quitte JAMAIS votre appareil.",
+      "Le destinataire reçoit un email BLOCKTRUST avec un lien de vérification — même sans compte BLOCKTRUST.",
+    ],
+    useCase:
+      "Vous envoyez un contrat de vente. Vous signez avec BIS. Le client reçoit le contrat + la notification BLOCKTRUST. Il clique « Vérifier » → c'est bien vous, et le contrat n'a pas été modifié. Si quelqu'un intercepte l'email et modifie le contrat → la vérification échoue → fraude détectée.",
     linkHref: "/dashboard/bis",
     linkLabel: "Signer avec BIS",
   },
-  {
-    id: "finish",
-    title: "C'est parti !",
-    body: "Vous êtes prêt ! Commencez par partager votre badge avec vos contacts.",
-    linkHref: "/dashboard/certificates",
-    linkLabel: "Partager mon badge",
+  domains: {
+    id: "domains",
+    title: "Protégez votre domaine contre les sites miroirs",
+    body: "BLOCKTRUST protège votre nom de domaine et votre site web contre le phishing et les sites miroirs. Nous détectons automatiquement les domaines qui imitent le vôtre pour tromper vos clients.",
+    bullets: [
+      {
+        label: "Typosquatting",
+        description:
+          "analyse des domaines similaires (ex. bl0cktrust.tech — o remplacé par 0). Levenshtein + homoglyphes.",
+      },
+      {
+        label: "Vérification de domaine",
+        description:
+          "quiconque vérifie votre domaine voit que VOUS êtes le propriétaire certifié. Un site miroir ne pourra pas le prouver.",
+      },
+      {
+        label: "Réputation",
+        description: "âge du domaine (RDAP), SPF/DKIM/DMARC, certificats SSL, niveau de risque global.",
+      },
+    ],
+    useCases: [
+      "Protection de votre site : un escroc crée cabinet-dup0nt.fr (zéro au lieu de o). BLOCKTRUST détecte le typosquatting et alerte : « ATTENTION — domaine similaire détecté ».",
+      "Vérification avant de cliquer : vous vérifiez le domaine d'un fournisseur. Domaine créé hier, pas de SPF, ressemble à un domaine certifié → ALERTE. Phishing évité.",
+      "Pour les entreprises : certifiez votre domaine. Vos clients vérifient que votre site est authentique — pas une copie.",
+    ],
+    practicalSteps: [
+      "Votre domaine est automatiquement lié à votre certificat",
+      "Via l'extension Chrome : les domaines suspects sont signalés",
+      "Via le MCP : les agents IA vérifient les domaines automatiquement",
+      "Via le dashboard : section contacts → domaines vérifiés",
+    ],
+    tools: [
+      "verify_domain : vérifie si un domaine est certifié BLOCKTRUST",
+      "verify_website : détecte phishing et typosquatting",
+      "check_domain_reputation : analyse complète (RDAP, SPF, risque)",
+    ],
+    linkHref: "/verify",
+    linkLabel: "Vérifier un domaine",
   },
-];
+  vault: {
+    id: "vault",
+    title: "Votre coffre-fort de données sensibles",
+    body: "Le Vault stocke vos données sensibles de manière sécurisée : RIB, IBAN, numéros de contrat, clés. Il sert aussi de RÉFÉRENCE pour détecter les fraudes.",
+    extraInfo: [
+      "Détection de fraude au faux RIB : stockez le RIB de vos fournisseurs dans le Vault. Quand vous recevez un « nouveau RIB », comparez-le avec la référence. Si les numéros ne correspondent pas → ALERTE FRAUDE. Protection n°1 contre l'arnaque au faux RIB.",
+    ],
+    bullets: [
+      { label: "Types stockables", description: "CONTACT, DOMAIN, EMAIL, PHONE, URL, WALLET" },
+    ],
+    useCase:
+      "Votre comptable reçoit un email du fournisseur habituel avec un nouveau RIB. Il vérifie dans le Vault : le RIB reçu ne correspond PAS à la référence. ALERTE → la boîte email du fournisseur a été compromise. Virement frauduleux évité.",
+    planNote: "Disponible à partir du plan Premium ou B2B.",
+    linkHref: "/dashboard/vault",
+    linkLabel: "Ouvrir le Vault",
+  },
+  kyc: {
+    id: "kyc",
+    title: "Renforcez votre certification",
+    body: "La vérification d'identité confirme votre identité avec une pièce officielle via Stripe Identity. C'est ce qui fait passer votre badge de « déclaré » à « certifié ».",
+    bullets: [
+      { label: "Déclaré (orange)", description: "email vérifié, pas de vérification d'identité" },
+      { label: "Vérifié (vert)", description: "identité confirmée" },
+      { label: "Ancré (vert + blockchain)", description: "certificat ancré sur Polygon" },
+    ],
+    useCase:
+      "Sans vérification d'identité, votre badge indique « identité déclarée » — badge orange. Après validation, votre pièce d'identité confirme qui vous êtes → badge vert « Certifié BLOCKTRUST™ ». Confiance formelle.",
+    planNote: "Disponible à partir du plan Essentiel.",
+    linkHref: "/onboarding/verify",
+    linkLabel: "Vérifier mon identité",
+  },
+  finish: {
+    id: "finish",
+    title: "Vous êtes prêt !",
+    body: "Vous connaissez maintenant toutes les fonctionnalités BLOCKTRUST™.",
+    checklist: [
+      "Installer l'extension Chrome",
+      "Partager votre badge avec vos contacts",
+      "Ajouter vos premiers contacts",
+      "Signer votre première interaction BIS",
+      "Vérifier un domaine suspect",
+    ],
+    extraInfo: [
+      "Le guide est toujours disponible via le bouton ? en bas à droite de votre dashboard.",
+    ],
+  },
+  mcp: {
+    id: "mcp",
+    title: "MCP & Agents IA",
+    body: "Pour les développeurs et les agents IA : BLOCKTRUST expose 15 outils via le protocole MCP. Vos agents peuvent vérifier des identités, détecter du phishing, signer des interactions et chercher dans le Vault — automatiquement.",
+    tools: [
+      "verify_identity — vérifier un badge ou certificat",
+      "verify_domain / verify_website — détecter phishing et typosquatting",
+      "sign_bis — signer une interaction",
+      "vault_search — chercher dans le coffre-fort",
+    ],
+    extraInfo: [
+      "Documentation complète et configuration : blocktrust.tech/mcp",
+    ],
+    linkHref: "/mcp",
+    linkLabel: "Documentation MCP",
+  },
+  "extensions-api": {
+    id: "extensions-api",
+    title: "Extensions & API",
+    body: "Connectez BLOCKTRUST à vos outils : extension Chrome TrustScan (Gmail), extension Outlook, clé API extension, API publique et intégrations White Label.",
+    practicalSteps: [
+      "Chrome : installez TrustScan et générez votre clé API",
+      "Outlook : connectez votre compte depuis le taskpane",
+      "API extension : dashboard → Extensions → Générer ma clé API",
+      "White Label : dashboard → API publique (plans B2B)",
+    ],
+    externalHref: CHROME_WEB_STORE_URL,
+    externalLabel: "Chrome Web Store — TrustScan",
+    linkHref: "/dashboard/extension",
+    linkLabel: "Configurer les extensions",
+  },
+};
+
+/** Étapes du parcours guidé séquentiel (11). */
+export const ONBOARDING_STEPS: OnboardingStep[] = ONBOARDING_TOUR_STEP_IDS.map(
+  (id) => ONBOARDING_STEP_CONTENT[id],
+);
+
+export function getOnboardingStep(id: OnboardingStepId): OnboardingStep {
+  return ONBOARDING_STEP_CONTENT[id];
+}
 
 export function shouldAutoOpenOnboarding(
   onboardingCompletedAt: string | null,

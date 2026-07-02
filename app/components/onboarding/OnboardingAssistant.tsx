@@ -14,7 +14,9 @@ import {
 } from "lucide-react";
 import {
   ONBOARDING_AUTO_DISMISS_KEY,
-  ONBOARDING_STEPS,
+  ONBOARDING_ENCYCLOPEDIA,
+  ONBOARDING_TOUR_STEP_IDS,
+  getOnboardingStep,
   shouldAutoOpenOnboarding,
   type OnboardingStepId,
 } from "@/lib/onboarding";
@@ -36,12 +38,14 @@ export default function OnboardingAssistant({
   const [completedAt, setCompletedAt] = useState<string | null>(initialCompletedAt);
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<PanelMode>("tour");
-  const [stepIndex, setStepIndex] = useState(0);
+  const [currentStepId, setCurrentStepId] = useState<OnboardingStepId>("welcome");
   const [completing, setCompleting] = useState(false);
 
-  const currentStep = ONBOARDING_STEPS[stepIndex];
-  const isLastStep = stepIndex === ONBOARDING_STEPS.length - 1;
-  const isFirstStep = stepIndex === 0;
+  const currentStep = getOnboardingStep(currentStepId);
+  const tourIndex = ONBOARDING_TOUR_STEP_IDS.indexOf(currentStepId);
+  const isInTour = tourIndex >= 0;
+  const isLastStep = currentStepId === "finish";
+  const isFirstStep = currentStepId === "welcome";
 
   const clearHighlight = useCallback(() => {
     document.querySelectorAll(`.${HIGHLIGHT_CLASS}`).forEach((el) => {
@@ -67,7 +71,7 @@ export default function OnboardingAssistant({
     if (shouldAutoOpenOnboarding(completedAt, lastLoginAt, dismissed)) {
       setOpen(true);
       setMode("tour");
-      setStepIndex(0);
+      setCurrentStepId("welcome");
     }
   }, [completedAt, lastLoginAt]);
 
@@ -76,9 +80,9 @@ export default function OnboardingAssistant({
       clearHighlight();
       return;
     }
-    applyHighlight(currentStep?.highlightTarget);
+    applyHighlight(currentStep.highlightTarget);
     return () => clearHighlight();
-  }, [open, mode, stepIndex, currentStep?.highlightTarget, applyHighlight, clearHighlight]);
+  }, [open, mode, currentStepId, currentStep.highlightTarget, applyHighlight, clearHighlight]);
 
   function openMenu() {
     setMode("menu");
@@ -86,8 +90,8 @@ export default function OnboardingAssistant({
     clearHighlight();
   }
 
-  function openTourAt(index: number) {
-    setStepIndex(index);
+  function openStep(stepId: OnboardingStepId) {
+    setCurrentStepId(stepId);
     setMode("tour");
     setOpen(true);
   }
@@ -123,15 +127,19 @@ export default function OnboardingAssistant({
       void completeOnboarding();
       return;
     }
-    setStepIndex((i) => Math.min(i + 1, ONBOARDING_STEPS.length - 1));
+    if (isInTour && tourIndex < ONBOARDING_TOUR_STEP_IDS.length - 1) {
+      setCurrentStepId(ONBOARDING_TOUR_STEP_IDS[tourIndex + 1]);
+    }
   }
 
   function handlePrevious() {
-    setStepIndex((i) => Math.max(i - 1, 0));
+    if (isInTour && tourIndex > 0) {
+      setCurrentStepId(ONBOARDING_TOUR_STEP_IDS[tourIndex - 1]);
+    }
   }
 
   function stepButtonLabel(stepId: OnboardingStepId): string {
-    if (stepId === "welcome") return "Commencer";
+    if (stepId === "welcome") return "Commencer le guide";
     if (stepId === "finish") return "Terminer le guide";
     return "Suivant";
   }
@@ -163,8 +171,8 @@ export default function OnboardingAssistant({
           />
 
           <div
-            className={`relative ml-auto flex h-full w-full flex-col border-white/10 bg-gradient-to-b from-[#0d1f3c] to-[#0a1628] shadow-2xl onboarding-sidebar-enter sm:max-w-md sm:border-l md:max-w-lg ${
-              mode === "menu" ? "sm:max-w-sm" : ""
+            className={`relative ml-auto flex h-full w-full flex-col border-white/10 bg-gradient-to-b from-[#0d1f3c] to-[#0a1628] shadow-2xl onboarding-sidebar-enter sm:border-l md:max-w-xl ${
+              mode === "menu" ? "sm:max-w-md" : "sm:max-w-lg md:max-w-xl"
             }`}
           >
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 sm:px-5">
@@ -173,7 +181,7 @@ export default function OnboardingAssistant({
                   Guide BLOCKTRUST™
                 </p>
                 <h2 id="onboarding-title" className="font-syne truncate text-lg font-bold text-white">
-                  {mode === "menu" ? "Étapes du guide" : currentStep.title}
+                  {mode === "menu" ? "Encyclopédie" : currentStep.title}
                 </h2>
               </div>
               <button
@@ -189,21 +197,21 @@ export default function OnboardingAssistant({
             {mode === "menu" ? (
               <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5">
                 <p className="mb-4 text-sm text-white/60">
-                  Choisissez une étape à consulter. Vous pouvez revenir ici à tout moment via le bouton
-                  d&apos;aide.
+                  Choisissez une fonctionnalité à consulter. Le guide reste accessible via le bouton
+                  d&apos;aide en bas à droite.
                 </p>
                 <ul className="space-y-2">
-                  {ONBOARDING_STEPS.map((step, index) => (
-                    <li key={step.id}>
+                  {ONBOARDING_ENCYCLOPEDIA.map((entry) => (
+                    <li key={entry.stepId}>
                       <button
                         type="button"
-                        onClick={() => openTourAt(index)}
+                        onClick={() => openStep(entry.stepId)}
                         className="flex w-full min-h-[44px] items-center gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-3 text-left transition hover:border-bt-cyan/30 hover:bg-bt-cyan/5"
                       >
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-bt-cyan/15 font-mono text-xs font-bold text-bt-cyan">
-                          {index + 1}
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center text-base" aria-hidden>
+                          {entry.icon}
                         </span>
-                        <span className="min-w-0 flex-1 text-sm font-medium text-white">{step.title}</span>
+                        <span className="min-w-0 flex-1 text-sm font-medium text-white">{entry.label}</span>
                         <ChevronRight className="h-4 w-4 shrink-0 text-white/35" aria-hidden />
                       </button>
                     </li>
@@ -215,19 +223,11 @@ export default function OnboardingAssistant({
                 <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-5">
                   <p className="text-sm leading-relaxed text-white/80">{currentStep.body}</p>
 
-                  {currentStep.practicalSteps && currentStep.practicalSteps.length > 0 ? (
-                    <ol className="mt-4 space-y-2">
-                      {currentStep.practicalSteps.map((item, i) => (
-                        <li
-                          key={item}
-                          className="flex gap-2 text-sm leading-relaxed text-white/70"
-                        >
-                          <span className="font-mono text-xs font-semibold text-bt-cyan">{i + 1}.</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  ) : null}
+                  {currentStep.extraInfo?.map((paragraph) => (
+                    <p key={paragraph.slice(0, 40)} className="mt-3 text-sm leading-relaxed text-white/65">
+                      {paragraph}
+                    </p>
+                  ))}
 
                   {currentStep.bullets && currentStep.bullets.length > 0 ? (
                     <ul className="mt-4 space-y-3">
@@ -243,6 +243,37 @@ export default function OnboardingAssistant({
                     </ul>
                   ) : null}
 
+                  {currentStep.practicalSteps && currentStep.practicalSteps.length > 0 ? (
+                    <div className="mt-4">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-bt-cyan">
+                        Comment l&apos;utiliser
+                      </p>
+                      <ol className="space-y-2">
+                        {currentStep.practicalSteps.map((item, i) => (
+                          <li key={item} className="flex gap-2 text-sm leading-relaxed text-white/70">
+                            <span className="font-mono text-xs font-semibold text-bt-cyan">{i + 1}.</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  ) : null}
+
+                  {currentStep.tools && currentStep.tools.length > 0 ? (
+                    <div className="mt-4 rounded-lg border border-white/10 bg-black/20 p-3">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-bt-cyan">
+                        Outils disponibles
+                      </p>
+                      <ul className="space-y-1.5">
+                        {currentStep.tools.map((tool) => (
+                          <li key={tool} className="font-mono text-xs leading-relaxed text-white/70">
+                            {tool}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+
                   {currentStep.useCase ? (
                     <div className="mt-5 rounded-lg border border-[#BDA76B]/25 bg-[#BDA76B]/5 p-3">
                       <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#BDA76B]">
@@ -253,26 +284,70 @@ export default function OnboardingAssistant({
                     </div>
                   ) : null}
 
+                  {currentStep.useCases?.map((uc, i) => (
+                    <div
+                      key={uc.slice(0, 32)}
+                      className="mt-4 rounded-lg border border-[#BDA76B]/25 bg-[#BDA76B]/5 p-3"
+                    >
+                      <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#BDA76B]">
+                        Cas d&apos;usage {i + 1}
+                      </p>
+                      <p className="text-sm leading-relaxed text-white/75">{uc}</p>
+                    </div>
+                  ))}
+
+                  {currentStep.checklist && currentStep.checklist.length > 0 ? (
+                    <ul className="mt-5 space-y-2">
+                      {currentStep.checklist.map((item) => (
+                        <li key={item} className="flex gap-2 text-sm text-white/75">
+                          <span className="text-white/45" aria-hidden>
+                            ☐
+                          </span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+
+                  {currentStep.planNote ? (
+                    <p className="mt-4 text-xs font-medium text-amber-300/90">{currentStep.planNote}</p>
+                  ) : null}
+
                   {currentStep.highlightTarget && pathname !== "/dashboard" ? (
                     <p className="mt-4 text-xs text-amber-300/90">
                       Retournez sur l&apos;accueil du dashboard pour voir la section mise en surbrillance.
                     </p>
                   ) : null}
 
-                  {currentStep.linkHref ? (
-                    <Link
-                      href={currentStep.linkHref}
-                      className="mt-5 inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-bt-cyan hover:underline"
-                      onClick={() => setOpen(false)}
-                    >
-                      {currentStep.linkLabel ?? "En savoir plus"}
-                      <ArrowRight className="h-4 w-4" aria-hidden />
-                    </Link>
-                  ) : null}
+                  <div className="mt-5 flex flex-col gap-2">
+                    {currentStep.externalHref ? (
+                      <a
+                        href={currentStep.externalHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-bt-cyan hover:underline"
+                      >
+                        {currentStep.externalLabel ?? "Lien externe"}
+                        <ArrowRight className="h-4 w-4" aria-hidden />
+                      </a>
+                    ) : null}
+                    {currentStep.linkHref ? (
+                      <Link
+                        href={currentStep.linkHref}
+                        className="inline-flex min-h-[44px] items-center gap-1 text-sm font-semibold text-bt-cyan hover:underline"
+                        onClick={() => setOpen(false)}
+                      >
+                        {currentStep.linkLabel ?? "En savoir plus"}
+                        <ArrowRight className="h-4 w-4" aria-hidden />
+                      </Link>
+                    ) : null}
+                  </div>
 
-                  <p className="mt-6 text-xs text-white/40">
-                    Étape {stepIndex + 1} sur {ONBOARDING_STEPS.length}
-                  </p>
+                  {isInTour ? (
+                    <p className="mt-6 text-xs text-white/40">
+                      Étape {tourIndex + 1} sur {ONBOARDING_TOUR_STEP_IDS.length}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="flex flex-col gap-2 border-t border-white/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
@@ -281,10 +356,10 @@ export default function OnboardingAssistant({
                     onClick={() => setMode("menu")}
                     className="inline-flex min-h-[44px] items-center justify-center gap-1 text-sm text-white/55 transition hover:text-white"
                   >
-                    Toutes les étapes
+                    Encyclopédie
                   </button>
                   <div className="flex gap-2">
-                    {!isFirstStep ? (
+                    {isInTour && !isFirstStep ? (
                       <button
                         type="button"
                         onClick={handlePrevious}
@@ -294,26 +369,36 @@ export default function OnboardingAssistant({
                         Retour
                       </button>
                     ) : null}
-                    <button
-                      type="button"
-                      onClick={handleNext}
-                      disabled={completing}
-                      className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg bg-bt-cyan px-5 text-sm font-semibold text-[#0a1628] transition hover:bg-bt-cyan/90 disabled:opacity-60 sm:flex-none"
-                    >
-                      {completing ? (
-                        "Enregistrement…"
-                      ) : isLastStep ? (
-                        <>
-                          <Check className="h-4 w-4" aria-hidden />
-                          {stepButtonLabel(currentStep.id)}
-                        </>
-                      ) : (
-                        <>
-                          {stepButtonLabel(currentStep.id)}
-                          <ArrowRight className="h-4 w-4" aria-hidden />
-                        </>
-                      )}
-                    </button>
+                    {isInTour ? (
+                      <button
+                        type="button"
+                        onClick={handleNext}
+                        disabled={completing}
+                        className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg bg-bt-cyan px-5 text-sm font-semibold text-[#0a1628] transition hover:bg-bt-cyan/90 disabled:opacity-60 sm:flex-none"
+                      >
+                        {completing ? (
+                          "Enregistrement…"
+                        ) : isLastStep ? (
+                          <>
+                            <Check className="h-4 w-4" aria-hidden />
+                            {stepButtonLabel(currentStepId)}
+                          </>
+                        ) : (
+                          <>
+                            {stepButtonLabel(currentStepId)}
+                            <ArrowRight className="h-4 w-4" aria-hidden />
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setMode("menu")}
+                        className="inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-lg bg-bt-cyan px-5 text-sm font-semibold text-[#0a1628] transition hover:bg-bt-cyan/90 sm:flex-none"
+                      >
+                        Retour à l&apos;encyclopédie
+                      </button>
+                    )}
                   </div>
                 </div>
               </>

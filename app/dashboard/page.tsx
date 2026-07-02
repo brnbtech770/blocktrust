@@ -26,6 +26,7 @@ import { getTrustScoreColor, getTrustScoreLabelFr } from "@/lib/trustscore";
 import { getPlanWording, resolvePlanKeyForWording } from "@/lib/plan-wording";
 import { resolveEffectivePlan } from "@/lib/plan-features";
 import { formatCertificateLabel } from "@/lib/format-certificate-label";
+import FeatureOnboardingTooltip from "@/app/components/onboarding/FeatureOnboardingTooltip";
 
 export default async function Dashboard({
   searchParams,
@@ -422,11 +423,12 @@ export default async function Dashboard({
         </div>
 
         <div className="mb-6 space-y-4 sm:mb-8 sm:space-y-6">
+          <FeatureOnboardingTooltip feature="trustscore" />
           <div
             data-onboarding-target="badge-section"
             className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-6"
           >
-            <div className="min-w-0 flex-1 basis-0 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
+            <div className="min-w-0 flex-1 basis-0 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6" data-onboarding-target="trustscore-section">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
                 <BlockTrustBadge
                   size={80}

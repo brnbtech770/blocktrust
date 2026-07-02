@@ -1,21 +1,34 @@
 import { describe, expect, it } from "vitest";
 import {
+  ONBOARDING_ENCYCLOPEDIA,
   ONBOARDING_STEPS,
+  ONBOARDING_TOUR_STEP_IDS,
   shouldAutoOpenOnboarding,
   onboardingFeatureSeenKey,
+  getOnboardingStep,
 } from "@/lib/onboarding";
 
 describe("onboarding", () => {
-  it("defines 6 guided steps", () => {
-    expect(ONBOARDING_STEPS).toHaveLength(6);
-    expect(ONBOARDING_STEPS.map((s) => s.id)).toEqual([
-      "welcome",
-      "badge",
-      "extension",
-      "contacts",
-      "bis",
-      "finish",
-    ]);
+  it("defines 11 guided tour steps", () => {
+    expect(ONBOARDING_TOUR_STEP_IDS).toHaveLength(11);
+    expect(ONBOARDING_STEPS).toHaveLength(11);
+    expect(ONBOARDING_STEPS[0]?.id).toBe("welcome");
+    expect(ONBOARDING_STEPS[10]?.id).toBe("finish");
+  });
+
+  it("encyclopedia covers all major features including MCP", () => {
+    expect(ONBOARDING_ENCYCLOPEDIA).toHaveLength(11);
+    expect(ONBOARDING_ENCYCLOPEDIA.map((e) => e.stepId)).toContain("mcp");
+    expect(ONBOARDING_ENCYCLOPEDIA.map((e) => e.stepId)).toContain("vault");
+    expect(ONBOARDING_ENCYCLOPEDIA.map((e) => e.stepId)).toContain("domains");
+  });
+
+  it("each tour step has body and title", () => {
+    for (const id of ONBOARDING_TOUR_STEP_IDS) {
+      const step = getOnboardingStep(id);
+      expect(step.title.length).toBeGreaterThan(0);
+      expect(step.body.length).toBeGreaterThan(0);
+    }
   });
 
   it("auto-opens when onboarding not completed and not dismissed", () => {
@@ -30,6 +43,7 @@ describe("onboarding", () => {
 
   it("uses stable localStorage keys per feature", () => {
     expect(onboardingFeatureSeenKey("bis")).toBe("bt_onboarding_seen_bis");
-    expect(onboardingFeatureSeenKey("extension")).toBe("bt_onboarding_seen_extension");
+    expect(onboardingFeatureSeenKey("vault")).toBe("bt_onboarding_seen_vault");
+    expect(onboardingFeatureSeenKey("trustscore")).toBe("bt_onboarding_seen_trustscore");
   });
 });
