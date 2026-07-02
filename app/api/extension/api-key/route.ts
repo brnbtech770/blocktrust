@@ -14,6 +14,7 @@ import {
 } from "@/lib/extension-api-key-crypto";
 import { extensionJsonResponse, extensionOptionsResponse } from "@/lib/extension-cors";
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
+import { writeSecurityAuditLogFireAndForget } from "@/lib/security-audit";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -46,16 +47,12 @@ async function writeNewExtensionKey(userId: string): Promise<
           extensionApiKeyEnc: encryptExtensionApiKey(apiKey),
         },
       });
-      void prisma.auditLog
-        .create({
-          data: {
-            action: "EXTENSION_API_KEY_CREATED",
-            resource: "user",
-            resourceId: userId,
-            userId,
-          },
-        })
-        .catch(() => null);
+      void writeSecurityAuditLogFireAndForget({
+        action: "API_KEY_GENERATED",
+        userId,
+        resource: "user",
+        resourceId: userId,
+      });
       return { ok: true, apiKey, masked: maskedDisplay };
     } catch (err) {
       const code =
@@ -180,16 +177,12 @@ export async function POST(req: NextRequest) {
       return extensionJsonResponse(req, { error: "server_error", message: "Impossible de déchiffrer la clé." }, 500);
     }
 
-    void prisma.auditLog
-      .create({
-        data: {
-          action: "EXTENSION_API_KEY_REVEALED",
-          resource: "user",
-          resourceId: session.user.id,
-          userId: session.user.id,
-        },
-      })
-      .catch(() => null);
+    writeSecurityAuditLogFireAndForget({
+      action: "API_KEY_REVEALED",
+      userId: session.user.id,
+      resource: "user",
+      resourceId: session.user.id,
+    });
 
     return extensionJsonResponse(req, {
       hasKey: true,
@@ -208,6 +201,13 @@ export async function POST(req: NextRequest) {
   if (!created.ok) {
     return extensionJsonResponse(req, { error: "server_error", message: created.error }, 500);
   }
+
+  writeSecurityAuditLogFireAndForget({
+    action: "API_KEY_REGENERATED",
+    userId: session.user.id,
+    resource: "user",
+    resourceId: session.user.id,
+  });
 
   return extensionJsonResponse(req, {
     hasKey: true,

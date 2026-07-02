@@ -14,6 +14,8 @@ import {
   resolveWelcomeFirstName,
   sendWelcomeEmailIfNeeded,
 } from "@/lib/welcome-email";
+import { validatePassword } from "@/lib/password-policy";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 const MIN_FORM_MS = 3000;
 
@@ -22,12 +24,8 @@ const registerSchema = z
     firstName: z.string().min(1).max(35),
     lastName: z.string().min(1).max(35),
     email: z.string().email().max(254),
-    password: z
-      .string()
-      .min(12, "Minimum 12 caractères")
-      .regex(/[A-Z]/, "Au moins 1 majuscule")
-      .regex(/[0-9]/, "Au moins 1 chiffre")
-      .regex(/[^a-zA-Z0-9]/, "Au moins 1 caractère spécial"),
+    password: z.string().min(8).max(128),
+    turnstileToken: z.string().min(1).optional(),
     /** Honeypot : doit rester vide */
     website: z.string().max(500).optional(),
     /** Date.now() côté client au montage du formulaire */
@@ -41,7 +39,7 @@ const registerSchema = z
   })
   .refine(
     (d) => d.firstName.trim().length + d.lastName.trim().length + 1 <= 60,
-    { message: "Prénom et nom trop longs ensemble (max 60 caractères au total)." }
+    { message: "Prénom et nom trop longs ensemble (max 60 caractères au total)." },
   );
 
 function clientIp(req: NextRequest): string {
@@ -55,7 +53,7 @@ function clientIp(req: NextRequest): string {
 function generic400() {
   return NextResponse.json(
     { error: "Une erreur est survenue. Vérifiez vos informations." },
-    { status: 400 }
+    { status: 400 },
   );
 }
 
@@ -68,10 +66,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message }, { status: 400 });
     }
 
-    const { firstName, lastName, email, password, website, formLoadedAt } =
+    const { firstName, lastName, email, password, website, formLoadedAt, turnstileToken } =
       parsed.data;
     const ip = clientIp(req);
     const hashedIP = hashIp(ip);
+
+    const turnstileOk = await verifyTurnstileToken(turnstileToken);
+    if (!turnstileOk) {
+      return NextResponse.json(
+        { error: "Vérification de sécurité échouée." },
+        { status: 403 },
+      );
+    }
 
     if (website != null && String(website).trim() !== "") {
       return generic400();
@@ -89,11 +95,16 @@ export async function POST(req: NextRequest) {
     if (!rl.ok) {
       return NextResponse.json(
         { error: "Trop de tentatives d'inscription. Réessayez plus tard." },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
     const emailNorm = email.trim().toLowerCase();
+
+    const passwordCheck = validatePassword(password, emailNorm);
+    if (!passwordCheck.valid) {
+      return NextResponse.json({ error: passwordCheck.errors[0] }, { status: 400 });
+    }
 
     if (isDisposableEmailDomain(emailNorm)) {
       await createAdminAlert({
@@ -123,7 +134,7 @@ export async function POST(req: NextRequest) {
             error:
               "Indiquez un prénom et un nom valides (ex. Jean Dupont). Le nom complet ne doit pas dépasser 60 caractères.",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
       return generic400();
@@ -138,7 +149,7 @@ export async function POST(req: NextRequest) {
     if (existing) {
       return NextResponse.json(
         { error: "Une erreur est survenue. Vérifiez vos informations." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -173,7 +184,7 @@ export async function POST(req: NextRequest) {
     console.error("[REGISTER ERROR]", err);
     return NextResponse.json(
       { error: "Erreur serveur. Réessayez." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

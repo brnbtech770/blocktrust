@@ -4,24 +4,27 @@ import { prisma } from "@/app/lib/db";
 import { createHash } from "node:crypto";
 import { timingSafeEqualString } from "@/lib/api-key";
 import bcrypt from "bcryptjs";
+import { validatePassword } from "@/lib/password-policy";
+import { invalidateUserSessions } from "@/lib/session-invalidation";
+import { writeSecurityAuditLogFireAndForget } from "@/lib/security-audit";
 
-const passwordSchema = z
-  .string()
-  .min(12, "Minimum 12 caractères")
-  .regex(/[A-Z]/, "Au moins 1 majuscule")
-  .regex(/[0-9]/, "Au moins 1 chiffre")
-  .regex(/[^a-zA-Z0-9]/, "Au moins 1 caractère spécial");
-
-// M10 : valider le token reçu (32 octets → 64 hex). On compare ensuite par hash.
 const tokenSchema = z.string().min(32);
 
 const resetBodySchema = z.object({
   token: tokenSchema,
-  password: z.string().min(1),
+  password: z.string().min(8).max(128),
 });
 
 function hashResetToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
+}
+
+function clientIp(req: NextRequest): string | null {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    null
+  );
 }
 
 export async function GET(req: NextRequest) {
@@ -51,19 +54,11 @@ export async function POST(req: NextRequest) {
     if (!parsedBody.success) {
       return NextResponse.json(
         { error: "Lien invalide ou expiré." },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const { token, password } = parsedBody.data;
 
-    const passwordValidation = passwordSchema.safeParse(password);
-    if (!passwordValidation.success) {
-      const err = passwordValidation.error as { issues?: Array<{ message?: string }> };
-      const msg = err.issues?.[0]?.message ?? "Mot de passe invalide.";
-      return NextResponse.json({ error: msg }, { status: 400 });
-    }
-
-    // Hash at rest : on hashe le token reçu et on compare au hash stocké (timing-safe).
     const tokenHash = hashResetToken(token);
     const reset = await prisma.passwordReset.findFirst({
       where: { tokenHash, used: false },
@@ -76,11 +71,9 @@ export async function POST(req: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "Lien invalide ou expiré." },
-        { status: 400 }
+        { status: 400 },
       );
     }
-
-    const hashedPassword = await bcrypt.hash(passwordValidation.data, 12);
 
     const user = await prisma.user.findUnique({
       where: { email: reset.email },
@@ -88,9 +81,20 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { error: "Lien invalide ou expiré." },
-        { status: 400 }
+        { status: 400 },
       );
     }
+
+    const passwordValidation = validatePassword(password, user.email);
+    if (!passwordValidation.valid) {
+      return NextResponse.json(
+        { error: passwordValidation.errors[0] ?? "Mot de passe invalide." },
+        { status: 400 },
+      );
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const ip = clientIp(req);
 
     await prisma.$transaction([
       prisma.user.update({
@@ -103,12 +107,25 @@ export async function POST(req: NextRequest) {
       }),
     ]);
 
+    await invalidateUserSessions(user.id, {
+      auditAction: "PASSWORD_RESET_COMPLETED",
+      ip,
+    });
+
+    writeSecurityAuditLogFireAndForget({
+      action: "PASSWORD_CHANGED",
+      userId: user.id,
+      resource: "user",
+      resourceId: user.id,
+      ip,
+    });
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("[RESET-PASSWORD]", err);
     return NextResponse.json(
       { error: "Erreur serveur." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

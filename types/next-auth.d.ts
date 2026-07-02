@@ -40,5 +40,8 @@ declare module "next-auth/jwt" {
     kycStatus?: string;
     accountType?: string;
     cookieConsent?: boolean;
+    /** Version sessions — invalidation après changement MDP */
+    sessionVersion?: number;
+    sessionInvalid?: boolean;
   }
 }

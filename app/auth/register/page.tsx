@@ -6,6 +6,9 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
+import PasswordStrengthIndicator from "@/app/components/auth/PasswordStrengthIndicator";
+import TurnstileWidget from "@/app/components/auth/TurnstileWidget";
+import { validatePassword } from "@/lib/password-policy";
 
 const cardClass =
   "mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-6";
@@ -40,6 +43,8 @@ export default function RegisterPage() {
   const [fieldError, setFieldError] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [acceptCgu, setAcceptCgu] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
   const formLoadedAtRef = useRef<number | null>(null);
   const websiteHoneypotRef = useRef<HTMLInputElement>(null);
 
@@ -52,17 +57,9 @@ export default function RegisterPage() {
     if (password !== confirmPassword) {
       err.confirmPassword = "Les mots de passe ne correspondent pas.";
     }
-    if (password.length < 12) {
-      err.password = "Minimum 12 caractères.";
-    }
-    if (!/[A-Z]/.test(password)) {
-      err.password = (err.password || "") + " Au moins 1 majuscule.";
-    }
-    if (!/[0-9]/.test(password)) {
-      err.password = (err.password || "") + " Au moins 1 chiffre.";
-    }
-    if (!/[^a-zA-Z0-9]/.test(password)) {
-      err.password = (err.password || "") + " Au moins 1 caractère spécial.";
+    const policy = validatePassword(password, email.trim());
+    if (!policy.valid) {
+      err.password = policy.errors[0] ?? "Mot de passe invalide.";
     }
     setFieldError(err);
     return Object.keys(err).length === 0;
@@ -79,6 +76,10 @@ export default function RegisterPage() {
       return;
     }
     if (!validate()) return;
+    if (turnstileSiteKey && !turnstileToken) {
+      setError("Vérification de sécurité en cours. Réessayez dans un instant.");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -94,6 +95,7 @@ export default function RegisterPage() {
           website,
           formLoadedAt: formLoadedAtRef.current ?? Date.now(),
           acceptCgu: true,
+          turnstileToken: turnstileToken || undefined,
         }),
       });
       const data = await res.json();
@@ -205,14 +207,15 @@ export default function RegisterPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <PasswordStrengthIndicator password={password} email={email.trim()} showErrors={Boolean(fieldError.password)} />
               <p className="mt-1 text-xs text-white/45">
-                Minimum 12 caractères · 1 majuscule · 1 chiffre · 1 caractère spécial
+                Minimum 8 caractères · majuscule · minuscule · chiffre · caractère spécial
               </p>
-              {fieldError.password && (
+              {fieldError.password ? (
                 <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>
                   {fieldError.password}
                 </p>
-              )}
+              ) : null}
             </div>
             <div style={{ marginBottom: "0.875rem" }}>
               <RequiredLabel htmlFor="confirmPassword">Confirmer le mot de passe</RequiredLabel>
@@ -263,6 +266,15 @@ export default function RegisterPage() {
                 .
               </span>
             </label>
+            {turnstileSiteKey ? (
+              <div className="mb-4">
+                <TurnstileWidget
+                  siteKey={turnstileSiteKey}
+                  onToken={setTurnstileToken}
+                  onExpire={() => setTurnstileToken("")}
+                />
+              </div>
+            ) : null}
             {error && <p style={{ color: "#E05252", marginBottom: "1rem" }}>{error}</p>}
             <button
               type="submit"

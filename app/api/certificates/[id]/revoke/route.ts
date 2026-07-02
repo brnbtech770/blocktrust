@@ -9,6 +9,7 @@ import { z } from 'zod'
 import { redactEmailRecipient, sendEmail } from '@/lib/email'
 import { invalidateTrustEngineCacheForCertificate } from '@/lib/trust-engine-cache'
 import { CertificateRevokedEmail, subject as certificateRevokedSubject } from '@/emails/CertificateRevokedEmail'
+import { writeSecurityAuditLogFireAndForget } from '@/lib/security-audit'
 
 const certificateIdSchema = z.string().cuid()
 
@@ -120,6 +121,13 @@ export async function POST(
         else console.log('[Certificate] Revoked notification envoyée entityUserId=', certificate.entity.userId.slice(0, 8))
       })
     }
+
+    writeSecurityAuditLogFireAndForget({
+      action: 'CERTIFICATE_REVOKED',
+      userId,
+      resource: 'certificate',
+      resourceId: certificateId,
+    })
 
     return NextResponse.json({
       success: true,

@@ -14,16 +14,16 @@ const CONTENT_SECURITY_POLICY = [
   "form-action 'self'",
   "frame-ancestors 'none'",
   // L5 (sécurité) — CHANTIER DÉDIÉ : durcir la CSP avec des nonces (Next 16 les supporte)
-  // pour retirer 'unsafe-inline' / 'unsafe-eval'. NON fait ici volontairement : le passage
+  // pour retirer 'unsafe-inline'. NON fait ici volontairement : le passage
   // aux nonces touche le rendu (scripts/styles inline de Next, Stripe.js, hydratation) et
   // doit être validé page par page pour ne rien casser. À traiter dans un ticket isolé,
   // avec Report-Only en préprod avant enforcement. Voir docs sécurité.
   [
     "script-src",
     "'self'",
-    "'unsafe-eval'",
     "'unsafe-inline'",
     "https://js.stripe.com",
+    "https://challenges.cloudflare.com",
   ].join(" "),
   [
     "style-src",
@@ -44,6 +44,7 @@ const CONTENT_SECURITY_POLICY = [
     "https://accounts.google.com",
     "https://oauth2.googleapis.com",
     "https://www.googleapis.com",
+    "https://challenges.cloudflare.com",
   ].join(" "),
   [
     "frame-src",
@@ -85,6 +86,7 @@ const nextConfig: NextConfig = {
           },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-XSS-Protection", value: "1; mode=block" },
           {
             key: "Referrer-Policy",
             value: "strict-origin-when-cross-origin",

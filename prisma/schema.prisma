@@ -123,6 +123,12 @@ model User {
   /// Assistant onboarding dashboard terminé (guide interactif)
   onboardingCompletedAt DateTime?
 
+  /// Incrémenté à chaque invalidation de sessions (JWT)
+  sessionVersion Int @default(0)
+
+  /// Suppression compte programmée (délai de grâce RGPD)
+  accountDeletionScheduledAt DateTime?
+
   trustScore   Int       @default(0)
   trustScoreAt DateTime?
 

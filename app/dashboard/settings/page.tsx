@@ -15,6 +15,7 @@ import {
 } from '@/lib/trust-delegation'
 import SettingsClient from './SettingsClient'
 import { userHasExtensionApiKey } from '@/lib/extension-api-key'
+import { isActiveBillingStatus } from '@/lib/plan-features'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,6 +43,7 @@ export default async function SettingsPage() {
       certifiedDomains: true,
       kycStatus: true,
       password: true,
+      accountDeletionScheduledAt: true,
       plan: { select: { type: true } },
     },
   })
@@ -52,8 +54,12 @@ export default async function SettingsPage() {
 
   const subscription = await prisma.subscription.findUnique({
     where: { userId: session.user.id },
-    select: { plan: true, status: true },
+    select: { plan: true, status: true, stripeSubscriptionId: true },
   })
+
+  const hasActiveSubscription = Boolean(
+    subscription?.stripeSubscriptionId && isActiveBillingStatus(subscription.status),
+  )
 
   const planKey = resolvePlanKeyForWording({
     planType: user.plan?.type,
@@ -117,6 +123,10 @@ export default async function SettingsPage() {
       }}
       planWording={planWording}
       delegationRights={delegationRights}
+      accountDeletionScheduledAt={
+        user.accountDeletionScheduledAt?.toISOString() ?? null
+      }
+      hasActiveSubscription={hasActiveSubscription}
     />
   )
 }

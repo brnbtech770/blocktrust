@@ -5,6 +5,7 @@ import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
 import { tryPromoteMutualOnAdd } from '@/lib/trust-circle-mutual'
 import { checkPlanRateLimit } from '@/lib/rate-limit-plan'
 import { resolveEffectivePlan, planAllowsTrustCircle } from '@/lib/plan-features'
+import { writeSecurityAuditLogFireAndForget } from '@/lib/security-audit'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -119,6 +120,13 @@ export async function POST(req: NextRequest) {
     if (promoted) {
       const { sendMutualTrustEmail } = await import('@/lib/trust-circle-email')
       await sendMutualTrustEmail(userId, targetUser.id).catch(console.error)
+      writeSecurityAuditLogFireAndForget({
+        action: 'TRUST_CIRCLE_ADDED',
+        userId,
+        resource: 'trust_circle',
+        resourceId: targetUser.id,
+        metadata: { trustType: 'MUTUAL' },
+      })
       return NextResponse.json({
         success:   true,
         trustType: 'MUTUAL',
@@ -143,6 +151,14 @@ export async function POST(req: NextRequest) {
       inviteToken
     ).catch(console.error)
   }
+
+  writeSecurityAuditLogFireAndForget({
+    action: 'TRUST_CIRCLE_ADDED',
+    userId,
+    resource: 'trust_circle',
+    resourceId: targetUser?.id ?? email,
+    metadata: { trustType: targetUser ? 'UNILATERAL' : 'UNVERIFIED' },
+  })
 
   return NextResponse.json({
     success:   true,

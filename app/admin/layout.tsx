@@ -18,6 +18,8 @@ import AdminNavLink from '@/app/admin/AdminNavLink'
 import { prisma } from '@/app/lib/db'
 import type { Metadata } from 'next'
 import type { AdminNavIconName } from '@/app/admin/AdminNavLink'
+import { writeSecurityAuditLogFireAndForget } from '@/lib/security-audit'
+import { headers } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
 
@@ -100,6 +102,17 @@ export default async function AdminLayout({
 
   if (!isDashboardAdmin(session.user.email)) {
     redirect('/dashboard')
+  }
+
+  if (!(await isRscPrefetchRequest())) {
+    const h = await headers()
+    writeSecurityAuditLogFireAndForget({
+      action: 'ADMIN_ACCESS',
+      userId: session.user.id,
+      resource: 'admin',
+      resourceId: 'admin-layout',
+      ip: h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined,
+    })
   }
 
   const unreadAdminAlerts = await prisma.adminAlert

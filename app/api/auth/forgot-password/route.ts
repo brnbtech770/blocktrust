@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/app/lib/db";
 import { redactEmailRecipient, sendEmail } from "@/lib/email";
 import { checkForgotPasswordRateLimit } from "@/lib/rate-limit-cost";
+import { writeSecurityAuditLogFireAndForget } from "@/lib/security-audit";
 import crypto from "crypto";
 
 const bodySchema = z.object({ email: z.string().email() });
@@ -36,6 +37,14 @@ export async function POST(req: NextRequest) {
         where: { email: emailNorm },
       });
       if (!user || !user.password) return;
+
+      writeSecurityAuditLogFireAndForget({
+        action: "PASSWORD_RESET_REQUESTED",
+        userId: user.id,
+        resource: "user",
+        resourceId: user.id,
+        ip,
+      });
 
       // Le token en clair n'est transmis QUE par email. En DB on ne stocke que son
       // hash SHA-256 (hash at rest) : si la base fuite, les tokens ne sont pas utilisables.

@@ -4,6 +4,8 @@ import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/app/components/ui/Logo";
+import PasswordStrengthIndicator from "@/app/components/auth/PasswordStrengthIndicator";
+import { validatePassword } from "@/lib/password-policy";
 
 const cardClass =
   "mx-auto max-w-[420px] rounded-xl border border-gold/20 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-gold/40";
@@ -41,10 +43,10 @@ function ResetPasswordContent() {
 
   function validate(): boolean {
     const err: Record<string, string> = {};
-    if (password.length < 12) err.password = "Minimum 12 caractères.";
-    if (!/[A-Z]/.test(password)) err.password = (err.password || "") + " Au moins 1 majuscule.";
-    if (!/[0-9]/.test(password)) err.password = (err.password || "") + " Au moins 1 chiffre.";
-    if (!/[^a-zA-Z0-9]/.test(password)) err.password = (err.password || "") + " Au moins 1 caractère spécial.";
+    const policy = validatePassword(password);
+    if (!policy.valid) {
+      err.password = policy.errors[0] ?? "Mot de passe invalide.";
+    }
     if (password !== confirmPassword) err.confirmPassword = "Les mots de passe ne correspondent pas.";
     setFieldError(err);
     return Object.keys(err).length === 0;
@@ -127,9 +129,10 @@ function ResetPasswordContent() {
               required
               className="w-full rounded-lg border border-gold/30 bg-white/5 px-3 py-2.5 text-white placeholder:text-white/40 focus:border-gold/50 focus:outline-none focus:ring-2 focus:ring-gold/20"
             />
-            {fieldError.password && (
+            <PasswordStrengthIndicator password={password} showErrors={Boolean(fieldError.password)} />
+            {fieldError.password ? (
               <p style={{ color: "#E05252", fontSize: "0.875rem", marginTop: "4px" }}>{fieldError.password}</p>
-            )}
+            ) : null}
           </div>
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ color: "rgba(232,234,240,0.8)", display: "block", marginBottom: "4px" }}>

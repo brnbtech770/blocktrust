@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSession } from 'next-auth/react'
 import {
   ArrowUpRight,
   Check,
@@ -12,9 +13,12 @@ import {
   Phone,
   Save,
   ShieldCheck,
+  Trash2,
 } from 'lucide-react'
 import SignOutButton from '@/app/components/SignOutButton'
 import Link from 'next/link'
+import PasswordStrengthIndicator from '@/app/components/auth/PasswordStrengthIndicator'
+import { validatePassword } from '@/lib/password-policy'
 import type { DelegationRightsSummary } from '@/lib/trust-delegation'
 import {
   CertifiedEmailsTagInput,
@@ -166,7 +170,14 @@ function ProCertifiedSection({
   )
 }
 
-function PasswordSection({ initialHasPassword }: { initialHasPassword: boolean }) {
+function PasswordSection({
+  initialHasPassword,
+  userEmail,
+}: {
+  initialHasPassword: boolean
+  userEmail: string
+}) {
+  const { update } = useSession()
   const [hasPassword, setHasPassword] = useState(initialHasPassword)
   const [expanded, setExpanded] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
@@ -199,12 +210,14 @@ function PasswordSection({ initialHasPassword }: { initialHasPassword: boolean }
     setError(null)
     setSuccess(null)
 
-    if (newPassword.length < 8) {
-      setError('Minimum 8 caractères.')
-      return
-    }
     if (newPassword !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas.')
+      return
+    }
+
+    const policy = validatePassword(newPassword, userEmail)
+    if (!policy.valid) {
+      setError(policy.errors[0] ?? 'Mot de passe invalide.')
       return
     }
 
@@ -227,6 +240,7 @@ function PasswordSection({ initialHasPassword }: { initialHasPassword: boolean }
       const data = (await res.json().catch(() => ({}))) as {
         error?: string
         mode?: 'set' | 'changed'
+        sessionVersion?: number
       }
 
       if (!res.ok) {
@@ -241,6 +255,9 @@ function PasswordSection({ initialHasPassword }: { initialHasPassword: boolean }
         setHasPassword(true)
       } else {
         setSuccess('Mot de passe mis à jour.')
+        if (typeof data.sessionVersion === 'number') {
+          await update({ sessionVersion: data.sessionVersion })
+        }
       }
       resetForm()
       setExpanded(false)
@@ -314,7 +331,10 @@ function PasswordSection({ initialHasPassword }: { initialHasPassword: boolean }
               autoComplete="new-password"
               className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white focus:border-[#00d4ff]/50 focus:outline-none"
             />
-            <p className="mt-1 text-xs text-white/45">Minimum 8 caractères.</p>
+            <PasswordStrengthIndicator password={newPassword} email={userEmail} />
+            <p className="mt-1 text-xs text-white/45">
+              Minimum 8 caractères · majuscule · minuscule · chiffre · caractère spécial
+            </p>
           </div>
 
           <div>
@@ -368,6 +388,188 @@ function PasswordSection({ initialHasPassword }: { initialHasPassword: boolean }
   )
 }
 
+function AccountDeletionSection({
+  accountDeletionScheduledAt,
+  hasActiveSubscription,
+}: {
+  accountDeletionScheduledAt: string | null
+  hasActiveSubscription: boolean
+}) {
+  const [step, setStep] = useState<0 | 1 | 2>(0)
+  const [confirmation, setConfirmation] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [scheduledAt, setScheduledAt] = useState<string | null>(accountDeletionScheduledAt)
+
+  async function handleScheduleDeletion() {
+    setError(null)
+    setLoading(true)
+    try {
+      const res = await fetch('/api/user/account', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ confirmation: 'SUPPRIMER' }),
+      })
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string
+        scheduledAt?: string
+        billingUrl?: string
+      }
+      if (!res.ok) {
+        setError(data.error ?? 'Suppression impossible.')
+        return
+      }
+      setScheduledAt(data.scheduledAt ?? null)
+      setStep(0)
+      setConfirmation('')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleCancelDeletion() {
+    setError(null)
+    setLoading(true)
+    try {
+      const res = await fetch('/api/user/account', {
+        method: 'PATCH',
+        credentials: 'include',
+      })
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string }
+        setError(data.error ?? 'Annulation impossible.')
+        return
+      }
+      setScheduledAt(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <section className="mb-6 rounded-xl border border-[#E05252]/30 bg-[#E05252]/5 p-6">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#E05252]/30 bg-[#E05252]/10">
+          <Trash2 className="h-4 w-4 text-[#E05252]" aria-hidden />
+        </div>
+        <div>
+          <h2 className="font-syne text-2xl font-semibold tracking-tight text-white">
+            Supprimer mon compte
+          </h2>
+          <p className="mt-1 text-sm text-white/50">
+            Droit à l&apos;effacement (RGPD). Action irréversible après 30 jours.
+          </p>
+        </div>
+      </div>
+
+      {scheduledAt ? (
+        <div className="space-y-3 rounded-lg border border-[#f59e0b]/30 bg-[#f59e0b]/10 p-4">
+          <p className="text-sm text-[#f59e0b]">
+            Suppression programmée le{' '}
+            {new Date(scheduledAt).toLocaleDateString('fr-FR', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+            . Reconnectez-vous pour annuler.
+          </p>
+          <button
+            type="button"
+            onClick={() => void handleCancelDeletion()}
+            disabled={loading}
+            className="inline-flex min-h-[44px] items-center rounded-lg border border-white/20 px-4 py-2 text-sm text-white/80 transition hover:bg-white/5 disabled:opacity-50"
+          >
+            Annuler la suppression
+          </button>
+        </div>
+      ) : step === 0 ? (
+        <button
+          type="button"
+          onClick={() => {
+            setError(null)
+            setStep(1)
+          }}
+          className="inline-flex min-h-[44px] items-center rounded-lg border border-[#E05252]/40 px-4 py-2 text-sm font-semibold text-[#E05252] transition hover:bg-[#E05252]/10"
+        >
+          Supprimer mon compte
+        </button>
+      ) : step === 1 ? (
+        <div className="space-y-4">
+          <p className="text-sm text-white/70">
+            Êtes-vous sûr ? Cette action est <strong className="text-white">IRRÉVERSIBLE</strong>{' '}
+            après le délai de grâce de 30 jours.
+          </p>
+          {hasActiveSubscription ? (
+            <p className="text-sm text-[#f59e0b]">
+              Vous avez un abonnement actif.{' '}
+              <Link href="/dashboard/billing" className="text-[#00d4ff] underline">
+                Annulez-le
+              </Link>{' '}
+              avant de supprimer votre compte.
+            </p>
+          ) : null}
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              disabled={hasActiveSubscription}
+              className="inline-flex min-h-[44px] items-center rounded-lg border border-[#E05252]/40 bg-[#E05252]/15 px-4 py-2 text-sm font-semibold text-[#E05252] transition hover:bg-[#E05252]/25 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Continuer
+            </button>
+            <button
+              type="button"
+              onClick={() => setStep(0)}
+              className="inline-flex min-h-[44px] items-center rounded-lg border border-white/15 px-4 py-2 text-sm text-white/70 transition hover:bg-white/5"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <p className="text-sm text-white/70">Tapez SUPPRIMER pour confirmer.</p>
+          <input
+            type="text"
+            value={confirmation}
+            onChange={(e) => setConfirmation(e.target.value)}
+            autoComplete="off"
+            placeholder="SUPPRIMER"
+            className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-white focus:border-[#E05252]/50 focus:outline-none"
+          />
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => void handleScheduleDeletion()}
+              disabled={loading || confirmation !== 'SUPPRIMER'}
+              className="inline-flex min-h-[44px] items-center rounded-lg border border-[#E05252]/40 bg-[#E05252]/20 px-4 py-2 text-sm font-semibold text-[#E05252] transition hover:bg-[#E05252]/30 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? 'Traitement…' : 'Confirmer la suppression'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setStep(0)
+                setConfirmation('')
+              }}
+              className="inline-flex min-h-[44px] items-center rounded-lg border border-white/15 px-4 py-2 text-sm text-white/70 transition hover:bg-white/5"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error ? (
+        <p className="mt-3 text-sm text-[#E05252]" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </section>
+  )
+}
+
 export default function SettingsClient({
   user,
   hasPassword,
@@ -375,6 +577,8 @@ export default function SettingsClient({
   certifiedContacts,
   planWording,
   delegationRights,
+  accountDeletionScheduledAt,
+  hasActiveSubscription,
 }: {
   user: SettingsClientUser
   hasPassword: boolean
@@ -382,6 +586,8 @@ export default function SettingsClient({
   certifiedContacts: CertifiedContactsInitial
   planWording: PlanWording
   delegationRights: DelegationRightsSummary
+  accountDeletionScheduledAt: string | null
+  hasActiveSubscription: boolean
 }) {
   const hasExtensionKey = extensionKeyInitial.hasKey
   const maskedKey = extensionKeyInitial.masked
@@ -509,7 +715,7 @@ export default function SettingsClient({
           </div>
         </div>
 
-        <PasswordSection initialHasPassword={hasPassword} />
+        <PasswordSection initialHasPassword={hasPassword} userEmail={user.email} />
 
         <section className="mb-6 rounded-xl border border-white/10 bg-[#0d1f3c] p-6">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
@@ -699,6 +905,11 @@ export default function SettingsClient({
             Les préférences de notification sont des placeholders pour l&apos;instant.
           </p>
         </div>
+
+        <AccountDeletionSection
+          accountDeletionScheduledAt={accountDeletionScheduledAt}
+          hasActiveSubscription={hasActiveSubscription}
+        />
 
         <div className="rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-red-500/40">
           <h2 className="font-syne mb-4 text-2xl font-semibold tracking-tight text-white">Session</h2>

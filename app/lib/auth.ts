@@ -9,12 +9,24 @@ import { prisma } from "@/app/lib/db";
 import type { NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { CredentialsSignin } from "next-auth";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { headers } from "next/headers";
 import authEdgeConfig from "./auth.edge.config";
 import { isSafeCallbackUrl } from "./auth-callback-url";
 import { isInternalAccount } from "@/lib/admin-utils";
 import { DEFAULT_B2C_PLAN, resolveEffectivePlan } from "@/lib/plan-features";
+import {
+  checkLoginLockout,
+  recordLoginFailure,
+  recordLoginSuccess,
+} from "@/lib/login-lockout";
+import { cancelScheduledAccountDeletion } from "@/lib/account-deletion";
+
+class AccountLockedError extends CredentialsSignin {
+  code = "account_locked";
+}
 
 async function touchLastLogin(userId: string): Promise<void> {
   await prisma.user
@@ -130,49 +142,50 @@ export const authOptions: NextAuthConfig = {
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
+        const emailNorm = email.trim().toLowerCase();
+
+        const hdrs = await headers();
+        const clientIp =
+          hdrs.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          hdrs.get("x-real-ip") ||
+          null;
+
+        const lockout = await checkLoginLockout(emailNorm);
+        if (lockout.locked) {
+          throw new AccountLockedError(lockout.message);
+        }
 
         const user = await prisma.user.findUnique({
-          where: { email },
+          where: { email: emailNorm },
           include: { subscription: true, plan: { select: { type: true } } },
         });
 
-        if (!user || !user.password) {
-          const { createHash } = await import('node:crypto')
-          const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? ''
-          const emailHash = createHash('sha256').update(`${email}:${secret}`).digest('hex')
-          void prisma.auditLog
-            .create({
-              data: {
-                action: 'AUTH_SIGNIN_FAILED',
-                resource: 'auth',
-                resourceId: emailHash,
-                ipHash: emailHash,
-              },
-            })
-            .catch(() => null)
-          return null
+        if (!user?.password || user.email?.startsWith("deleted_")) {
+          const failStatus = await recordLoginFailure(emailNorm, { ip: clientIp });
+          if (failStatus.locked) {
+            throw new AccountLockedError(failStatus.message);
+          }
+          return null;
         }
 
-        const isValid = await bcrypt.compare(password, user.password)
+        const isValid = await bcrypt.compare(password, user.password);
         if (!isValid) {
-          const { createHash } = await import('node:crypto')
-          const secret = process.env.NEXTAUTH_SECRET ?? process.env.AUTH_SECRET ?? ''
-          const emailHash = createHash('sha256').update(`${email}:${secret}`).digest('hex')
-          void prisma.auditLog
-            .create({
-              data: {
-                action: 'AUTH_SIGNIN_FAILED',
-                resource: 'auth',
-                resourceId: emailHash,
-                ipHash: emailHash,
-                userId: user.id,
-              },
-            })
-            .catch(() => null)
-          return null
+          const failStatus = await recordLoginFailure(emailNorm, {
+            ip: clientIp,
+            userId: user.id,
+          });
+          if (failStatus.locked) {
+            throw new AccountLockedError(failStatus.message);
+          }
+          return null;
         }
 
-        // Plan effectif : un abonnement non payant actif (inactive/canceled) → Découverte.
+        await recordLoginSuccess(emailNorm, { ip: clientIp, userId: user.id });
+
+        if (user.accountDeletionScheduledAt) {
+          await cancelScheduledAccountDeletion(user.id);
+        }
+
         const plan = resolveEffectivePlan({
           subscription: user.subscription,
           email: user.email,
@@ -184,8 +197,8 @@ export const authOptions: NextAuthConfig = {
           email: user.email ?? undefined,
           name: user.name ?? undefined,
           plan,
-          kycStatus: user.kycStatus ?? 'PENDING',
-          accountType: user.accountType ?? 'PERSONAL',
+          kycStatus: user.kycStatus ?? "PENDING",
+          accountType: user.accountType ?? "PERSONAL",
           cookieConsent: user.cookieConsent ?? false,
         };
       },
@@ -222,12 +235,24 @@ export const authOptions: NextAuthConfig = {
       }
       return true;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger, session }) {
       if (user) {
         const loginUserId =
           typeof user.id === "string" ? user.id : typeof token.sub === "string" ? token.sub : null;
         if (loginUserId) {
           void touchLastLogin(loginUserId);
+          const dbSec = await prisma.user
+            .findUnique({
+              where: { id: loginUserId },
+              select: { sessionVersion: true, accountDeletionScheduledAt: true },
+            })
+            .catch(() => null);
+          if (dbSec) {
+            token.sessionVersion = dbSec.sessionVersion;
+            if (dbSec.accountDeletionScheduledAt) {
+              await cancelScheduledAccountDeletion(loginUserId);
+            }
+          }
         }
 
         if (account?.provider === "credentials") {
@@ -295,8 +320,36 @@ export const authOptions: NextAuthConfig = {
           }
         }
       }
-      // Rafraîchir plan + profil uniquement si cache expiré (> 1 h) — évite Prisma à chaque requête.
       if (token.sub && !user) {
+        const svRow = await prisma.user
+          .findUnique({
+            where: { id: token.sub },
+            select: { sessionVersion: true, email: true },
+          })
+          .catch(() => null);
+
+        if (!svRow || svRow.email?.startsWith("deleted_")) {
+          token.sessionInvalid = true;
+        } else if (
+          typeof token.sessionVersion === "number" &&
+          svRow.sessionVersion > token.sessionVersion
+        ) {
+          token.sessionInvalid = true;
+        } else if (typeof token.sessionVersion !== "number") {
+          token.sessionVersion = svRow.sessionVersion;
+        }
+      }
+
+      if (trigger === "update" && session && typeof session === "object") {
+        const patch = session as { sessionVersion?: number };
+        if (typeof patch.sessionVersion === "number") {
+          token.sessionVersion = patch.sessionVersion;
+          token.sessionInvalid = false;
+        }
+      }
+
+      // Rafraîchir plan + profil uniquement si cache expiré (> 1 h) — évite Prisma à chaque requête.
+      if (token.sub && !user && !token.sessionInvalid) {
         const email = typeof token.email === "string" ? token.email : null;
         const isInternalUser = email ? isInternalAccount(email) : false;
 
@@ -362,6 +415,9 @@ export const authOptions: NextAuthConfig = {
       return token;
     },
     async session({ session, token }) {
+      if (token.sessionInvalid) {
+        return { ...session, expires: new Date(0).toISOString() };
+      }
       if (session.user) {
         return {
           ...session,

@@ -48,8 +48,20 @@ const separatorStyle: React.CSSProperties = {
 const CREDENTIALS_ERROR_MESSAGE =
   "Email ou mot de passe incorrect. Si vous vous êtes inscrit avec Google, utilisez le bouton « Se connecter avec Google » ou définissez un mot de passe dans vos paramètres.";
 
+const LOCKOUT_ERROR_MESSAGE =
+  "Compte temporairement verrouillé. Réessayez dans 15 minutes.";
+
 /** Erreurs credentials / Auth.js : jamais de code technique côté utilisateur. */
-function credentialsErrorMessage(code: string | null | undefined): string {
+function credentialsErrorMessage(
+  code: string | null | undefined,
+  url?: string | null,
+): string {
+  if (code === "account_locked") {
+    return LOCKOUT_ERROR_MESSAGE;
+  }
+  if (url?.includes("account_locked")) {
+    return LOCKOUT_ERROR_MESSAGE;
+  }
   if (!code) return CREDENTIALS_ERROR_MESSAGE;
   return CREDENTIALS_ERROR_MESSAGE;
 }
@@ -67,6 +79,7 @@ function oauthErrorMessage(code: string | null): string | null {
     Callback: "Erreur callback (URL ou secret).",
     Default: "Connexion impossible. Réessayez.",
     CredentialsSignin: CREDENTIALS_ERROR_MESSAGE,
+    account_locked: LOCKOUT_ERROR_MESSAGE,
   };
   return map[code] ?? "Connexion impossible. Réessayez.";
 }
@@ -158,7 +171,13 @@ function SignInContent() {
         router.push(callbackUrl);
         return;
       }
-      setError(credentialsErrorMessage(result?.error));
+      const errCode =
+        (result as { code?: string } | undefined)?.code ?? result?.error ?? undefined;
+      if (errCode === "account_locked") {
+        setError(LOCKOUT_ERROR_MESSAGE);
+        return;
+      }
+      setError(credentialsErrorMessage(errCode, result?.url));
     } catch {
       setError("Erreur de connexion.");
     } finally {
