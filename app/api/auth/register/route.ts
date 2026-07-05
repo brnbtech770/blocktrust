@@ -16,6 +16,7 @@ import {
 } from "@/lib/welcome-email";
 import { validatePassword } from "@/lib/password-policy";
 import { verifyTurnstileForRegister } from "@/lib/turnstile";
+import { clearLoginLockout } from "@/lib/login-lockout";
 
 const MIN_FORM_MS = 3000;
 
@@ -178,6 +179,9 @@ export async function POST(req: NextRequest) {
     console.log(
       `[register] user created userId=${user.id.slice(0, 8)}... turnstile=${turnstile.skipped ? turnstile.reason : "verified"}`,
     );
+
+    // Inscription réussie : effacer un éventuel lockout (tentatives login avant création du compte).
+    await clearLoginLockout(emailNorm);
 
     await createAdminAlert({
       type: "NEW_USER",

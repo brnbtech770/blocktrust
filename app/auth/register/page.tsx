@@ -9,6 +9,7 @@ import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
 import PasswordStrengthIndicator from "@/app/components/auth/PasswordStrengthIndicator";
 import TurnstileWidget from "@/app/components/auth/TurnstileWidget";
 import { validatePassword } from "@/lib/password-policy";
+import { parseCredentialsSignInError } from "@/lib/auth-signin-errors";
 
 const cardClass =
   "mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-6";
@@ -148,10 +149,12 @@ export default function RegisterPage() {
           router.push("/dashboard");
           return;
         }
-        setError(
-          "Compte créé. Connectez-vous avec votre email et mot de passe.",
+        const parsed = parseCredentialsSignInError(signInResult);
+        router.push(
+          `/auth/signin?registered=1&callbackUrl=${encodeURIComponent("/dashboard")}${
+            parsed.code !== "credentials" ? `&error=${encodeURIComponent(parsed.code)}` : ""
+          }`,
         );
-        router.push("/auth/signin");
         return;
       }
       setError(data.error || "Une erreur est survenue.");

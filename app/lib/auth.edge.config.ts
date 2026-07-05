@@ -14,9 +14,10 @@ export const googleProvider =
     ? GoogleProvider({
         clientId,
         clientSecret,
-        // Opt-in explicite uniquement — false par défaut (sécurité account takeover).
+        // Opt-in explicite — true par défaut : Google vérifie l'email, permet la liaison
+        // avec un compte credentials existant (même adresse).
         allowDangerousEmailAccountLinking:
-          process.env.ALLOW_DANGEROUS_EMAIL_LINKING === "true",
+          process.env.ALLOW_DANGEROUS_EMAIL_LINKING !== "false",
       })
     : null;
 

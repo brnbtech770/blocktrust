@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       const user = await prisma.user.findUnique({
         where: { email: emailNorm },
       });
-      if (!user || !user.password) return;
+      if (!user) return;
 
       writeSecurityAuditLogFireAndForget({
         action: "PASSWORD_RESET_REQUESTED",

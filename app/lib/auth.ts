@@ -111,22 +111,24 @@ async function resolveDbUserAfterOAuth(user: {
   const email = user.email?.trim();
   if (!email) return null;
 
-  let dbUser = await prisma.user.findUnique({ where: { email } });
+  const emailNorm = email.toLowerCase();
+
+  let dbUser = await prisma.user.findUnique({ where: { email: emailNorm } });
   if (dbUser) return dbUser;
 
   dbUser = await prisma.user.findFirst({
-    where: { email: { equals: email, mode: "insensitive" } },
+    where: { email: { equals: emailNorm, mode: "insensitive" } },
   });
   if (dbUser) return dbUser;
 
   return prisma.user.upsert({
-    where: { email },
+    where: { email: emailNorm },
     update: {
       name: user.name,
       image: user.image,
     },
     create: {
-      email,
+      email: emailNorm,
       name: user.name,
       image: user.image,
       kycStatus: "PENDING",
@@ -240,15 +242,16 @@ export const authOptions: NextAuthConfig = {
           console.warn('[signIn google] email absent du profil, connexion refusée');
           return false;
         }
+        const emailNorm = email.toLowerCase();
         try {
           await prisma.user.upsert({
-            where: { email },
+            where: { email: emailNorm },
             update: {
               name: user.name,
               image: user.image,
             },
             create: {
-              email,
+              email: emailNorm,
               name: user.name,
               image: user.image,
               kycStatus: 'PENDING',

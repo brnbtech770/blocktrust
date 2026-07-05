@@ -26,8 +26,12 @@ vi.mock("@/lib/turnstile", () => ({
     reason: "client_bypass",
   }),
 }));
+vi.mock("@/lib/login-lockout", () => ({
+  clearLoginLockout: vi.fn().mockResolvedValue(undefined),
+}));
 
 import { POST as registerPost } from "@/app/api/auth/register/route";
+import { clearLoginLockout } from "@/lib/login-lockout";
 
 function registerRequest(body: Record<string, unknown>) {
   return new NextRequest("http://localhost/api/auth/register", {
@@ -66,6 +70,7 @@ describe("POST /api/auth/register", () => {
 
     expect(res.status).toBe(201);
     expect(data.success).toBe(true);
+    expect(clearLoginLockout).toHaveBeenCalledWith("user@example.com");
     expect(prismaMock.user.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

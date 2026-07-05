@@ -23,7 +23,7 @@ const EXTENDED_LOCKOUT_COUNT = 3;
 
 export type LoginLockoutStatus =
   | { locked: false }
-  | { locked: true; message: string; retryAfterSec?: number };
+  | { locked: true; message: string; retryAfterSec?: number; extended?: boolean };
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -89,12 +89,22 @@ async function redisDel(...keys: string[]): Promise<void> {
 export async function checkLoginLockout(email: string): Promise<LoginLockoutStatus> {
   const locked = await redisGet(lockoutKey(email));
   if (locked) {
+    const extended = locked === "extended";
     return {
       locked: true,
-      message: "Compte temporairement verrouillé. Réessayez dans 15 minutes.",
+      extended,
+      message: extended
+        ? "Compte temporairement verrouillé. Réessayez dans 1 heure."
+        : "Compte temporairement verrouillé. Réessayez dans 15 minutes.",
+      retryAfterSec: extended ? EXTENDED_LOCKOUT_SEC : FAIL_TTL_SEC,
     };
   }
   return { locked: false };
+}
+
+/** Efface lockout + compteur d'échecs (inscription réussie, déblocage admin). */
+export async function clearLoginLockout(email: string): Promise<void> {
+  await redisDel(failKey(email), lockoutKey(email));
 }
 
 export async function recordLoginFailure(
@@ -120,7 +130,7 @@ export async function recordLoginFailure(
   const extended = lockoutCount >= EXTENDED_LOCKOUT_COUNT;
   const lockoutTtl = extended ? EXTENDED_LOCKOUT_SEC : FAIL_TTL_SEC;
 
-  await redisSetEx(lockoutKey(email), "1", lockoutTtl);
+  await redisSetEx(lockoutKey(email), extended ? "extended" : "standard", lockoutTtl);
 
   writeSecurityAuditLogFireAndForget({
     action: "LOGIN_LOCKOUT",
@@ -162,6 +172,7 @@ export async function recordLoginFailure(
 
   return {
     locked: true,
+    extended,
     message: extended
       ? "Compte temporairement verrouillé. Réessayez dans 1 heure."
       : "Compte temporairement verrouillé. Réessayez dans 15 minutes.",

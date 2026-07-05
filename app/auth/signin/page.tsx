@@ -6,9 +6,13 @@ import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { sanitizeCallbackUrl } from "@/app/lib/auth-callback-url";
 import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
+import {
+  CREDENTIALS_ERROR_MESSAGE,
+  oauthOrSignInErrorMessage,
+  parseCredentialsSignInError,
+} from "@/lib/auth-signin-errors";
 
 const pageBg = "#0a1628";
-
 
 const inputStyle: React.CSSProperties = {
   width: "100%",
@@ -45,53 +49,12 @@ const separatorStyle: React.CSSProperties = {
   fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
 };
 
-const CREDENTIALS_ERROR_MESSAGE =
-  "Email ou mot de passe incorrect.";
-
-const NO_PASSWORD_ERROR_MESSAGE =
-  "Connectez-vous via Google ou définissez un mot de passe.";
-
-const LOCKOUT_ERROR_MESSAGE =
-  "Compte verrouillé 15 minutes.";
-
-/** Erreurs credentials / Auth.js : jamais de code technique côté utilisateur. */
-function credentialsErrorMessage(
-  code: string | null | undefined,
-  url?: string | null,
-): string {
-  if (code === "account_locked") {
-    return LOCKOUT_ERROR_MESSAGE;
+function initialCredentialsError(errorParam: string | null): string | null {
+  if (!errorParam) return null;
+  if (errorParam === "CredentialsSignin" || errorParam === "no-session-cookie") {
+    return CREDENTIALS_ERROR_MESSAGE;
   }
-  if (code === "no_password") {
-    return NO_PASSWORD_ERROR_MESSAGE;
-  }
-  if (url?.includes("account_locked")) {
-    return LOCKOUT_ERROR_MESSAGE;
-  }
-  if (url?.includes("no_password")) {
-    return NO_PASSWORD_ERROR_MESSAGE;
-  }
-  if (!code) return CREDENTIALS_ERROR_MESSAGE;
-  return CREDENTIALS_ERROR_MESSAGE;
-}
-
-/** Messages NextAuth / Auth.js pour ?error= (visibles aussi pour Google OAuth). */
-function oauthErrorMessage(code: string | null): string | null {
-  if (!code) return null;
-  const map: Record<string, string> = {
-    AccessDenied: "Connexion refusée.",
-    Verification: "Le lien de vérification a expiré ou a déjà été utilisé.",
-    OAuthSignin: "Impossible de démarrer la connexion OAuth.",
-    OAuthCallback: "Erreur lors du retour OAuth (callback).",
-    OAuthAccountNotLinked:
-      "Cet email est déjà enregistré avec une autre méthode. Utilisez le lien magique ou définissez un mot de passe dans vos paramètres pour vous connecter aussi par email.",
-    Callback: "Erreur callback (URL ou secret).",
-    Default: "Connexion impossible. Réessayez.",
-    CredentialsSignin: CREDENTIALS_ERROR_MESSAGE,
-    account_locked: LOCKOUT_ERROR_MESSAGE,
-    no_password: NO_PASSWORD_ERROR_MESSAGE,
-  };
-  return map[code] ?? "Connexion impossible. Réessayez.";
+  return oauthOrSignInErrorMessage(errorParam);
 }
 
 /** Après redirect depuis dashboard/admin : message utilisateur (sans codes techniques). */
@@ -139,26 +102,19 @@ function SignInContent() {
   const callbackUrl = sanitizeCallbackUrl(searchParams.get("callbackUrl"));
   const errorParam = searchParams.get("error");
   const reasonParam = searchParams.get("reason");
+  const registered = searchParams.get("registered") === "1";
   const clearedOAuth = searchParams.get("cleared") === "oauth";
   const oauthError =
     errorParam &&
     errorParam !== "CredentialsSignin" &&
     errorParam !== "Configuration"
-      ? oauthErrorMessage(errorParam)
+      ? oauthOrSignInErrorMessage(errorParam)
       : null;
   const reasonHint = signinReasonMessage(reasonParam);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(() => {
-    if (
-      errorParam === "CredentialsSignin" ||
-      errorParam === "no-session-cookie"
-    ) {
-      return CREDENTIALS_ERROR_MESSAGE;
-    }
-    return null;
-  });
+  const [error, setError] = useState<string | null>(() => initialCredentialsError(errorParam));
   const [loading, setLoading] = useState(false);
 
   const [magicEmail, setMagicEmail] = useState("");
@@ -170,9 +126,10 @@ function SignInContent() {
     e.preventDefault();
     setError(null);
     setLoading(true);
+    const emailNorm = email.trim().toLowerCase();
     try {
       const result = await signIn("credentials", {
-        email: email.trim(),
+        email: emailNorm,
         password,
         callbackUrl,
         redirect: false,
@@ -181,17 +138,7 @@ function SignInContent() {
         router.push(callbackUrl);
         return;
       }
-      const errCode =
-        (result as { code?: string } | undefined)?.code ?? result?.error ?? undefined;
-      if (errCode === "account_locked") {
-        setError(LOCKOUT_ERROR_MESSAGE);
-        return;
-      }
-      if (errCode === "no_password") {
-        setError(NO_PASSWORD_ERROR_MESSAGE);
-        return;
-      }
-      setError(credentialsErrorMessage(errCode, result?.url));
+      setError(parseCredentialsSignInError(result).message);
     } catch {
       setError("Erreur de connexion.");
     } finally {
@@ -203,7 +150,7 @@ function SignInContent() {
     e.preventDefault();
     setMagicError(null);
     setMagicSent(null);
-    const trimmed = magicEmail.trim();
+    const trimmed = magicEmail.trim().toLowerCase();
     if (!trimmed) {
       setMagicError("Indiquez une adresse email.");
       return;
@@ -228,7 +175,6 @@ function SignInContent() {
   }
 
   function handleGoogle() {
-    // Auth.js v5 : OAuth via signIn() (POST + CSRF). GET /api/auth/signin/google → Configuration.
     void signIn("google", {
       callbackUrl: googleSignInCallbackUrl(callbackUrl),
     });
@@ -248,6 +194,20 @@ function SignInContent() {
         <h1 className="font-syne mb-4 text-2xl font-bold text-white sm:text-3xl">
           Connexion
         </h1>
+
+        {registered && (
+          <p
+            role="status"
+            style={{
+              color: "#1DB87E",
+              marginBottom: "1.25rem",
+              fontSize: "0.9rem",
+              lineHeight: 1.45,
+            }}
+          >
+            Compte créé. Connectez-vous avec votre email et mot de passe.
+          </p>
+        )}
 
         {clearedOAuth && (
           <p
@@ -304,7 +264,6 @@ function SignInContent() {
           </p>
         )}
 
-        {/* 1. Google */}
         <button
           type="button"
           onClick={handleGoogle}
@@ -320,7 +279,6 @@ function SignInContent() {
           <span style={{ flex: 1, height: 1, background: "rgba(0,212,255,0.2)" }} />
         </div>
 
-        {/* 2. Magic link */}
         <form onSubmit={handleMagicLink}>
           <label className="mb-2 block text-sm text-white/75">
             Lien magique (sans mot de passe)
@@ -364,7 +322,6 @@ function SignInContent() {
           <span style={{ flex: 1, height: 1, background: "rgba(0,212,255,0.2)" }} />
         </div>
 
-        {/* 3. Email + mot de passe */}
         <form onSubmit={handleCredentialsSubmit}>
           <div style={{ marginBottom: "1rem" }}>
             <label className="mb-2 block text-sm text-white/75">
@@ -375,6 +332,7 @@ function SignInContent() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.15)]"
               style={inputStyle}
             />
@@ -388,6 +346,7 @@ function SignInContent() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
               className="focus:outline-none focus:border-[#00d4ff] focus:ring-[3px] focus:ring-[rgba(0,212,255,0.15)]"
               style={inputStyle}
             />
@@ -398,7 +357,7 @@ function SignInContent() {
             </p>
           </div>
           {error && (
-            <p style={{ color: "#E05252", marginBottom: "1rem", fontSize: "0.9rem", lineHeight: 1.45 }}>
+            <p role="alert" style={{ color: "#E05252", marginBottom: "1rem", fontSize: "0.9rem", lineHeight: 1.45 }}>
               {error}
             </p>
           )}

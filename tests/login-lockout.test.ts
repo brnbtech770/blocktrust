@@ -25,7 +25,7 @@ vi.mock("@/lib/email", () => ({
   sendEmailFireAndForget: vi.fn(),
 }));
 
-import { checkLoginLockout, recordLoginFailure, recordLoginSuccess } from "@/lib/login-lockout";
+import { checkLoginLockout, recordLoginFailure, recordLoginSuccess, clearLoginLockout } from "@/lib/login-lockout";
 
 describe("login-lockout", () => {
   beforeEach(() => {
@@ -41,9 +41,21 @@ describe("login-lockout", () => {
   });
 
   it("bloque si la clé lockout est présente", async () => {
-    redisMock.get.mockResolvedValue("1");
+    redisMock.get.mockResolvedValue("standard");
     const status = await checkLoginLockout("user@example.com");
     expect(status.locked).toBe(true);
+    if (status.locked) {
+      expect(status.extended).toBe(false);
+    }
+  });
+
+  it("signale un lockout étendu (1 h)", async () => {
+    redisMock.get.mockResolvedValue("extended");
+    const status = await checkLoginLockout("user@example.com");
+    expect(status.locked).toBe(true);
+    if (status.locked) {
+      expect(status.extended).toBe(true);
+    }
   });
 
   it("incrémente les échecs sans lockout avant le seuil", async () => {
@@ -61,6 +73,11 @@ describe("login-lockout", () => {
 
   it("réinitialise le compteur après succès", async () => {
     await recordLoginSuccess("user@example.com", { userId: "u1" });
+    expect(redisMock.del).toHaveBeenCalled();
+  });
+
+  it("clearLoginLockout efface les clés Redis", async () => {
+    await clearLoginLockout("user@example.com");
     expect(redisMock.del).toHaveBeenCalled();
   });
 });

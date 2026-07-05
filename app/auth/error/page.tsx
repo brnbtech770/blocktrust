@@ -19,6 +19,9 @@ function shortMessage(code: string | null): string {
       "Cet email est déjà enregistré avec une autre méthode (lien magique ou mot de passe). Utilisez le lien magique ou connectez-vous avec Google après avoir défini un mot de passe dans vos paramètres.",
     Callback: "Erreur callback.",
     CredentialsSignin: "Identifiants incorrects.",
+    account_locked: "Compte verrouillé temporairement. Réessayez dans 15 minutes ou 1 heure.",
+    no_password:
+      "Ce compte n'a pas de mot de passe. Utilisez Google, le lien magique, ou « Mot de passe oublié » pour en définir un.",
     Default: "Connexion impossible.",
   };
   return m[code] ?? `Erreur : ${code}`;
