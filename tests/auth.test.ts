@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockGetRequest } from './helpers/mock-request'
 
 const authMock = vi.hoisted(() => vi.fn())
 const checkRateLimitMock = vi.hoisted(() => vi.fn())
@@ -85,7 +84,7 @@ describe('Auth — session & JWT', () => {
   it('JWT expiré → rejet (401 session ou erreur verify)', async () => {
     authMock.mockResolvedValue(null)
 
-    const sessionRes = await getKycStatus(mockGetRequest('/api/kyc/status'))
+    const sessionRes = await getKycStatus()
     expect(sessionRes.status).toBe(401)
 
     verifyTokenMock.mockRejectedValue(new Error('JWTExpired: token expired'))
@@ -118,7 +117,7 @@ describe('Auth — session & JWT', () => {
       accountType: 'PERSONAL',
     })
 
-    const res = await getKycStatus(mockGetRequest('/api/kyc/status'))
+    const res = await getKycStatus()
 
     expect(res.status).toBe(200)
     const data = await res.json()

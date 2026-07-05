@@ -70,7 +70,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   });
 }
 
-export async function PATCH(req: NextRequest): Promise<NextResponse> {
+export async function PATCH(): Promise<NextResponse> {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });

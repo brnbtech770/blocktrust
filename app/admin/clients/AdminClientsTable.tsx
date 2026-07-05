@@ -5,6 +5,7 @@
 // ============================================================
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { CheckCircle2, Clock, Link2, XCircle, Eye, CreditCard, Mail, ExternalLink } from 'lucide-react'
@@ -142,9 +143,12 @@ export default function AdminClientsTable({ rows }: { rows: AdminClientRow[] }) 
                 <td className="sticky left-0 z-[1] bg-[#0d1f3c] px-4 py-3">
                   <div className="flex items-center gap-3">
                     {r.image ? (
-                      <img
+                      <Image
                         src={r.image}
                         alt=""
+                        width={36}
+                        height={36}
+                        unoptimized
                         className="h-9 w-9 shrink-0 rounded-full border border-white/10 object-cover"
                       />
                     ) : (

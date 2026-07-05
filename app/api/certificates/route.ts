@@ -33,7 +33,7 @@ import {
 // ─────────────────────────────────────────────
 // GET — Liste des certificats de l'utilisateur
 // ─────────────────────────────────────────────
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Vérifier l'authentification avec NextAuth v5
     const session = await auth()

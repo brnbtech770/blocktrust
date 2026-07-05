@@ -393,7 +393,7 @@ export async function POST(req: NextRequest) {
 // ─────────────────────────────────────────────
 // GET — Liste des entités de l'utilisateur
 // ─────────────────────────────────────────────
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Vérifier l'authentification avec NextAuth v5
     const session = await auth();

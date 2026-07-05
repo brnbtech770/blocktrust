@@ -501,7 +501,6 @@ export async function POST(req: NextRequest) {
       // ─────────────────────────────────────────────
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
-        const customerId = subscription.customer as string
 
         // Abonnement résilié : statut canceled + retour au plan gratuit Découverte.
         // (On ne laisse JAMAIS un plan payant résiduel — cf. resolveEffectivePlan.)

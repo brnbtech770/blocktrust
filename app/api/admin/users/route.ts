@@ -9,7 +9,7 @@ import { prisma } from '@/app/lib/db'
 import { adminUserListSelect } from '@/lib/prisma-admin-user'
 import { randomBytes } from 'crypto'
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Vérifier l'authentification et les droits admin
     const session = await auth()

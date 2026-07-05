@@ -2,12 +2,12 @@
 // API admin pour les KPIs
 // ============================================================
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
 import { prisma } from '@/app/lib/db'
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     // Vérifier l'authentification et les droits admin
     const session = await auth()

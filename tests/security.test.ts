@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mockGetRequest, mockPostRequest } from './helpers/mock-request'
+import { mockPostRequest } from './helpers/mock-request'
 
 const prismaMock = vi.hoisted(() => ({
   certificate: {
@@ -95,7 +95,7 @@ describe('IDOR protection', () => {
       user: { email: 'user@example.com', id: 'user-1' },
     })
 
-    const res = await getAdminStats(mockGetRequest('/api/admin/stats'))
+    const res = await getAdminStats()
 
     expect(res.status).toBe(403)
     expect(prismaMock.certificate.count).not.toHaveBeenCalled()
@@ -108,7 +108,7 @@ describe('IDOR protection', () => {
     prismaMock.certificate.count.mockResolvedValue(0)
     prismaMock.user.count.mockResolvedValue(0)
 
-    const res = await getAdminStats(mockGetRequest('/api/admin/stats'))
+    const res = await getAdminStats()
     expect(res.status).toBe(200)
   })
 

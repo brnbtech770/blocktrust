@@ -5,6 +5,7 @@
 import { prisma } from '@/app/lib/db'
 import { requireAdminPage } from '@/app/lib/require-admin-page'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import type Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 import { adminUserDetailSelect } from '@/lib/prisma-admin-user'
@@ -65,9 +66,9 @@ export default async function AdminUserDetailPage({
   return (
     <div>
       <div className="mb-8">
-        <a href="/admin/users" className="mb-4 inline-block hover:underline" style={{ color: 'var(--bt-cyan)' }}>
+        <Link href="/admin/users" className="mb-4 inline-block hover:underline" style={{ color: 'var(--bt-cyan)' }}>
           ← Retour à la liste
-        </a>
+        </Link>
         <p style={{ color: 'var(--bt-muted)' }}>Email: {user.email}</p>
       </div>
 
@@ -77,7 +78,7 @@ export default async function AdminUserDetailPage({
           <div className="space-y-3">
             <div><p className="text-sm" style={labelStyle}>Nom</p><p className="text-white">{user.name || '—'}</p></div>
             <div><p className="text-sm" style={labelStyle}>Email</p><p className="text-white">{user.email}</p></div>
-            <div><p className="text-sm" style={labelStyle}>Date d'inscription</p><p className="text-white">{new Date(user.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
+            <div><p className="text-sm" style={labelStyle}>Date d&apos;inscription</p><p className="text-white">{new Date(user.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
             <div><p className="text-sm" style={labelStyle}>Stripe Customer ID</p><p className="text-white text-sm font-mono">{user.stripeCustomerId || '—'}</p></div>
           </div>
         </div>

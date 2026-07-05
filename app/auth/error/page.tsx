@@ -72,6 +72,8 @@ function ErrorContent() {
             </p>
             <ol style={{ margin: 0, paddingLeft: "1.2rem" }}>
               <li style={{ marginBottom: "8px" }}>
+                {/* Route API (pas une page App Router) — lien direct volontaire */}
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                 <a
                   href="/api/auth/reset-oauth-cookies"
                   className="font-semibold text-[#00d4ff] underline hover:brightness-110"

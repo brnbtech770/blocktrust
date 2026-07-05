@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
-import { mockGetRequest, mockPostRequest } from './helpers/mock-request'
+import { mockPostRequest } from './helpers/mock-request'
 
 function mockPatchRequest(path: string, body: string): NextRequest {
   return new NextRequest(`http://localhost${path}`, {
@@ -73,7 +73,7 @@ describe('Admin — accès', () => {
   it('/admin/stats API → 403 sans isAdmin', async () => {
     authMock.mockResolvedValue({ user: { email: 'user@example.com', id: 'u1' } })
 
-    const res = await getAdminStats(mockGetRequest('/api/admin/stats'))
+    const res = await getAdminStats()
 
     expect(res.status).toBe(403)
   })
@@ -147,7 +147,7 @@ describe('Admin — clients / users', () => {
       },
     ])
 
-    const res = await getAdminUsers(mockGetRequest('/api/admin/users'))
+    const res = await getAdminUsers()
     expect(res.status).toBe(200)
 
     const data = await res.json()
@@ -163,7 +163,7 @@ describe('Admin — clients / users', () => {
   it('liste users → 403 sans admin', async () => {
     authMock.mockResolvedValue({ user: { email: 'user@example.com', id: 'u1' } })
 
-    const res = await getAdminUsers(mockGetRequest('/api/admin/users'))
+    const res = await getAdminUsers()
 
     expect(res.status).toBe(403)
     expect(prismaMock.user.findMany).not.toHaveBeenCalled()
@@ -173,7 +173,7 @@ describe('Admin — clients / users', () => {
     authMock.mockResolvedValue({ user: { email: ADMIN_EMAIL, id: 'admin-1' } })
     prismaMock.user.findMany.mockRejectedValue(new Error('db down'))
 
-    const res = await getAdminUsers(mockGetRequest('/api/admin/users'))
+    const res = await getAdminUsers()
 
     expect(res.status).toBe(500)
     const data = await res.json()

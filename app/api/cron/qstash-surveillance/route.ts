@@ -46,7 +46,7 @@ function qstashRouteUrl(): string | undefined {
   return `${clean}/api/cron/qstash-surveillance`
 }
 
-async function handle(_req: NextRequest) {
+async function handle() {
   const anomaly = await runAgentSafe('anomaly-detection', runAnomalyDetection)
   const fraud = await runAgentSafe('fraud-surveillance', runFraudSurveillance)
 

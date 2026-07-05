@@ -5,6 +5,7 @@
 import { prisma } from '@/app/lib/db'
 import { requireAdminPage } from '@/app/lib/require-admin-page'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import CertificateActions from '@/app/components/admin/CertificateActions'
 import { getCertificateLevelDisplayLabel } from '@/lib/validationLevelDisplay'
 import { resolveEffectivePlan } from '@/lib/plan-features'
@@ -84,9 +85,9 @@ export default async function AdminCertificateDetailPage({
   return (
     <div>
       <div className="mb-8">
-        <a href="/admin/certificates" className="mb-4 inline-block hover:underline" style={{ color: 'var(--bt-cyan)' }}>
+        <Link href="/admin/certificates" className="mb-4 inline-block hover:underline" style={{ color: 'var(--bt-cyan)' }}>
           ← Retour à la liste
-        </a>
+        </Link>
         <p
           style={{ color: 'var(--bt-muted)', fontFamily: 'var(--font-mono-bt), monospace' }}
           title={certDisplay.fullCode}
@@ -125,7 +126,7 @@ export default async function AdminCertificateDetailPage({
               </span>
             </div>
             <div><p className={labelCls} style={labelStyle}>Niveau</p><p className="text-white">{levelLabel}</p></div>
-            <div><p className={labelCls} style={labelStyle}>Date d'émission</p><p className="text-white">{new Date(certificate.issuedAt).toLocaleDateString('fr-FR')}</p></div>
+            <div><p className={labelCls} style={labelStyle}>Date d&apos;émission</p><p className="text-white">{new Date(certificate.issuedAt).toLocaleDateString('fr-FR')}</p></div>
             {certificate.revokedAt && <div><p className={labelCls} style={labelStyle}>Date de révocation</p><p className="text-white">{new Date(certificate.revokedAt).toLocaleDateString('fr-FR')}</p></div>}
             {certificate.revocationReason && <div><p className={labelCls} style={labelStyle}>Raison de révocation</p><p className="text-white">{certificate.revocationReason}</p></div>}
             <div><p className={labelCls} style={labelStyle}>Vérifications</p><p className="text-white">{certificate.verificationCount}</p></div>

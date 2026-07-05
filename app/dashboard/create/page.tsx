@@ -888,7 +888,7 @@ export default function CreateCertificate() {
                     className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    L'URL sera automatiquement complétée avec https:// si nécessaire
+                    L&apos;URL sera automatiquement complétée avec https:// si nécessaire
                   </p>
                 </div>
 

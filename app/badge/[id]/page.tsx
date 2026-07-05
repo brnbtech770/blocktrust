@@ -179,7 +179,7 @@ export default async function BadgePage({
 
         <div className="text-center text-gray-300 text-sm">
           <p>Scannez le QR code pour vérifier</p>
-          <p>l'authenticité de ce certificat</p>
+          <p>l&apos;authenticité de ce certificat</p>
         </div>
 
         <div className="mt-6 pt-6 border-t border-blue-800/50 text-center">

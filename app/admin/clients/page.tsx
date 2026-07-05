@@ -298,7 +298,7 @@ export default async function AdminClientsPage({
       if (filter === 'no-badge') return !r.hasActiveBadge
       return true
     })
-    .map(({ subActive: _s, hasActiveBadge: _h, ...row }) => row)
+    .map(({ subActive: _subActive, hasActiveBadge: _hasActiveBadge, ...row }) => row)
 
   const filterLinkClass = (f: ClientFilter) =>
     [

@@ -173,7 +173,7 @@ export default function BillingPage() {
                     Statut: <span className="font-semibold">{data.subscription.status}</span>
                   </p>
                   <p className="text-base text-gray-600">
-                    Période actuelle jusqu'au:{' '}
+                    Période actuelle jusqu&apos;au:{' '}
                     <span className="font-semibold">
                       {formatDate(data.subscription.currentPeriodEnd)}
                     </span>

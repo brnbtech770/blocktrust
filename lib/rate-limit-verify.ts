@@ -154,7 +154,7 @@ function pruneMagicAuth() {
 function checkMagicAuthMemory(identifier: string): { limited: boolean } {
   pruneMagicAuth();
   const now = Date.now();
-  let e = magicAuthStore.get(identifier);
+  const e = magicAuthStore.get(identifier);
   if (!e || e.resetAt < now) {
     magicAuthStore.set(identifier, {
       count: 1,

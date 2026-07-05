@@ -2,13 +2,13 @@
 // Liste les relations User-centric + stats quota
 // ============================================================
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
 import { syncMutualRelationsForUser } from '@/lib/trust-circle-mutual'
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
@@ -16,11 +16,6 @@ export async function GET(req: NextRequest) {
 
   const userId = session.user.id
   const plan = (session.user as { plan?: string }).plan ?? 'ESSENTIEL'
-
-  const userRow = await prisma.user.findUnique({
-    where: { id: userId },
-    include: { plan: true },
-  })
 
   // Trust Circle accessible à tous les utilisateurs vérifiés.
   // Les quotas (checkTrustCircleQuota) limitent selon le plan.
