@@ -15,7 +15,7 @@ import {
   sendWelcomeEmailIfNeeded,
 } from "@/lib/welcome-email";
 import { validatePassword } from "@/lib/password-policy";
-import { verifyTurnstileToken } from "@/lib/turnstile";
+import { verifyTurnstileForRegister } from "@/lib/turnstile";
 
 const MIN_FORM_MS = 3000;
 
@@ -26,6 +26,8 @@ const registerSchema = z
     email: z.string().email().max(254),
     password: z.string().min(8).max(128),
     turnstileToken: z.string().min(1).optional(),
+    /** Widget indisponible côté client — bypass fail-safe */
+    turnstileBypass: z.boolean().optional(),
     /** Honeypot : doit rester vide */
     website: z.string().max(500).optional(),
     /** Date.now() côté client au montage du formulaire */
@@ -66,17 +68,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: message }, { status: 400 });
     }
 
-    const { firstName, lastName, email, password, website, formLoadedAt, turnstileToken } =
+    const { firstName, lastName, email, password, website, formLoadedAt, turnstileToken, turnstileBypass } =
       parsed.data;
     const ip = clientIp(req);
     const hashedIP = hashIp(ip);
 
-    const turnstileOk = await verifyTurnstileToken(turnstileToken);
-    if (!turnstileOk) {
-      return NextResponse.json(
-        { error: "Vérification de sécurité échouée." },
-        { status: 403 },
-      );
+    const turnstile = await verifyTurnstileForRegister({
+      token: turnstileToken,
+      bypass: turnstileBypass === true,
+      ip,
+    });
+    if (!turnstile.ok) {
+      const message =
+        turnstile.reason === "invalid_token"
+          ? "Vérification de sécurité échouée."
+          : "Vérification de sécurité requise.";
+      return NextResponse.json({ error: message }, { status: 403 });
     }
 
     if (website != null && String(website).trim() !== "") {

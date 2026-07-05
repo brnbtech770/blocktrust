@@ -52,6 +52,7 @@ const CONTENT_SECURITY_POLICY = [
     "https://hooks.stripe.com",
     "https://*.stripe.com",
     "https://accounts.google.com",
+    "https://challenges.cloudflare.com",
   ].join(" "),
   "worker-src blob:",
 ].join("; ");

@@ -44,6 +44,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [acceptCgu, setAcceptCgu] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileBypass, setTurnstileBypass] = useState(false);
+  const [turnstileUnavailableMsg, setTurnstileUnavailableMsg] = useState<string | null>(null);
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim() ?? "";
   const formLoadedAtRef = useRef<number | null>(null);
   const websiteHoneypotRef = useRef<HTMLInputElement>(null);
@@ -51,6 +53,34 @@ export default function RegisterPage() {
   useEffect(() => {
     formLoadedAtRef.current = Date.now();
   }, []);
+
+  useEffect(() => {
+    if (!turnstileSiteKey) {
+      console.warn("[register] Turnstile site key missing — widget skipped, bypass enabled");
+      setTurnstileBypass(true);
+      return;
+    }
+
+    if (turnstileToken || turnstileBypass) return;
+
+    const timeout = window.setTimeout(() => {
+      console.warn("[register] Turnstile token absent after 8s — bypass enabled");
+      setTurnstileBypass(true);
+      setTurnstileUnavailableMsg(
+        "Vérification de sécurité indisponible. Vous pouvez créer votre compte.",
+      );
+    }, 8000);
+
+    return () => window.clearTimeout(timeout);
+  }, [turnstileSiteKey, turnstileToken, turnstileBypass]);
+
+  function handleTurnstileUnavailable(reason: "script_error" | "render_error") {
+    console.warn(`[register] Turnstile unavailable (${reason}) — bypass enabled`);
+    setTurnstileBypass(true);
+    setTurnstileUnavailableMsg(
+      "Vérification de sécurité indisponible. Vous pouvez créer votre compte.",
+    );
+  }
 
   function validate(): boolean {
     const err: Record<string, string> = {};
@@ -76,7 +106,7 @@ export default function RegisterPage() {
       return;
     }
     if (!validate()) return;
-    if (turnstileSiteKey && !turnstileToken) {
+    if (turnstileSiteKey && !turnstileToken && !turnstileBypass) {
       setError("Vérification de sécurité en cours. Réessayez dans un instant.");
       return;
     }
@@ -96,6 +126,7 @@ export default function RegisterPage() {
           formLoadedAt: formLoadedAtRef.current ?? Date.now(),
           acceptCgu: true,
           turnstileToken: turnstileToken || undefined,
+          turnstileBypass: turnstileBypass || undefined,
         }),
       });
       const data = await res.json();
@@ -270,9 +301,18 @@ export default function RegisterPage() {
               <div className="mb-4">
                 <TurnstileWidget
                   siteKey={turnstileSiteKey}
-                  onToken={setTurnstileToken}
+                  onToken={(token) => {
+                    setTurnstileToken(token);
+                    setTurnstileUnavailableMsg(null);
+                  }}
                   onExpire={() => setTurnstileToken("")}
+                  onUnavailable={handleTurnstileUnavailable}
                 />
+                {turnstileUnavailableMsg ? (
+                  <p className="mt-2 text-xs text-[#f59e0b]" role="status">
+                    {turnstileUnavailableMsg}
+                  </p>
+                ) : null}
               </div>
             ) : null}
             {error && <p style={{ color: "#E05252", marginBottom: "1rem" }}>{error}</p>}
