@@ -26,6 +26,15 @@ function scoreTextColor(score: number): string {
   return "text-[#E05252]";
 }
 
+function OfficialTrustBadge() {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#BDA76B]/40 bg-[#BDA76B]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-[#BDA76B]">
+      <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+      Compte officiel BLOCKTRUST™
+    </span>
+  );
+}
+
 function mainTrustSignals(engine: TrustEngineResult | null) {
   const find = (type: string) => engine?.signals.find((s) => s.type === type);
   const kyc = find("KYC_VERIFIED");
@@ -151,6 +160,11 @@ export function ValidWowView({
               <span className="text-2xl font-semibold text-white/35 sm:text-3xl">/100</span>
             </p>
             <p className="mt-2 text-sm text-white/45">{trustEngine.contextLabel}</p>
+            {trustEngine.isOfficialAccount ? (
+              <div className="mt-3 flex justify-center">
+                <OfficialTrustBadge />
+              </div>
+            ) : null}
           </div>
 
           <div
@@ -422,6 +436,11 @@ function TrustEnginePanel({ engine }: { engine: TrustEngineResult }) {
           {engine.globalScore}/100
         </span>
       </div>
+      {engine.isOfficialAccount ? (
+        <div className="pt-1">
+          <OfficialTrustBadge />
+        </div>
+      ) : null}
 
       {engine.signals.map((signal) => (
         <div key={signal.type} className="flex flex-col gap-1 border-b border-white/5 py-2 text-xs last:border-0 sm:flex-row sm:items-center sm:gap-2 sm:border-0 sm:py-1">

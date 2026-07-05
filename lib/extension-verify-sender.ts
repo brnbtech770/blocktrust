@@ -4,6 +4,10 @@
 
 import type { Certificate, Entity } from "@prisma/client";
 import { sanitizeDisplayText } from "@/lib/sanitize-display-text";
+import {
+  isOfficialRootOfTrustEntity,
+  OFFICIAL_TRUST_SCORE,
+} from "@/lib/official-trust";
 
 type CertStatus = "PENDING" | "ACTIVE" | "REVOKED" | "EXPIRED" | "ANCHORED" | "SUSPENDED";
 
@@ -50,11 +54,14 @@ export type ExtensionVerifyPayload = {
   /** Alerte : contact certifié habitué à signer, email sans BIS. */
   bisMissingAlert: boolean;
   bisMissingAlertMessage: string | null;
+  /** Root of Trust BLOCKTRUST — score fixe 100. */
+  officialAccount?: boolean;
 };
 
 type EntityWithCerts = Entity & {
   certificates: Certificate[];
   trustScore: { score: number } | null;
+  user?: { email: string | null } | null;
 };
 
 export type ExtensionVerifyContext = {
@@ -352,7 +359,20 @@ export function buildExtensionVerifyResult(
 
   const certifiedDomains = [...pick.certifiedDomains];
   const certifiedEmails = [...pick.certifiedEmails];
-  const trustScore = pick.trustScore?.score ?? null;
+  const ownerEmail = pick.user?.email ?? null;
+  const isOfficialEntity = isOfficialRootOfTrustEntity(pick.email, ownerEmail);
+  let trustScore = pick.trustScore?.score ?? null;
+  let officialAccount = false;
+
+  if (isOfficialEntity && hasActive) {
+    trustScore = OFFICIAL_TRUST_SCORE;
+    officialAccount = true;
+  }
+  if (isOfficialEntity && (hasFraud || (bestCert && certIsFraudish(bestCert, now)))) {
+    trustScore = 0;
+    officialAccount = false;
+  }
+
   const entityName = entityDisplayName(pick);
   const slug = bestCert?.publicId ?? bestCert?.id ?? null;
   const badgeUrl = slug ? `${baseUrl.replace(/\/$/, "")}/badge/${slug}` : null;
@@ -365,6 +385,7 @@ export function buildExtensionVerifyResult(
       status: "CERTIFIED",
       entityName,
       trustScore,
+      officialAccount,
       badgeUrl,
       certifiedDomains,
       certifiedEmails,

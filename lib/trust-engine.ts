@@ -13,6 +13,11 @@ import {
   isDisposableEmail,
 } from "@/lib/signals/disposable-email";
 import { checkIpReputation } from "@/lib/signals/ip-reputation";
+import {
+  buildOfficialTrustEngineResult,
+  buildRevokedOfficialTrustEngineResult,
+  isOfficialRootOfTrustEntity,
+} from "@/lib/official-trust";
 
 export interface TrustEngineOptions {
   /** IP du contexte de vérification (optionnel — AbuseIPDB) */
@@ -38,6 +43,8 @@ export interface TrustEngineResult {
   signals: TrustSignal[];
   recommendation: TrustRecommendation;
   contextLabel: string;
+  /** Compte Root of Trust BLOCKTRUST (score fixe 100). */
+  isOfficialAccount?: boolean;
 }
 
 function defaultResult(
@@ -109,6 +116,18 @@ export async function computeTrustEngineScore(
   }
 
   const user = cert.entity.user;
+
+  if (cert.status === "REVOKED") {
+    if (isOfficialRootOfTrustEntity(cert.entity.email, user.email)) {
+      return buildRevokedOfficialTrustEngineResult();
+    }
+    return defaultResult(0, "DANGER", "Certificat révoqué");
+  }
+
+  if (isOfficialRootOfTrustEntity(cert.entity.email, user.email)) {
+    return buildOfficialTrustEngineResult();
+  }
+
   const signals: TrustSignal[] = [];
 
   // ─── IDENTITY SCORE ───────────────────────
@@ -346,16 +365,6 @@ export async function computeTrustEngineScore(
         bisVerifiedCount > 0
           ? `${bisVerifiedCount} vérifiée(s) par le destinataire (+${bisVerifiedBonus})`
           : undefined,
-    });
-  }
-
-  if (cert.status === "REVOKED" && bisSentCount > 0) {
-    behaviorScore = Math.max(0, behaviorScore - 10);
-    signals.push({
-      type: "BIS_CERT_REVOKED",
-      label: "Certificat révoqué après signatures BIS",
-      impact: "negative",
-      weight: -10,
     });
   }
 

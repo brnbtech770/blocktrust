@@ -357,6 +357,11 @@ function styleTooltipLink(link) {
   link.style.setProperty("pointer-events", "auto", "important");
 }
 
+function officialAccountBadgeHtml(official) {
+  if (!official) return "";
+  return `<div style="margin:4px 0 8px !important;font-size:10px !important;font-weight:700 !important;color:#BDA76B !important;letter-spacing:0.04em !important;text-transform:uppercase !important;">Compte officiel BLOCKTRUST™</div>`;
+}
+
 function trustScoreBarHtml(score) {
   if (typeof score !== "number" || !Number.isFinite(score)) return "";
   const clamped = Math.max(0, Math.min(100, Math.round(score)));
@@ -515,6 +520,7 @@ function attachBadgeTooltip(badge, result) {
     activeTooltip.innerHTML = `
       <span class="bt-tooltip-title">BLOCKTRUST™</span>
       ${entityLine}
+      ${result.status === "CERTIFIED" && result.officialAccount ? officialAccountBadgeHtml(true) : ""}
       ${result.status === "CERTIFIED" ? trustScoreBarHtml(result.trustScore) : ""}
       ${result.status === "CERTIFIED" ? rows.map((row) => signalRowHtml(row.label, row.ok)).join("") : ""}
       ${bisTooltipSectionHtml(result)}

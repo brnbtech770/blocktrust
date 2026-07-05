@@ -141,4 +141,68 @@ describe('Trust Engine scoring', () => {
     expect(result.globalScore).toBeGreaterThanOrEqual(75)
     expect(result.recommendation).toBe('TRUST')
   })
+
+  it('compte interne actif → 100 + isOfficialAccount (court-circuit)', async () => {
+    prismaMock.certificate.findFirst.mockResolvedValue({
+      id: 'cert-internal',
+      publicId: 'bt-official',
+      status: 'ACTIVE' as const,
+      blockchainStatus: 'ANCHORED' as const,
+      polygonTxHash: '0xabc',
+      entity: {
+        email: 'brnbtech@gmail.com',
+        certifiedEmails: [],
+        certifiedDomains: [],
+        user: {
+          id: 'user-official',
+          email: 'brnbtech@gmail.com',
+          kycStatus: 'VERIFIED',
+          createdAt: new Date(),
+          trustScore: 0,
+          certifiedEmails: [],
+          certifiedDomains: [],
+          subscription: { status: 'active' },
+          _count: { userTrustFrom: 0 },
+        },
+      },
+    })
+
+    const result = await computeTrustEngineScore('bt-official')
+
+    expect(result.globalScore).toBe(100)
+    expect(result.isOfficialAccount).toBe(true)
+    expect(prismaMock.verification.count).not.toHaveBeenCalled()
+  })
+
+  it('compte interne révoqué → 0 (pas de score officiel)', async () => {
+    prismaMock.certificate.findFirst.mockResolvedValue({
+      id: 'cert-revoked',
+      publicId: 'bt-revoked',
+      status: 'REVOKED' as const,
+      blockchainStatus: 'ANCHORED' as const,
+      polygonTxHash: null,
+      entity: {
+        email: 'brnbtech@gmail.com',
+        certifiedEmails: [],
+        certifiedDomains: [],
+        user: {
+          id: 'user-official',
+          email: 'brnbtech@gmail.com',
+          kycStatus: 'VERIFIED',
+          createdAt: new Date(),
+          trustScore: 100,
+          certifiedEmails: [],
+          certifiedDomains: [],
+          subscription: { status: 'active' },
+          _count: { userTrustFrom: 0 },
+        },
+      },
+    })
+
+    const result = await computeTrustEngineScore('bt-revoked')
+
+    expect(result.globalScore).toBe(0)
+    expect(result.isOfficialAccount).toBe(false)
+    expect(result.recommendation).toBe('DANGER')
+  })
 })

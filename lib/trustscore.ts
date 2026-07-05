@@ -7,16 +7,22 @@
 
 import { prisma } from '@/app/lib/db'
 import { isActiveBillingStatus } from '@/lib/plan-features'
+import { isOfficialRootOfTrustEmail, OFFICIAL_TRUST_SCORE } from '@/lib/official-trust'
 
 export async function computeTrustScore(userId: string): Promise<number> {
+  const userRow = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, kycStatus: true, createdAt: true, cguAcceptedAt: true },
+  })
+
+  if (isOfficialRootOfTrustEmail(userRow?.email)) {
+    return OFFICIAL_TRUST_SCORE
+  }
+
   let score = 0
 
   const kyc = await prisma.kYCVerification.findFirst({
     where: { userId, status: 'VERIFIED' },
-  })
-  const userRow = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { kycStatus: true, createdAt: true, cguAcceptedAt: true },
   })
   if (kyc || userRow?.kycStatus === 'VERIFIED') score += 30
 

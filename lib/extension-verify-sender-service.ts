@@ -23,6 +23,7 @@ const DEFAULT_BASE_URL =
 const entityInclude = {
   certificates: { take: 1, orderBy: { issuedAt: "desc" as const } },
   trustScore: { select: { score: true } },
+  user: { select: { email: true } },
 };
 
 type EntityWithCerts = Prisma.EntityGetPayload<{ include: typeof entityInclude }>;

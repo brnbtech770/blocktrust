@@ -71,6 +71,7 @@ export async function handleGetTrustScore(
     trustScore: engine.globalScore,
     recommendation: engine.recommendation,
     contextLabel: engine.contextLabel,
+    officialAccount: engine.isOfficialAccount === true,
     subScores: {
       identity: engine.identityScore,
       network: engine.networkScore,
