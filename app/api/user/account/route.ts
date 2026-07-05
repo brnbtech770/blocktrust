@@ -10,6 +10,7 @@ import {
   scheduleAccountDeletion,
   cancelScheduledAccountDeletion,
   userHasActivePaidSubscription,
+  OrgOwnershipTransferRequiredError,
 } from "@/lib/account-deletion";
 import { writeSecurityAuditLogFireAndForget } from "@/lib/security-audit";
 
@@ -55,19 +56,26 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
       {
         error:
           "Vous avez un abonnement actif. Annulez-le avant de supprimer votre compte.",
-        billingUrl: "/dashboard/billing",
+        billingUrl: "/dashboard/subscription",
       },
       { status: 409 },
     );
   }
 
-  const scheduledAt = await scheduleAccountDeletion(user.id, user.email);
+  try {
+    const scheduledAt = await scheduleAccountDeletion(user.id, user.email);
 
-  return NextResponse.json({
-    ok: true,
-    scheduledAt: scheduledAt.toISOString(),
-    message: "Votre compte sera supprimé dans 30 jours. Reconnectez-vous pour annuler.",
-  });
+    return NextResponse.json({
+      ok: true,
+      scheduledAt: scheduledAt.toISOString(),
+      message: "Votre compte sera supprimé dans 30 jours. Reconnectez-vous pour annuler.",
+    });
+  } catch (e) {
+    if (e instanceof OrgOwnershipTransferRequiredError) {
+      return NextResponse.json({ error: e.message, code: e.code }, { status: 409 });
+    }
+    throw e;
+  }
 }
 
 export async function PATCH(): Promise<NextResponse> {

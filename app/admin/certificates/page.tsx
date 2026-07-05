@@ -13,6 +13,7 @@ import TrustScoreCell from '@/app/components/admin/TrustScoreCell'
 import IdCell from '@/app/components/admin/IdCell'
 import BlockchainCell from '@/app/components/admin/BlockchainCell'
 import { DetailsLink } from '@/app/components/admin/ActionButton'
+import AdminDeleteRevokedCertificateButton from '@/app/components/admin/AdminDeleteRevokedCertificateButton'
 import ExportCertificatesCsvButton from '@/app/admin/certificates/ExportCertificatesCsvButton'
 import CertificatesPagination, {
   PAGE_SIZE,
@@ -279,6 +280,9 @@ export default async function AdminCertificatesPage({
                       currentStatus={cert.status}
                       blockchainStatus={cert.blockchainStatus}
                     />
+                    {cert.status === 'REVOKED' && (
+                      <AdminDeleteRevokedCertificateButton certificateId={cert.id} />
+                    )}
                     <DetailsLink href={`/admin/certificates/${cert.id}`} />
                   </div>
                 </td>

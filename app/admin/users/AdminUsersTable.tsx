@@ -20,14 +20,27 @@ export type AdminUserRow = {
   certificatesCount: number
   createdAtLabel: string
   hasActivePlan: boolean
+  hasActiveSubscription: boolean
   isAdminUser: boolean
   isSuspect: boolean
 }
 
-export default function AdminUsersTable({ users: initialUsers }: { users: AdminUserRow[] }) {
+export default function AdminUsersTable({
+  users: initialUsers,
+  canDeleteAdmins,
+  currentAdminEmail,
+}: {
+  users: AdminUserRow[]
+  canDeleteAdmins: boolean
+  currentAdminEmail: string
+}) {
   const router = useRouter()
   const [users, setUsers] = useState(initialUsers)
   const [confirmUser, setConfirmUser] = useState<AdminUserRow | null>(null)
+  const [confirmEmailInput, setConfirmEmailInput] = useState('')
+  const [deleteReason, setDeleteReason] = useState('')
+  const [cancelStripe, setCancelStripe] = useState(false)
+  const [bulkReason, setBulkReason] = useState('')
   const [bulkConfirm, setBulkConfirm] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
   const [error, setError] = useState<string | null>(null)
@@ -37,7 +50,9 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
   const [toast, setToast] = useState<string | null>(null)
   const [creatingTest, setCreatingTest] = useState(false)
 
-  const selectableUsers = users.filter((u) => !u.isAdminUser)
+  const selectableUsers = users.filter(
+    (u) => !u.isAdminUser || canDeleteAdmins,
+  )
   const selectedBulkTargets = selectableUsers.filter((u) => selectedIds.has(u.id))
   const selectAllCheckboxRef = useRef<HTMLInputElement>(null)
 
@@ -74,7 +89,7 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
       const res = await fetch('/api/admin/users/bulk-delete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids }),
+        body: JSON.stringify({ ids, reason: bulkReason.trim(), cancelStripe: true }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -102,11 +117,33 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
   }
 
   async function confirmDelete() {
-    if (!confirmUser) return
+    if (!confirmUser?.email) return
+    if (deleteReason.trim().length < 3) {
+      setError('Indiquez une raison (3 caractères minimum).')
+      return
+    }
+    if (confirmEmailInput.trim().toLowerCase() !== confirmUser.email.trim().toLowerCase()) {
+      setError("L'email saisi ne correspond pas au compte cible.")
+      return
+    }
     setError(null)
-    const res = await fetch(`/api/admin/users/${confirmUser.id}`, { method: 'DELETE' })
-    const data = await res.json().catch(() => ({}))
+    const res = await fetch(`/api/admin/users/${confirmUser.id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reason: deleteReason.trim(),
+        confirmEmail: confirmEmailInput.trim(),
+        cancelStripe,
+      }),
+    })
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: string
+      requiresStripeCancellation?: boolean
+    }
     if (!res.ok) {
+      if (data.requiresStripeCancellation) {
+        setCancelStripe(true)
+      }
       setError(typeof data.error === 'string' ? data.error : 'Suppression impossible')
       return
     }
@@ -117,9 +154,27 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
       return next
     })
     setConfirmUser(null)
+    setConfirmEmailInput('')
+    setDeleteReason('')
+    setCancelStripe(false)
     setToast(`Utilisateur ${confirmUser.email ?? confirmUser.id} supprimé.`)
     startTransition(() => router.refresh())
     window.setTimeout(() => setToast(null), 5000)
+  }
+
+  function openDeleteModal(user: AdminUserRow) {
+    setConfirmUser(user)
+    setConfirmEmailInput('')
+    setDeleteReason('')
+    setCancelStripe(false)
+    setError(null)
+  }
+
+  function canDeleteUser(user: AdminUserRow): boolean {
+    if (!user.email) return false
+    if (user.email.toLowerCase() === currentAdminEmail.toLowerCase()) return false
+    if (user.isAdminUser && !canDeleteAdmins) return false
+    return true
   }
 
   async function createTestUser() {
@@ -271,6 +326,14 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
                       onChange={() => toggleSelect(user.id)}
                       aria-label={`Sélectionner ${user.email ?? user.id}`}
                     />
+                  ) : canDeleteAdmins && canDeleteUser(user) ? (
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-white/20 bg-transparent"
+                      checked={selectedIds.has(user.id)}
+                      onChange={() => toggleSelect(user.id)}
+                      aria-label={`Sélectionner ${user.email ?? user.id}`}
+                    />
                   ) : (
                     <span className="inline-block w-4" aria-hidden />
                   )}
@@ -342,13 +405,13 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
                       Détails
                       <ArrowRight size={12} aria-hidden />
                     </Link>
-                    {!user.isAdminUser && (
+                    {canDeleteUser(user) && (
                       <button
                         type="button"
-                        onClick={() => setConfirmUser(user)}
+                        onClick={() => openDeleteModal(user)}
                         className="rounded p-2 transition hover:bg-red-500/10"
                         style={{ color: '#e05252' }}
-                        title="Supprimer l’utilisateur"
+                        title="Supprimer l'utilisateur"
                         aria-label={`Supprimer ${user.email ?? user.id}`}
                       >
                         <Trash2 size={18} />
@@ -381,9 +444,18 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
               Supprimer {selectedBulkTargets.length} utilisateur(s) ?
             </h2>
             <p className="mt-3 text-sm" style={{ color: 'var(--bt-muted)' }}>
-              Action irréversible pour chaque compte sélectionné (hors comptes admin, qui ne sont pas
-              listés).
+              Action irréversible pour chaque compte sélectionné. Une raison est obligatoire.
             </p>
+            <label className="mt-4 block text-xs font-medium text-white/60">
+              Raison de la suppression
+              <textarea
+                value={bulkReason}
+                onChange={(e) => setBulkReason(e.target.value)}
+                rows={3}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+                placeholder="Ex. comptes bots, demande RGPD…"
+              />
+            </label>
             {bulkError && (
               <p className="mt-3 text-sm" style={{ color: 'var(--bt-danger, #e05252)' }}>
                 {bulkError}
@@ -407,7 +479,7 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
               <button
                 type="button"
                 onClick={confirmBulkDelete}
-                disabled={bulkPending}
+                disabled={bulkPending || bulkReason.trim().length < 3}
                 className="rounded-lg px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50"
                 style={{ background: '#b91c1c' }}
               >
@@ -437,9 +509,43 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
               Supprimer {confirmUser.email ?? 'cet utilisateur'} ?
             </h2>
             <p className="mt-3 text-sm" style={{ color: 'var(--bt-muted)' }}>
-              Cette action est irréversible. Tous ses certificats, entités et données seront
-              supprimés.
+              Le compte sera anonymisé (données effacées, ligne User conservée pour l&apos;intégrité
+              des vérifications tierces). Cette action est irréversible.
             </p>
+            <label className="mt-4 block text-xs font-medium text-white/60">
+              Raison (obligatoire)
+              <textarea
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                rows={3}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+                placeholder="Ex. demande RGPD, compte frauduleux…"
+              />
+            </label>
+            <label className="mt-3 block text-xs font-medium text-white/60">
+              Confirmez en tapant l&apos;email du compte
+              <input
+                type="email"
+                value={confirmEmailInput}
+                onChange={(e) => setConfirmEmailInput(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+                placeholder={confirmUser.email ?? ''}
+                autoComplete="off"
+              />
+            </label>
+            {confirmUser.hasActiveSubscription && (
+              <label className="mt-3 flex items-start gap-2 text-xs text-white/70">
+                <input
+                  type="checkbox"
+                  checked={cancelStripe}
+                  onChange={(e) => setCancelStripe(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-white/20"
+                />
+                <span>
+                  Annuler automatiquement l&apos;abonnement Stripe actif avant suppression
+                </span>
+              </label>
+            )}
             {error && (
               <p className="mt-3 text-sm" style={{ color: 'var(--bt-danger, #e05252)' }}>
                 {error}
@@ -450,6 +556,9 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
                 type="button"
                 onClick={() => {
                   setConfirmUser(null)
+                  setConfirmEmailInput('')
+                  setDeleteReason('')
+                  setCancelStripe(false)
                   setError(null)
                 }}
                 className="rounded-lg px-4 py-2 text-sm font-medium transition"
@@ -463,7 +572,13 @@ export default function AdminUsersTable({ users: initialUsers }: { users: AdminU
               <button
                 type="button"
                 onClick={confirmDelete}
-                disabled={pending}
+                disabled={
+                  pending ||
+                  deleteReason.trim().length < 3 ||
+                  confirmEmailInput.trim().toLowerCase() !==
+                    (confirmUser.email ?? '').trim().toLowerCase() ||
+                  (confirmUser.hasActiveSubscription && !cancelStripe)
+                }
                 className="rounded-lg px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50"
                 style={{ background: '#b91c1c' }}
               >

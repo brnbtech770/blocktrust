@@ -21,6 +21,9 @@ export const adminUserListSelect = {
       _count: { select: { certificates: true } },
     },
   },
+  subscription: {
+    select: { status: true, stripeSubscriptionId: true },
+  },
 } satisfies Prisma.UserSelect;
 
 /** Détail utilisateur admin (sans `password`). */

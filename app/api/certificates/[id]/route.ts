@@ -7,7 +7,8 @@ import type { CertificateStatus, Prisma } from '@prisma/client';
 import { getAuthUser } from '@/app/lib/auth';
 import { auth } from '@/app/lib/auth-server';
 import { prisma } from '@/app/lib/db';
-import { deleteRevokedCertificate } from '@/lib/delete-revoked-certificate';
+import { deleteRevokedCertificate, deleteRevokedCertificateAsAdmin } from '@/lib/delete-revoked-certificate';
+import { isDashboardAdmin } from '@/lib/admin-utils';
 import { z } from 'zod';
 
 const actionSchema = z
@@ -28,7 +29,11 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
-  const result = await deleteRevokedCertificate(session.user.id, id);
+
+  const result =
+    session.user.email && isDashboardAdmin(session.user.email)
+      ? await deleteRevokedCertificateAsAdmin(session.user.id, id)
+      : await deleteRevokedCertificate(session.user.id, id);
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });

@@ -1,55 +1,70 @@
 // app/api/admin/users/[id]/route.ts
-// Suppression définitive d’un utilisateur (non admin)
+// Suppression définitive d'un utilisateur par un admin dashboard
 // ============================================================
 
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { auth } from '@/app/lib/auth-server'
-import { isAdmin, isInternalAccount } from '@/lib/admin-utils'
+import { isDashboardAdmin } from '@/lib/admin-utils'
 import { prisma } from '@/app/lib/db'
-import { deleteAdminUserTransaction } from '@/lib/admin-delete-user'
+import { deleteAccountAsAdmin } from '@/lib/admin-delete-account'
 import { isValidAdminPlanCode, updateUserPlanAdmin } from '@/lib/admin-update-user-plan'
 
 interface RouteParams {
   params: Promise<{ id: string }>
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+const deleteBodySchema = z
+  .object({
+    reason: z.string().trim().min(3).max(500),
+    confirmEmail: z.string().trim().email(),
+    cancelStripe: z.boolean().optional(),
+  })
+  .strict()
+
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth()
-    if (!session?.user?.email || !isAdmin(session.user.email)) {
+    if (!session?.user?.id || !session.user.email || !isDashboardAdmin(session.user.email)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { id: targetUserId } = await params
 
-    const target = await prisma.user.findUnique({
-      where: { id: targetUserId },
-      select: { id: true, email: true },
+    let body: unknown
+    try {
+      body = await req.json()
+    } catch {
+      return NextResponse.json({ error: 'Corps JSON invalide' }, { status: 400 })
+    }
+
+    const parsed = deleteBodySchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Raison et email de confirmation requis.' },
+        { status: 400 },
+      )
+    }
+
+    const result = await deleteAccountAsAdmin({
+      targetUserId,
+      adminUserId: session.user.id,
+      adminEmail: session.user.email,
+      reason: parsed.data.reason,
+      confirmEmail: parsed.data.confirmEmail,
+      cancelStripe: parsed.data.cancelStripe,
     })
 
-    if (!target) {
-      return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 })
-    }
-
-    if (
-      target.email &&
-      session.user.email &&
-      target.email.toLowerCase() === session.user.email.toLowerCase()
-    ) {
+    if (!result.ok) {
       return NextResponse.json(
-        { error: 'Vous ne pouvez pas supprimer votre propre compte depuis l’admin.' },
-        { status: 400 }
+        {
+          error: result.error,
+          code: result.code,
+          requiresStripeCancellation: result.requiresStripeCancellation,
+        },
+        { status: result.status },
       )
     }
-
-    if (isInternalAccount(target.email)) {
-      return NextResponse.json(
-        { error: 'Impossible de supprimer un compte interne BLOCKTRUST.' },
-        { status: 403 }
-      )
-    }
-
-    await prisma.$transaction((tx) => deleteAdminUserTransaction(targetUserId, tx))
 
     return NextResponse.json({ success: true, deletedUserId: targetUserId })
   } catch (e) {
@@ -65,7 +80,7 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth()
-    if (!session?.user?.email || !isAdmin(session.user.email)) {
+    if (!session?.user?.email || !isDashboardAdmin(session.user.email)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

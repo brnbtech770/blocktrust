@@ -8,10 +8,17 @@ import { stripe } from "@/lib/stripe";
 import { sendEmailFireAndForget } from "@/lib/email";
 import { writeSecurityAuditLog } from "@/lib/security-audit";
 import { appBaseUrl } from "@/lib/agents/agent-utils";
-import type { Prisma } from "@prisma/client";
+import {
+  anonymizeUserDataCascade,
+  assertNoOrgOwnershipBlocks,
+  findOrgOwnershipBlocks,
+  OrgOwnershipTransferRequiredError,
+} from "@/lib/user-deletion-cascade";
 import * as React from "react";
 import { AccountDeletedEmail } from "@/emails/AccountDeletedEmail";
 import { AccountDeletionScheduledEmail } from "@/emails/AccountDeletionScheduledEmail";
+
+export { OrgOwnershipTransferRequiredError } from "@/lib/user-deletion-cascade";
 
 export const DELETION_GRACE_DAYS = 30;
 
@@ -30,6 +37,8 @@ export async function userHasActivePaidSubscription(userId: string): Promise<boo
 }
 
 export async function scheduleAccountDeletion(userId: string, email: string): Promise<Date> {
+  await assertNoOrgOwnershipBlocks(userId);
+
   const scheduledAt = getDeletionScheduledDate();
 
   await prisma.user.update({
@@ -68,7 +77,7 @@ export async function cancelScheduledAccountDeletion(userId: string): Promise<vo
   });
 }
 
-async function cancelStripeSubscription(userId: string): Promise<void> {
+export async function cancelStripeSubscriptionIfActive(userId: string): Promise<void> {
   const sub = await prisma.subscription.findUnique({
     where: { userId },
     select: { stripeSubscriptionId: true, status: true },
@@ -81,77 +90,14 @@ async function cancelStripeSubscription(userId: string): Promise<void> {
   }
 }
 
-export async function anonymizeUserTransaction(
-  userId: string,
-  tx: Prisma.TransactionClient,
-): Promise<void> {
-  const user = await tx.user.findUnique({
-    where: { id: userId },
-    select: { id: true, email: true },
-  });
-  if (!user) throw new Error("USER_NOT_FOUND");
-
-  const entityRows = await tx.entity.findMany({
-    where: { userId },
-    select: { id: true },
-  });
-  const entityIds = entityRows.map((e) => e.id);
-
-  if (entityIds.length > 0) {
-    await tx.aIAlert.deleteMany({ where: { entityId: { in: entityIds } } });
-    await tx.adminAlert.deleteMany({ where: { entityId: { in: entityIds } } });
-  }
-
-  await tx.interactionSignature.deleteMany({
-    where: { senderId: userId },
-  });
-
-  await tx.userManualTrustEntry.deleteMany({ where: { requestedBy: userId } });
-  await tx.userTrustRelation.deleteMany({
-    where: { OR: [{ fromUserId: userId }, { toUserId: userId }] },
-  });
-
-  await tx.trustVaultPermission.deleteMany({ where: { userId } });
-  await tx.trustVaultEntry.deleteMany({ where: { addedById: userId } });
-
-  await tx.organizationMember.deleteMany({ where: { userId } });
-  await tx.personalAccountMember.deleteMany({ where: { userId } });
-  await tx.adminAlert.deleteMany({ where: { userId } });
-  await tx.whiteLabelConfig.deleteMany({ where: { userId } });
-  await tx.kYCVerification.deleteMany({ where: { userId } });
-  await tx.account.deleteMany({ where: { userId } });
-  await tx.session.deleteMany({ where: { userId } });
-  await tx.userDevice.deleteMany({ where: { userId } });
-  await tx.entity.deleteMany({ where: { userId } });
-  await tx.subscription.deleteMany({ where: { userId } });
-
-  if (user.email) {
-    await tx.passwordReset.deleteMany({ where: { email: user.email } });
-  }
-
-  await tx.auditLog.deleteMany({ where: { userId } });
-
-  await tx.user.update({
-    where: { id: userId },
-    data: {
-      email: `deleted_${userId}@blocktrust.tech`,
-      name: "Compte supprimé",
-      password: null,
-      image: null,
-      phone: null,
-      company: null,
-      stripeCustomerId: null,
-      extensionApiKeyHash: null,
-      extensionApiKey: null,
-      extensionApiKeyEnc: null,
-      accountDeletionScheduledAt: null,
-      sessionVersion: { increment: 1 },
-    },
-  });
-}
-
 export async function executeAccountDeletion(userId: string, emailForNotice: string): Promise<void> {
-  await cancelStripeSubscription(userId);
+  const blocks = await findOrgOwnershipBlocks(userId);
+  if (blocks.length > 0) {
+    await cancelScheduledAccountDeletion(userId);
+    throw new OrgOwnershipTransferRequiredError(blocks);
+  }
+
+  await cancelStripeSubscriptionIfActive(userId);
 
   await writeSecurityAuditLog({
     action: "ACCOUNT_DELETED",
@@ -160,7 +106,7 @@ export async function executeAccountDeletion(userId: string, emailForNotice: str
     resourceId: userId,
   });
 
-  await prisma.$transaction((tx) => anonymizeUserTransaction(userId, tx));
+  await prisma.$transaction((tx) => anonymizeUserDataCascade(userId, tx));
 
   if (emailForNotice.includes("@") && !emailForNotice.startsWith("deleted_")) {
     sendEmailFireAndForget({
@@ -181,10 +127,22 @@ export async function processDueAccountDeletions(now = new Date()): Promise<numb
     take: 50,
   });
 
+  let processed = 0;
   for (const user of due) {
     if (!user.email) continue;
-    await executeAccountDeletion(user.id, user.email);
+    try {
+      await executeAccountDeletion(user.id, user.email);
+      processed += 1;
+    } catch (err) {
+      if (err instanceof OrgOwnershipTransferRequiredError) {
+        console.warn(
+          `[account-deletion] blocked userId=${user.id.slice(0, 8)}… org ownership`,
+        );
+        continue;
+      }
+      throw err;
+    }
   }
 
-  return due.length;
+  return processed;
 }
