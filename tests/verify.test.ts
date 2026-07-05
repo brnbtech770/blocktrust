@@ -70,6 +70,10 @@ vi.mock('@/app/lib/auth-server', () => ({
   auth: authMock,
 }))
 
+vi.mock('@/app/lib/auth', () => ({
+  hashIp: vi.fn().mockReturnValue('ip-hash'),
+}))
+
 vi.mock('@/lib/trust-engine', () => ({
   computeTrustEngineScore: trustEngineMock,
 }))

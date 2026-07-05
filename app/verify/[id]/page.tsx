@@ -35,6 +35,7 @@ import {
 import { formatPriceFr, ESSENTIEL_MONTHLY_EUR } from '@/lib/pricing'
 import { getValidationLevelLabel } from '@/lib/validationLevelDisplay'
 import { formatCertificateLabel } from '@/lib/format-certificate-label'
+import { isActiveBillingStatus, resolveEffectivePlan } from '@/lib/plan-features'
 
 export const dynamic = 'force-dynamic'
 
@@ -208,15 +209,35 @@ export default async function VerifyPublicPage({
   let quotaFooter: { remaining: number; limit: number } | null = null
 
   if (!userIsAdmin) {
-    const subscription = await prisma.subscription.findUnique({
-      where: { userId: session.user.id },
-    })
-    if (!subscription || subscription.status !== 'active') {
+    const [subscription, userPlan] = await Promise.all([
+      prisma.subscription.findUnique({
+        where: { userId: session.user.id },
+        select: {
+          plan: true,
+          status: true,
+          stripeSubscriptionId: true,
+          currentPeriodEnd: true,
+        },
+      }),
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { plan: { select: { type: true } } },
+      }),
+    ])
+
+    if (!subscription || !isActiveBillingStatus(subscription.status)) {
       return <SubscriptionRequiredVerifyView />
     }
+
+    const effectivePlan = resolveEffectivePlan({
+      subscription,
+      email: session.user.email,
+      planType: userPlan?.plan?.type,
+    })
+
     const quota = await checkAndIncrementVerifyQuota(
       session.user.id,
-      subscription.plan,
+      effectivePlan,
       false
     )
     if (!quota.allowed) {

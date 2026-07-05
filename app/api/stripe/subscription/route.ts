@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
         blockchainAnchor: userWithPlan.plan.blockchainAnchor,
       }
     } else {
-      // Fallback: ancien système avec planLimits
+      // Fallback: ancien système avec planLimits (clé = plan effectif résolu)
       const planLimits: Record<string, { maxEntities: number; maxCertificates: number; trustCircleEnabled: boolean; blockchainAnchor: boolean }> = {
         // trustCircleEnabled / blockchainAnchor alignés sur lib/pricing.ts :
         // Trust Circle à partir de Premium ; ancrage Polygon sur tout plan payant.
@@ -85,17 +85,11 @@ export async function GET(req: NextRequest) {
         TEAM: { maxEntities: 50, maxCertificates: 50, trustCircleEnabled: true, blockchainAnchor: true },
         BUSINESS: { maxEntities: 999999, maxCertificates: 999999, trustCircleEnabled: true, blockchainAnchor: true },
         ENTERPRISE: { maxEntities: 999999, maxCertificates: 999999, trustCircleEnabled: true, blockchainAnchor: true },
+        B2B_ENTERPRISE: { maxEntities: 999999, maxCertificates: 999999, trustCircleEnabled: true, blockchainAnchor: true },
       }
-      
-      // Essayer de récupérer le plan depuis user.plan (ancien format String)
-      const planName =
-        (
-          await prisma.subscription.findUnique({
-            where: { userId: user.id },
-            select: { plan: true },
-          })
-        )?.plan ?? 'ESSENTIEL'
-      limits = planLimits[planName] || planLimits.ESSENTIEL
+
+      const limitsKey = planCode.replace(/^B2[BC]_/, '')
+      limits = planLimits[planCode] ?? planLimits[limitsKey] ?? planLimits.ESSENTIEL
       limits = {
         ...limits,
         trustCircleEnabled: planAllowsTrustCircle(planCode),

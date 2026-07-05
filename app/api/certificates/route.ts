@@ -207,42 +207,42 @@ export async function POST(req: NextRequest) {
     const userWithPlan = user
 
     // Déterminer les limites selon le plan (nouveau ou ancien système)
+    const subscriptionRow = await prisma.subscription.findUnique({
+      where: { userId: user.id },
+      select: {
+        plan: true,
+        status: true,
+        stripeSubscriptionId: true,
+        currentPeriodEnd: true,
+      },
+    })
+    const effectivePlan = resolveEffectivePlan({
+      subscription: subscriptionRow,
+      email: session.user.email,
+      planType: userWithPlan?.plan?.type ?? null,
+    })
+
     let maxCertificates = 1
     if (userWithPlan?.plan) {
-      // Nouveau système : utiliser plan.maxCertificates
       maxCertificates = userWithPlan.plan.maxCertificates
     } else {
-      // Fallback: ancien système avec planLimits
       const planLimits: Record<string, number> = {
         ESSENTIEL: 1,
         PREMIUM: 5,
         FAMILLE: 10,
-        'FAMILLE_PLUS': 999999,
+        FAMILLE_PLUS: 999999,
+        SOLO_PRO: 100,
         STARTER: 10,
         TEAM: 50,
         BUSINESS: 999999,
         ENTERPRISE: 999999,
+        B2B_ENTERPRISE: 999999,
       }
-      const planName =
-        (
-          await prisma.subscription.findUnique({
-            where: { userId: user.id },
-            select: { plan: true },
-          })
-        )?.plan ?? 'ESSENTIEL'
-      maxCertificates = planLimits[planName] || 1
+      const limitsKey = effectivePlan.replace(/^B2[BC]_/, '')
+      maxCertificates = planLimits[effectivePlan] ?? planLimits[limitsKey] ?? 1
     }
 
     // Plan effectif (statut Stripe inclus) — décide l'ancrage Polygon (jamais pour DISCOVERY).
-    // Abonnement inactif → DISCOVERY ; admin/interne → Enterprise (badge ancré normalement).
-    const subscriptionForPlan = await prisma.subscription.findUnique({
-      where: { userId: user.id },
-      select: { plan: true, status: true },
-    })
-    const effectivePlan = resolveEffectivePlan({
-      subscription: subscriptionForPlan,
-      email: session.user.email,
-    })
     const isDiscovery = isDiscoveryPlan(effectivePlan)
 
     // Vérifier que l'entité appartient à l'utilisateur

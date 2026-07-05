@@ -24,6 +24,7 @@ import {
 } from '@/lib/verify-fraud'
 import { runEventualAnomalyCheck } from '@/lib/agents/eventual-anomaly-check'
 import { persistUserTrustScore } from '@/lib/trustscore'
+import { isActiveBillingStatus, resolveEffectivePlan } from '@/lib/plan-features'
 
 function quotaJson(remaining: number, limit: number) {
   const unlimited = limit === Number.POSITIVE_INFINITY
@@ -96,17 +97,37 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     let quotaForResponse: { remaining: number | null; limit: number | null } | undefined
 
     if (!userIsAdmin) {
-      const subscription = await prisma.subscription.findUnique({
-        where: { userId: session.user.id },
-      })
-      if (!subscription || subscription.status !== 'active') {
+      const [subscription, userPlan] = await Promise.all([
+        prisma.subscription.findUnique({
+          where: { userId: session.user.id },
+          select: {
+            plan: true,
+            status: true,
+            stripeSubscriptionId: true,
+            currentPeriodEnd: true,
+          },
+        }),
+        prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { plan: { select: { type: true } } },
+        }),
+      ])
+
+      if (!subscription || !isActiveBillingStatus(subscription.status)) {
         return NextResponse.json(
           { error: 'SUBSCRIPTION_REQUIRED', redirectUrl: '/pricing' },
           { status: 403, headers: rateHeaders }
         )
       }
+
+      const effectivePlan = resolveEffectivePlan({
+        subscription,
+        email: session.user.email,
+        planType: userPlan?.plan?.type,
+      })
+
       // Rate limit par tier et par compte (anti-abus, en plus du quota mensuel).
-      const planRate = await checkPlanRateLimit('verify', subscription.plan, session.user.id)
+      const planRate = await checkPlanRateLimit('verify', effectivePlan, session.user.id)
       if (!planRate.ok) {
         return NextResponse.json(
           { status: 'RATE_LIMITED', message: 'Trop de requêtes', code: 'RATE_LIMITED' },
@@ -123,7 +144,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       }
       const quota = await checkAndIncrementVerifyQuota(
         session.user.id,
-        subscription.plan,
+        effectivePlan,
         false
       )
       if (!quota.allowed) {

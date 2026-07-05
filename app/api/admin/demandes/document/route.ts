@@ -9,8 +9,10 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { get } from '@vercel/blob'
+import { Prisma } from '@prisma/client'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
+import { prisma } from '@/app/lib/db'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -35,6 +37,45 @@ function isAllowedLegacyDocumentUrl(raw: string): boolean {
   }
 }
 
+/** Variantes d'un path/URL blob pour comparer avec les entrées en DB. */
+function documentReferenceVariants(ref: string): string[] {
+  const trimmed = ref.trim()
+  const variants = new Set<string>([trimmed])
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed)
+      variants.add(url.pathname)
+      variants.add(url.href)
+    } catch {
+      /* ignore */
+    }
+  } else {
+    variants.add(trimmed.startsWith('/') ? trimmed : `/${trimmed}`)
+    variants.add(trimmed.replace(/^\//, ''))
+  }
+  return [...variants]
+}
+
+/** Vérifie que le document appartient à une demande Trust manuel existante (anti-IDOR blob). */
+async function isDocumentLinkedToDemand(documentRef: string): Promise<boolean> {
+  const targets = new Set(documentReferenceVariants(documentRef))
+  const entries = await prisma.userManualTrustEntry.findMany({
+    where: { documents: { not: Prisma.DbNull } },
+    select: { documents: true },
+  })
+
+  for (const { documents } of entries) {
+    if (!Array.isArray(documents)) continue
+    for (const doc of documents) {
+      if (typeof doc !== 'string') continue
+      for (const variant of documentReferenceVariants(doc)) {
+        if (targets.has(variant)) return true
+      }
+    }
+  }
+  return false
+}
+
 export async function GET(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.email || !isAdmin(session.user.email)) {
@@ -44,6 +85,11 @@ export async function GET(req: NextRequest) {
   const path = req.nextUrl.searchParams.get('path')?.trim()
   if (!path) {
     return NextResponse.json({ error: 'Paramètre `path` manquant' }, { status: 400 })
+  }
+
+  const linked = await isDocumentLinkedToDemand(path)
+  if (!linked) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   // Rétro-compat : anciens documents stockés en URL publique Vercel Blob uniquement.
