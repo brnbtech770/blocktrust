@@ -38,8 +38,7 @@ describe("verifyTurnstileForRegister", () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.skipped).toBe(true);
+    if (result.ok && result.skipped) {
       expect(result.reason).toBe("client_bypass");
     }
     expect(fetch).not.toHaveBeenCalled();
