@@ -149,9 +149,11 @@ export async function POST(req: NextRequest) {
 
     await new Promise((r) => setTimeout(r, Math.random() * 400 + 100));
 
-    const existing = await prisma.user.findUnique({
-      where: { email: emailNorm },
-    });
+    const existing =
+      (await prisma.user.findUnique({ where: { email: emailNorm } })) ??
+      (await prisma.user.findFirst({
+        where: { email: { equals: emailNorm, mode: "insensitive" } },
+      }));
 
     if (existing) {
       return NextResponse.json(
@@ -167,10 +169,15 @@ export async function POST(req: NextRequest) {
         name: `${firstName} ${lastName}`.trim(),
         email: emailNorm,
         password: hashedPassword,
+        sessionVersion: 0,
         cguAcceptedAt: new Date(),
         cguVersion: "1.0",
       },
     });
+
+    console.log(
+      `[register] user created userId=${user.id.slice(0, 8)}... turnstile=${turnstile.skipped ? turnstile.reason : "verified"}`,
+    );
 
     await createAdminAlert({
       type: "NEW_USER",

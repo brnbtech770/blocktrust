@@ -28,6 +28,23 @@ class AccountLockedError extends CredentialsSignin {
   code = "account_locked";
 }
 
+class NoPasswordError extends CredentialsSignin {
+  code = "no_password";
+}
+
+async function findUserByEmailForCredentials(emailNorm: string) {
+  const byExact = await prisma.user.findUnique({
+    where: { email: emailNorm },
+    include: { subscription: true, plan: { select: { type: true } } },
+  });
+  if (byExact) return byExact;
+
+  return prisma.user.findFirst({
+    where: { email: { equals: emailNorm, mode: "insensitive" } },
+    include: { subscription: true, plan: { select: { type: true } } },
+  });
+}
+
 async function touchLastLogin(userId: string): Promise<void> {
   await prisma.user
     .update({
@@ -152,18 +169,27 @@ export const authOptions: NextAuthConfig = {
 
         const lockout = await checkLoginLockout(emailNorm);
         if (lockout.locked) {
-          throw new AccountLockedError(lockout.message);
+          throw new AccountLockedError();
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: emailNorm },
-          include: { subscription: true, plan: { select: { type: true } } },
-        });
+        const user = await findUserByEmailForCredentials(emailNorm);
 
-        if (!user?.password || user.email?.startsWith("deleted_")) {
+        if (user?.email?.startsWith("deleted_")) {
           const failStatus = await recordLoginFailure(emailNorm, { ip: clientIp });
           if (failStatus.locked) {
-            throw new AccountLockedError(failStatus.message);
+            throw new AccountLockedError();
+          }
+          return null;
+        }
+
+        if (user && !user.password) {
+          throw new NoPasswordError();
+        }
+
+        if (!user?.password) {
+          const failStatus = await recordLoginFailure(emailNorm, { ip: clientIp });
+          if (failStatus.locked) {
+            throw new AccountLockedError();
           }
           return null;
         }
@@ -175,7 +201,7 @@ export const authOptions: NextAuthConfig = {
             userId: user.id,
           });
           if (failStatus.locked) {
-            throw new AccountLockedError(failStatus.message);
+            throw new AccountLockedError();
           }
           return null;
         }
@@ -264,6 +290,9 @@ export const authOptions: NextAuthConfig = {
           token.accountType = user.accountType ?? 'PERSONAL';
           token.cookieConsent = user.cookieConsent ?? false;
           token.planFetchedAt = Date.now();
+          if (typeof token.sessionVersion !== "number") {
+            token.sessionVersion = 0;
+          }
         } else {
           // Connexion Google/OAuth — user vient de l'adapter (id DB + email)
           // Fallback immédiat : toujours peupler le token avec les infos OAuth disponibles

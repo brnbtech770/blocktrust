@@ -46,10 +46,13 @@ const separatorStyle: React.CSSProperties = {
 };
 
 const CREDENTIALS_ERROR_MESSAGE =
-  "Email ou mot de passe incorrect. Si vous vous êtes inscrit avec Google, utilisez le bouton « Se connecter avec Google » ou définissez un mot de passe dans vos paramètres.";
+  "Email ou mot de passe incorrect.";
+
+const NO_PASSWORD_ERROR_MESSAGE =
+  "Connectez-vous via Google ou définissez un mot de passe.";
 
 const LOCKOUT_ERROR_MESSAGE =
-  "Compte temporairement verrouillé. Réessayez dans 15 minutes.";
+  "Compte verrouillé 15 minutes.";
 
 /** Erreurs credentials / Auth.js : jamais de code technique côté utilisateur. */
 function credentialsErrorMessage(
@@ -59,8 +62,14 @@ function credentialsErrorMessage(
   if (code === "account_locked") {
     return LOCKOUT_ERROR_MESSAGE;
   }
+  if (code === "no_password") {
+    return NO_PASSWORD_ERROR_MESSAGE;
+  }
   if (url?.includes("account_locked")) {
     return LOCKOUT_ERROR_MESSAGE;
+  }
+  if (url?.includes("no_password")) {
+    return NO_PASSWORD_ERROR_MESSAGE;
   }
   if (!code) return CREDENTIALS_ERROR_MESSAGE;
   return CREDENTIALS_ERROR_MESSAGE;
@@ -80,6 +89,7 @@ function oauthErrorMessage(code: string | null): string | null {
     Default: "Connexion impossible. Réessayez.",
     CredentialsSignin: CREDENTIALS_ERROR_MESSAGE,
     account_locked: LOCKOUT_ERROR_MESSAGE,
+    no_password: NO_PASSWORD_ERROR_MESSAGE,
   };
   return map[code] ?? "Connexion impossible. Réessayez.";
 }
@@ -175,6 +185,10 @@ function SignInContent() {
         (result as { code?: string } | undefined)?.code ?? result?.error ?? undefined;
       if (errCode === "account_locked") {
         setError(LOCKOUT_ERROR_MESSAGE);
+        return;
+      }
+      if (errCode === "no_password") {
+        setError(NO_PASSWORD_ERROR_MESSAGE);
         return;
       }
       setError(credentialsErrorMessage(errCode, result?.url));

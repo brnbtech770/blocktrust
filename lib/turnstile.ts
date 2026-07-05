@@ -49,13 +49,7 @@ export async function verifyTurnstileForRegister(
     return { ok: true, skipped: true, reason: "no_secret" };
   }
 
-  const token = input.token?.trim();
-  if (token) {
-    const valid = await siteverifyToken(token, secret);
-    if (!valid) return { ok: false, reason: "invalid_token" };
-    return { ok: true, skipped: false };
-  }
-
+  // Bypass client en premier : widget indisponible / token périmé ne doit pas bloquer l'inscription.
   if (input.bypass) {
     writeSecurityAuditLogFireAndForget({
       action: "TURNSTILE_BYPASS",
@@ -65,6 +59,13 @@ export async function verifyTurnstileForRegister(
       metadata: { reason: "client_widget_unavailable" },
     });
     return { ok: true, skipped: true, reason: "client_bypass" };
+  }
+
+  const token = input.token?.trim();
+  if (token) {
+    const valid = await siteverifyToken(token, secret);
+    if (!valid) return { ok: false, reason: "invalid_token" };
+    return { ok: true, skipped: false };
   }
 
   return { ok: false, reason: "missing_token" };

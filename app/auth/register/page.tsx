@@ -13,6 +13,8 @@ import { validatePassword } from "@/lib/password-policy";
 const cardClass =
   "mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-6";
 
+const MIN_FORM_MS = 3000;
+
 const inputStyle: CSSProperties = {
   width: "100%",
   padding: "10px 12px",
@@ -58,6 +60,7 @@ export default function RegisterPage() {
     if (!turnstileSiteKey) {
       console.warn("[register] Turnstile site key missing — widget skipped, bypass enabled");
       setTurnstileBypass(true);
+      setTurnstileToken("");
       return;
     }
 
@@ -66,6 +69,7 @@ export default function RegisterPage() {
     const timeout = window.setTimeout(() => {
       console.warn("[register] Turnstile token absent after 8s — bypass enabled");
       setTurnstileBypass(true);
+      setTurnstileToken("");
       setTurnstileUnavailableMsg(
         "Vérification de sécurité indisponible. Vous pouvez créer votre compte.",
       );
@@ -77,6 +81,7 @@ export default function RegisterPage() {
   function handleTurnstileUnavailable(reason: "script_error" | "render_error") {
     console.warn(`[register] Turnstile unavailable (${reason}) — bypass enabled`);
     setTurnstileBypass(true);
+    setTurnstileToken("");
     setTurnstileUnavailableMsg(
       "Vérification de sécurité indisponible. Vous pouvez créer votre compte.",
     );
@@ -114,30 +119,39 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const website = websiteHoneypotRef.current?.value ?? "";
+      const emailNorm = email.trim().toLowerCase();
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-          email: email.trim(),
+          email: emailNorm,
           password,
           website,
-          formLoadedAt: formLoadedAtRef.current ?? Date.now(),
+          formLoadedAt: formLoadedAtRef.current ?? Date.now() - MIN_FORM_MS - 100,
           acceptCgu: true,
-          turnstileToken: turnstileToken || undefined,
+          turnstileToken: turnstileBypass ? undefined : turnstileToken || undefined,
           turnstileBypass: turnstileBypass || undefined,
         }),
       });
-      const data = await res.json();
+      const data = (await res.json()) as { error?: string };
 
       if (res.status === 201) {
-        await signIn("credentials", {
-          email: email.trim(),
+        const signInResult = await signIn("credentials", {
+          email: emailNorm,
           password,
           callbackUrl: "/dashboard",
+          redirect: false,
         });
-        router.push("/dashboard");
+        if (signInResult?.ok) {
+          router.push("/dashboard");
+          return;
+        }
+        setError(
+          "Compte créé. Connectez-vous avec votre email et mot de passe.",
+        );
+        router.push("/auth/signin");
         return;
       }
       setError(data.error || "Une erreur est survenue.");
