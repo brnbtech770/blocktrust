@@ -205,4 +205,37 @@ describe('Trust Engine scoring', () => {
     expect(result.isOfficialAccount).toBe(false)
     expect(result.recommendation).toBe('DANGER')
   })
+
+  it('entité test owned par interne → calcul standard (pas 100)', async () => {
+    prismaMock.certificate.findFirst.mockResolvedValue({
+      id: 'cert-test',
+      publicId: 'bt-test-entity',
+      status: 'ACTIVE' as const,
+      blockchainStatus: 'PENDING' as const,
+      polygonTxHash: null,
+      entity: {
+        email: '1rst.invest@gmail.com',
+        certifiedEmails: [],
+        certifiedDomains: [],
+        user: {
+          id: 'user-internal-owner',
+          email: 'brnbimmo@gmail.com',
+          kycStatus: 'VERIFIED',
+          createdAt: new Date(Date.now() - 200 * 24 * 60 * 60 * 1000),
+          trustScore: 100,
+          certifiedEmails: [],
+          certifiedDomains: [],
+          subscription: { status: 'active' },
+          _count: { userTrustFrom: 5 },
+        },
+      },
+    })
+    prismaMock.verification.count.mockResolvedValue(0)
+
+    const result = await computeTrustEngineScore('bt-test-entity')
+
+    expect(result.isOfficialAccount).not.toBe(true)
+    expect(result.globalScore).not.toBe(100)
+    expect(prismaMock.verification.count).toHaveBeenCalled()
+  })
 })

@@ -27,14 +27,20 @@ export function isOfficialRootOfTrustEmail(
   return getInternalEmailList().includes(e);
 }
 
+/**
+ * Entité officielle — critère : Entity.email uniquement (pas le propriétaire).
+ */
+export function isOfficialEntity(
+  entityEmail: string | null | undefined,
+): boolean {
+  return isOfficialRootOfTrustEmail(entityEmail);
+}
+
+/** @deprecated Préférer isOfficialEntity — conservé pour imports existants. */
 export function isOfficialRootOfTrustEntity(
   entityEmail: string | null | undefined,
-  ownerUserEmail: string | null | undefined,
 ): boolean {
-  return (
-    isOfficialRootOfTrustEmail(entityEmail) ||
-    isOfficialRootOfTrustEmail(ownerUserEmail)
-  );
+  return isOfficialEntity(entityEmail);
 }
 
 export function buildOfficialTrustEngineResult(): TrustEngineResult {
@@ -82,4 +88,17 @@ export function buildRevokedOfficialTrustEngineResult(): TrustEngineResult {
 /** Liste normalisée pour scripts (idempotent). */
 export function getOfficialRootOfTrustEmails(): string[] {
   return [...new Set([...getInternalEmailList(), OFFICIAL_SITE_ENTITY_EMAIL])];
+}
+
+/** Emails d'entités marquées à tort lors du premier déploiement Root of Trust. */
+export const KNOWN_FALSE_OFFICIAL_ENTITY_EMAILS = [
+  "1rst.invest@gmail.com",
+] as const;
+
+export function isKnownFalseOfficialEntityEmail(
+  entityEmail: string | null | undefined,
+): boolean {
+  if (!entityEmail?.trim()) return false;
+  const e = normalizeEmail(entityEmail);
+  return KNOWN_FALSE_OFFICIAL_ENTITY_EMAILS.some((known) => known === e);
 }

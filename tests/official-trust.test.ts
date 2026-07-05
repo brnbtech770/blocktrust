@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   buildOfficialTrustEngineResult,
   buildRevokedOfficialTrustEngineResult,
+  isOfficialEntity,
   isOfficialRootOfTrustEmail,
-  isOfficialRootOfTrustEntity,
+  isKnownFalseOfficialEntityEmail,
   OFFICIAL_SITE_ENTITY_EMAIL,
   OFFICIAL_TRUST_SCORE,
 } from "@/lib/official-trust";
@@ -16,16 +17,16 @@ describe("official-trust Root of Trust", () => {
     expect(isOfficialRootOfTrustEmail("random@example.com")).toBe(false);
   });
 
-  it("résout l'entité via email entité ou propriétaire", () => {
-    expect(
-      isOfficialRootOfTrustEntity("contact@example.com", "brnbtech@gmail.com"),
-    ).toBe(true);
-    expect(
-      isOfficialRootOfTrustEntity(OFFICIAL_SITE_ENTITY_EMAIL, null),
-    ).toBe(true);
-    expect(isOfficialRootOfTrustEntity("user@gmail.com", "user@gmail.com")).toBe(
-      false,
-    );
+  it("isOfficialEntity — email entité uniquement (pas le propriétaire)", () => {
+    expect(isOfficialEntity("brnbtech@gmail.com")).toBe(true);
+    expect(isOfficialEntity(OFFICIAL_SITE_ENTITY_EMAIL)).toBe(true);
+    expect(isOfficialEntity("1rst.invest@gmail.com")).toBe(false);
+    expect(isOfficialEntity("contact@example.com")).toBe(false);
+  });
+
+  it("entité test possédée par un interne n'est pas officielle", () => {
+    expect(isOfficialEntity("1rst.invest@gmail.com")).toBe(false);
+    expect(isKnownFalseOfficialEntityEmail("1rst.invest@gmail.com")).toBe(true);
   });
 
   it("buildOfficialTrustEngineResult → score 100 stable", () => {

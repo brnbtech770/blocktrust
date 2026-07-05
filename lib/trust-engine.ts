@@ -16,7 +16,7 @@ import { checkIpReputation } from "@/lib/signals/ip-reputation";
 import {
   buildOfficialTrustEngineResult,
   buildRevokedOfficialTrustEngineResult,
-  isOfficialRootOfTrustEntity,
+  isOfficialEntity,
 } from "@/lib/official-trust";
 
 export interface TrustEngineOptions {
@@ -118,13 +118,13 @@ export async function computeTrustEngineScore(
   const user = cert.entity.user;
 
   if (cert.status === "REVOKED") {
-    if (isOfficialRootOfTrustEntity(cert.entity.email, user.email)) {
+    if (isOfficialEntity(cert.entity.email)) {
       return buildRevokedOfficialTrustEngineResult();
     }
     return defaultResult(0, "DANGER", "Certificat révoqué");
   }
 
-  if (isOfficialRootOfTrustEntity(cert.entity.email, user.email)) {
+  if (isOfficialEntity(cert.entity.email)) {
     return buildOfficialTrustEngineResult();
   }
 

@@ -5,7 +5,7 @@
 import type { Certificate, Entity } from "@prisma/client";
 import { sanitizeDisplayText } from "@/lib/sanitize-display-text";
 import {
-  isOfficialRootOfTrustEntity,
+  isOfficialEntity,
   OFFICIAL_TRUST_SCORE,
 } from "@/lib/official-trust";
 
@@ -359,16 +359,15 @@ export function buildExtensionVerifyResult(
 
   const certifiedDomains = [...pick.certifiedDomains];
   const certifiedEmails = [...pick.certifiedEmails];
-  const ownerEmail = pick.user?.email ?? null;
-  const isOfficialEntity = isOfficialRootOfTrustEntity(pick.email, ownerEmail);
+  const isOfficialEntityEmail = isOfficialEntity(pick.email);
   let trustScore = pick.trustScore?.score ?? null;
   let officialAccount = false;
 
-  if (isOfficialEntity && hasActive) {
+  if (isOfficialEntityEmail && hasActive) {
     trustScore = OFFICIAL_TRUST_SCORE;
     officialAccount = true;
   }
-  if (isOfficialEntity && (hasFraud || (bestCert && certIsFraudish(bestCert, now)))) {
+  if (isOfficialEntityEmail && (hasFraud || (bestCert && certIsFraudish(bestCert, now)))) {
     trustScore = 0;
     officialAccount = false;
   }
