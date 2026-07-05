@@ -16,6 +16,7 @@ import {
   isPolygonConfigured,
   notifyAnchorSuccess,
 } from '@/lib/polygon'
+import { ensureBadgeSignature } from '@/lib/admin-bootstrap'
 
 const actionSchema = z
   .object({
@@ -148,6 +149,11 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       })
       if (ownerEntity) {
         await persistUserTrustScore(ownerEntity.userId)
+        if (action === 'activate') {
+          await ensureBadgeSignature(id, ownerEntity.userId).catch((err) => {
+            console.error('[admin/certificates] ensureBadgeSignature failed:', err)
+          })
+        }
       }
 
       // Ancrage Polygon (fire-and-forget) — uniquement à l'activation initiale

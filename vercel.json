@@ -20,6 +20,10 @@
     {
       "path": "/api/cron/account-deletion",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/subscription-monitor",
+      "schedule": "0 9 * * *"
     }
   ]
 }

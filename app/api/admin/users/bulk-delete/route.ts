@@ -6,8 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { isDashboardAdmin, isSuperAdmin } from '@/lib/admin-utils'
 import { prisma } from '@/app/lib/db'
-import { deleteUserAdmin } from '@/lib/admin-delete-user'
-import { hashAuditEmail, writeSecurityAuditLog } from '@/lib/security-audit'
+import { deleteAccountAsAdmin } from '@/lib/admin-delete-account'
 import { z } from 'zod'
 
 const bodySchema = z
@@ -51,25 +50,22 @@ export async function POST(req: NextRequest) {
         errors.push(`${target.email}: compte administrateur protégé`)
         continue
       }
-      try {
-        await deleteUserAdmin(target.id)
-        await writeSecurityAuditLog({
-          action: 'ADMIN_ACCOUNT_DELETED',
-          userId: session.user.id,
-          resource: 'user',
-          resourceId: target.id,
-          metadata: {
-            targetUserId: target.id,
-            adminId: session.user.id,
-            targetEmailHash: hashAuditEmail(target.email),
-            reason: parsed.data.reason,
-            bulk: true,
-          },
-        })
-        deleted.push(target.id)
-      } catch {
-        errors.push(`${target.email ?? target.id}: erreur`)
+
+      const result = await deleteAccountAsAdmin({
+        targetUserId: target.id,
+        adminUserId: session.user.id,
+        adminEmail: session.user.email,
+        reason: parsed.data.reason,
+        confirmEmail: target.email,
+        cancelStripe: parsed.data.cancelStripe,
+      })
+
+      if (!result.ok) {
+        errors.push(`${target.email}: ${result.error}`)
+        continue
       }
+
+      deleted.push(target.id)
     }
 
     return NextResponse.json({
