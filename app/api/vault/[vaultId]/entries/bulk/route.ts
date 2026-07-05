@@ -8,18 +8,17 @@ import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import { loadVaultForUser, orgRoleCanManageVaults } from '@/lib/org-vault-server'
 import { countOrgVaultEntries, getVaultQuota } from '@/lib/vault-utils'
-
-const entryTypes = z.enum(['CONTACT', 'DOMAIN', 'EMAIL', 'PHONE', 'URL', 'WALLET'])
-
-const rowSchema = z.object({
-  name: z.string().min(1).max(200),
-  type: entryTypes,
-  value: z.string().min(1).max(2000),
-  description: z.string().max(2000).optional().nullable(),
-})
+import { vaultEntryCreateSchema } from '@/lib/vault-entry-schema'
+import {
+  buildVaultEntryWriteData,
+  canEncryptVaultEntries,
+  validateVaultEntryValue,
+} from '@/lib/vault-entry-value'
+import { vaultRateLimitResponse } from '@/lib/vault-api-utils'
+import { auditVaultAction } from '@/lib/vault-audit'
 
 const bulkBody = z.object({
-  entries: z.array(rowSchema).min(1).max(500),
+  entries: z.array(vaultEntryCreateSchema).min(1).max(500),
 })
 
 export async function POST(
@@ -29,6 +28,13 @@ export async function POST(
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
+
+  const rl = await vaultRateLimitResponse(session.user.id)
+  if (rl) return rl
+
+  if (!canEncryptVaultEntries()) {
+    return NextResponse.json({ error: 'Configuration coffre indisponible' }, { status: 503 })
   }
 
   const { vaultId } = await ctx.params
@@ -72,21 +78,41 @@ export async function POST(
   }
 
   const rows = parsed.data.entries
-  const toInsert = rows.slice(0, remaining)
-  if (toInsert.length < rows.length) {
-    // partial import
+  const validRows: typeof rows = []
+  for (const row of rows) {
+    const check = validateVaultEntryValue(row.type, row.value)
+    if (check.ok) validRows.push(row)
   }
 
-  await prisma.trustVaultEntry.createMany({
-    data: toInsert.map((row) => ({
-      vaultId: loaded.vault.id,
-      name: row.name.trim(),
-      type: row.type,
-      value: row.value.trim(),
-      description: row.description?.trim() || null,
-      addedById: session.user.id,
-    })),
-  })
+  const toInsert = validRows.slice(0, remaining)
+
+  if (toInsert.length > 0) {
+    await prisma.trustVaultEntry.createMany({
+      data: toInsert.map((row) => {
+        const enc = buildVaultEntryWriteData(row.value)
+        return {
+          vaultId: loaded.vault.id,
+          name: row.name.trim(),
+          type: row.type,
+          value: enc.value,
+          valueEnc: enc.valueEnc,
+          description: row.description?.trim() || null,
+          addedById: session.user.id,
+        }
+      }),
+    })
+
+    for (const row of toInsert) {
+      auditVaultAction({
+        action: 'VAULT_ENTRY_CREATED',
+        userId: session.user.id,
+        vaultId: loaded.vault.id,
+        entryType: row.type,
+        valueForHash: row.value,
+        metadata: { source: 'bulk' },
+      })
+    }
+  }
 
   return NextResponse.json({
     created: toInsert.length,

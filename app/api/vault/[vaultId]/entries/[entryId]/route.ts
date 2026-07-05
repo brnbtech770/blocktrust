@@ -7,12 +7,20 @@ import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import { loadVaultForUser, orgRoleCanManageVaults } from '@/lib/org-vault-server'
-
-const entryTypes = z.enum(['CONTACT', 'DOMAIN', 'EMAIL', 'PHONE', 'URL', 'WALLET'])
+import { vaultEntryTypeSchema } from '@/lib/vault-entry-schema'
+import {
+  buildVaultEntryWriteData,
+  canEncryptVaultEntries,
+  readVaultEntryPlaintext,
+  serializeVaultEntryForClient,
+  validateVaultEntryValue,
+} from '@/lib/vault-entry-value'
+import { vaultRateLimitResponse, orgRoleCanRevealVaultValues } from '@/lib/vault-api-utils'
+import { auditVaultAction } from '@/lib/vault-audit'
 
 const patchBody = z.object({
   name: z.string().min(1).max(200).optional(),
-  type: entryTypes.optional(),
+  type: vaultEntryTypeSchema.optional(),
   value: z.string().min(1).max(2000).optional(),
   description: z.string().max(2000).optional().nullable(),
 })
@@ -25,6 +33,9 @@ export async function PATCH(
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
+
+  const rl = await vaultRateLimitResponse(session.user.id)
+  if (rl) return rl
 
   const { vaultId, entryId } = await ctx.params
   const loaded = await loadVaultForUser(vaultId, session.user.id)
@@ -68,12 +79,26 @@ export async function PATCH(
     return NextResponse.json({ error: 'Aucun champ à mettre à jour' }, { status: 400 })
   }
 
+  const nextType = d.type ?? entry.type
+  if (d.value !== undefined) {
+    if (!canEncryptVaultEntries()) {
+      return NextResponse.json({ error: 'Configuration coffre indisponible' }, { status: 503 })
+    }
+    const valueCheck = validateVaultEntryValue(nextType, d.value)
+    if (!valueCheck.ok) {
+      return NextResponse.json({ error: valueCheck.error }, { status: 400 })
+    }
+  }
+
+  const enc =
+    d.value !== undefined ? buildVaultEntryWriteData(d.value) : null
+
   const updated = await prisma.trustVaultEntry.update({
     where: { id: entry.id },
     data: {
       ...(d.name !== undefined ? { name: d.name.trim() } : {}),
       ...(d.type !== undefined ? { type: d.type } : {}),
-      ...(d.value !== undefined ? { value: d.value.trim() } : {}),
+      ...(enc ? { value: enc.value, valueEnc: enc.valueEnc } : {}),
       ...(d.description !== undefined
         ? { description: d.description === null ? null : d.description.trim() || null }
         : {}),
@@ -83,12 +108,23 @@ export async function PATCH(
       name: true,
       type: true,
       value: true,
+      valueEnc: true,
       description: true,
       createdAt: true,
     },
   })
 
-  return NextResponse.json({ entry: updated })
+  auditVaultAction({
+    action: 'VAULT_ENTRY_UPDATED',
+    userId: session.user.id,
+    vaultId: loaded.vault.id,
+    entryId: updated.id,
+    entryType: updated.type,
+    valueForHash: d.value ?? readVaultEntryPlaintext(entry),
+  })
+
+  const canReveal = orgRoleCanRevealVaultValues(loaded.membership.role)
+  return NextResponse.json({ entry: serializeVaultEntryForClient(updated, { canReveal }) })
 }
 
 export async function DELETE(
@@ -99,6 +135,9 @@ export async function DELETE(
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
+
+  const rl = await vaultRateLimitResponse(session.user.id)
+  if (rl) return rl
 
   const { vaultId, entryId } = await ctx.params
   const loaded = await loadVaultForUser(vaultId, session.user.id)
@@ -116,6 +155,15 @@ export async function DELETE(
   if (!entry) {
     return NextResponse.json({ error: 'Entrée introuvable' }, { status: 404 })
   }
+
+  auditVaultAction({
+    action: 'VAULT_ENTRY_DELETED',
+    userId: session.user.id,
+    vaultId: loaded.vault.id,
+    entryId: entry.id,
+    entryType: entry.type,
+    valueForHash: readVaultEntryPlaintext(entry),
+  })
 
   await prisma.trustVaultEntry.delete({ where: { id: entry.id } })
 

@@ -277,7 +277,10 @@ model TrustVaultEntry {
   vaultId     String
   name        String
   type        VaultEntryType
-  value       String
+  /// Legacy — vidé après migration chiffrement ; ne plus exposer en API.
+  value       String         @default("")
+  /// Valeur chiffrée AES-256-GCM (base64url).
+  valueEnc    String?
   description String?
   addedById   String
   createdAt   DateTime       @default(now())
@@ -316,6 +319,7 @@ enum VaultEntryType {
   PHONE
   URL
   WALLET
+  IBAN
 }
 
 // ============================================================

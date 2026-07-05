@@ -16,11 +16,40 @@ export type ResolvedVault = {
 export async function resolveUserVault(
   userId: string,
   plan: string,
+  preferredVaultId?: string,
 ): Promise<{ vault: ResolvedVault | null; error?: string }> {
   if (!mcpPlanAllowsVault(plan)) {
     return {
       vault: null,
       error: "Le Vault est disponible à partir du plan Premium ou sur les plans professionnels.",
+    };
+  }
+
+  if (preferredVaultId) {
+    const vault = await prisma.trustVault.findUnique({
+      where: { id: preferredVaultId },
+      select: { id: true, organizationId: true },
+    });
+    if (!vault) {
+      return { vault: null, error: "Coffre introuvable." };
+    }
+    const membership = await prisma.organizationMember.findUnique({
+      where: {
+        organizationId_userId: {
+          organizationId: vault.organizationId,
+          userId,
+        },
+      },
+    });
+    if (!membership?.joinedAt) {
+      return { vault: null, error: "Accès coffre refusé." };
+    }
+    return {
+      vault: {
+        vaultId: vault.id,
+        organizationId: vault.organizationId,
+        canManage: orgRoleCanManageVaults(membership.role),
+      },
     };
   }
 

@@ -3,6 +3,9 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import {
+  readVaultEntryPlaintext,
+} from '@/lib/vault-entry-value'
 
 export function getVaultQuota(plan: string): {
   maxVaults: number
@@ -119,7 +122,7 @@ export async function checkVaultMatchForUserContacts(args: {
   )
 
   const match = allEntries.some((e) => {
-    const val = e.value.trim().toLowerCase()
+    const val = readVaultEntryPlaintext(e).trim().toLowerCase()
     if (e.type === 'EMAIL' && emailSet.has(val)) return true
     if (e.type === 'DOMAIN' && domainSet.has(val)) return true
     return false

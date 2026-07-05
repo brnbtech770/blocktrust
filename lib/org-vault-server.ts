@@ -1,6 +1,8 @@
 // lib/org-vault-server.ts
 // Accès serveur organisation + coffres (BlockTrust Vault)
 // ============================================================
+// NOTE (chantier futur) : TrustVaultPermission (RBAC par coffre) existe en
+// schéma Prisma mais n'est pas encore branché — RBAC actuel = OrganizationMember.role.
 
 import { prisma } from '@/app/lib/db'
 import type { OrgRole } from '@prisma/client'

@@ -164,16 +164,21 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
   },
   {
     name: "store_in_vault",
-    description: "Stocke une donnée de confiance dans le Vault (Premium+ ou B2B).",
+    description:
+      "Stocke une donnée de confiance dans le Vault (Premium+ ou B2B). Valeur chiffrée AES-256-GCM au repos.",
     inputSchema: {
       type: "object",
       properties: {
         label: { type: "string" },
-        type: { type: "string", enum: ["CONTACT", "DOMAIN", "EMAIL", "PHONE", "URL", "WALLET"] },
+        type: {
+          type: "string",
+          enum: ["CONTACT", "DOMAIN", "EMAIL", "PHONE", "URL", "WALLET", "IBAN"],
+        },
         value: { type: "string" },
         associatedEmail: { type: "string" },
         notes: { type: "string" },
         expiresAt: { type: "string" },
+        vaultId: { type: "string", description: "ID coffre (multi-org)" },
       },
       required: ["label", "type", "value"],
     },
@@ -182,7 +187,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
   {
     name: "search_vault",
     description:
-      "Recherche dans le Vault. compareValue active la détection de fraude RIB (faux RIB).",
+      "Recherche dans le Vault (valeurs masquées). compareValue active la détection fraude RIB : mismatch seulement si aucune entrée ne correspond.",
     inputSchema: {
       type: "object",
       properties: {
@@ -190,6 +195,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
         type: { type: "string" },
         associatedEmail: { type: "string" },
         compareValue: { type: "string", description: "RIB/IBAN reçu à comparer" },
+        vaultId: { type: "string", description: "ID coffre (multi-org)" },
       },
     },
     annotations: { title: "Search vault entries", readOnlyHint: true },
@@ -243,11 +249,13 @@ export const MCP_TOOL_ZOD = {
     associatedEmail: z.string().optional(),
     notes: z.string().optional(),
     expiresAt: z.string().optional(),
+    vaultId: z.string().optional(),
   },
   search_vault: {
     query: z.string().optional(),
     type: z.string().optional(),
     associatedEmail: z.string().optional(),
     compareValue: z.string().optional(),
+    vaultId: z.string().optional(),
   },
 } as const;

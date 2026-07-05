@@ -125,6 +125,9 @@ export const getExtensionRevealLimiter = () => getLimiter("bt:extension:reveal",
 // Serveur MCP — 60 req/min par hash de clé API
 export const getMcpLimiter = () => getLimiter("bt:mcp", 60, "1 m");
 
+// Coffre-fort organisation — 60 req/min par userId
+export const getVaultLimiter = () => getLimiter("bt:vault", 60, "1 m");
+
 // ── Limites différenciées par tier (anti-abus Sybil du plan gratuit Découverte) ──
 // Tier strict (DISCOVERY / DISCOVERY_EXPIRED) vs tier généreux (comptes payants).
 export const getVerifyPlanDiscoveryLimiter = () => getLimiter("bt:plan:verify:disc", 10, "1 m");

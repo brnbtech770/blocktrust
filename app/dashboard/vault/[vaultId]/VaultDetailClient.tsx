@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import type { OrgRole, VaultEntryType } from '@prisma/client'
-import { Edit, ExternalLink, Loader2, Trash2, Upload } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Edit, ExternalLink, Eye, EyeOff, Loader2, ShieldCheck, Trash2, Upload } from 'lucide-react'
 import { showToast } from '@/app/lib/show-toast'
 import { VAULT_ENTRY_TYPE_LABELS } from '@/lib/vault-entry-labels'
 
@@ -11,7 +11,8 @@ type EntryRow = {
   id: string
   name: string
   type: VaultEntryType
-  value: string
+  maskedValue: string
+  canReveal: boolean
   description: string | null
   createdAt: string
 }
@@ -23,6 +24,7 @@ const ENTRY_TYPES: VaultEntryType[] = [
   'PHONE',
   'URL',
   'WALLET',
+  'IBAN',
 ]
 
 type EditEntryState = {
@@ -55,6 +57,17 @@ export default function VaultDetailClient(props: {
   const [renameOpen, setRenameOpen] = useState(false)
   const [renameValue, setRenameValue] = useState('')
   const [editEntry, setEditEntry] = useState<EditEntryState | null>(null)
+
+  const [revealed, setRevealed] = useState<Record<string, string>>({})
+  const [revealBusy, setRevealBusy] = useState<string | null>(null)
+
+  const [compareOpen, setCompareOpen] = useState(false)
+  const [compareValue, setCompareValue] = useState('')
+  const [compareResult, setCompareResult] = useState<{
+    verdict: 'MATCH' | 'MISMATCH' | 'NO_POOL'
+    message: string
+  } | null>(null)
+  const [compareBusy, setCompareBusy] = useState(false)
 
   const load = useCallback(async () => {
     setErr(null)
@@ -141,6 +154,89 @@ export default function VaultDetailClient(props: {
     } finally {
       setBusy(false)
     }
+  }
+
+  async function revealEntry(entryId: string) {
+    if (revealed[entryId] || revealBusy) return
+    setRevealBusy(entryId)
+    try {
+      const res = await fetch(
+        `/api/vault/${encodeURIComponent(props.vaultId)}/entries/${encodeURIComponent(entryId)}/reveal`,
+        { method: 'POST' },
+      )
+      const j = (await res.json()) as { error?: string; value?: string }
+      if (!res.ok || !j.value) {
+        setErr(j.error ?? 'Révélation impossible')
+        return
+      }
+      setRevealed((prev) => ({ ...prev, [entryId]: j.value! }))
+    } finally {
+      setRevealBusy(null)
+    }
+  }
+
+  function hideEntry(entryId: string) {
+    setRevealed((prev) => {
+      const next = { ...prev }
+      delete next[entryId]
+      return next
+    })
+  }
+
+  async function runCompare(e: React.FormEvent) {
+    e.preventDefault()
+    if (!compareValue.trim() || compareBusy) return
+    setCompareBusy(true)
+    setCompareResult(null)
+    setErr(null)
+    try {
+      const res = await fetch(`/api/vault/${encodeURIComponent(props.vaultId)}/compare`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ compareValue: compareValue.trim() }),
+      })
+      const j = (await res.json()) as {
+        error?: string
+        verdict?: 'MATCH' | 'MISMATCH' | 'NO_POOL'
+        fraudAlert?: { message?: string }
+      }
+      if (!res.ok) {
+        setErr(j.error ?? 'Comparaison impossible')
+        return
+      }
+      setCompareResult({
+        verdict: j.verdict ?? 'NO_POOL',
+        message:
+          j.fraudAlert?.message ??
+          (j.verdict === 'MATCH'
+            ? 'Le RIB reçu correspond à une entrée de votre coffre.'
+            : 'Aucune entrée RIB/IBAN dans ce coffre.'),
+      })
+    } finally {
+      setCompareBusy(false)
+    }
+  }
+
+  async function openEditEntry(row: EntryRow) {
+    let value = revealed[row.id] ?? ''
+    if (!value && row.canReveal) {
+      const res = await fetch(
+        `/api/vault/${encodeURIComponent(props.vaultId)}/entries/${encodeURIComponent(row.id)}/reveal`,
+        { method: 'POST' },
+      )
+      const j = (await res.json()) as { value?: string; error?: string }
+      if (res.ok && j.value) {
+        value = j.value
+        setRevealed((prev) => ({ ...prev, [row.id]: j.value! }))
+      }
+    }
+    setEditEntry({
+      id: row.id,
+      name: row.name,
+      type: row.type,
+      value,
+      description: row.description ?? '',
+    })
   }
 
   async function deleteEntry(entryId: string) {
@@ -242,11 +338,13 @@ export default function VaultDetailClient(props: {
   }
 
   function verifyHref(entry: EntryRow): string | null {
+    const plain = revealed[entry.id]
+    if (!plain) return null
     if (entry.type === 'EMAIL') {
-      return `/verify?email=${encodeURIComponent(entry.value.trim())}`
+      return `/verify?email=${encodeURIComponent(plain.trim())}`
     }
     if (entry.type === 'DOMAIN') {
-      return `/verify?domain=${encodeURIComponent(entry.value.trim())}`
+      return `/verify?domain=${encodeURIComponent(plain.trim())}`
     }
     return null
   }
@@ -272,35 +370,46 @@ export default function VaultDetailClient(props: {
         <h1 className="font-syne text-2xl font-bold text-white">
           {vaultName ?? 'Coffre'}
         </h1>
-        {props.canEdit || props.canDeleteVault ? (
-          <div className="flex flex-wrap gap-2">
-            {props.canEdit ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setRenameValue(vaultName ?? '')
-                  setRenameOpen(true)
-                }}
-                disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/70 transition hover:border-bt-cyan/30 hover:text-white disabled:opacity-40"
-              >
-                <Edit className="h-3.5 w-3.5" aria-hidden />
-                Renommer
-              </button>
-            ) : null}
-            {props.canDeleteVault ? (
-              <button
-                type="button"
-                onClick={() => void deleteVault()}
-                disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/15 disabled:opacity-40"
-              >
-                <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                Supprimer
-              </button>
-            ) : null}
-          </div>
-        ) : null}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setCompareOpen(true)
+              setCompareValue('')
+              setCompareResult(null)
+            }}
+            disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-400 transition hover:bg-emerald-500/15 disabled:opacity-40"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
+            Comparer un RIB reçu
+          </button>
+          {props.canEdit ? (
+            <button
+              type="button"
+              onClick={() => {
+                setRenameValue(vaultName ?? '')
+                setRenameOpen(true)
+              }}
+              disabled={busy}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/70 transition hover:border-bt-cyan/30 hover:text-white disabled:opacity-40"
+            >
+              <Edit className="h-3.5 w-3.5" aria-hidden />
+              Renommer
+            </button>
+          ) : null}
+          {props.canDeleteVault ? (
+            <button
+              type="button"
+              onClick={() => void deleteVault()}
+              disabled={busy}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-500/15 disabled:opacity-40"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden />
+              Supprimer
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {err ? (
@@ -406,10 +515,39 @@ export default function VaultDetailClient(props: {
                       {VAULT_ENTRY_TYPE_LABELS[row.type]}
                     </td>
                     <td className="max-w-[280px] truncate px-3 py-2 font-mono text-xs text-white/70">
-                      {row.value}
+                      {revealed[row.id] ?? row.maskedValue}
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex items-center justify-end gap-1">
+                        {row.canReveal ? (
+                          revealed[row.id] ? (
+                            <button
+                              type="button"
+                              onClick={() => hideEntry(row.id)}
+                              disabled={revealBusy === row.id}
+                              className="rounded p-1 text-white/55 hover:bg-white/10 hover:text-white disabled:opacity-40"
+                              aria-label="Masquer la valeur"
+                              title="Masquer"
+                            >
+                              <EyeOff className="h-4 w-4" aria-hidden />
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => void revealEntry(row.id)}
+                              disabled={revealBusy === row.id}
+                              className="rounded p-1 text-white/55 hover:bg-white/10 hover:text-white disabled:opacity-40"
+                              aria-label="Révéler la valeur"
+                              title="Révéler"
+                            >
+                              {revealBusy === row.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                              ) : (
+                                <Eye className="h-4 w-4" aria-hidden />
+                              )}
+                            </button>
+                          )
+                        ) : null}
                         {href ? (
                           <Link
                             href={href}
@@ -426,15 +564,7 @@ export default function VaultDetailClient(props: {
                           <>
                             <button
                               type="button"
-                              onClick={() =>
-                                setEditEntry({
-                                  id: row.id,
-                                  name: row.name,
-                                  type: row.type,
-                                  value: row.value,
-                                  description: row.description ?? '',
-                                })
-                              }
+                              onClick={() => void openEditEntry(row)}
                               disabled={busy}
                               className="rounded p-1 text-white/55 hover:bg-white/10 hover:text-white disabled:opacity-40"
                               aria-label="Modifier"
@@ -443,7 +573,7 @@ export default function VaultDetailClient(props: {
                             </button>
                             <button
                               type="button"
-                              onClick={() => deleteEntry(row.id)}
+                              onClick={() => void deleteEntry(row.id)}
                               disabled={busy}
                               className="rounded p-1 text-red-400 hover:bg-red-500/10 disabled:opacity-40"
                               aria-label="Supprimer"
@@ -569,6 +699,89 @@ export default function VaultDetailClient(props: {
               </button>
             </div>
           </form>
+        </div>
+      ) : null}
+
+      {compareOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="compare-rib-title"
+        >
+          <div className="w-full max-w-lg rounded-xl border border-white/10 bg-[#0d1f3c] p-5 shadow-xl">
+            <h2 id="compare-rib-title" className="font-syne text-lg font-semibold text-white">
+              Comparer un RIB reçu
+            </h2>
+            <p className="mt-2 text-xs text-white/50">
+              Collez le RIB/IBAN reçu par email ou courrier. La comparaison ignore espaces et casse.
+            </p>
+            {!compareResult ? (
+              <form onSubmit={runCompare} className="mt-4 space-y-3">
+                <input
+                  className="w-full rounded-lg border border-white/10 bg-[#060d1a] px-3 py-2 font-mono text-sm text-white outline-none focus:border-bt-cyan/40"
+                  placeholder="FR76 3000 6000 0112 3456 7890 189"
+                  value={compareValue}
+                  onChange={(e) => setCompareValue(e.target.value)}
+                  autoFocus
+                />
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCompareOpen(false)}
+                    disabled={compareBusy}
+                    className="rounded-lg px-3 py-2 text-sm text-white/60 hover:text-white disabled:opacity-40"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={compareBusy || !compareValue.trim()}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-bt-cyan/40 bg-bt-cyan/15 px-4 py-2 text-sm font-medium text-bt-cyan disabled:opacity-40"
+                  >
+                    {compareBusy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                    ) : (
+                      <ShieldCheck className="h-4 w-4" aria-hidden />
+                    )}
+                    Comparer
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="mt-4 space-y-3">
+                <div
+                  className={`rounded-lg border px-4 py-3 ${
+                    compareResult.verdict === 'MATCH'
+                      ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
+                      : compareResult.verdict === 'MISMATCH'
+                        ? 'border-red-500/40 bg-red-500/10 text-red-300'
+                        : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+                  }`}
+                >
+                  <div className="flex items-start gap-2">
+                    {compareResult.verdict === 'MATCH' ? (
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400" aria-hidden />
+                    ) : compareResult.verdict === 'MISMATCH' ? (
+                      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-400 animate-pulse" aria-hidden />
+                    ) : (
+                      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" aria-hidden />
+                    )}
+                    <p className="text-sm">{compareResult.message}</p>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setCompareOpen(false)}
+                    className="rounded-lg border border-white/15 px-4 py-2 text-sm text-white/70 hover:text-white"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       ) : null}
     </div>

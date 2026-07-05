@@ -11,6 +11,8 @@ import {
   orgRoleCanDeleteVault,
   orgRoleCanManageVaults,
 } from '@/lib/org-vault-server'
+import { serializeVaultEntryForClient } from '@/lib/vault-entry-value'
+import { vaultRateLimitResponse, orgRoleCanRevealVaultValues } from '@/lib/vault-api-utils'
 
 const patchBody = z.object({
   name: z.string().min(1).max(120).optional(),
@@ -26,6 +28,9 @@ export async function GET(
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
 
+  const rl = await vaultRateLimitResponse(session.user.id)
+  if (rl) return rl
+
   const { vaultId } = await ctx.params
   const loaded = await loadVaultForUser(vaultId, session.user.id)
   if (!loaded) {
@@ -33,6 +38,8 @@ export async function GET(
   }
 
   const { vault } = loaded
+  const canReveal = orgRoleCanRevealVaultValues(loaded.membership.role)
+
   const entries = await prisma.trustVaultEntry.findMany({
     where: { vaultId: vault.id },
     orderBy: { createdAt: 'desc' },
@@ -50,11 +57,7 @@ export async function GET(
       createdAt: vault.createdAt,
     },
     entries: entries.map((e) => ({
-      id: e.id,
-      name: e.name,
-      type: e.type,
-      value: e.value,
-      description: e.description,
+      ...serializeVaultEntryForClient(e, { canReveal }),
       createdAt: e.createdAt,
       addedBy: e.addedBy,
     })),
@@ -70,6 +73,9 @@ export async function PATCH(
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
+
+  const rl = await vaultRateLimitResponse(session.user.id)
+  if (rl) return rl
 
   const { vaultId } = await ctx.params
   const loaded = await loadVaultForUser(vaultId, session.user.id)
@@ -123,6 +129,9 @@ export async function DELETE(
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
+
+  const rl = await vaultRateLimitResponse(session.user.id)
+  if (rl) return rl
 
   const { vaultId } = await ctx.params
   const loaded = await loadVaultForUser(vaultId, session.user.id)

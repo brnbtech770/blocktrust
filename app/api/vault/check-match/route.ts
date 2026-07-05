@@ -6,6 +6,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { z } from 'zod'
 import { checkVaultMatchForUserContacts } from '@/lib/vault-utils'
+import { vaultRateLimitResponse } from '@/lib/vault-api-utils'
 
 const bodySchema = z.object({
   emails: z.array(z.string()).optional(),
@@ -17,6 +18,9 @@ export async function POST(req: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
   }
+
+  const rl = await vaultRateLimitResponse(session.user.id)
+  if (rl) return rl
 
   let body: unknown
   try {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mockPostRequest } from './helpers/mock-request'
 
 const authMock = vi.hoisted(() => vi.fn())
@@ -65,6 +65,15 @@ vi.mock('@/lib/email-signature', () => ({
     certId: null,
     verifyUrl: null,
   }),
+}))
+
+vi.mock('@/lib/vault-api-utils', () => ({
+  vaultRateLimitResponse: vi.fn().mockResolvedValue(null),
+  orgRoleCanRevealVaultValues: (role: string) => role === 'OWNER' || role === 'ADMIN',
+}))
+
+vi.mock('@/lib/vault-audit', () => ({
+  auditVaultAction: vi.fn(),
 }))
 
 import { POST as postOrganization } from '@/app/api/organization/route'
@@ -142,8 +151,11 @@ describe('Vault — création coffre', () => {
 })
 
 describe('Vault — entrées', () => {
+  const prevSecret = process.env.NEXTAUTH_SECRET
+
   beforeEach(() => {
     vi.clearAllMocks()
+    process.env.NEXTAUTH_SECRET = 'test-vault-secret-for-unit-tests'
     authMock.mockResolvedValue({ user: { id: 'user-owner' } })
     loadVaultForUserMock.mockResolvedValue({
       vault: { id: 'vault-1', organizationId: 'org-1' },
@@ -151,17 +163,22 @@ describe('Vault — entrées', () => {
     })
     prismaMock.organization.findUnique.mockResolvedValue({ tier: 'B2B_STARTER' })
     prismaMock.trustVaultEntry.count.mockResolvedValue(0)
-    prismaMock.trustVaultEntry.create.mockResolvedValue({
+    prismaMock.trustVaultEntry.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({
       id: 'entry-1',
-      name: 'Contact principal',
-      type: 'EMAIL',
-      value: 'partner@corp.com',
-      description: null,
+      name: data.name,
+      type: data.type,
+      value: data.value ?? '',
+      valueEnc: data.valueEnc ?? null,
+      description: data.description ?? null,
       createdAt: new Date().toISOString(),
-    })
+    }))
   })
 
-  it('ajoute une entrée EMAIL', async () => {
+  afterEach(() => {
+    process.env.NEXTAUTH_SECRET = prevSecret
+  })
+
+  it('ajoute une entrée EMAIL (valeur masquée en réponse)', async () => {
     const res = await postEntry(
       mockPostRequest(
         '/api/vault/vault-1/entries',
@@ -176,7 +193,16 @@ describe('Vault — entrées', () => {
 
     expect(res.status).toBe(200)
     const data = await res.json()
-    expect(data.entry.value).toBe('partner@corp.com')
+    expect(data.entry.maskedValue).toContain('@')
+    expect(data.entry.value).toBeUndefined()
+    expect(prismaMock.trustVaultEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          valueEnc: expect.any(String),
+          value: '',
+        }),
+      }),
+    )
   })
 
   it('refuse la création pour un MEMBER', async () => {

@@ -11,6 +11,7 @@ export const VAULT_ENTRY_TYPE_LABELS: Record<VaultEntryType, string> = {
   PHONE: 'Téléphone',
   URL: 'URL',
   WALLET: 'Portefeuille crypto',
+  IBAN: 'IBAN / RIB',
 }
 
 export function vaultEntryTypeLabel(type: VaultEntryType): string {
