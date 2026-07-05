@@ -227,8 +227,14 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
       <section className="mb-8 rounded-xl border border-white/10 bg-[#0d1f3c]/60 p-4">
         <div className="flex items-center gap-2 text-bt-cyan/90">
           <ShieldCheck className="h-4 w-4" aria-hidden />
-          <h2 className="text-sm font-semibold uppercase tracking-wider">BLOCKTRUST™ Vault</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider">
+            Coffre-fort (Vault)
+          </h2>
         </div>
+        <p className="mt-2 text-xs leading-relaxed text-white/50">
+          Stockez vos données de référence (RIB, IBAN, emails officiels) pour détecter les fraudes au
+          faux virement. Ce n&apos;est pas la gestion des membres d&apos;équipe.
+        </p>
 
         {canManageVaults(role) ? (
           <form onSubmit={createVault} className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -274,12 +280,16 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
           <UserCog className="h-4 w-4 text-white/50" aria-hidden />
           <h2 className="text-sm font-semibold uppercase tracking-wider text-white/70">Équipe</h2>
         </div>
+        <p className="mt-2 text-xs leading-relaxed text-white/45">
+          Membres invités avec un compte BLOCKTRUST™. L&apos;organisation est l&apos;entité
+          entreprise ; l&apos;équipe regroupe les collaborateurs qui y accèdent.
+        </p>
         {canInviteMember(role) ? (
           <form onSubmit={sendInvite} className="mt-3 flex flex-col gap-2 sm:flex-row">
             <input
               type="email"
               className="flex-1 rounded-lg border border-white/10 bg-[#060d1a] px-3 py-2 text-sm text-white outline-none focus:border-bt-cyan/40"
-              placeholder="Adresse e-mail BLOCKTRUST existante"
+              placeholder="Email du collègue (compte BLOCKTRUST existant)"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
             />

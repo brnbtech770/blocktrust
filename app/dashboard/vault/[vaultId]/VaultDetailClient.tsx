@@ -318,11 +318,16 @@ export default function VaultDetailClient(props: {
 
       {props.canEdit ? (
         <div className="mt-6 space-y-4 rounded-xl border border-white/10 bg-[#0d1f3c]/60 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-bt-cyan/90">Ajouter une entrée</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-bt-cyan/90">
+            Ajouter une donnée de référence
+          </p>
+          <p className="text-xs text-white/45">
+            Exemples : RIB fournisseur, IBAN client, email officiel à surveiller.
+          </p>
           <form onSubmit={addEntry} className="grid gap-3 sm:grid-cols-2">
             <input
               className="rounded-lg border border-white/10 bg-[#060d1a] px-3 py-2 text-sm text-white outline-none focus:border-bt-cyan/40"
-              placeholder="Libellé"
+              placeholder="Nom de la donnée (ex. RIB Fournisseur X)"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -339,13 +344,13 @@ export default function VaultDetailClient(props: {
             </select>
             <input
               className="sm:col-span-2 rounded-lg border border-white/10 bg-[#060d1a] px-3 py-2 text-sm text-white outline-none focus:border-bt-cyan/40"
-              placeholder="Valeur"
+              placeholder="Donnée à protéger (ex. FR76 3000 …)"
               value={value}
               onChange={(e) => setValue(e.target.value)}
             />
             <input
               className="sm:col-span-2 rounded-lg border border-white/10 bg-[#060d1a] px-3 py-2 text-sm text-white outline-none focus:border-bt-cyan/40"
-              placeholder="Description (optionnel)"
+              placeholder="Note interne (optionnel)"
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
             />

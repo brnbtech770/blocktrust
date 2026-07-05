@@ -9,6 +9,7 @@ import { Shield, CheckCircle, Link2, AlertTriangle, Users, Check } from 'lucide-
 export interface KpiGridProps {
   certs: number
   contacts: number
+  contactsSub?: string
   verifications: number
   blockchainStatus: DashboardStats['blockchainStatus']
   fraudAlerts: number
@@ -24,6 +25,7 @@ const statusLabel: Record<DashboardStats['blockchainStatus'], string> = {
 export default function KpiGrid({
   certs,
   contacts,
+  contactsSub,
   verifications,
   blockchainStatus,
   fraudAlerts,
@@ -51,7 +53,7 @@ export default function KpiGrid({
       <KpiCard
         label="Contacts"
         value={String(contacts)}
-        sub="dans votre espace"
+        sub={contactsSub ?? "tiers référencés"}
         icon={<Users className="h-5 w-5 shrink-0 text-bt-cyan" />}
         accent="brand"
       />

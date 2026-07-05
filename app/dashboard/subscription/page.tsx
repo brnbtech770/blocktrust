@@ -86,17 +86,26 @@ export default async function SubscriptionPage() {
               <p className="text-3xl font-bold text-cyan-400">{planName}</p>
             </div>
             <span className={`px-4 py-2 rounded-full text-sm font-medium ${
-              status === 'active' 
+              status === 'active' || status === 'trialing'
                 ? premiumTrial
                   ? 'bg-[#BDA76B]/20 text-[#BDA76B] border border-[#BDA76B]/40'
                   : 'bg-green-500/20 text-green-400 border border-green-500/50'
                 : 'bg-gray-500/20 text-gray-400 border border-gray-500/50'
             }`}>
-              {status === 'active' ? (premiumTrial ? 'Essai Premium offert' : 'Actif') : 'Inactif'}
+              {status === 'active' || status === 'trialing'
+                ? (premiumTrial ? 'Essai Premium offert' : 'Actif')
+                : 'Inactif'}
             </span>
           </div>
 
-          {currentPeriodEnd && status === 'active' && (
+          {status !== 'active' && status !== 'trialing' ? (
+            <p className="mb-6 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white/60">
+              Facturation disponible au lancement — mode test actuellement. Choisissez un plan pour
+              activer votre abonnement lorsque la facturation sera ouverte.
+            </p>
+          ) : null}
+
+          {(currentPeriodEnd && (status === 'active' || status === 'trialing')) && (
             <div className="mb-6">
               <p className="text-gray-400 text-sm mb-1">
                 {premiumTrial ? 'Fin de l\'essai offert' : 'Prochain renouvellement'}

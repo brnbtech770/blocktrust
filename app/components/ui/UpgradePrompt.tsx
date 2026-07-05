@@ -12,6 +12,8 @@ export type UpgradePromptProps = {
   upgradeHref: string;
   /** Bandeau compact (ex. haut de liste certificats) au lieu de la carte pleine. */
   inline?: boolean;
+  /** Libellé quota : certificats (défaut) ou contacts. */
+  resourceLabel?: "certificat" | "contact";
 };
 
 export function UpgradePrompt({
@@ -22,9 +24,11 @@ export function UpgradePrompt({
   nextPlanPrice,
   upgradeHref,
   inline = false,
+  resourceLabel = "certificat",
 }: UpgradePromptProps) {
-  const certWord = currentLimit <= 1 ? "certificat" : "certificats";
-  const nextWord = nextPlanLimit <= 1 ? "certificat" : "certificats";
+  const unit = resourceLabel;
+  const currentWord = currentLimit <= 1 ? unit : `${unit}s`;
+  const nextWord = nextPlanLimit <= 1 ? unit : `${unit}s`;
 
   if (inline) {
     return (
@@ -45,7 +49,7 @@ export function UpgradePrompt({
           <p className="min-w-[200px] flex-1 text-sm leading-relaxed text-white/80">
             Forfait <span className="font-semibold text-white">{planName}</span> —{" "}
             <span className="text-white/60">
-              {currentLimit} {certWord} inclus.
+              {currentLimit} {currentWord} inclus.
             </span>{" "}
             Passez à <span className="font-semibold text-white">{nextPlanName}</span> pour {nextPlanLimit} {nextWord}.
           </p>
@@ -88,7 +92,7 @@ export function UpgradePrompt({
           <p className="mt-1 text-xs leading-relaxed text-white/60">
             Votre forfait{" "}
             <span className="font-medium text-white/80">{planName}</span> inclut{" "}
-            {currentLimit} {certWord}.{" "}
+            {currentLimit} {currentWord}.{" "}
             <span className="font-medium text-white/80">{nextPlanName}</span>{" "}
             débloque {nextPlanLimit} {nextWord}.
           </p>

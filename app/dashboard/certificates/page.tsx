@@ -232,6 +232,14 @@ export default function CertificatesPage() {
         <div className="mb-6">
           <UpgradePrompt
             inline
+            resourceLabel={
+              certQuota.plan.toUpperCase().includes("B2B") ||
+              ["STARTER", "TEAM", "ENTERPRISE", "BUSINESS"].includes(
+                certQuota.plan.toUpperCase(),
+              )
+                ? "contact"
+                : "certificat"
+            }
             {...buildUpgradePromptProps(certQuota.plan, certQuota.max)}
           />
         </div>
@@ -252,11 +260,11 @@ export default function CertificatesPage() {
           </p>
         </div>
         <Link
-          href="/dashboard/create"
+          href="/dashboard/create?intent=badge"
           className="inline-flex min-h-[44px] w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-bt-cyan px-4 py-3 text-center text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:px-6 sm:text-base"
         >
           <Plus className="h-5 w-5 shrink-0" aria-hidden />
-          Créer un certificat
+          Créer mon badge
         </Link>
       </div>
 
@@ -413,7 +421,7 @@ export default function CertificatesPage() {
           <h3 className="font-syne mb-2 text-xl font-semibold text-white sm:text-2xl">Aucun certificat</h3>
           <p className="mb-6 font-sans text-base text-white/80">Créez votre premier certificat pour commencer</p>
           <Link
-            href="/dashboard/create"
+            href="/dashboard/create?intent=badge"
             className="inline-flex min-h-[44px] w-full max-w-xs items-center justify-center rounded-lg bg-bt-cyan px-6 py-3 font-sans font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto"
           >
             Créer mon premier certificat
