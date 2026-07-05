@@ -1,8 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Check } from "lucide-react";
+import { Check, Circle } from "lucide-react";
 import { formatPriceFr } from "@/lib/pricing";
+
+export type PlanCardFeature =
+  | string
+  | { label: string; muted?: boolean };
 
 export type PlanCardProps = {
   name: string;
@@ -12,7 +16,7 @@ export type PlanCardProps = {
   taxLabel?: string;
   /** Ex. « /mois » ou « /mois/utilisateur ». */
   priceUnit?: string;
-  features: readonly string[];
+  features: readonly PlanCardFeature[];
   cta: string;
   ctaStyle: { background: string; border?: string; color: string };
   isPopular?: boolean;
@@ -23,9 +27,19 @@ export type PlanCardProps = {
   ctaLoading?: boolean;
   /** Ligne discrète sous le prix (ex. facturation annuelle). */
   billedNote?: string;
+  /** Mention alternative mensuel ↔ annuel. */
+  altBillingNote?: string;
   extraControl?: ReactNode;
   footerNote?: ReactNode;
 };
+
+function featureLabel(feature: PlanCardFeature): string {
+  return typeof feature === "string" ? feature : feature.label;
+}
+
+function featureMuted(feature: PlanCardFeature): boolean {
+  return typeof feature === "object" && feature.muted === true;
+}
 
 export default function PlanCard({
   name,
@@ -42,6 +56,7 @@ export default function PlanCard({
   ctaDisabled = false,
   ctaLoading = false,
   billedNote,
+  altBillingNote,
   extraControl,
   footerNote,
 }: PlanCardProps) {
@@ -90,13 +105,30 @@ export default function PlanCard({
         <p className="mt-1 text-xs text-white/40">{billedNote}</p>
       ) : null}
 
+      {altBillingNote ? (
+        <p className="mt-1 text-xs text-white/45">{altBillingNote}</p>
+      ) : null}
+
       <ul className="mt-5 mb-6 flex-1 space-y-2.5">
-        {features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2 text-sm text-white/70">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-bt-cyan" aria-hidden />
-            <span>{feature}</span>
-          </li>
-        ))}
+        {features.map((feature) => {
+          const muted = featureMuted(feature);
+          const label = featureLabel(feature);
+          return (
+            <li
+              key={label}
+              className={`flex items-start gap-2 text-sm ${
+                muted ? "text-white/40" : "text-white/70"
+              }`}
+            >
+              {muted ? (
+                <Circle className="mt-0.5 h-4 w-4 shrink-0 text-white/30" aria-hidden />
+              ) : (
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-bt-cyan" aria-hidden />
+              )}
+              <span>{label}</span>
+            </li>
+          );
+        })}
       </ul>
 
       {footerNote ? <div className="mb-4 text-xs text-white/50">{footerNote}</div> : null}

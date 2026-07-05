@@ -166,17 +166,6 @@ export const PLANS_B2C = [
   },
 ] as const;
 
-/** Montant formaté « 3,99 » (séparateur virgule FR). */
-export function formatPriceFr(amount: number): string {
-  return amount.toLocaleString("fr-FR", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-/** Badge affiché sur le toggle annuel /pricing. */
-export const YEARLY_DISCOUNT_LABEL = "-20%";
-
 type PlanWithPrices = {
   prices: {
     monthly: { amount: number; priceId?: string };
@@ -189,6 +178,31 @@ type PlanWithPrices = {
     };
   } | null;
 };
+
+/** Montant formaté « 3,99 » (séparateur virgule FR). */
+export function formatPriceFr(amount: number): string {
+  return amount.toLocaleString("fr-FR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/** Mention alternative mensuel ↔ annuel sous les cartes /pricing (sans modifier les prix). */
+export function getAlternateBillingNote(
+  plan: PlanWithPrices & { isFree?: boolean },
+  interval: BillingInterval,
+  taxLabel: "TTC" | "HT",
+): string | undefined {
+  if (plan.isFree || !plan.prices) return undefined;
+  const tax = taxLabel === "HT" ? " (HT)" : "";
+  if (interval === "yearly") {
+    return `Ou démarrer à ${formatPriceFr(plan.prices.monthly.amount)}€/mois${tax} sans engagement`;
+  }
+  return `Ou ${formatPriceFr(plan.prices.yearly.perMonth)}€/mois${tax} avec engagement annuel (−20%)`;
+}
+
+/** Badge affiché sur le toggle annuel /pricing. */
+export const YEARLY_DISCOUNT_LABEL = "-20%";
 
 /** Montant mensuel affiché (TTC/HT) pour un plan payant et un cycle donné. */
 export function getPlanPerMonthAmount(
@@ -263,9 +277,10 @@ export const PRICING_CARD_BENEFITS_B2C: Record<
     "Vérifications illimitées",
   ],
   FAMILLE: [
-    "Jusqu'à 5 profils",
-    "200 contacts partagés",
-    "Vérifications illimitées",
+    "5 profils inclus — ajout jusqu'à 5 profils supplémentaires",
+    "200 contacts partagés — accessibles à tous les profils",
+    "50 contacts personnels par profil",
+    "1 profil administrateur — gestion des membres et des accès",
   ],
 };
 
@@ -282,9 +297,10 @@ export const PRICING_CARD_BENEFITS_B2B: Record<
   ],
   TEAM: [
     "2-10 utilisateurs",
-    "Vault d'équipe illimité",
-    "Audit logs",
-    "Signatures BIS",
+    "Vault partagé — contacts de confiance illimités *",
+    "Vault individuel — 100 contacts de confiance / utilisateur",
+    "Gestion des rôles et permissions",
+    "Audit Logs",
   ],
   ENTERPRISE: [
     "SSO/SAML",

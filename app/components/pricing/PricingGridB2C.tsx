@@ -1,16 +1,17 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import PlanCard from './PlanCard'
 import {
   formatPriceFr,
   PRICING_CARD_BENEFITS_B2C,
+  getAlternateBillingNote,
   getPlanPerMonthAmount,
   getPlanPriceId,
   type PlanB2C,
   type BillingInterval,
 } from '@/lib/pricing'
+import type { PlanCardFeature } from './PlanCard'
 
 const CTA_STYLES: Record<string, { background: string; border?: string; color: string }> = {
   DISCOVERY: { background: 'var(--bt-gold)', color: '#0a1628' },
@@ -49,7 +50,10 @@ export default function PricingGridB2C({
     <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-4 sm:grid-cols-2 sm:gap-6 sm:px-6 lg:grid-cols-4 lg:px-8">
       {plans.map((plan) => {
         const isCurrent = isAuthenticated && currentPlan === plan.id
-        const benefits = PRICING_CARD_BENEFITS_B2C[plan.id] ?? []
+        const benefits: PlanCardFeature[] = [...(PRICING_CARD_BENEFITS_B2C[plan.id] ?? [])]
+        if (plan.id === 'ESSENTIEL') {
+          benefits.push({ label: 'Trust Circle disponible en Premium', muted: true })
+        }
         const isPopular = plan.id === 'PREMIUM'
 
         if (plan.isFree || !plan.prices) {
@@ -81,6 +85,7 @@ export default function PricingGridB2C({
         const billedNote = isYearly
           ? `Facturé ${formatPriceFr(priceInfo.amount)}€/an (TTC)`
           : undefined
+        const altBillingNote = getAlternateBillingNote(plan, interval, 'TTC')
 
         return (
           <PlanCard
@@ -90,17 +95,8 @@ export default function PricingGridB2C({
             taxLabel="(TTC)"
             priceUnit="/mois"
             billedNote={billedNote}
+            altBillingNote={altBillingNote}
             features={benefits}
-            footerNote={
-              plan.id === 'FAMILLE' ? (
-                <>
-                  Profils supplémentaires disponibles —{' '}
-                  <Link href="/faq" className="cursor-pointer text-bt-cyan underline-offset-2 hover:underline">
-                    En savoir plus
-                  </Link>
-                </>
-              ) : undefined
-            }
             cta={isCurrent ? 'Plan actuel' : 'Choisir ce plan'}
             ctaStyle={CTA_STYLES[plan.id] ?? { background: '#00d4ff', color: '#0a1628' }}
             isPopular={isPopular}

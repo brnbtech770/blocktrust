@@ -7,6 +7,7 @@ import PlanCard from './PlanCard'
 import {
   formatPriceFr,
   PRICING_CARD_BENEFITS_B2B,
+  getAlternateBillingNote,
   getPlanPerMonthAmount,
   getPlanPriceId,
   isPerSeatPlan,
@@ -123,6 +124,10 @@ export default function PricingGridB2B({
         }
 
         const quantity = perSeat ? teamSeats : undefined
+        const altBillingNote =
+          hasPrices && !isEnterprise
+            ? getAlternateBillingNote(plan, interval, 'HT')
+            : undefined
 
         return (
           <PlanCard
@@ -132,6 +137,7 @@ export default function PricingGridB2B({
             taxLabel={isEnterprise ? undefined : '(HT)'}
             priceUnit={isEnterprise ? undefined : perSeat ? '/mois/utilisateur' : '/mois'}
             billedNote={billedNote}
+            altBillingNote={altBillingNote}
             features={benefits}
             extraControl={
               perSeat && perUnit != null ? (

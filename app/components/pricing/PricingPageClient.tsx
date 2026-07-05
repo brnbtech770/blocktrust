@@ -76,10 +76,11 @@ export default function PricingPageClient({
 
       <section className="mx-auto max-w-7xl px-3 pt-8 pb-4 sm:px-6 sm:pt-12 sm:pb-6 lg:px-8">
         <h1 className="font-syne text-balance mx-auto mb-3 max-w-3xl text-center text-2xl font-bold text-white sm:mb-4 sm:text-3xl lg:text-4xl">
-          Des tarifs simples et transparents
+          Tarifs transparents
         </h1>
         <p className="mx-auto mb-8 max-w-2xl text-balance text-center text-base text-white/70 sm:mb-10 sm:text-lg">
-          Choisissez la protection qui vous correspond.
+          Le badge BLOCKTRUST est inclus dans tous nos abonnements. Sans frais cachés. Choisissez la
+          formule adaptée à vos besoins. Mensuel sans engagement ou annuel à tarif préférentiel.
         </p>
 
         <PricingToggle mode={mode} setMode={setMode} />
@@ -100,7 +101,7 @@ export default function PricingPageClient({
                 : 'border-white/10 bg-white/[0.06] text-white/50'
             }`}
           >
-            Mensuel
+            Mensuel — Sans engagement
           </button>
           <button
             type="button"
@@ -113,11 +114,9 @@ export default function PricingPageClient({
                 : 'border-white/10 bg-white/[0.06] text-white/50'
             }`}
           >
-            Annuel
+            Annuel — −20% · Paiement annuel
           </button>
-          <span className="rounded-full bg-emerald-500/15 px-3 py-1 font-mono text-[10px] font-medium text-emerald-400">
-            {YEARLY_DISCOUNT_LABEL}
-          </span>
+          <span className="sr-only">{YEARLY_DISCOUNT_LABEL}</span>
         </div>
       </section>
 
@@ -147,7 +146,7 @@ export default function PricingPageClient({
             href="#compare"
             className="cursor-pointer text-sm font-medium text-bt-cyan underline-offset-4 hover:underline"
           >
-            Comparer les plans en détail →
+            Comparer les offres →
           </a>
           <p className="text-sm text-white/60">
             Des questions ?{' '}
@@ -155,7 +154,7 @@ export default function PricingPageClient({
               href="/faq"
               className="cursor-pointer font-medium text-bt-cyan underline-offset-4 hover:underline"
             >
-              Consultez notre FAQ →
+              Consultez notre FAQ
             </Link>
           </p>
         </div>
