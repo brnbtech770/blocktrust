@@ -20,14 +20,24 @@ export default function CreateOrgForm({ disabled }: { disabled: boolean }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ name: name.trim() }),
       })
-      const data = (await res.json()) as { error?: string; organization?: { slug: string } }
+      const data = (await res.json()) as {
+        error?: string
+        organization?: { slug: string }
+        code?: string
+      }
+      if (res.status === 409 && data.code === 'ORG_ALREADY_EXISTS' && data.organization?.slug) {
+        router.replace(`/dashboard/organization/${data.organization.slug}`)
+        router.refresh()
+        return
+      }
       if (!res.ok) {
         setError(data.error ?? 'Échec de la création')
         return
       }
       if (data.organization?.slug) {
-        router.push(`/dashboard/organization/${data.organization.slug}`)
+        router.replace(`/dashboard/organization/${data.organization.slug}`)
         router.refresh()
+        return
       }
     } catch {
       setError('Erreur réseau')

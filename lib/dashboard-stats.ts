@@ -3,8 +3,12 @@
  */
 import { prisma } from "@/app/lib/db";
 import type { DashboardStats } from "@/types/dashboard";
+import { personalContactEntitiesWhere } from "@/lib/entity-contacts";
 
-export async function getDashboardStats(userId: string): Promise<DashboardStats> {
+export async function getDashboardStats(
+  userId: string,
+  userEmail?: string | null,
+): Promise<DashboardStats> {
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -17,7 +21,7 @@ export async function getDashboardStats(userId: string): Promise<DashboardStats>
         },
       }),
       prisma.entity.count({
-        where: { userId },
+        where: personalContactEntitiesWhere(userId, userEmail),
       }),
       prisma.verification.count({
         where: {

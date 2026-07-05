@@ -60,7 +60,7 @@ export async function POST(
     return NextResponse.json(
       {
         error:
-          'Aucun compte BLOCKTRUST avec cette adresse. La personne doit d’abord créer un compte avec la même adresse e-mail.',
+          'Aucun compte BLOCKTRUST avec cette adresse. La personne doit d’abord créer un compte avec cette adresse e-mail, puis vous pourrez l’inviter dans l’équipe.',
         code: 'USER_NOT_FOUND',
       },
       { status: 404 },
@@ -68,7 +68,14 @@ export async function POST(
   }
 
   if (invitee.id === session.user.id) {
-    return NextResponse.json({ error: 'Vous êtes déjà membre de cette organisation' }, { status: 409 })
+    return NextResponse.json(
+      {
+        error:
+          'Vous êtes déjà membre de cette organisation (propriétaire ou invité). Utilisez un autre email pour inviter un collègue.',
+        code: 'SELF_INVITE',
+      },
+      { status: 409 },
+    )
   }
 
   const existing = await prisma.organizationMember.findUnique({

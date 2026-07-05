@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { HelpCircle, X } from "lucide-react";
 import {
+  ONBOARDING_FEATURE_ENCYCLOPEDIA_STEP,
   ONBOARDING_FEATURE_TOOLTIPS,
+  isOnboardingFeaturePage,
   onboardingFeatureSeenKey,
   type OnboardingFeature,
 } from "@/lib/onboarding";
@@ -15,20 +18,32 @@ type Props = {
 };
 
 export default function FeatureOnboardingTooltip({ feature, className = "mb-6" }: Props) {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const content = ONBOARDING_FEATURE_TOOLTIPS[feature];
+  const onSamePage = isOnboardingFeaturePage(pathname, feature);
 
   useEffect(() => {
+    if (onSamePage) return;
     if (localStorage.getItem(onboardingFeatureSeenKey(feature)) === "1") return;
     setVisible(true);
-  }, [feature]);
+  }, [feature, onSamePage]);
 
   function dismiss() {
     localStorage.setItem(onboardingFeatureSeenKey(feature), "1");
     setVisible(false);
   }
 
-  if (!visible) return null;
+  function openEncyclopedia() {
+    dismiss();
+    window.dispatchEvent(
+      new CustomEvent("bt-open-onboarding", {
+        detail: { stepId: ONBOARDING_FEATURE_ENCYCLOPEDIA_STEP[feature] },
+      }),
+    );
+  }
+
+  if (!visible || onSamePage) return null;
 
   return (
     <div
@@ -46,7 +61,15 @@ export default function FeatureOnboardingTooltip({ feature, className = "mb-6" }
             >
               {content.linkLabel ?? "En savoir plus"}
             </Link>
-          ) : null}
+          ) : (
+            <button
+              type="button"
+              onClick={openEncyclopedia}
+              className="mt-2 inline-flex min-h-[44px] items-center text-sm font-semibold text-bt-cyan hover:underline"
+            >
+              Ouvrir le guide
+            </button>
+          )}
         </div>
       </div>
       <button

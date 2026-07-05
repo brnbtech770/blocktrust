@@ -5,6 +5,7 @@
 import { prisma } from '@/app/lib/db'
 import { resolveEffectivePlan } from '@/lib/plan-features'
 import { getMaxContacts } from '@/lib/pricing'
+import { personalContactEntitiesWhere } from '@/lib/entity-contacts'
 
 export type QuotaCheckResult = {
   allowed: boolean
@@ -39,9 +40,9 @@ export async function checkEntityQuota(userId: string): Promise<QuotaCheckResult
   const maxEntities =
     fromPlanRow != null && fromPlanRow > 0 ? fromPlanRow : getMaxEntities(plan)
 
-  // Compter les entités existantes
+  // Compter uniquement les contacts tiers (hors badge personnel).
   const currentEntities = await prisma.entity.count({
-    where: { userId },
+    where: personalContactEntitiesWhere(userId, user.email),
   })
 
   if (currentEntities >= maxEntities) {
@@ -139,7 +140,9 @@ export async function getEntityQuotaSnapshot(userId: string): Promise<{
   const fromPlanRow = user.plan?.maxEntities
   const max = fromPlanRow != null && fromPlanRow > 0 ? fromPlanRow : getMaxEntities(planStr)
 
-  const current = await prisma.entity.count({ where: { userId } })
+  const current = await prisma.entity.count({
+    where: personalContactEntitiesWhere(userId, user.email),
+  })
 
   return { current, max, plan: planStr }
 }

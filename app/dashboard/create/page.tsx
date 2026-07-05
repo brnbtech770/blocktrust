@@ -52,6 +52,8 @@ export default function CreateCertificate() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editIdParam = searchParams.get("edit")?.trim() || null;
+  const intentParam = searchParams.get("intent")?.trim().toLowerCase();
+  const isContactIntent = editIdParam ? true : intentParam !== "badge";
 
   const [step, setStep] = useState<1 | 2>(1);
   const [entityType, setEntityType] = useState<EntityType>("BUSINESS");
@@ -464,12 +466,18 @@ export default function CreateCertificate() {
 
         <div className="mb-8">
           <h1 className="font-syne text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl mb-2">
-            {editIdParam ? "Modifier un contact" : "Créer un certificat"}
+            {editIdParam
+              ? "Modifier un contact"
+              : isContactIntent
+                ? "Ajouter un contact"
+                : "Créer mon badge"}
           </h1>
           <p className="mb-6 font-sans text-base leading-relaxed text-white/80">
             {editIdParam
               ? "Mettez à jour les informations de ce contact."
-              : "Remplissez les informations de votre contact"}
+              : isContactIntent
+                ? "Référencez une personne ou une entreprise dans votre réseau de confiance."
+                : "Créez ou mettez à jour votre certificat BLOCKTRUST™ personnel."}
           </p>
           
           {/* Indicateur d'étapes */}

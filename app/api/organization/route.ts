@@ -95,7 +95,27 @@ export async function POST(req: Request) {
   }
 
   const { name } = parsed.data
-  const slugBase = slugifyOrgName(name)
+  const nameTrim = name.trim()
+
+  const duplicate = await prisma.organization.findFirst({
+    where: {
+      ownerId: session.user.id,
+      name: { equals: nameTrim, mode: 'insensitive' },
+    },
+    select: { id: true, slug: true, name: true },
+  })
+  if (duplicate) {
+    return NextResponse.json(
+      {
+        error: `Vous avez déjà une organisation « ${duplicate.name} ».`,
+        code: 'ORG_ALREADY_EXISTS',
+        organization: { slug: duplicate.slug },
+      },
+      { status: 409 },
+    )
+  }
+
+  const slugBase = slugifyOrgName(nameTrim)
   const slug = await uniqueOrgSlug(slugBase)
   // Sièges achetés au checkout (Team facturé par utilisateur) sinon quota du plan.
   const sub = await prisma.subscription.findUnique({
@@ -107,7 +127,7 @@ export async function POST(req: Request) {
   const org = await prisma.$transaction(async (tx) => {
     const o = await tx.organization.create({
       data: {
-        name: name.trim(),
+        name: nameTrim,
         slug,
         tier: planCode,
         ownerId: session.user.id,

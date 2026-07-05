@@ -1,5 +1,5 @@
 // app/dashboard/entities/page.tsx
-// Liste des entités de l'utilisateur
+// Liste des contacts tiers (hors badge personnel)
 // ============================================================
 
 import { prisma } from "@/app/lib/db";
@@ -18,6 +18,11 @@ import {
 } from "lucide-react";
 import { walletNetworkLabelFr } from "@/lib/wallet-validation";
 import DeleteContactButton from "@/app/components/dashboard/DeleteContactButton";
+import {
+  filterThirdPartyContactEntities,
+} from "@/lib/entity-contacts";
+import { resolveEffectivePlan, getPlanDisplayLabel } from "@/lib/plan-features";
+import { getMaxContacts } from "@/lib/pricing";
 
 function KycStatusBadge({ status }: { status: string }) {
   const base =
@@ -69,54 +74,86 @@ function KycStatusBadge({ status }: { status: string }) {
 
 export default async function EntitiesPage() {
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     return null;
   }
 
-  // Récupérer l'utilisateur avec son plan
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    include: { plan: true },
+    include: { plan: true, subscription: true },
   });
 
   if (!user) {
     return null;
   }
 
-  // Récupère les entités de l'utilisateur
-  const entities = await prisma.entity.findMany({
-    where: { userId: user.id },
+  const allEntities = await prisma.entity.findMany({
+    where: { userId: user.id, organizationId: null },
+    include: { certificates: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const contacts = filterThirdPartyContactEntities(allEntities, user.email);
+  const ownBadgeCount = allEntities.length - contacts.length;
+
+  const effectivePlan = resolveEffectivePlan({
+    subscription: user.subscription,
+    email: user.email,
+    planType: user.plan?.type,
+  });
+  const maxContacts = getMaxContacts(effectivePlan);
+  const contactsCount = contacts.length;
+  const limitReached = contactsCount >= maxContacts;
+
+  const orgMemberships = await prisma.organizationMember.findMany({
+    where: { userId: user.id, joinedAt: { not: null } },
     include: {
-      certificates: true,
-    },
-    orderBy: {
-      createdAt: "desc",
+      organization: {
+        select: { name: true, tier: true, _count: { select: { members: true } } },
+      },
     },
   });
 
-  const plan = user.plan;
-  const entitiesCount = entities.length;
-  const maxEntities = plan?.maxEntities || 1;
-  const limitReached = entitiesCount >= maxEntities;
-
   return (
     <>
-      {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="font-syne mb-2 text-4xl font-bold tracking-tight text-white drop-shadow-none">
-            Mes Contacts
+            Mes contacts
           </h1>
-          <p className="text-base text-gray-400 max-w-2xl mb-1">
-            Personnes ou entreprises que vous certifiez dans votre réseau BLOCKTRUST™.
+          <p className="mb-1 max-w-2xl text-base text-gray-400">
+            Personnes ou entreprises que vous référencez dans votre réseau BLOCKTRUST™ (hors votre
+            propre badge).
           </p>
-          <p className="text-gray-400 text-base">
-            {entitiesCount}/{maxEntities} utilisées
+          <p className="text-base text-gray-400">
+            Contacts personnels : {contactsCount}/
+            {Number.isFinite(maxContacts) ? maxContacts : "∞"} · Plan{" "}
+            {getPlanDisplayLabel(effectivePlan, { email: user.email })}
           </p>
+          {orgMemberships.length > 0 ? (
+            <p className="mt-1 text-sm text-white/45">
+              {orgMemberships.map((m) => (
+                <span key={m.id} className="mr-3 inline-block">
+                  Organisation {m.organization.name} : équipe {m.organization._count.members} membre
+                  {m.organization._count.members > 1 ? "s" : ""}
+                </span>
+              ))}
+            </p>
+          ) : null}
+          {ownBadgeCount > 0 ? (
+            <p className="mt-2 text-sm text-bt-cyan/80">
+              Vos {ownBadgeCount} badge{ownBadgeCount > 1 ? "s" : ""} personnel
+              {ownBadgeCount > 1 ? "s" : ""} sont dans{" "}
+              <Link href="/dashboard/certificates" className="underline hover:text-bt-cyan">
+                Mes badges
+              </Link>
+              , pas dans cette liste.
+            </p>
+          ) : null}
         </div>
         <Link
-          href="/dashboard/create"
+          href="/dashboard/create?intent=contact"
           className={`inline-flex items-center justify-center gap-2 rounded-lg py-3 px-6 font-bold transition-all ${
             limitReached
               ? "cursor-not-allowed bg-gray-700 text-gray-400"
@@ -126,27 +163,27 @@ export default async function EntitiesPage() {
           tabIndex={limitReached ? -1 : undefined}
         >
           <Plus className="h-5 w-5 shrink-0" aria-hidden />
-          Nouveau contact
+          Ajouter un contact
         </Link>
       </div>
 
-      {/* Entities List */}
-      {entities.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {entities.map((entity) => {
-            const entityName = entity.entityType === "INDIVIDUAL"
-              ? `${entity.firstName || ''} ${entity.lastName || ''}`.trim() || entity.email
-              : entity.legalName || entity.tradeName || entity.email;
+      {contacts.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {contacts.map((entity) => {
+            const entityName =
+              entity.entityType === "INDIVIDUAL"
+                ? `${entity.firstName || ""} ${entity.lastName || ""}`.trim() || entity.email
+                : entity.legalName || entity.tradeName || entity.email;
 
             return (
               <div
                 key={entity.id}
                 className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-lg transition-all hover:border-gold/30"
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="mb-4 flex items-start justify-between">
                   <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-white mb-2">{entityName}</h3>
-                    <p className="text-gray-400 text-base">{entity.email}</p>
+                    <h3 className="mb-2 text-2xl font-bold text-white">{entityName}</h3>
+                    <p className="text-base text-gray-400">{entity.email}</p>
                   </div>
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
@@ -169,27 +206,29 @@ export default async function EntitiesPage() {
                   </span>
                 </div>
 
-                {entity.siret && (
+                {entity.siret ? (
                   <div className="mb-4">
-                    <p className="text-gray-400 text-base mb-1 font-medium">SIRET</p>
+                    <p className="mb-1 text-base font-medium text-gray-400">SIRET</p>
                     <code className="rounded bg-bt-cyan/10 px-3 py-1.5 font-mono text-base text-bt-cyan">
                       {entity.siret}
                     </code>
                   </div>
-                )}
+                ) : null}
 
                 {entity.walletAddress?.trim() && entity.walletNetwork?.trim() ? (
                   <div className="mb-4">
-                    <p className="text-gray-400 text-base mb-1 font-medium">Wallet</p>
-                    <p className="break-all font-mono text-sm text-bt-cyan/90">{entity.walletAddress.trim()}</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="mb-1 text-base font-medium text-gray-400">Wallet</p>
+                    <p className="break-all font-mono text-sm text-bt-cyan/90">
+                      {entity.walletAddress.trim()}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">
                       {walletNetworkLabelFr(entity.walletNetwork.trim())}
                     </p>
                   </div>
                 ) : null}
 
                 <div className="mb-4">
-                  <p className="text-gray-400 text-base font-medium mb-1">Identité vérifiée</p>
+                  <p className="mb-1 text-base font-medium text-gray-400">Identité vérifiée</p>
                   <KycStatusBadge status={entity.kycStatus} />
                 </div>
 
@@ -216,12 +255,14 @@ export default async function EntitiesPage() {
         <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-lg transition-all hover:border-gold/30">
           <Inbox className="mx-auto mb-4 h-12 w-12 text-white/20" aria-hidden />
           <h3 className="font-syne mb-2 text-2xl font-bold text-white">Aucun contact</h3>
-          <p className="text-gray-400 text-base mb-6">Créez votre premier contact pour commencer</p>
+          <p className="mb-6 text-base text-gray-400">
+            Ajoutez un contact tiers pour commencer à construire votre réseau de confiance.
+          </p>
           <Link
-            href="/dashboard/create"
+            href="/dashboard/create?intent=contact"
             className="inline-block rounded-lg bg-bt-cyan py-3 px-6 font-bold text-navy transition hover:bg-bt-cyan/90"
           >
-            Créer mon premier contact
+            Ajouter mon premier contact
           </Link>
         </div>
       )}

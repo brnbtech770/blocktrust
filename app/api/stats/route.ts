@@ -12,7 +12,7 @@ export async function GET(): Promise<NextResponse<DashboardStats | { error: stri
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    const stats = await getDashboardStats(session.user.id)
+    const stats = await getDashboardStats(session.user.id, session.user.email)
     return NextResponse.json(stats)
   } catch (e) {
     console.error('[API stats]', e)

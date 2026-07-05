@@ -6,6 +6,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import { isActiveBillingStatus } from '@/lib/plan-features'
 
 export async function computeTrustScore(userId: string): Promise<number> {
   let score = 0
@@ -13,31 +14,31 @@ export async function computeTrustScore(userId: string): Promise<number> {
   const kyc = await prisma.kYCVerification.findFirst({
     where: { userId, status: 'VERIFIED' },
   })
-  if (kyc) score += 30
+  const userRow = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { kycStatus: true, createdAt: true, cguAcceptedAt: true },
+  })
+  if (kyc || userRow?.kycStatus === 'VERIFIED') score += 30
 
   const sub = await prisma.subscription.findUnique({
     where: { userId },
   })
-  if (sub?.status === 'active') score += 15
+  if (sub && isActiveBillingStatus(sub.status)) score += 15
 
   const cert = await prisma.certificate.findFirst({
     where: {
       entity: { userId },
-      status: 'ACTIVE',
+      status: { in: ['ACTIVE', 'ANCHORED'] },
     },
   })
   if (cert) score += 20
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { createdAt: true, cguAcceptedAt: true },
-  })
-  if (user) {
+  if (userRow) {
     const ageMonths = Math.floor(
-      (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24 * 30)
+      (Date.now() - userRow.createdAt.getTime()) / (1000 * 60 * 60 * 24 * 30)
     )
     score += Math.min(ageMonths, 10)
-    if (user.cguAcceptedAt) score += 5
+    if (userRow.cguAcceptedAt) score += 5
   }
 
   // Une entrée par sens ; on compte les liens sortants mutuels pour ne pas doubler la paire A↔B.

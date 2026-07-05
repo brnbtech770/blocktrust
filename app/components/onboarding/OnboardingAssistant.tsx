@@ -96,6 +96,23 @@ export default function OnboardingAssistant({
     setOpen(true);
   }
 
+  useEffect(() => {
+    function onOpenGuide(e: Event) {
+      const stepId = (e as CustomEvent<{ stepId?: OnboardingStepId }>).detail?.stepId;
+      if (stepId) {
+        setCurrentStepId(stepId);
+        setMode("tour");
+        setOpen(true);
+      } else {
+        setMode("menu");
+        setOpen(true);
+        clearHighlight();
+      }
+    }
+    window.addEventListener("bt-open-onboarding", onOpenGuide);
+    return () => window.removeEventListener("bt-open-onboarding", onOpenGuide);
+  }, [clearHighlight]);
+
   function dismissAutoOpen() {
     localStorage.setItem(ONBOARDING_AUTO_DISMISS_KEY, "1");
     setOpen(false);

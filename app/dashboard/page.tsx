@@ -22,11 +22,13 @@ import ActivityFeed from "@/app/components/dashboard/ActivityFeed";
 import KpiGridSkeleton from "@/app/components/dashboard/KpiGridSkeleton";
 import CertificateTableSkeleton from "@/app/components/dashboard/CertificateTableSkeleton";
 import ActivityFeedSkeleton from "@/app/components/dashboard/ActivityFeedSkeleton";
-import { getTrustScoreColor, getTrustScoreLabelFr } from "@/lib/trustscore";
+import { getTrustScoreColor, getTrustScoreLabelFr, persistUserTrustScore } from "@/lib/trustscore";
 import { getPlanWording, resolvePlanKeyForWording } from "@/lib/plan-wording";
 import { resolveEffectivePlan } from "@/lib/plan-features";
+import { getMaxContacts } from "@/lib/pricing";
 import { formatCertificateLabel } from "@/lib/format-certificate-label";
 import FeatureOnboardingTooltip from "@/app/components/onboarding/FeatureOnboardingTooltip";
+import { personalContactEntitiesWhere } from "@/lib/entity-contacts";
 
 export default async function Dashboard({
   searchParams,
@@ -65,49 +67,6 @@ export default async function Dashboard({
 
     const firstName = user.name?.split(' ')[0] || user.email?.split('@')[0] || 'Utilisateur';
 
-    // Plancher à 0 : un TrustScore ne doit JAMAIS s'afficher en négatif
-    // (valeurs héritées d'anciens calculs possibles avant le plancher).
-    const trustScoreValue = Math.max(0, user.trustScore ?? 0);
-    const trustScoreLabel = getTrustScoreLabelFr(trustScoreValue);
-    const trustScoreColor = getTrustScoreColor(trustScoreValue);
-    const showKycTrustHint =
-      trustScoreValue < 50 && user.kycStatus !== "VERIFIED";
-
-    const userIsAdmin = isAdmin(session.user.email);
-
-    const fraudWeekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    const [fraudAlertsWeek, dashboardStats] = await Promise.all([
-      prisma.verification.count({
-        where: {
-          result: "FRAUD_ALERT",
-          verifiedAt: { gte: fraudWeekStart },
-          certificate: { entity: { userId: user.id } },
-        },
-      }),
-      getDashboardStats(user.id),
-    ]);
-
-    const subscription = await prisma.subscription.findUnique({
-      where: { userId: user.id },
-    });
-    const hasActiveSub = subscription?.status === "active";
-    const planKey = resolvePlanKeyForWording({
-      planType: user.plan?.type ?? null,
-      subscriptionPlan: subscription?.plan ?? null,
-      subscriptionStatus: subscription?.status ?? null,
-    });
-    const dashboardWording = getPlanWording(planKey);
-    // Quota de vérifications affiché pour TOUS les comptes non-admin, y compris
-    // Découverte (20/mois). On ne bloque jamais la vérification côté UI.
-    let quotaLabel: string | null = null;
-    if (!userIsAdmin) {
-      const planForQuota = resolveEffectivePlan({ subscription, email: user.email });
-      const d = await getVerifyQuotaDisplay(user.id, planForQuota);
-      quotaLabel = d.unlimited
-        ? "Illimité ce mois"
-        : `${d.remaining}/${d.limit} vérifications ce mois-ci`;
-    }
-
     const certificates = await prisma.certificate.findMany({
       where: {
         entity: { userId: user.id },
@@ -128,11 +87,65 @@ export default async function Dashboard({
       orderBy: { issuedAt: 'desc' },
     });
 
-    const entitiesCount = await prisma.entity.count({
-      where: { userId: user.id },
+    const hasActiveOwnCert = certificates.some(
+      (c) => c.status === "ACTIVE" || c.status === "ANCHORED",
+    );
+    let trustScoreValue = Math.max(0, user.trustScore ?? 0);
+    if (
+      trustScoreValue === 0 &&
+      (user.kycStatus === "VERIFIED" || hasActiveOwnCert)
+    ) {
+      trustScoreValue = await persistUserTrustScore(user.id);
+    }
+    const trustScoreLabel = getTrustScoreLabelFr(trustScoreValue);
+    const trustScoreColor = getTrustScoreColor(trustScoreValue);
+    const showKycTrustHint =
+      trustScoreValue < 50 && user.kycStatus !== "VERIFIED";
+
+    const userIsAdmin = isAdmin(session.user.email);
+
+    const fraudWeekStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const [fraudAlertsWeek, dashboardStats, subscription] = await Promise.all([
+      prisma.verification.count({
+        where: {
+          result: "FRAUD_ALERT",
+          verifiedAt: { gte: fraudWeekStart },
+          certificate: { entity: { userId: user.id } },
+        },
+      }),
+      getDashboardStats(user.id, user.email),
+      prisma.subscription.findUnique({ where: { userId: user.id } }),
+    ]);
+
+    const planForQuota = resolveEffectivePlan({ subscription, email: user.email });
+    const maxPersonalContacts = getMaxContacts(planForQuota);
+    const personalContactsCount = await prisma.entity.count({
+      where: personalContactEntitiesWhere(user.id, user.email),
     });
+    const contactsQuotaSub =
+      maxPersonalContacts >= 999999
+        ? `${personalContactsCount} contacts personnels`
+        : `Contacts personnels : ${personalContactsCount}/${maxPersonalContacts}`;
+
+    const hasActiveSub = subscription?.status === "active" || subscription?.status === "trialing";
+    const planKey = resolvePlanKeyForWording({
+      planType: user.plan?.type ?? null,
+      subscriptionPlan: subscription?.plan ?? null,
+      subscriptionStatus: subscription?.status ?? null,
+    });
+    const dashboardWording = getPlanWording(planKey);
+    // Quota de vérifications affiché pour TOUS les comptes non-admin, y compris
+    // Découverte (20/mois). On ne bloque jamais la vérification côté UI.
+    let quotaLabel: string | null = null;
+    if (!userIsAdmin) {
+      const d = await getVerifyQuotaDisplay(user.id, planForQuota);
+      quotaLabel = d.unlimited
+        ? "Illimité ce mois"
+        : `${d.remaining}/${d.limit} vérifications ce mois-ci`;
+    }
+
     const kycVerified = user.kycStatus === "VERIFIED";
-    const hasEntities = entitiesCount > 0;
+    const hasContacts = personalContactsCount > 0;
     const hasCertificate = certificates.length > 0;
     const showOnboardingGuide = certificates.length === 0 && user.onboardingCompletedAt != null;
     // Le KYC ne concerne QUE les plans payants (ou admin). Un compte Découverte
@@ -143,7 +156,7 @@ export default async function Dashboard({
       : { step: "1", text: "Activez votre certification", href: "/pricing", done: false };
     const onboardingSteps: { step: string; text: string; href: string; done: boolean }[] = [
       firstStep,
-      { step: "2", text: "Créez votre premier contact", href: "/dashboard/entities", done: hasEntities },
+      { step: "2", text: "Ajoutez votre premier contact", href: "/dashboard/create?intent=contact", done: hasContacts },
       { step: "3", text: "Partagez votre badge", href: "/dashboard/certificates", done: hasCertificate },
     ];
 
@@ -308,7 +321,7 @@ export default async function Dashboard({
         )}
 
         <Suspense fallback={<KpiGridSkeleton />}>
-          <StatsBlock stats={dashboardStats} />
+          <StatsBlock stats={dashboardStats} contactsSub={contactsQuotaSub} />
         </Suspense>
 
         {fraudAlertsWeek > 0 ? (
@@ -341,6 +354,40 @@ export default async function Dashboard({
             </div>
           </div>
         ) : null}
+
+        <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-gold/30 sm:p-6">
+          <h2 className="font-syne mb-3 text-xl font-semibold tracking-tight text-gold sm:mb-4 sm:text-2xl">
+            Actions rapides
+          </h2>
+          <div className="mb-6">
+            <VerifyBadgeCard
+              quotaLabel={quotaLabel}
+              isAdmin={userIsAdmin}
+            />
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
+            <Link
+              href="/dashboard/create?intent=contact"
+              className="inline-flex min-h-[44px] min-w-0 w-full items-center justify-center gap-2 rounded-lg bg-bt-cyan px-6 py-3 font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:text-base"
+            >
+              <Plus className="h-5 w-5 shrink-0" aria-hidden />
+              Ajouter un contact
+            </Link>
+            <Link
+              href="/dashboard/create?intent=badge"
+              className="inline-flex min-h-[44px] min-w-0 w-full items-center justify-center gap-2 rounded-lg border border-bt-cyan/40 bg-bt-cyan/10 px-6 py-3 font-sans text-sm font-semibold text-bt-cyan transition-all hover:bg-bt-cyan/20 sm:w-auto sm:text-base"
+            >
+              <Shield className="h-5 w-5 shrink-0" aria-hidden />
+              Créer mon badge
+            </Link>
+            <Link
+              href="/dashboard/certificates"
+              className="inline-flex min-h-[44px] min-w-0 w-full items-center justify-center gap-2 rounded-lg border border-white/20 px-6 py-3 font-sans text-sm font-semibold text-white transition-all hover:border-bt-cyan/50 hover:text-bt-cyan sm:w-auto sm:text-base"
+            >
+              Voir tous mes badges
+            </Link>
+          </div>
+        </div>
 
         {certificates.length > 0 && (
           <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6">
@@ -394,41 +441,13 @@ export default async function Dashboard({
           </div>
         )}
 
-        <div className="mb-6 sm:mb-8 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition-all hover:border-gold/30 sm:p-6">
-          <h2 className="font-syne mb-3 text-xl font-semibold tracking-tight text-gold sm:mb-4 sm:text-2xl">
-            Actions rapides
-          </h2>
-          <div className="mb-6">
-            <VerifyBadgeCard
-              quotaLabel={quotaLabel}
-              isAdmin={userIsAdmin}
-            />
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-            <Link
-              href="/dashboard/create"
-              className="inline-flex min-h-[44px] min-w-0 w-full items-center justify-center gap-2 rounded-lg bg-bt-cyan px-6 py-3 font-sans text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 sm:w-auto sm:text-base"
-            >
-              <Plus className="h-5 w-5 shrink-0" aria-hidden />
-              Créer un contact
-            </Link>
-            <Link
-              href="/dashboard/certificates"
-              className="inline-flex min-h-[44px] min-w-0 w-full items-center justify-center gap-2 rounded-lg border border-white/20 px-6 py-3 font-sans text-sm font-semibold text-white transition-all hover:border-bt-cyan/50 hover:text-bt-cyan sm:w-auto sm:text-base"
-            >
-              <Shield className="h-5 w-5 shrink-0" aria-hidden />
-              Voir tous mes certificats
-            </Link>
-          </div>
-        </div>
-
         <div className="mb-6 space-y-4 sm:mb-8 sm:space-y-6">
           <FeatureOnboardingTooltip feature="trustscore" />
           <div
             data-onboarding-target="badge-section"
             className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-6"
           >
-            <div className="min-w-0 flex-1 basis-0 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6" data-onboarding-target="trustscore-section">
+            <div id="trustscore-section" className="min-w-0 flex-1 basis-0 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm sm:p-6" data-onboarding-target="trustscore-section">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
                 <BlockTrustBadge
                   size={80}

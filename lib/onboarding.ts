@@ -58,6 +58,38 @@ export function onboardingFeatureSeenKey(feature: OnboardingFeature): string {
   return `bt_onboarding_seen_${feature}`;
 }
 
+/** Page dashboard où le tooltip ne doit pas renvoyer vers lui-même. */
+export const ONBOARDING_FEATURE_PATH: Record<OnboardingFeature, string> = {
+  bis: "/dashboard/bis",
+  "trust-circle": "/dashboard/trust-circle",
+  extension: "/dashboard/extension",
+  vault: "/dashboard/vault",
+  trustscore: "/dashboard",
+};
+
+/** Étape encyclopédie de l'assistant pour ouverture depuis un tooltip. */
+export const ONBOARDING_FEATURE_ENCYCLOPEDIA_STEP: Record<
+  OnboardingFeature,
+  OnboardingStepId
+> = {
+  bis: "bis",
+  "trust-circle": "trust-circle",
+  extension: "extensions-api",
+  vault: "vault",
+  trustscore: "trustscore",
+};
+
+export function isOnboardingFeaturePage(
+  pathname: string,
+  feature: OnboardingFeature,
+): boolean {
+  const base = ONBOARDING_FEATURE_PATH[feature];
+  if (feature === "trustscore") {
+    return pathname === "/dashboard" || pathname === "/dashboard/";
+  }
+  return pathname === base || pathname.startsWith(`${base}/`);
+}
+
 export const ONBOARDING_FEATURE_TOOLTIPS: Record<
   OnboardingFeature,
   { message: string; linkHref?: string; linkLabel?: string }
@@ -72,7 +104,7 @@ export const ONBOARDING_FEATURE_TOOLTIPS: Record<
     message:
       "Votre réseau de confiance. Ajoutez des contacts pour établir une confiance mutuelle.",
     linkHref: "/dashboard/trust-circle",
-    linkLabel: "Ouvrir le Trust Circle",
+    linkLabel: "Guide Trust Circle",
   },
   extension: {
     message:
@@ -89,7 +121,7 @@ export const ONBOARDING_FEATURE_TOOLTIPS: Record<
   trustscore: {
     message:
       "Votre score de confiance. Plus vous utilisez BLOCKTRUST, plus il monte.",
-    linkHref: "/dashboard",
+    linkHref: "/dashboard#trustscore-section",
     linkLabel: "Voir mon TrustScore",
   },
 };
@@ -153,20 +185,21 @@ export const ONBOARDING_STEP_CONTENT: Record<OnboardingStepId, OnboardingStep> =
   extension: {
     id: "extension",
     title: "Protégez vos emails avec TrustScan",
-    body: "L'extension Chrome vérifie automatiquement l'identité de vos correspondants dans Gmail. Un badge vert ou gris apparaît à côté de chaque expéditeur.",
+    body: "Installez l'extension Chrome ou Outlook selon votre messagerie. Générez votre clé API dans Extensions, puis vérifiez vos correspondants automatiquement.",
     bullets: [
-      { label: "Automatique", description: "tous vos emails sortants sont signés (invisible)" },
-      { label: "Sélectif", description: "bouton ✓ BIS dans le composeur Gmail" },
-      { label: "Désactivé", description: "vérification entrante uniquement" },
+      { label: "Chrome (Gmail)", description: "badge vert ou gris à côté de chaque expéditeur" },
+      { label: "Outlook", description: "même protection dans Microsoft 365 / Outlook Web" },
+      { label: "Clé API", description: "Dashboard → Extensions → Générer ma clé API" },
+      { label: "Sélectif", description: "bouton ✓ BIS dans le composeur (mode recommandé)" },
     ],
     useCase:
       "Vous recevez un email de votre banque vous demandant de mettre à jour vos coordonnées. Badge vert → c'est bien votre banque. Badge gris → méfiance, c'est peut-être du phishing. Si votre contact signe habituellement avec BIS mais que cet email n'est PAS signé → alerte de compromission.",
     practicalSteps: [
-      "Installez l'extension depuis le Chrome Web Store",
       "Dashboard → Extensions → Générer ma clé API → Copier",
-      "Dans Gmail, icône TrustScan → collez votre clé",
-      "Les badges apparaissent dans Gmail",
-      "Options de l'extension → choisissez votre mode BIS",
+      "Chrome : installer TrustScan depuis le Web Store, coller la clé dans Gmail",
+      "Outlook : installer le complément BLOCKTRUST, coller la même clé API",
+      "Les badges apparaissent dans votre messagerie",
+      "Options de l'extension → choisissez votre mode BIS (Sélectif recommandé)",
     ],
     externalHref: CHROME_WEB_STORE_URL,
     externalLabel: "Installer TrustScan",
@@ -194,7 +227,7 @@ export const ONBOARDING_STEP_CONTENT: Record<OnboardingStepId, OnboardingStep> =
       },
     ],
     useCase:
-      "Vous êtes notaire. Vous ajoutez vos clients, confrères et partenaires. Quand un client vous envoie un document, vous voyez immédiatement s'il est certifié. Un nouveau contact prétend être un confrère → vérifiez son badge avant de lui faire confiance.",
+      "Vous êtes notaire. Vous ajoutez vos clients, confrères et partenaires dans Gmail ou Outlook. Quand un client vous envoie un document, vous voyez immédiatement s'il est certifié.",
     extraInfo: ["Vous pouvez supprimer un contact à tout moment."],
     linkHref: "/dashboard/entities",
     linkLabel: "Gérer mes contacts",
