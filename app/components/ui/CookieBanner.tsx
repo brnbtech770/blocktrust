@@ -114,7 +114,7 @@ export default function CookieBanner() {
                 }}
                 className="rounded-lg border border-white/20 px-4 py-2 text-sm font-medium text-white/90 transition hover:bg-white/5"
               >
-                Paramétrer
+                Paramétrer mes choix
               </button>
               <button
                 type="button"
@@ -122,7 +122,7 @@ export default function CookieBanner() {
                 className="rounded-lg px-4 py-2 text-sm font-semibold text-[#0a1628] transition hover:brightness-110"
                 style={{ background: '#00d4ff' }}
               >
-                Tout accepter
+                Accepter
               </button>
             </div>
           </div>

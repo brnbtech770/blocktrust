@@ -14,6 +14,7 @@ const links: { label: string; href: string }[] = [
   { label: "CGU", href: "/cgu" },
   { label: "CGV", href: "/cgv" },
   { label: "Confidentialité", href: "/privacy" },
+  { label: "Cookies", href: "/cookies" },
   { label: "Contact", href: "mailto:contact@blocktrust.tech" },
 ];
 

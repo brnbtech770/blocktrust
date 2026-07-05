@@ -342,17 +342,22 @@ export default function PrivacyContent() {
             </Li>
             <Li>
               <strong className="text-white/85">Cookies de consentement</strong> : mémorisation de votre
-              choix cookie — durée 12 mois.
+              choix — durée <strong className="text-white/85">6 mois</strong> (revalidation automatique).
             </Li>
             <Li>
               <strong className="text-white/85">Cookies analytiques</strong> (Vercel Analytics, Speed
-              Insights) : mesure d&apos;audience anonymisée — soumis à votre consentement via la bannière
-              cookies.
+              Insights) : mesure d&apos;audience — soumis à votre consentement ; durée maximale{' '}
+              <strong className="text-white/85">13 mois</strong>.
             </Li>
           </ul>
           <p>
-            Vous pouvez à tout moment modifier vos préférences via la bannière cookies ou les paramètres de
-            votre navigateur. Le refus des cookies analytiques n&apos;affecte pas l&apos;accès au service.
+            La liste détaillée des cookies est disponible sur la{' '}
+            <Link href="/cookies" className="text-[#00d4ff] hover:underline">
+              politique cookies
+            </Link>
+            . Vous pouvez à tout moment modifier vos préférences via la bannière cookies ou le lien
+            « Gestion des cookies » en pied de page. Le refus des cookies analytiques n&apos;affecte pas
+            l&apos;accès au service.
           </p>
         </Section>
 
