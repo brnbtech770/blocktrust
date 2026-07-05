@@ -8,5 +8,5 @@
 // À incrémenter à chaque révision substantielle des CGU/CGV.
 // ============================================================
 
-/** Version courante des CGU et CGV (date de publication V2). */
-export const LEGAL_DOC_VERSION = '2026-05-01'
+/** Version courante des CGU et CGV (publication V3 — 5 juillet 2026). */
+export const LEGAL_DOC_VERSION = '2026-07-05'

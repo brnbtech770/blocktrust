@@ -17,6 +17,7 @@ import {
 import { validatePassword } from "@/lib/password-policy";
 import { verifyTurnstileForRegister } from "@/lib/turnstile";
 import { clearLoginLockout } from "@/lib/login-lockout";
+import { LEGAL_DOC_VERSION } from "@/lib/legal";
 
 const MIN_FORM_MS = 3000;
 
@@ -172,7 +173,7 @@ export async function POST(req: NextRequest) {
         password: hashedPassword,
         sessionVersion: 0,
         cguAcceptedAt: new Date(),
-        cguVersion: "1.0",
+        cguVersion: LEGAL_DOC_VERSION,
       },
     });
 
