@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildExtensionVerifyResult,
+  buildOfficialExtensionVerifyPayload,
+  isOfficialSenderEmail,
   type ExtensionVerifyContext,
 } from '@/lib/extension-verify-sender'
 import { isDisposableEmail } from '@/lib/signals/disposable-email'
@@ -202,6 +204,23 @@ describe('Extension verify-sender', () => {
     const result = buildExtensionVerifyResult([], 'mine@blocktrust.tech', '', BASE_URL, ctx)
 
     expect(result.status).toBe('IN_CONTACTS')
+  })
+
+  it('brnbtech@gmail.com → CERTIFIED officiel Root of Trust', () => {
+    expect(isOfficialSenderEmail('brnbtech@gmail.com')).toBe(true)
+
+    const result = buildOfficialExtensionVerifyPayload('brnbtech@gmail.com', BASE_URL)
+
+    expect(result.status).toBe('CERTIFIED')
+    expect(result.verified).toBe(true)
+    expect(result.trustScore).toBe(100)
+    expect(result.officialAccount).toBe(true)
+    expect(result.message).toBe('Compte officiel BLOCKTRUST™')
+    expect(result.signals.official).toBe(true)
+  })
+
+  it('email inconnu non officiel → isOfficialSenderEmail false', () => {
+    expect(isOfficialSenderEmail('unknown@nowhere.test')).toBe(false)
   })
 
   it('expéditeur = email compte mais entité sur autre email → CERTIFIED via ownerActiveEntity', () => {

@@ -6,8 +6,10 @@ import type { Certificate, Prisma } from "@prisma/client";
 import { prisma } from "@/app/lib/db";
 import {
   buildExtensionVerifyResult,
+  buildOfficialExtensionVerifyPayload,
   collectContactEntityKeys,
   entityMatchesSender,
+  isOfficialSenderEmail,
   normalizeSenderDomain,
   normalizeSenderEmail,
   type ExtensionVerifyContext,
@@ -149,6 +151,20 @@ export async function runExtensionVerifySender(params: {
   const bisIdRaw = params.bisId?.trim() ?? "";
   const emailNorm = normalizeSenderEmail(emailRaw);
   const domainNorm = normalizeSenderDomain(domainRaw);
+
+  if (emailNorm && isOfficialSenderEmail(emailNorm)) {
+    const userEmail = await prisma.user
+      .findUnique({ where: { id: params.userId }, select: { email: true } })
+      .then((u) => u?.email ?? null)
+      .catch(() => null);
+
+    return enrichExtensionPayloadWithBis({
+      payload: buildOfficialExtensionVerifyPayload(emailRaw, baseUrl),
+      bisId: bisIdRaw || null,
+      recipientEmail: userEmail,
+      senderEmail: emailRaw,
+    });
+  }
 
   const userEmail = await prisma.user
     .findUnique({ where: { id: params.userId }, select: { email: true } })

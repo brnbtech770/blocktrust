@@ -6,6 +6,7 @@ import type { Certificate, Entity } from "@prisma/client";
 import { sanitizeDisplayText } from "@/lib/sanitize-display-text";
 import {
   isOfficialEntity,
+  isOfficialRootOfTrustEmail,
   OFFICIAL_TRUST_SCORE,
 } from "@/lib/official-trust";
 
@@ -20,6 +21,8 @@ export type ExtensionVerifySignals = {
   /** Présent dans les contacts / coordonnées certifiées de l'utilisateur. */
   inContact: boolean;
   polygonAnchored: boolean;
+  /** Root of Trust BLOCKTRUST (email officiel). */
+  official?: boolean;
 };
 
 export type ExtensionBisVerification = {
@@ -75,6 +78,37 @@ export type ExtensionVerifyContext = {
 
 export function normalizeSenderEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+/** Email expéditeur appartenant à la Root of Trust (admins, comptes internes). */
+export function isOfficialSenderEmail(email: string | null | undefined): boolean {
+  return isOfficialRootOfTrustEmail(email);
+}
+
+/** Payload CERTIFIED pour un expéditeur Root of Trust (sans lookup entité). */
+export function buildOfficialExtensionVerifyPayload(
+  emailRaw: string,
+  _baseUrl: string,
+): ExtensionVerifyPayload {
+  const emailNorm = normalizeSenderEmail(emailRaw);
+  return finalizePayload({
+    verified: true,
+    status: "CERTIFIED",
+    entityName: "BLOCKTRUST™",
+    trustScore: OFFICIAL_TRUST_SCORE,
+    officialAccount: true,
+    badgeUrl: null,
+    certifiedDomains: [],
+    certifiedEmails: emailNorm ? [emailNorm] : [],
+    signals: {
+      kycVerified: true,
+      inNetwork: false,
+      inContact: false,
+      polygonAnchored: false,
+      official: true,
+    },
+    message: "Compte officiel BLOCKTRUST™",
+  });
 }
 
 export function normalizeSenderDomain(domain: string): string {

@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
   const domainNorm = normalizeSenderDomain(domainRaw);
   const cacheKey =
     emailNorm || domainNorm
-      ? `bt:ext:verify:v6:${userId}:${emailNorm}:${domainNorm}:${bisIdRaw || "-"}`
+      ? `bt:ext:verify:v7:${userId}:${emailNorm}:${domainNorm}:${bisIdRaw || "-"}`
       : null;
 
   const redis = getRedis();
