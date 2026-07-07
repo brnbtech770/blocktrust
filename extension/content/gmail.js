@@ -5,6 +5,10 @@
  */
 
 const API_BASE = "https://blocktrust.tech";
+const BT_UI_MARKER = "data-bt-ui";
+const TOOLTIP_AUTO_DISMISS_MS = 8000;
+const TOOLTIP_MOUSELEAVE_MS = 200;
+const GMAIL_SCAN_DEBOUNCE_MS = 300;
 
 /** Cache résultats pour éviter re-appels (5 min). */
 const verifyCache = new Map();
@@ -25,6 +29,47 @@ const SENDER_SELECTORS = [
   ".yP[email]",
   ".zF[email]",
 ];
+
+/** Zones de composition Gmail — jamais scannées ni badgées. */
+const COMPOSE_SEND_MARKERS = [
+  'div[role="button"][aria-label*="Envoyer"]',
+  'div[role="button"][aria-label*="Send"]',
+  ".T-I.T-I-KE",
+];
+
+/**
+ * L'élément est-il dans un composeur (dialog, inline reply, éditeur) ?
+ * @param {Element | null | undefined} el
+ * @returns {boolean}
+ */
+function isInsideComposeArea(el) {
+  if (!(el instanceof Element)) return false;
+
+  if (el.closest('[contenteditable="true"]')) return true;
+  if (el.closest('div[role="textbox"]')) return true;
+  if (el.closest(".editable")) return true;
+  if (el.closest(".Am.Al.editable")) return true;
+
+  const dialog = el.closest('div[role="dialog"]');
+  if (dialog && COMPOSE_SEND_MARKERS.some((sel) => dialog.querySelector(sel))) {
+    return true;
+  }
+
+  const inlineHost = el.closest("div.nH, div.AD, div.aY");
+  if (inlineHost && COMPOSE_SEND_MARKERS.some((sel) => inlineHost.querySelector(sel))) {
+    return true;
+  }
+
+  return false;
+}
+
+/** Retire les chips data-bt pollués dans les brouillons (résidu v1.0.8). */
+function purgePollutedBadgesFromCompose() {
+  const polluted = document.querySelectorAll(
+    '[contenteditable="true"] .bt-trust-badge, div[role="textbox"] .bt-trust-badge, .editable .bt-trust-badge, [contenteditable="true"] [data-bt-ui].bt-trust-badge',
+  );
+  polluted.forEach((badge) => badge.remove());
+}
 
 console.log("[BLOCKTRUST] Content script chargé sur Gmail");
 console.log("[BLOCKTRUST] API_BASE:", API_BASE);
@@ -293,6 +338,8 @@ async function processQueue() {
  * @param {Element} element
  */
 function addToQueue(email, domain, element, bisId) {
+  if (isInsideComposeArea(element)) return;
+
   const queueKey = `${email.toLowerCase()}:${bisId || "-"}`;
 
   const alreadyQueued = scanQueue.some(
@@ -313,10 +360,29 @@ function addToQueue(email, domain, element, bisId) {
   void processQueue();
 }
 
-/** Tooltip flottant unique (réutilisé entre badges). */
+/** Tooltip singleton — un seul vivant à la fois. */
 let activeTooltip = null;
 let tooltipDismissListenersInstalled = false;
 let tooltipHideTimerId = null;
+let tooltipAutoDismissId = null;
+/** @type {Element | null} */
+let tooltipAnchor = null;
+
+function destroyTooltip() {
+  if (tooltipHideTimerId !== null) {
+    clearTimeout(tooltipHideTimerId);
+    tooltipHideTimerId = null;
+  }
+  if (tooltipAutoDismissId !== null) {
+    clearTimeout(tooltipAutoDismissId);
+    tooltipAutoDismissId = null;
+  }
+  if (activeTooltip) {
+    activeTooltip.remove();
+    activeTooltip = null;
+  }
+  tooltipAnchor = null;
+}
 
 /** Affiche ou masque la tooltip (inline !important — Gmail ignore les classes seules). */
 function setTooltipVisible(tooltip, visible) {
@@ -330,20 +396,14 @@ function setTooltipVisible(tooltip, visible) {
 }
 
 function hideBadgeTooltip() {
-  if (tooltipHideTimerId !== null) {
-    clearTimeout(tooltipHideTimerId);
-    tooltipHideTimerId = null;
-  }
-  if (activeTooltip) {
-    setTooltipVisible(activeTooltip, false);
-  }
+  destroyTooltip();
 }
 
-function scheduleHideBadgeTooltip(delayMs = 120) {
+function scheduleHideBadgeTooltip(delayMs = TOOLTIP_MOUSELEAVE_MS) {
   if (tooltipHideTimerId !== null) clearTimeout(tooltipHideTimerId);
   tooltipHideTimerId = setTimeout(() => {
     tooltipHideTimerId = null;
-    hideBadgeTooltip();
+    destroyTooltip();
   }, delayMs);
 }
 
@@ -351,13 +411,64 @@ function ensureTooltipDismissListeners() {
   if (tooltipDismissListenersInstalled) return;
   tooltipDismissListenersInstalled = true;
 
-  document.addEventListener("scroll", hideBadgeTooltip, true);
-  document.addEventListener("click", hideBadgeTooltip, true);
-  window.addEventListener("blur", hideBadgeTooltip);
-  window.addEventListener("resize", hideBadgeTooltip);
+  document.addEventListener(
+    "scroll",
+    () => {
+      destroyTooltip();
+    },
+    true,
+  );
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (activeTooltip?.contains(e.target)) return;
+      if (e.target instanceof Element && e.target.closest(".bt-trust-badge")) return;
+      destroyTooltip();
+    },
+    true,
+  );
+  window.addEventListener("blur", destroyTooltip);
+  window.addEventListener("resize", destroyTooltip);
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") hideBadgeTooltip();
+    if (e.key === "Escape") destroyTooltip();
   });
+}
+
+/**
+ * @param {HTMLElement} anchor
+ * @param {string} html
+ * @param {boolean} interactive
+ */
+function openTooltip(anchor, html, interactive) {
+  destroyTooltip();
+  ensureTooltipDismissListeners();
+
+  activeTooltip = document.createElement("div");
+  activeTooltip.className = "bt-tooltip";
+  activeTooltip.setAttribute("role", "tooltip");
+  activeTooltip.setAttribute(BT_UI_MARKER, "1");
+  document.body.appendChild(activeTooltip);
+
+  applyTooltipBaseStyles(activeTooltip, interactive);
+  activeTooltip.innerHTML = html;
+
+  if (interactive) {
+    const link = activeTooltip.querySelector("a");
+    if (link) styleTooltipLink(link);
+    bindInteractiveTooltipDismiss(activeTooltip);
+  }
+
+  tooltipAnchor = anchor;
+  positionTooltip(activeTooltip, anchor);
+
+  requestAnimationFrame(() => {
+    if (activeTooltip) setTooltipVisible(activeTooltip, true);
+  });
+
+  tooltipAutoDismissId = setTimeout(() => {
+    tooltipAutoDismissId = null;
+    destroyTooltip();
+  }, TOOLTIP_AUTO_DISMISS_MS);
 }
 
 function bindInteractiveTooltipDismiss(tooltip) {
@@ -366,9 +477,16 @@ function bindInteractiveTooltipDismiss(tooltip) {
       clearTimeout(tooltipHideTimerId);
       tooltipHideTimerId = null;
     }
+    if (tooltipAutoDismissId !== null) {
+      clearTimeout(tooltipAutoDismissId);
+      tooltipAutoDismissId = setTimeout(() => {
+        tooltipAutoDismissId = null;
+        destroyTooltip();
+      }, TOOLTIP_AUTO_DISMISS_MS);
+    }
     setTooltipVisible(tooltip, true);
   });
-  tooltip.addEventListener("mouseleave", () => scheduleHideBadgeTooltip(80));
+  tooltip.addEventListener("mouseleave", () => scheduleHideBadgeTooltip(TOOLTIP_MOUSELEAVE_MS));
 }
 
 function positionTooltip(tooltip, anchor) {
@@ -559,17 +677,7 @@ function attachBadgeTooltip(badge, result) {
       : "";
 
   badge.addEventListener("mouseenter", () => {
-    if (!activeTooltip) {
-      activeTooltip = document.createElement("div");
-      activeTooltip.className = "bt-tooltip";
-      activeTooltip.setAttribute("role", "tooltip");
-      document.body.appendChild(activeTooltip);
-    } else {
-      activeTooltip.className = "bt-tooltip";
-    }
-    applyTooltipBaseStyles(activeTooltip, false);
-
-    activeTooltip.innerHTML = `
+    const html = `
       <span class="bt-tooltip-title">BLOCKTRUST™</span>
       ${entityLine}
       ${result.status === "CERTIFIED" && result.officialAccount ? officialAccountBadgeHtml(true) : ""}
@@ -578,15 +686,11 @@ function attachBadgeTooltip(badge, result) {
       ${bisTooltipSectionHtml(result)}
       ${bisMissingAlertHtml(result)}
     `;
-
-    positionTooltip(activeTooltip, badge);
-    requestAnimationFrame(() => {
-      if (activeTooltip) setTooltipVisible(activeTooltip, true);
-    });
+    openTooltip(badge, html, false);
   });
 
-  badge.addEventListener("mouseleave", hideBadgeTooltip);
-  badge.addEventListener("blur", hideBadgeTooltip);
+  badge.addEventListener("mouseleave", () => scheduleHideBadgeTooltip(TOOLTIP_MOUSELEAVE_MS));
+  badge.addEventListener("blur", destroyTooltip);
 }
 
 /**
@@ -609,14 +713,7 @@ function attachUnknownBadgeTooltip(badge, result) {
           : "";
 
   badge.addEventListener("mouseenter", () => {
-    if (!activeTooltip) {
-      activeTooltip = document.createElement("div");
-      activeTooltip.setAttribute("role", "tooltip");
-      document.body.appendChild(activeTooltip);
-    }
-    applyTooltipBaseStyles(activeTooltip, true);
-
-    activeTooltip.innerHTML = `
+    const html = `
       <span class="bt-tooltip-title">BLOCKTRUST™ — Non certifié</span>
       <div class="bt-tooltip-row bt-tooltip-muted">
         ${knownHint}
@@ -628,22 +725,12 @@ function attachUnknownBadgeTooltip(badge, result) {
         → Certifier son identité sur blocktrust.tech
       </a>
     `;
-
-    const link = activeTooltip.querySelector("a");
-    if (link) styleTooltipLink(link);
-
-    bindInteractiveTooltipDismiss(activeTooltip);
-    positionTooltip(activeTooltip, badge);
-    requestAnimationFrame(() => {
-      if (activeTooltip) setTooltipVisible(activeTooltip, true);
-    });
+    openTooltip(badge, html, true);
   });
 
   badge.addEventListener("mouseleave", (e) => {
-    if (activeTooltip?.contains(e.relatedTarget)) {
-      return;
-    }
-    scheduleHideBadgeTooltip(100);
+    if (activeTooltip?.contains(e.relatedTarget)) return;
+    scheduleHideBadgeTooltip(TOOLTIP_MOUSELEAVE_MS);
   });
 }
 
@@ -706,7 +793,11 @@ function createVerifyBadge(result) {
       typeof result.trustScore === "number" && Number.isFinite(result.trustScore)
         ? Math.round(result.trustScore)
         : null;
-    const mainLine = score != null ? `✓ Certifié • Score ${score}/100` : "✓ Certifié BLOCKTRUST™";
+    const mainLine = result.officialAccount
+      ? "✓ Compte officiel BLOCKTRUST™"
+      : score != null
+        ? `✓ Certifié • Score ${score}/100`
+        : "✓ Certifié BLOCKTRUST™";
     const networkLine =
       result.signals?.inNetwork && result.signals?.inContact
         ? `<span class="bt-bis-sub">Dans votre réseau · Contact vérifié</span>`
@@ -758,6 +849,7 @@ function createVerifyBadge(result) {
   }
 
   badge.className = `bt-trust-badge bt-badge ${statusClass}`;
+  badge.setAttribute(BT_UI_MARKER, "1");
   badge.setAttribute("style", baseStyles + colorStyles);
   badge.innerHTML = innerHtml;
 
@@ -778,10 +870,15 @@ function createVerifyBadge(result) {
  * @param {HTMLElement} badge
  */
 function injectBadge(senderElement, badge) {
+  if (isInsideComposeArea(senderElement)) {
+    console.warn("[BLOCKTRUST] Badge ignoré — élément dans un composeur");
+    return;
+  }
+
   const parent = senderElement.parentElement;
   if (!parent) {
+    if (senderElement.nextElementSibling?.classList?.contains("bt-trust-badge")) return;
     senderElement.insertAdjacentElement("afterend", badge);
-    console.log("[BLOCKTRUST] Badge injecté (afterend):", badge.textContent);
     return;
   }
 
@@ -789,7 +886,6 @@ function injectBadge(senderElement, badge) {
   if (existing) existing.remove();
 
   parent.insertBefore(badge, senderElement.nextSibling);
-  console.log("[BLOCKTRUST] Badge injecté:", badge.textContent);
 }
 
 /**
@@ -812,11 +908,13 @@ function isOpenEmailView() {
   const main = document.querySelector('[role="main"]');
   if (!main) return false;
 
-  const openBody = main.querySelector(".a3s.aiL, .a3s.aiL > div");
-  if (openBody) return true;
+  const receivedBodies = Array.from(main.querySelectorAll(".a3s.aiL")).filter(
+    (body) => !isInsideComposeArea(body),
+  );
+  if (receivedBodies.length > 0) return true;
 
   const threadMessage = main.querySelector(".gs .gD[email], .gs [email].go");
-  if (threadMessage) return true;
+  if (threadMessage && !isInsideComposeArea(threadMessage)) return true;
 
   return false;
 }
@@ -831,12 +929,14 @@ function getOpenMessageRoot() {
 
   const bodies = main.querySelectorAll(".a3s.aiL");
   if (bodies.length > 0) {
-    const last = bodies[bodies.length - 1];
+    const received = Array.from(bodies).filter((b) => !isInsideComposeArea(b));
+    const last = received[received.length - 1];
+    if (!last) return null;
     return last.closest(".gs") || last.closest("[data-message-id]") || last.parentElement;
   }
 
   const headerInThread = main.querySelector(".gs .gD[email], .gs [email].go");
-  if (headerInThread) {
+  if (headerInThread && !isInsideComposeArea(headerInThread)) {
     return headerInThread.closest(".gs") || headerInThread.closest(".adn") || main;
   }
 
@@ -860,6 +960,7 @@ function extractSenderFromOpenEmail() {
     if (!el) continue;
 
     if (el.closest("tr.zA, .zA")) continue;
+    if (isInsideComposeArea(el)) continue;
 
     const raw =
       el.getAttribute("email") ||
@@ -888,7 +989,7 @@ let lastProcessedKey = null;
  * Scan uniquement l’email ouvert — ajout à la queue si nécessaire.
  */
 function processOpenEmailSender() {
-  hideBadgeTooltip();
+  destroyTooltip();
 
   if (!isOpenEmailView()) {
     lastProcessedKey = null;
@@ -924,18 +1025,49 @@ function processOpenEmailSender() {
 /** Debounce : Gmail émet énormément de mutations */
 let gmailDebounceId = null;
 
+/**
+ * @param {Node} node
+ * @returns {boolean}
+ */
+function nodeIsBtUiMutation(node) {
+  if (!(node instanceof Element)) return false;
+  if (node.hasAttribute(BT_UI_MARKER)) return true;
+  if (node.hasAttribute("data-bt-bis-block")) return true;
+  if (node.classList?.contains("bt-trust-badge")) return true;
+  if (node.classList?.contains("bt-tooltip")) return true;
+  if (node.id === "bt-compose-toast" || node.id === "bt-bis-auto-badge") return true;
+  if (node.closest(`[${BT_UI_MARKER}]`)) return true;
+  if (node.closest("[data-bt-bis-block]")) return true;
+  return false;
+}
+
+/**
+ * @param {MutationRecord} mutation
+ * @returns {boolean}
+ */
+function isIgnorableGmailMutation(mutation) {
+  if (nodeIsBtUiMutation(mutation.target)) return true;
+  for (const node of mutation.addedNodes) {
+    if (nodeIsBtUiMutation(node)) return true;
+  }
+  for (const node of mutation.removedNodes) {
+    if (nodeIsBtUiMutation(node)) return true;
+  }
+  return false;
+}
+
 function scheduleGmailScan() {
   if (gmailDebounceId !== null) clearTimeout(gmailDebounceId);
   gmailDebounceId = setTimeout(() => {
     gmailDebounceId = null;
     if (!isOpenEmailView()) return;
-    console.log("[BLOCKTRUST] DOM changé — scan email ouvert...");
     processOpenEmailSender();
-  }, 400);
+  }, GMAIL_SCAN_DEBOUNCE_MS);
 }
 
 function observeGmail() {
-  const observer = new MutationObserver(() => {
+  const observer = new MutationObserver((mutations) => {
+    if (mutations.every(isIgnorableGmailMutation)) return;
     scheduleGmailScan();
   });
 
@@ -945,6 +1077,7 @@ function observeGmail() {
     attributes: false,
   });
 
+  purgePollutedBadgesFromCompose();
   scheduleGmailScan();
 }
 

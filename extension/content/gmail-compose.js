@@ -17,6 +17,8 @@
   const TOAST_DURATION_MS = 2000;
 
   const BIS_BLOCK_MARKER = "data-bt-bis-block";
+  const ATTR_BIS_BTN = "data-bt-bis-btn";
+  const ATTR_BIS_READY = "data-bt-bis-ready";
   const ATTR_BIS_DONE = "data-bt-bis-done";
   const ATTR_BIS_PENDING = "data-bt-bis-pending";
   const ATTR_BIS_RELEASED = "data-bt-bis-released";
@@ -37,8 +39,8 @@
   /** @type {number | null} */
   let composeDebounceId = null;
 
-  /** @type {Set<Element>} */
-  const rootsWithButton = new Set();
+  /** @type {WeakSet<Element>} */
+  const initializedComposers = new WeakSet();
 
   /** @type {Map<Element, { signed: boolean, signing: boolean }>} */
   const composeState = new Map();
@@ -671,11 +673,10 @@
   }
 
   function removeAllComposeButtons() {
-    rootsWithButton.forEach((root) => {
-      const btn = root.querySelector(".bt-bis-btn");
-      if (btn) btn.remove();
+    document.querySelectorAll(`[${ATTR_BIS_BTN}]`).forEach((btn) => btn.remove());
+    document.querySelectorAll(`[${ATTR_BIS_READY}]`).forEach((root) => {
+      root.removeAttribute(ATTR_BIS_READY);
     });
-    rootsWithButton.clear();
     composeState.clear();
   }
 
@@ -684,13 +685,16 @@
    */
   async function injectSelectiveButton(root) {
     if (!deps || currentMode !== BIS_MODES.SELECTIVE) return;
-    if (rootsWithButton.has(root)) return;
-
-    const toolbar = findComposeToolbar(root);
-    if (!toolbar || toolbar.querySelector(".bt-bis-btn")) {
-      rootsWithButton.add(root);
+    if (initializedComposers.has(root)) return;
+    if (root.getAttribute(ATTR_BIS_READY) === "1") return;
+    if (root.querySelector(`[${ATTR_BIS_BTN}]`)) {
+      root.setAttribute(ATTR_BIS_READY, "1");
+      initializedComposers.add(root);
       return;
     }
+
+    const toolbar = findComposeToolbar(root);
+    if (!toolbar) return;
 
     const button = document.createElement("div");
     button.className = "bt-bis-btn";
@@ -698,6 +702,7 @@
     button.setAttribute("tabindex", "0");
     button.setAttribute("aria-label", "Signer avec BLOCKTRUST BIS");
     button.setAttribute(BT_UI_MARKER, "1");
+    button.setAttribute(ATTR_BIS_BTN, "1");
 
     const apiKey = await deps.getApiKey();
     setButtonState(button, apiKey ? "ready" : "disabled");
@@ -716,7 +721,8 @@
     });
 
     toolbar.appendChild(button);
-    rootsWithButton.add(root);
+    root.setAttribute(ATTR_BIS_READY, "1");
+    initializedComposers.add(root);
     composeState.set(root, { signed: false, signing: false });
 
     const bodyEl = findComposeBody(root);
@@ -860,6 +866,9 @@
 
     if (currentMode === BIS_MODES.SELECTIVE) {
       findComposeRoots().forEach((root) => {
+        if (initializedComposers.has(root) || root.getAttribute(ATTR_BIS_READY) === "1") {
+          return;
+        }
         void injectSelectiveButton(root);
       });
     } else {
