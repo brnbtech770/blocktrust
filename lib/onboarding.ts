@@ -18,7 +18,8 @@ export type OnboardingStepId =
   | "kyc"
   | "finish"
   | "mcp"
-  | "extensions-api";
+  | "extensions-api"
+  | "certification-vs-bis";
 
 export type OnboardingFeature =
   | "bis"
@@ -108,7 +109,7 @@ export const ONBOARDING_FEATURE_TOOLTIPS: Record<
   },
   extension: {
     message:
-      "Générez votre clé API et installez l'extension pour protéger vos emails dans Gmail.",
+      "TrustScan vérifie automatiquement l'identité de vos correspondants (badge vert/gris). La signature BIS est une option séparée.",
     linkHref: "/dashboard/extension",
     linkLabel: "Ouvrir Extensions",
   },
@@ -143,6 +144,7 @@ export const ONBOARDING_TOUR_STEP_IDS: OnboardingStepId[] = [
 export const ONBOARDING_ENCYCLOPEDIA: EncyclopediaEntry[] = [
   { icon: "📌", label: "Mon badge certifié", stepId: "badge" },
   { icon: "🧩", label: "Extension Chrome TrustScan", stepId: "extension" },
+  { icon: "📋", label: "Certification vs BIS — comprendre la différence", stepId: "certification-vs-bis" },
   { icon: "👥", label: "Mes contacts", stepId: "contacts" },
   { icon: "🛡️", label: "Trust Circle", stepId: "trust-circle" },
   { icon: "📊", label: "TrustScore & Trust Graph", stepId: "trustscore" },
@@ -184,22 +186,35 @@ export const ONBOARDING_STEP_CONTENT: Record<OnboardingStepId, OnboardingStep> =
   },
   extension: {
     id: "extension",
-    title: "Protégez vos emails avec TrustScan",
-    body: "Installez l'extension Chrome ou Outlook selon votre messagerie. Générez votre clé API dans Extensions, puis vérifiez vos correspondants automatiquement.",
+    title: "Vérifiez automatiquement vos correspondants",
+    body: "L'extension Chrome TrustScan vérifie automatiquement l'identité de vos correspondants dans Gmail. C'est passif et invisible — vous n'avez RIEN À FAIRE une fois l'extension installée.",
     bullets: [
-      { label: "Chrome (Gmail)", description: "badge vert ou gris à côté de chaque expéditeur" },
-      { label: "Outlook", description: "même protection dans Microsoft 365 / Outlook Web" },
-      { label: "Clé API", description: "Dashboard → Extensions → Générer ma clé API" },
-      { label: "Sélectif", description: "bouton ✓ BIS dans le composeur (mode recommandé)" },
+      {
+        label: "Badge vert ✓",
+        description: "expéditeur CERTIFIÉ BLOCKTRUST™",
+      },
+      {
+        label: "Badge gris ?",
+        description: "expéditeur NON CERTIFIÉ",
+      },
+      {
+        label: "Badge jaune ⚠",
+        description: "expéditeur suspect (domaine similaire, typosquatting détecté)",
+      },
+    ],
+    extraInfo: [
+      "La vérification est AUTOMATIQUE et INDÉPENDANTE : elle fonctionne dès l'installation, sans action de votre part ; elle ne bloque JAMAIS la réception ni l'envoi d'emails ; elle ne modifie AUCUN email ; elle fonctionne même si le BIS (signature) est désactivé.",
+      "C'est comme un cadenas vert dans la barre d'adresse du navigateur : il vous informe, il ne vous empêche pas de naviguer.",
+      "Ce que la certification N'EST PAS : la certification vérifie l'IDENTITÉ de l'expéditeur, pas le CONTENU de l'email. Pour prouver qu'un email ou un document n'a pas été modifié, utilisez la signature BIS (étape 7).",
     ],
     useCase:
-      "Vous recevez un email de votre banque vous demandant de mettre à jour vos coordonnées. Badge vert → c'est bien votre banque. Badge gris → méfiance, c'est peut-être du phishing. Si votre contact signe habituellement avec BIS mais que cet email n'est PAS signé → alerte de compromission.",
+      "Vous recevez un email de votre banque vous demandant de mettre à jour vos coordonnées. Badge vert → c'est bien votre banque. Badge gris → méfiance, vérifiez par un autre canal avant de cliquer sur un lien. Vous n'avez rien fait — l'extension a vérifié automatiquement.",
     practicalSteps: [
-      "Dashboard → Extensions → Générer ma clé API → Copier",
-      "Chrome : installer TrustScan depuis le Web Store, coller la clé dans Gmail",
-      "Outlook : installer le complément BLOCKTRUST, coller la même clé API",
-      "Les badges apparaissent dans votre messagerie",
-      "Options de l'extension → choisissez votre mode BIS (Sélectif recommandé)",
+      "Installez l'extension depuis le Chrome Web Store",
+      "Dashboard → Extensions → « Générer ma clé API » → « Copier »",
+      "Dans Gmail, cliquez l'icône TrustScan → collez votre clé",
+      "C'est TOUT — les badges apparaissent automatiquement dans Gmail",
+      "Aucune configuration supplémentaire nécessaire",
     ],
     externalHref: CHROME_WEB_STORE_URL,
     externalLabel: "Installer TrustScan",
@@ -297,22 +312,32 @@ export const ONBOARDING_STEP_CONTENT: Record<OnboardingStepId, OnboardingStep> =
   },
   bis: {
     id: "bis",
-    title: "Signez vos interactions",
-    body: "BIS (BlockTrust Interaction Signature) est une signature cryptographique infalsifiable. Elle prouve que VOUS avez envoyé un email ou un document — et que le contenu n'a pas été modifié.",
+    title: "Signez vos interactions importantes",
+    body: "Le BIS (BlockTrust Interaction Signature) est une signature cryptographique VOLONTAIRE. Contrairement à la certification (qui vérifie automatiquement les expéditeurs), le BIS est une ACTION que VOUS décidez de faire pour prouver que c'est bien VOUS qui avez envoyé cet email ou ce document, et que le contenu N'A PAS ÉTÉ MODIFIÉ depuis la signature.",
     bullets: [
-      { label: "EMAIL", description: "prouve que l'email vient bien de vous" },
-      { label: "DOCUMENT", description: "prouve que le fichier n'a pas été altéré (hash SHA-256)" },
-      { label: "CONTRAT", description: "signature contractuelle vérifiable" },
-      { label: "PAIEMENT", description: "preuve d'un ordre de paiement" },
-      { label: "MARKETPLACE", description: "preuve d'une transaction" },
+      {
+        label: "Automatique",
+        description:
+          "tous vos emails sortants sont signés (invisible, pour utilisateurs avancés — activable dans les options de l'extension)",
+      },
+      {
+        label: "Sélectif (recommandé)",
+        description: "bouton ✓ BIS dans le composeur Gmail — vous choisissez quels emails signer",
+      },
+      {
+        label: "Dashboard",
+        description:
+          "pour les documents (hash SHA-256 côté client, le fichier ne quitte JAMAIS votre appareil)",
+      },
     ],
     extraInfo: [
-      "3 façons de signer : extension Chrome (automatique), extension Chrome (sélectif — bouton ✓ BIS dans Gmail), dashboard BIS (documents et cas spéciaux).",
-      "Pour les documents : seule l'empreinte SHA-256 est enregistrée — le fichier ne quitte JAMAIS votre appareil.",
-      "Le destinataire reçoit un email BLOCKTRUST avec un lien de vérification — même sans compte BLOCKTRUST.",
+      "Le BIS et la certification sont INDÉPENDANTS : vous pouvez être certifié sans jamais utiliser le BIS ; vous pouvez utiliser le BIS sans que votre destinataire soit certifié ; désactiver le BIS ne désactive PAS la certification ; la certification vérifie QUI envoie — le BIS prouve CE QUI est envoyé.",
+      "Quand utiliser le BIS : pas pour chaque email du quotidien. Utilisez-le pour un contrat ou document officiel, un email avec RIB ou coordonnées bancaires, un ordre de virement ou validation financière, ou toute interaction où vous voulez une preuve infalsifiable. Bref : quand l'enjeu justifie 2 secondes de plus.",
+      "Ce qui se passe pour le destinataire : il reçoit votre email normalement (Gmail, Outlook, etc.) ; un bloc de vérification est inclus dans le corps : « ✅ Cet email est signé BLOCKTRUST™ (Niveau 3) » avec un lien cliquable ; il peut aussi recevoir une notification email BLOCKTRUST séparée ; pour un document, il dépose le fichier sur la page de vérification → « Document intègre » ou « Document modifié ».",
+      "IMPORTANT — le BIS ne bloque JAMAIS l'envoi : si la signature échoue (réseau lent, serveur indisponible), votre email part quand même — sans signature BIS. Vous recevez une notification discrète. Le BIS est un bonus de sécurité, jamais un obstacle.",
     ],
     useCase:
-      "Vous envoyez un contrat de vente. Vous signez avec BIS. Le client reçoit le contrat + la notification BLOCKTRUST. Il clique « Vérifier » → c'est bien vous, et le contrat n'a pas été modifié. Si quelqu'un intercepte l'email et modifie le contrat → la vérification échoue → fraude détectée.",
+      "Vous envoyez un contrat de vente avec un RIB à votre client. Vous cliquez ✓ BIS dans Gmail. Le client reçoit le contrat AVEC la preuve que c'est bien vous qui l'avez envoyé et que le RIB n'a pas été modifié en transit. Si un escroc intercepte l'email et change le RIB, la vérification BIS échouera → fraude détectée.",
     linkHref: "/dashboard/bis",
     linkLabel: "Signer avec BIS",
   },
@@ -351,6 +376,9 @@ export const ONBOARDING_STEP_CONTENT: Record<OnboardingStepId, OnboardingStep> =
       "verify_domain : vérifie si un domaine est certifié BLOCKTRUST",
       "verify_website : détecte phishing et typosquatting",
       "check_domain_reputation : analyse complète (RDAP, SPF, risque)",
+    ],
+    extraInfo: [
+      "La protection des domaines est un 3ème mécanisme indépendant : la certification vérifie les PERSONNES (qui envoie ?) ; le BIS vérifie les CONTENUS (le document est-il intact ?) ; la protection des domaines vérifie les SITES (est-ce le vrai site ?). Les trois se complètent mais fonctionnent indépendamment.",
     ],
     linkHref: "/verify",
     linkLabel: "Vérifier un domaine",
@@ -431,6 +459,33 @@ export const ONBOARDING_STEP_CONTENT: Record<OnboardingStepId, OnboardingStep> =
     externalLabel: "Chrome Web Store — TrustScan",
     linkHref: "/dashboard/extension",
     linkLabel: "Configurer les extensions",
+  },
+  "certification-vs-bis": {
+    id: "certification-vs-bis",
+    title: "Certification vs BIS : deux protections complémentaires",
+    body: "BLOCKTRUST propose trois mécanismes distincts. Comprendre la différence évite de confondre « qui m'écrit » et « ce qui m'a été envoyé ».",
+    bullets: [
+      {
+        label: "CERTIFICATION (automatique)",
+        description:
+          "vérifie QUI vous écrit. Badge vert = expéditeur certifié BLOCKTRUST. Fonctionne automatiquement, ne bloque rien, toujours actif. → Répond à : « Est-ce vraiment ma banque qui m'écrit ? »",
+      },
+      {
+        label: "BIS — Signature d'interaction (volontaire)",
+        description:
+          "prouve CE QUI a été envoyé. Signature cryptographique du contenu. Activé par vous, quand l'enjeu le justifie. → Répond à : « Ce contrat/RIB est-il bien celui que j'ai envoyé ? »",
+      },
+      {
+        label: "DOMAINES (automatique)",
+        description:
+          "vérifie les SITES WEB. Détecte les copies et le typosquatting. → Répond à : « Ce site est-il le vrai ou une copie ? »",
+      },
+    ],
+    extraInfo: [
+      "Les trois sont INDÉPENDANTS : désactiver le BIS ne désactive pas la certification. Un expéditeur certifié peut envoyer un email non signé BIS. Un site vérifié peut avoir un propriétaire non certifié.",
+    ],
+    linkHref: "/dashboard/extension",
+    linkLabel: "Configurer TrustScan",
   },
 };
 

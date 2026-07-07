@@ -36,7 +36,9 @@ export function WelcomeUsageGuideSections({
       <Section style={stepBlock}>
         <Text style={stepTitle}>1️⃣ Installez l&apos;extension Chrome</Text>
         <Text style={stepLead}>
-          Protégez vos emails dans Gmail automatiquement :
+          L&apos;extension vérifie AUTOMATIQUEMENT l&apos;identité de vos correspondants dans Gmail
+          (badge vert ou gris). Indépendamment, vous pouvez CHOISIR de signer vos emails
+          importants avec BIS pour prouver leur authenticité.
         </Text>
         <Text style={stepItem}>
           → Installez TrustScan :{' '}
@@ -54,7 +56,8 @@ export function WelcomeUsageGuideSections({
         <Text style={stepItem}>→ Collez-la dans l&apos;extension TrustScan</Text>
         <Text style={result}>
           <strong>Résultat :</strong> un badge vert ou gris apparaît à côté de chaque expéditeur
-          dans Gmail. Vous savez immédiatement si votre correspondant est certifié.
+          dans Gmail — certification passive, sans action de votre part. La signature BIS reste
+          optionnelle et distincte.
         </Text>
       </Section>
 

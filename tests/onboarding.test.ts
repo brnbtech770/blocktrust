@@ -17,10 +17,28 @@ describe("onboarding", () => {
   });
 
   it("encyclopedia covers all major features including MCP", () => {
-    expect(ONBOARDING_ENCYCLOPEDIA).toHaveLength(11);
+    expect(ONBOARDING_ENCYCLOPEDIA).toHaveLength(12);
     expect(ONBOARDING_ENCYCLOPEDIA.map((e) => e.stepId)).toContain("mcp");
     expect(ONBOARDING_ENCYCLOPEDIA.map((e) => e.stepId)).toContain("vault");
     expect(ONBOARDING_ENCYCLOPEDIA.map((e) => e.stepId)).toContain("domains");
+    expect(ONBOARDING_ENCYCLOPEDIA.map((e) => e.stepId)).toContain("certification-vs-bis");
+  });
+
+  it("extension, BIS et domaines ancrent l'indépendance certification / BIS", () => {
+    const extension = getOnboardingStep("extension");
+    const bis = getOnboardingStep("bis");
+    const domains = getOnboardingStep("domains");
+    const combined = [
+      extension.body,
+      ...(extension.extraInfo ?? []),
+      bis.body,
+      ...(bis.extraInfo ?? []),
+      domains.body,
+      ...(domains.extraInfo ?? []),
+    ].join(" ");
+    expect(combined.toLowerCase()).toContain("indépendant");
+    expect(extension.title).toBe("Vérifiez automatiquement vos correspondants");
+    expect(bis.title).toBe("Signez vos interactions importantes");
   });
 
   it("each tour step has body and title", () => {
