@@ -2,14 +2,14 @@
 // Logique verify-sender partagée (extension + MCP).
 // ============================================================
 
-import type { Certificate, Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/app/lib/db";
+import { isOfficialEmail } from "@/lib/official-trust";
 import {
   buildExtensionVerifyResult,
   buildOfficialExtensionVerifyPayload,
   collectContactEntityKeys,
   entityMatchesSender,
-  isOfficialSenderEmail,
   normalizeSenderDomain,
   normalizeSenderEmail,
   type ExtensionVerifyContext,
@@ -29,71 +29,6 @@ const entityInclude = {
 };
 
 type EntityWithCerts = Prisma.EntityGetPayload<{ include: typeof entityInclude }>;
-
-function certIsFullyActiveForExtension(c: Certificate, now: Date): boolean {
-  if (c.status === "REVOKED" || c.status === "SUSPENDED") return false;
-  if (c.status === "EXPIRED") return false;
-  if (c.expiresAt && c.expiresAt < now) return false;
-  return c.status === "ACTIVE" || c.status === "ANCHORED";
-}
-
-function pickBestCertForExtension(certs: Certificate[]): Certificate | null {
-  if (certs.length === 0) return null;
-  const order: Certificate["status"][] = [
-    "ACTIVE",
-    "ANCHORED",
-    "PENDING",
-    "SUSPENDED",
-    "REVOKED",
-    "EXPIRED",
-  ];
-  const sorted = [...certs].sort(
-    (a, b) => order.indexOf(a.status) - order.indexOf(b.status),
-  );
-  return sorted[0] ?? null;
-}
-
-function findOwnerActiveEntity(
-  ownEntities: EntityWithCerts[],
-): EntityWithCerts | null {
-  const now = new Date();
-  for (const entity of ownEntities) {
-    const cert = pickBestCertForExtension(entity.certificates);
-    if (cert && certIsFullyActiveForExtension(cert, now)) {
-      return entity;
-    }
-  }
-  return null;
-}
-
-function collectOwnerSenderEmails(
-  userEmail: string | null,
-  certifiedEmails: string[],
-  ownEntities: EntityWithCerts[],
-): Set<string> {
-  const ownerEmails = new Set<string>();
-  if (userEmail) ownerEmails.add(normalizeSenderEmail(userEmail));
-  for (const em of certifiedEmails) {
-    if (em?.trim()) ownerEmails.add(normalizeSenderEmail(em));
-  }
-  for (const entity of ownEntities) {
-    if (entity.email?.trim()) ownerEmails.add(normalizeSenderEmail(entity.email));
-    for (const em of entity.certifiedEmails) {
-      if (em?.trim()) ownerEmails.add(normalizeSenderEmail(em));
-    }
-  }
-  return ownerEmails;
-}
-
-function senderIsApiKeyOwner(
-  emailNorm: string,
-  userEmail: string | null,
-  certifiedEmails: string[],
-  ownEntities: EntityWithCerts[],
-): boolean {
-  if (!emailNorm) return false;
-  return collectOwnerSenderEmails(userEmail, certifiedEmails, ownEntities).has(emailNorm);
-}
 
 /** Recherche globale d'entités certifiées correspondant à l'expéditeur. */
 export async function findGlobalEntitiesMatchingSender(
@@ -152,7 +87,7 @@ export async function runExtensionVerifySender(params: {
   const emailNorm = normalizeSenderEmail(emailRaw);
   const domainNorm = normalizeSenderDomain(domainRaw);
 
-  if (emailNorm && isOfficialSenderEmail(emailNorm)) {
+  if (emailNorm && isOfficialEmail(emailNorm)) {
     const userEmail = await prisma.user
       .findUnique({ where: { id: params.userId }, select: { email: true } })
       .then((u) => u?.email ?? null)
@@ -203,17 +138,6 @@ export async function runExtensionVerifySender(params: {
     contactEntityDomains: contactKeys.domains,
   };
 
-  const ownerActiveEntity =
-    emailNorm &&
-    senderIsApiKeyOwner(
-      emailNorm,
-      userEmail,
-      userProfile?.certifiedEmails ?? [],
-      ownEntities,
-    )
-      ? findOwnerActiveEntity(ownEntities)
-      : null;
-
   const payload = await enrichExtensionPayloadWithBis({
     payload: buildExtensionVerifyResult(
       entities,
@@ -221,7 +145,6 @@ export async function runExtensionVerifySender(params: {
       domainRaw,
       baseUrl,
       verifyContext,
-      ownerActiveEntity,
     ),
     bisId: bisIdRaw || null,
     recipientEmail: userEmail,

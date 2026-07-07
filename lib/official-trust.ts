@@ -27,6 +27,11 @@ export function isOfficialRootOfTrustEmail(
   return getInternalEmailList().includes(e);
 }
 
+/** Expéditeur Root of Trust — statut OBJECTIF pour tous les viewers. */
+export function isOfficialEmail(email: string | null | undefined): boolean {
+  return isOfficialRootOfTrustEmail(email);
+}
+
 /**
  * Entité officielle — critère : Entity.email uniquement (pas le propriétaire).
  */

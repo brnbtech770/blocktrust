@@ -223,19 +223,28 @@ describe('Extension verify-sender', () => {
     expect(isOfficialSenderEmail('unknown@nowhere.test')).toBe(false)
   })
 
-  it('expéditeur = email compte mais entité sur autre email → CERTIFIED via ownerActiveEntity', () => {
-    const ownerEntity = makeEntity('olivier@blocktrust.tech', 'ACTIVE', 92)
-    const result = buildExtensionVerifyResult(
-      [],
-      'brnbtech@gmail.com',
-      'gmail.com',
-      BASE_URL,
-      emptyCtx,
-      ownerEntity,
-    )
+  it('contact ajouté par user sans certificat global → IN_CONTACTS, pas CERTIFIED', () => {
+    const ctx: ExtensionVerifyContext = {
+      ...emptyCtx,
+      contactEntityEmails: ['vendor@acme.fr'],
+    }
+    const result = buildExtensionVerifyResult([], 'vendor@acme.fr', '', BASE_URL, ctx)
 
-    expect(result.status).toBe('CERTIFIED')
-    expect(result.verified).toBe(true)
-    expect(result.entityName).toContain('Jean')
+    expect(result.status).toBe('IN_CONTACTS')
+    expect(result.verified).toBe(false)
+  })
+
+  it('email compte user sans entité certifiée globale → IN_CONTACTS (pas viewer-dependent)', () => {
+    const ctx: ExtensionVerifyContext = {
+      userCertifiedEmails: ['mine@blocktrust.tech'],
+      userCertifiedDomains: [],
+      trustRelationEmails: [],
+      contactEntityEmails: [],
+      contactEntityDomains: [],
+    }
+    const result = buildExtensionVerifyResult([], 'mine@blocktrust.tech', '', BASE_URL, ctx)
+
+    expect(result.status).toBe('IN_CONTACTS')
+    expect(result.verified).toBe(false)
   })
 })

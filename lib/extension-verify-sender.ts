@@ -331,8 +331,6 @@ export function buildExtensionVerifyResult(
   domainRaw: string,
   baseUrl: string,
   context?: ExtensionVerifyContext,
-  /** Entité certifiée du propriétaire de la clé API quand l'expéditeur est l'utilisateur lui-même. */
-  ownerActiveEntity?: EntityWithCerts | null,
 ): ExtensionVerifyPayload {
   const emailNorm = normalizeSenderEmail(emailRaw);
   const domainNorm = normalizeSenderDomain(domainRaw);
@@ -360,9 +358,6 @@ export function buildExtensionVerifyResult(
   }
 
   const matches = entities.filter((e) => entityMatchesSender(e, emailNorm, domainNorm));
-  if (matches.length === 0 && ownerActiveEntity) {
-    matches.push(ownerActiveEntity);
-  }
   if (matches.length === 0) {
     const signals = buildSignals(null, null, emailNorm, domainNorm, ctx);
     if (signals.inNetwork || signals.inContact) {
