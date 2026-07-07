@@ -14,6 +14,7 @@
   const WATCHDOG_MS = 1500;
   const SELECTIVE_SIGN_TIMEOUT_MS = 8000;
   const COMPOSE_SCAN_DEBOUNCE_MS = 300;
+  const BIS_WARM_DEBOUNCE_MS = 1200;
   const TOAST_DURATION_MS = 2000;
 
   const BIS_BLOCK_MARKER = "data-bt-bis-block";
@@ -44,6 +45,18 @@
 
   /** @type {Map<Element, { signed: boolean, signing: boolean }>} */
   const composeState = new Map();
+
+  /**
+   * Signature BIS en cache par composeur (warm-up ou sign manuel).
+   * @type {Map<Element, { contentHash: string, bisId: string, verifyUrl: string }>}
+   */
+  const bisSignatureByRoot = new Map();
+
+  /** @type {Map<Element, number>} */
+  const bisWarmDebounceByRoot = new Map();
+
+  /** @type {WeakSet<Element>} */
+  const bodyInvalidationBound = new WeakSet();
 
   let autoSendHookInstalled = false;
   let composeObserver = null;
@@ -500,26 +513,58 @@
 
   /**
    * @param {Element} root
-   * @param {{ silent?: boolean, timeoutMs?: number }} [options]
-   * @returns {Promise<{ ok: true, bisId: string } | { ok: false, reason: string }>}
    */
-  async function signBis(root, options = {}) {
-    if (!deps) return { ok: false, reason: "not_initialized" };
+  function invalidateBisForRoot(root) {
+    bisSignatureByRoot.delete(root);
+    const bodyEl = findComposeBody(root);
+    if (bodyEl) removeExistingBisBlocks(bodyEl);
 
-    if (root.getAttribute(ATTR_BIS_DONE) === "1") {
-      return { ok: false, reason: "send_already_triggered" };
+    const state = composeState.get(root);
+    if (state) {
+      composeState.set(root, { signed: false, signing: false });
     }
 
+    const btn = root.querySelector(`[${ATTR_BIS_BTN}]`);
+    if (btn instanceof HTMLElement) {
+      setButtonState(btn, deps ? "ready" : "disabled");
+    }
+  }
+
+  /**
+   * @param {Element} root
+   */
+  function bindBodyInvalidation(root) {
+    if (bodyInvalidationBound.has(root)) return;
     const bodyEl = findComposeBody(root);
-    if (!bodyEl) return { ok: false, reason: "no_body" };
-    if (hasBisBlock(bodyEl)) return { ok: true, bisId: "existing" };
+    if (!bodyEl) return;
+
+    bodyInvalidationBound.add(root);
+    bodyEl.addEventListener("input", () => {
+      const cached = bisSignatureByRoot.get(root);
+      const currentText = extractBodyText(bodyEl);
+      if (!cached && !hasBisBlock(bodyEl)) return;
+
+      void sha256Text(currentText).then((hash) => {
+        if (cached && cached.contentHash === hash && hasBisBlock(bodyEl)) return;
+        invalidateBisForRoot(root);
+      });
+    });
+  }
+
+  /**
+   * @param {Element} root
+   * @param {string} contentHash
+   * @param {{ silent?: boolean, timeoutMs?: number }} [options]
+   * @returns {Promise<{ ok: true, bisId: string, verifyUrl: string, contentHash: string } | { ok: false, reason: string }>}
+   */
+  async function requestBisSignature(root, contentHash, options = {}) {
+    if (!deps) return { ok: false, reason: "not_initialized" };
 
     const apiKey = await deps.getApiKey();
     if (!apiKey) return { ok: false, reason: "no_api_key" };
 
-    const { recipientEmail, subject, bodyText } = extractComposeData(root);
+    const { recipientEmail, subject } = extractComposeData(root);
     if (!recipientEmail) return { ok: false, reason: "no_recipient" };
-    if (!bodyText) return { ok: false, reason: "empty_body" };
 
     if (!options.silent && hasAttachments(root)) {
       showToast(
@@ -528,8 +573,6 @@
         3500,
       );
     }
-
-    const contentHash = await sha256Text(bodyText);
 
     const controller = new AbortController();
     const timeoutMs = options.timeoutMs ?? SELECTIVE_SIGN_TIMEOUT_MS;
@@ -571,12 +614,7 @@
 
       if (!bisId || !verifyUrl) return { ok: false, reason: "incomplete_response" };
 
-      if (!root.isConnected || root.getAttribute(ATTR_BIS_DONE) === "1") {
-        return { ok: false, reason: "compose_closed" };
-      }
-
-      insertBisBlock(bodyEl, bisId, verifyUrl, root);
-      return { ok: true, bisId };
+      return { ok: true, bisId, verifyUrl, contentHash };
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
         return { ok: false, reason: "timeout" };
@@ -585,6 +623,158 @@
     } finally {
       window.clearTimeout(timeoutId);
     }
+  }
+
+  /**
+   * Warm-up AUTO : pré-signature sans insertion de bloc (Neon cold start).
+   * @param {Element} root
+   */
+  function scheduleBisWarmUp(root) {
+    if (currentMode !== BIS_MODES.AUTO || !deps) return;
+
+    const prev = bisWarmDebounceByRoot.get(root);
+    if (prev !== undefined) window.clearTimeout(prev);
+
+    const timerId = window.setTimeout(() => {
+      bisWarmDebounceByRoot.delete(root);
+      if (!root.isConnected) return;
+
+      const bodyEl = findComposeBody(root);
+      if (!bodyEl) return;
+
+      const { recipientEmail, bodyText } = extractComposeData(root);
+      if (!recipientEmail || !bodyText) return;
+
+      void (async () => {
+        const contentHash = await sha256Text(bodyText);
+        const cached = bisSignatureByRoot.get(root);
+        if (cached?.contentHash === contentHash) return;
+
+        const result = await requestBisSignature(root, contentHash, {
+          silent: true,
+          timeoutMs: SELECTIVE_SIGN_TIMEOUT_MS,
+        });
+        if (result.ok) {
+          bisSignatureByRoot.set(root, {
+            contentHash: result.contentHash,
+            bisId: result.bisId,
+            verifyUrl: result.verifyUrl,
+          });
+        }
+      })();
+    }, BIS_WARM_DEBOUNCE_MS);
+
+    bisWarmDebounceByRoot.set(root, timerId);
+  }
+
+  /**
+   * Signe pour envoi AUTO : hash FINAL obligatoire avant insertion.
+   * @param {Element} root
+   * @param {{ timeoutMs?: number }} [options]
+   */
+  async function signBisForSend(root, options = {}) {
+    if (!deps) return { ok: false, reason: "not_initialized" };
+    if (root.getAttribute(ATTR_BIS_DONE) === "1") {
+      return { ok: false, reason: "send_already_triggered" };
+    }
+
+    const bodyEl = findComposeBody(root);
+    if (!bodyEl) return { ok: false, reason: "no_body" };
+
+    const { recipientEmail, bodyText } = extractComposeData(root);
+    if (!recipientEmail) return { ok: false, reason: "no_recipient" };
+    if (!bodyText) return { ok: false, reason: "empty_body" };
+
+    removeExistingBisBlocks(bodyEl);
+
+    const finalHash = await sha256Text(bodyText);
+    const cached = bisSignatureByRoot.get(root);
+
+    let signature = null;
+
+    if (cached && cached.contentHash === finalHash) {
+      signature = cached;
+    } else {
+      const apiResult = await requestBisSignature(root, finalHash, {
+        silent: true,
+        timeoutMs: options.timeoutMs ?? AUTO_RACE_TIMEOUT_MS,
+      });
+      if (!apiResult.ok) return apiResult;
+
+      const bodyTextAfter = extractComposeData(root).bodyText;
+      const hashAfter = await sha256Text(bodyTextAfter);
+      if (hashAfter !== finalHash) {
+        return { ok: false, reason: "content_changed" };
+      }
+
+      signature = {
+        contentHash: apiResult.contentHash,
+        bisId: apiResult.bisId,
+        verifyUrl: apiResult.verifyUrl,
+      };
+      bisSignatureByRoot.set(root, signature);
+    }
+
+    if (!root.isConnected || root.getAttribute(ATTR_BIS_DONE) === "1") {
+      return { ok: false, reason: "compose_closed" };
+    }
+
+    const verifyHash = await sha256Text(extractBodyText(bodyEl));
+    if (verifyHash !== finalHash) {
+      return { ok: false, reason: "content_changed" };
+    }
+
+    insertBisBlock(bodyEl, signature.bisId, signature.verifyUrl, root);
+    return { ok: true, bisId: signature.bisId, reused: cached?.contentHash === finalHash };
+  }
+
+  /**
+   * Signe en mode sélectif (clic ✓ BIS).
+   * @param {Element} root
+   */
+  async function signBisSelective(root) {
+    if (!deps) return { ok: false, reason: "not_initialized" };
+
+    const bodyEl = findComposeBody(root);
+    if (!bodyEl) return { ok: false, reason: "no_body" };
+
+    const { recipientEmail, bodyText } = extractComposeData(root);
+    if (!recipientEmail) return { ok: false, reason: "no_recipient" };
+    if (!bodyText) return { ok: false, reason: "empty_body" };
+
+    removeExistingBisBlocks(bodyEl);
+
+    const finalHash = await sha256Text(bodyText);
+    const apiResult = await requestBisSignature(root, finalHash, {
+      silent: false,
+      timeoutMs: SELECTIVE_SIGN_TIMEOUT_MS,
+    });
+    if (!apiResult.ok) return apiResult;
+
+    const hashAfter = await sha256Text(extractComposeData(root).bodyText);
+    if (hashAfter !== finalHash) {
+      return { ok: false, reason: "content_changed" };
+    }
+
+    bisSignatureByRoot.set(root, {
+      contentHash: finalHash,
+      bisId: apiResult.bisId,
+      verifyUrl: apiResult.verifyUrl,
+    });
+    insertBisBlock(bodyEl, apiResult.bisId, apiResult.verifyUrl, root);
+    return { ok: true, bisId: apiResult.bisId };
+  }
+
+  /**
+   * @deprecated Alias interne — utiliser signBisForSend ou signBisSelective.
+   * @param {Element} root
+   * @param {{ silent?: boolean, timeoutMs?: number }} [options]
+   */
+  async function signBis(root, options = {}) {
+    if (options.silent) {
+      return signBisForSend(root, { timeoutMs: options.timeoutMs });
+    }
+    return signBisSelective(root);
   }
 
   /**
@@ -630,7 +820,7 @@
     composeState.set(root, { signed: false, signing: true });
     setButtonState(button, "signing");
 
-    const result = await signBis(root, { silent: false, timeoutMs: SELECTIVE_SIGN_TIMEOUT_MS });
+    const result = await signBisSelective(root);
 
     if (result.ok) {
       composeState.set(root, { signed: true, signing: false });
@@ -678,6 +868,9 @@
       root.removeAttribute(ATTR_BIS_READY);
     });
     composeState.clear();
+    bisSignatureByRoot.clear();
+    bisWarmDebounceByRoot.forEach((id) => window.clearTimeout(id));
+    bisWarmDebounceByRoot.clear();
   }
 
   /**
@@ -695,6 +888,11 @@
 
     const toolbar = findComposeToolbar(root);
     if (!toolbar) return;
+    if (toolbar.querySelector(`[${ATTR_BIS_BTN}]`)) {
+      root.setAttribute(ATTR_BIS_READY, "1");
+      initializedComposers.add(root);
+      return;
+    }
 
     const button = document.createElement("div");
     button.className = "bt-bis-btn";
@@ -724,6 +922,7 @@
     root.setAttribute(ATTR_BIS_READY, "1");
     initializedComposers.add(root);
     composeState.set(root, { signed: false, signing: false });
+    bindBodyInvalidation(root);
 
     const bodyEl = findComposeBody(root);
     if (bodyEl && hasBisBlock(bodyEl)) {
@@ -812,10 +1011,15 @@
     if (root.getAttribute(ATTR_BIS_PENDING) === "1") return;
 
     const bodyEl = findComposeBody(root);
-    if (bodyEl && hasBisBlock(bodyEl)) return;
-
     const data = extractComposeData(root);
     if (!data.recipientEmail || !data.bodyText) return;
+
+    if (bodyEl && hasBisBlock(bodyEl)) {
+      const finalHash = await sha256Text(data.bodyText);
+      const cached = bisSignatureByRoot.get(root);
+      if (cached && cached.contentHash === finalHash) return;
+      removeExistingBisBlocks(bodyEl);
+    }
 
     event.preventDefault();
     event.stopPropagation();
@@ -825,7 +1029,7 @@
 
     try {
       const result = await Promise.race([
-        signBis(root, { silent: true, timeoutMs: SELECTIVE_SIGN_TIMEOUT_MS }),
+        signBisForSend(root, { timeoutMs: AUTO_RACE_TIMEOUT_MS }),
         sleep(AUTO_RACE_TIMEOUT_MS),
       ]);
 
@@ -876,9 +1080,15 @@
     }
 
     if (currentMode === BIS_MODES.AUTO) {
+      findComposeRoots().forEach((root) => {
+        bindBodyInvalidation(root);
+        scheduleBisWarmUp(root);
+      });
       installAutoSendHook();
       updateAutoBadge();
     } else {
+      bisWarmDebounceByRoot.forEach((id) => window.clearTimeout(id));
+      bisWarmDebounceByRoot.clear();
       uninstallAutoSendHook();
       autoBadgeEl?.remove();
       autoBadgeEl = null;

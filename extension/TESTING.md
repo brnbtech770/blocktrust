@@ -19,7 +19,8 @@ Principe : **l'envoi ne doit jamais être bloqué** — le BIS est un bonus.
 | 5 | Double-clic Envoyer | Clics frénétiques sur Envoyer | **Un seul** envoi, pas de doublon |
 | 6 | Sélectif | Signer (✓ BIS) puis Envoyer ; ou Envoyer sans signer | Les deux cas OK, **pas d'interception** Envoyer |
 | 7 | 2 composeurs | Répondre + nouveau message en parallèle | **Un seul** bouton ✓ BIS par composeur |
-| 8 | Officiels certifiés | Ouvrir email de `brnbtech@gmail.com` | Badge **✓ Compte officiel BLOCKTRUST™**, pas « Non vérifié » |
+| 8 | Officiels certifiés | Ouvrir email de `brnbtech@gmail.com` | Badge **✓ Compte officiel BLOCKTRUST™** pour **tous** les viewers |
+| 9 | Intégrité hash BIS | Pré-signature warm-up, puis taper du texte, Envoyer | Email part ; `/verify/bis/[id]` valide le **contenu final** (ou envoi sans BIS si timeout) |
 
 ## Régressions à vérifier
 
