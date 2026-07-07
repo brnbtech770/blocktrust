@@ -266,6 +266,18 @@ async function processQueue() {
     if (result) {
       const badge = createVerifyBadge(result);
       injectBadge(element, badge);
+    } else {
+      const apiKey = await getApiKey();
+      const fallback = apiKey
+        ? {
+            status: "UNKNOWN",
+            message: "Vérification indisponible — réessayez plus tard.",
+          }
+        : {
+            status: "UNKNOWN",
+            message: "Extension non connectée — configurez votre clé API.",
+          };
+      injectBadge(element, createVerifyBadge(fallback));
     }
 
     await new Promise((r) => setTimeout(r, 300));
@@ -303,6 +315,8 @@ function addToQueue(email, domain, element, bisId) {
 
 /** Tooltip flottant unique (réutilisé entre badges). */
 let activeTooltip = null;
+let tooltipDismissListenersInstalled = false;
+let tooltipHideTimerId = null;
 
 /** Affiche ou masque la tooltip (inline !important — Gmail ignore les classes seules). */
 function setTooltipVisible(tooltip, visible) {
@@ -312,12 +326,49 @@ function setTooltipVisible(tooltip, visible) {
     visible ? "translateY(0)" : "translateY(4px)",
     "important",
   );
+  tooltip.style.setProperty("pointer-events", visible ? "auto" : "none", "important");
 }
 
 function hideBadgeTooltip() {
+  if (tooltipHideTimerId !== null) {
+    clearTimeout(tooltipHideTimerId);
+    tooltipHideTimerId = null;
+  }
   if (activeTooltip) {
     setTooltipVisible(activeTooltip, false);
   }
+}
+
+function scheduleHideBadgeTooltip(delayMs = 120) {
+  if (tooltipHideTimerId !== null) clearTimeout(tooltipHideTimerId);
+  tooltipHideTimerId = setTimeout(() => {
+    tooltipHideTimerId = null;
+    hideBadgeTooltip();
+  }, delayMs);
+}
+
+function ensureTooltipDismissListeners() {
+  if (tooltipDismissListenersInstalled) return;
+  tooltipDismissListenersInstalled = true;
+
+  document.addEventListener("scroll", hideBadgeTooltip, true);
+  document.addEventListener("click", hideBadgeTooltip, true);
+  window.addEventListener("blur", hideBadgeTooltip);
+  window.addEventListener("resize", hideBadgeTooltip);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") hideBadgeTooltip();
+  });
+}
+
+function bindInteractiveTooltipDismiss(tooltip) {
+  tooltip.addEventListener("mouseenter", () => {
+    if (tooltipHideTimerId !== null) {
+      clearTimeout(tooltipHideTimerId);
+      tooltipHideTimerId = null;
+    }
+    setTooltipVisible(tooltip, true);
+  });
+  tooltip.addEventListener("mouseleave", () => scheduleHideBadgeTooltip(80));
 }
 
 function positionTooltip(tooltip, anchor) {
@@ -492,6 +543,7 @@ function attachBadgeTooltip(badge, result) {
     return;
   }
 
+  ensureTooltipDismissListeners();
   badge.style.cursor = "help";
 
   const signals = result.signals || {};
@@ -543,6 +595,7 @@ function attachBadgeTooltip(badge, result) {
  * @param {{ status?: string, message?: string, signals?: { inNetwork?: boolean, inContact?: boolean } }} [result]
  */
 function attachUnknownBadgeTooltip(badge, result) {
+  ensureTooltipDismissListeners();
   badge.style.cursor = "help";
   const inNetwork = Boolean(result?.signals?.inNetwork);
   const inContact = Boolean(result?.signals?.inContact);
@@ -579,6 +632,7 @@ function attachUnknownBadgeTooltip(badge, result) {
     const link = activeTooltip.querySelector("a");
     if (link) styleTooltipLink(link);
 
+    bindInteractiveTooltipDismiss(activeTooltip);
     positionTooltip(activeTooltip, badge);
     requestAnimationFrame(() => {
       if (activeTooltip) setTooltipVisible(activeTooltip, true);
@@ -586,8 +640,10 @@ function attachUnknownBadgeTooltip(badge, result) {
   });
 
   badge.addEventListener("mouseleave", (e) => {
-    if (activeTooltip?.contains(e.relatedTarget)) return;
-    hideBadgeTooltip();
+    if (activeTooltip?.contains(e.relatedTarget)) {
+      return;
+    }
+    scheduleHideBadgeTooltip(100);
   });
 }
 
@@ -832,6 +888,8 @@ let lastProcessedKey = null;
  * Scan uniquement l’email ouvert — ajout à la queue si nécessaire.
  */
 function processOpenEmailSender() {
+  hideBadgeTooltip();
+
   if (!isOpenEmailView()) {
     lastProcessedKey = null;
     return;

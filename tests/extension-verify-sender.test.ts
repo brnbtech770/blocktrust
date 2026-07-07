@@ -203,4 +203,20 @@ describe('Extension verify-sender', () => {
 
     expect(result.status).toBe('IN_CONTACTS')
   })
+
+  it('expéditeur = email compte mais entité sur autre email → CERTIFIED via ownerActiveEntity', () => {
+    const ownerEntity = makeEntity('olivier@blocktrust.tech', 'ACTIVE', 92)
+    const result = buildExtensionVerifyResult(
+      [],
+      'brnbtech@gmail.com',
+      'gmail.com',
+      BASE_URL,
+      emptyCtx,
+      ownerEntity,
+    )
+
+    expect(result.status).toBe('CERTIFIED')
+    expect(result.verified).toBe(true)
+    expect(result.entityName).toContain('Jean')
+  })
 })

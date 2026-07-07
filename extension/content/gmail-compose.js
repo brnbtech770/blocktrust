@@ -1,6 +1,6 @@
 /**
  * BLOCKTRUST™ — Phase 3 : BIS composeur Gmail (auto + sélectif + off)
- * Module séparé de gmail.js (Phase 1+2 inchangées).
+ * Principe : le BIS est un bonus — l'envoi ne doit jamais être bloqué.
  */
 (function initBlockTrustGmailCompose(global) {
   const BIS_MODES = Object.freeze({
@@ -10,15 +10,29 @@
   });
 
   const DEFAULT_BIS_MODE = BIS_MODES.SELECTIVE;
-  const AUTO_SIGN_TIMEOUT_MS = 3000;
-  const BIS_BLOCK_MARKER = "data-blocktrust-bis-block";
-  const AUTO_BYPASS_ATTR = "data-bt-auto-bypass";
+  const AUTO_RACE_TIMEOUT_MS = 2500;
+  const WATCHDOG_MS = 1500;
+  const SELECTIVE_SIGN_TIMEOUT_MS = 8000;
+  const COMPOSE_SCAN_DEBOUNCE_MS = 300;
+  const TOAST_DURATION_MS = 2000;
+
+  const BIS_BLOCK_MARKER = "data-bt-bis-block";
+  const ATTR_BIS_DONE = "data-bt-bis-done";
+  const ATTR_BIS_PENDING = "data-bt-bis-pending";
+  const ATTR_BIS_RELEASED = "data-bt-bis-released";
+  const ATTR_WATCHDOG_RETRY = "data-bt-watchdog-retry";
+  const BT_UI_MARKER = "data-bt-ui";
+  const CIRCUIT_BREAKER_KEY = "bt_bis_auto_failures";
+  const CIRCUIT_BREAKER_THRESHOLD = 2;
 
   /** @type {{ apiBase: string, getApiKey: () => Promise<string|null>, escapeHtml: (v: unknown) => string } | null} */
   let deps = null;
 
   /** @type {string} */
   let currentMode = DEFAULT_BIS_MODE;
+
+  /** Interception AUTO désactivée pour la session (circuit breaker). */
+  let sessionAutoPaused = false;
 
   /** @type {number | null} */
   let composeDebounceId = null;
@@ -67,6 +81,16 @@
     '<svg class="bt-bis-btn-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>';
 
   /**
+   * @param {number} ms
+   * @returns {Promise<{ ok: false, reason: "race_timeout" }>}
+   */
+  function sleep(ms) {
+    return new Promise((resolve) => {
+      window.setTimeout(() => resolve({ ok: false, reason: "race_timeout" }), ms);
+    });
+  }
+
+  /**
    * @returns {boolean}
    */
   function isGmailMobile() {
@@ -74,6 +98,36 @@
     const ua = navigator.userAgent || "";
     if (/Android|iPhone|iPad|iPod|Mobile/i.test(ua) && global.innerWidth < 900) {
       return true;
+    }
+    return false;
+  }
+
+  /**
+   * @param {Node} node
+   * @returns {boolean}
+   */
+  function nodeIsBtUi(node) {
+    if (!(node instanceof Element)) return false;
+    if (node.hasAttribute(BT_UI_MARKER)) return true;
+    if (node.hasAttribute(BIS_BLOCK_MARKER)) return true;
+    if (node.id === "bt-compose-toast" || node.id === "bt-bis-auto-badge") return true;
+    if (node.classList?.contains("bt-bis-btn")) return true;
+    if (node.closest(`[${BT_UI_MARKER}]`)) return true;
+    if (node.closest(`[${BIS_BLOCK_MARKER}]`)) return true;
+    return false;
+  }
+
+  /**
+   * @param {MutationRecord} mutation
+   * @returns {boolean}
+   */
+  function isIgnorableMutation(mutation) {
+    if (nodeIsBtUi(mutation.target)) return true;
+    for (const node of mutation.addedNodes) {
+      if (nodeIsBtUi(node)) return true;
+    }
+    for (const node of mutation.removedNodes) {
+      if (nodeIsBtUi(node)) return true;
     }
     return false;
   }
@@ -124,7 +178,7 @@
    * @param {"info"|"error"|"success"} [kind]
    * @param {number} [durationMs]
    */
-  function showToast(message, kind = "info", durationMs = 2000) {
+  function showToast(message, kind = "info", durationMs = TOAST_DURATION_MS) {
     const existing = document.getElementById("bt-compose-toast");
     if (existing) existing.remove();
 
@@ -132,17 +186,26 @@
     toast.id = "bt-compose-toast";
     toast.className = `bt-compose-toast bt-compose-toast-${kind}`;
     toast.setAttribute("role", "status");
+    toast.setAttribute(BT_UI_MARKER, "1");
     toast.textContent = message;
-    document.body.appendChild(toast);
 
-    requestAnimationFrame(() => {
-      toast.classList.add("bt-compose-toast-visible");
-    });
+    try {
+      document.body.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.add("bt-compose-toast-visible");
+      });
 
-    window.setTimeout(() => {
-      toast.classList.remove("bt-compose-toast-visible");
-      window.setTimeout(() => toast.remove(), 200);
-    }, durationMs);
+      window.setTimeout(() => {
+        try {
+          toast.classList.remove("bt-compose-toast-visible");
+          window.setTimeout(() => toast.remove(), 200);
+        } finally {
+          if (toast.isConnected) toast.remove();
+        }
+      }, durationMs);
+    } catch {
+      toast.remove();
+    }
   }
 
   /**
@@ -154,6 +217,40 @@
       const next = [{ at: new Date().toISOString(), ...entry }, ...prev].slice(0, 20);
       chrome.storage.local.set({ bisAutoFailLog: next });
     });
+  }
+
+  function recordInterceptionSuccess() {
+    chrome.storage.local.set({ [CIRCUIT_BREAKER_KEY]: 0 });
+  }
+
+  function recordInterceptionFailure() {
+    chrome.storage.local.get([CIRCUIT_BREAKER_KEY], (result) => {
+      const count = Number(result[CIRCUIT_BREAKER_KEY] || 0) + 1;
+      chrome.storage.local.set({ [CIRCUIT_BREAKER_KEY]: count });
+      if (count >= CIRCUIT_BREAKER_THRESHOLD) {
+        sessionAutoPaused = true;
+        uninstallAutoSendHook();
+        updateAutoBadge();
+        logAutoSignFailure({ reason: "circuit_breaker", count });
+      }
+    });
+  }
+
+  /**
+   * @param {Element} root
+   */
+  function clearComposeFlags(root) {
+    root.removeAttribute(ATTR_BIS_DONE);
+    root.removeAttribute(ATTR_BIS_PENDING);
+    root.removeAttribute(ATTR_WATCHDOG_RETRY);
+  }
+
+  /**
+   * @param {Element} root
+   */
+  function releaseComposeControl(root) {
+    root.setAttribute(ATTR_BIS_RELEASED, "1");
+    clearComposeFlags(root);
   }
 
   /**
@@ -346,6 +443,13 @@
   }
 
   /**
+   * @param {HTMLElement} bodyEl
+   */
+  function removeExistingBisBlocks(bodyEl) {
+    bodyEl.querySelectorAll(`[${BIS_BLOCK_MARKER}]`).forEach((el) => el.remove());
+  }
+
+  /**
    * @param {string} bisId
    * @param {string} verifyUrl
    * @returns {string}
@@ -354,7 +458,7 @@
     const safeUrl = esc(verifyUrl);
     const safeId = esc(bisId);
     return (
-      `<div ${BIS_BLOCK_MARKER}="1" contenteditable="false" ` +
+      `<div ${BIS_BLOCK_MARKER}="1" ${BT_UI_MARKER}="1" contenteditable="false" ` +
       `style="margin:16px 0;padding:10px 14px;border-left:3px solid #00d4ff;` +
       `background:#f0fbff;border-radius:4px;font-family:Arial,sans-serif;font-size:13px;">` +
       `<div style="font-weight:600;color:#0a1628;margin-bottom:4px;">` +
@@ -374,9 +478,12 @@
    * @param {HTMLElement} bodyEl
    * @param {string} bisId
    * @param {string} verifyUrl
+   * @param {Element | null} [root]
    */
-  function insertBisBlock(bodyEl, bisId, verifyUrl) {
-    if (hasBisBlock(bodyEl)) return;
+  function insertBisBlock(bodyEl, bisId, verifyUrl, root = null) {
+    if (root?.getAttribute(ATTR_BIS_DONE) === "1") return;
+
+    removeExistingBisBlocks(bodyEl);
 
     const html = buildBisBlockHtml(bisId, verifyUrl);
     bodyEl.focus();
@@ -394,8 +501,12 @@
    * @param {{ silent?: boolean, timeoutMs?: number }} [options]
    * @returns {Promise<{ ok: true, bisId: string } | { ok: false, reason: string }>}
    */
-  async function signCompose(root, options = {}) {
+  async function signBis(root, options = {}) {
     if (!deps) return { ok: false, reason: "not_initialized" };
+
+    if (root.getAttribute(ATTR_BIS_DONE) === "1") {
+      return { ok: false, reason: "send_already_triggered" };
+    }
 
     const bodyEl = findComposeBody(root);
     if (!bodyEl) return { ok: false, reason: "no_body" };
@@ -419,7 +530,7 @@
     const contentHash = await sha256Text(bodyText);
 
     const controller = new AbortController();
-    const timeoutMs = options.timeoutMs ?? 8000;
+    const timeoutMs = options.timeoutMs ?? SELECTIVE_SIGN_TIMEOUT_MS;
     const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
 
     try {
@@ -458,7 +569,11 @@
 
       if (!bisId || !verifyUrl) return { ok: false, reason: "incomplete_response" };
 
-      insertBisBlock(bodyEl, bisId, verifyUrl);
+      if (!root.isConnected || root.getAttribute(ATTR_BIS_DONE) === "1") {
+        return { ok: false, reason: "compose_closed" };
+      }
+
+      insertBisBlock(bodyEl, bisId, verifyUrl, root);
       return { ok: true, bisId };
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
@@ -513,12 +628,12 @@
     composeState.set(root, { signed: false, signing: true });
     setButtonState(button, "signing");
 
-    const result = await signCompose(root);
+    const result = await signBis(root, { silent: false, timeoutMs: SELECTIVE_SIGN_TIMEOUT_MS });
 
     if (result.ok) {
       composeState.set(root, { signed: true, signing: false });
       setButtonState(button, "signed");
-      showToast("Email signé — le destinataire sera notifié", "success", 2000);
+      showToast("Email signé — le destinataire sera notifié", "success");
       return;
     }
 
@@ -582,6 +697,7 @@
     button.setAttribute("role", "button");
     button.setAttribute("tabindex", "0");
     button.setAttribute("aria-label", "Signer avec BLOCKTRUST BIS");
+    button.setAttribute(BT_UI_MARKER, "1");
 
     const apiKey = await deps.getApiKey();
     setButtonState(button, apiKey ? "ready" : "disabled");
@@ -590,6 +706,7 @@
       e.preventDefault();
       e.stopPropagation();
       if (button.classList.contains("bt-bis-btn--signed")) return;
+      if (button.classList.contains("bt-bis-btn--signing")) return;
       void handleSelectiveSignClick(root, button);
     };
 
@@ -621,16 +738,60 @@
       autoBadgeEl.id = "bt-bis-auto-badge";
       autoBadgeEl.className = "bt-bis-auto-badge";
       autoBadgeEl.setAttribute("role", "status");
-      autoBadgeEl.textContent = "BIS AUTO ✓";
+      autoBadgeEl.setAttribute(BT_UI_MARKER, "1");
       document.body.appendChild(autoBadgeEl);
     }
+
+    if (sessionAutoPaused) {
+      autoBadgeEl.classList.add("bt-bis-auto-badge--paused");
+      autoBadgeEl.textContent = "BIS AUTO ⚠︎ pause";
+    } else {
+      autoBadgeEl.classList.remove("bt-bis-auto-badge--paused");
+      autoBadgeEl.textContent = "BIS AUTO ✓";
+    }
+  }
+
+  /**
+   * @param {Element} root
+   * @param {HTMLElement} sendBtn
+   */
+  function triggerSendWithWatchdog(root, sendBtn) {
+    root.setAttribute(ATTR_BIS_DONE, "1");
+    root.removeAttribute(ATTR_BIS_PENDING);
+
+    sendBtn.click();
+
+    window.setTimeout(() => {
+      if (!root.isConnected) {
+        recordInterceptionSuccess();
+        clearComposeFlags(root);
+        return;
+      }
+
+      if (root.getAttribute(ATTR_WATCHDOG_RETRY) !== "1") {
+        root.setAttribute(ATTR_WATCHDOG_RETRY, "1");
+        sendBtn.click();
+
+        window.setTimeout(() => {
+          if (!root.isConnected) {
+            recordInterceptionSuccess();
+            clearComposeFlags(root);
+            return;
+          }
+
+          releaseComposeControl(root);
+          recordInterceptionFailure();
+          showToast("BIS désactivé pour cet email — cliquez Envoyer", "info");
+        }, WATCHDOG_MS);
+      }
+    }, WATCHDOG_MS);
   }
 
   /**
    * @param {MouseEvent} event
    */
   async function handleAutoSendClick(event) {
-    if (currentMode !== BIS_MODES.AUTO || !deps) return;
+    if (currentMode !== BIS_MODES.AUTO || !deps || sessionAutoPaused) return;
 
     const sendBtn = findSendButton(event.target);
     if (!sendBtn) return;
@@ -638,10 +799,11 @@
     const root = findComposeRoot(sendBtn);
     if (!root) return;
 
-    if (root.getAttribute(AUTO_BYPASS_ATTR) === "1") {
-      root.removeAttribute(AUTO_BYPASS_ATTR);
-      return;
-    }
+    if (root.getAttribute(ATTR_BIS_RELEASED) === "1") return;
+
+    if (root.getAttribute(ATTR_BIS_DONE) === "1") return;
+
+    if (root.getAttribute(ATTR_BIS_PENDING) === "1") return;
 
     const bodyEl = findComposeBody(root);
     if (bodyEl && hasBisBlock(bodyEl)) return;
@@ -653,24 +815,29 @@
     event.stopPropagation();
     event.stopImmediatePropagation();
 
-    const result = await signCompose(root, {
-      silent: true,
-      timeoutMs: AUTO_SIGN_TIMEOUT_MS,
-    });
+    root.setAttribute(ATTR_BIS_PENDING, "1");
 
-    if (!result.ok) {
-      logAutoSignFailure({ reason: result.reason });
-      showToast("Signature BIS échouée", "error", 2500);
+    try {
+      const result = await Promise.race([
+        signBis(root, { silent: true, timeoutMs: SELECTIVE_SIGN_TIMEOUT_MS }),
+        sleep(AUTO_RACE_TIMEOUT_MS),
+      ]);
+
+      if (!result.ok && result.reason !== "race_timeout") {
+        logAutoSignFailure({ reason: result.reason, phase: "auto_race" });
+      }
+    } catch (err) {
+      logAutoSignFailure({
+        reason: err instanceof Error ? err.message : "exception",
+        phase: "auto_race",
+      });
+    } finally {
+      triggerSendWithWatchdog(root, sendBtn);
     }
-
-    root.setAttribute(AUTO_BYPASS_ATTR, "1");
-    window.setTimeout(() => {
-      sendBtn.click();
-    }, 0);
   }
 
   function installAutoSendHook() {
-    if (autoSendHookInstalled) return;
+    if (autoSendHookInstalled || sessionAutoPaused) return;
     document.addEventListener("click", handleAutoSendClick, true);
     autoSendHookInstalled = true;
   }
@@ -714,7 +881,7 @@
     composeDebounceId = window.setTimeout(() => {
       composeDebounceId = null;
       scanComposeWindows();
-    }, 350);
+    }, COMPOSE_SCAN_DEBOUNCE_MS);
   }
 
   /**
@@ -738,6 +905,16 @@
     deps = options;
     currentMode = await getBisMode();
 
+    chrome.storage.local.get([CIRCUIT_BREAKER_KEY], (result) => {
+      const failures = Number(result[CIRCUIT_BREAKER_KEY] || 0);
+      if (failures >= CIRCUIT_BREAKER_THRESHOLD) {
+        sessionAutoPaused = true;
+      }
+      if (currentMode === BIS_MODES.AUTO) {
+        updateAutoBadge();
+      }
+    });
+
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== "local" || !changes.bisMode) return;
       const next = changes.bisMode.newValue;
@@ -750,10 +927,11 @@
       }
     });
 
-    console.log("[BLOCKTRUST] Compose BIS Phase 3 — mode:", currentMode);
+    console.log("[BLOCKTRUST] Compose BIS v1.0.9 — mode:", currentMode);
 
     if (composeObserver) composeObserver.disconnect();
-    composeObserver = new MutationObserver(() => {
+    composeObserver = new MutationObserver((mutations) => {
+      if (mutations.every(isIgnorableMutation)) return;
       scheduleComposeScan();
     });
     composeObserver.observe(document.body, {
