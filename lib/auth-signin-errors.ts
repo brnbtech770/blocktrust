@@ -6,10 +6,9 @@ export const CREDENTIALS_ERROR_MESSAGE =
   "Email ou mot de passe incorrect.";
 
 export const NO_PASSWORD_ERROR_MESSAGE =
-  "Connectez-vous via Google, le lien magique, ou définissez un mot de passe via « Mot de passe oublié ».";
+  "Ce compte utilise Google. Connectez-vous via Google ou définissez un mot de passe dans vos paramètres.";
 
-export const LOCKOUT_15M_MESSAGE =
-  "Compte verrouillé 15 minutes après plusieurs tentatives incorrectes.";
+export const LOCKOUT_15M_MESSAGE = "Compte verrouillé 15 minutes.";
 
 export const LOCKOUT_1H_MESSAGE =
   "Compte verrouillé 1 heure après de nombreuses tentatives incorrectes.";

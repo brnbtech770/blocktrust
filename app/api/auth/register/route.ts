@@ -159,27 +159,41 @@ export async function POST(req: NextRequest) {
 
     if (existing) {
       return NextResponse.json(
-        { error: "Une erreur est survenue. Vérifiez vos informations." },
-        { status: 400 },
+        { error: "Cet email est déjà utilisé." },
+        { status: 409 },
       );
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await prisma.user.create({
-      data: {
-        name: `${firstName} ${lastName}`.trim(),
-        email: emailNorm,
-        password: hashedPassword,
-        sessionVersion: 0,
-        cguAcceptedAt: new Date(),
-        cguVersion: LEGAL_DOC_VERSION,
-      },
-    });
+    let user;
+    try {
+      user = await prisma.user.create({
+        data: {
+          name: `${firstName} ${lastName}`.trim(),
+          email: emailNorm,
+          password: hashedPassword,
+          sessionVersion: 0,
+          cguAcceptedAt: new Date(),
+          cguVersion: LEGAL_DOC_VERSION,
+        },
+      });
+    } catch (createErr: unknown) {
+      const code =
+        createErr &&
+        typeof createErr === "object" &&
+        "code" in createErr &&
+        (createErr as { code?: string }).code;
+      if (code === "P2002") {
+        return NextResponse.json(
+          { error: "Cet email est déjà utilisé." },
+          { status: 409 },
+        );
+      }
+      throw createErr;
+    }
 
-    console.log(
-      `[register] user created userId=${user.id.slice(0, 8)}... turnstile=${turnstile.skipped ? turnstile.reason : "verified"}`,
-    );
+    console.log(`[register] User created: ${user.id}`);
 
     // Inscription réussie : effacer un éventuel lockout (tentatives login avant création du compte).
     await clearLoginLockout(emailNorm);
@@ -198,7 +212,7 @@ export async function POST(req: NextRequest) {
       resolveWelcomeFirstName(user.name, emailNorm),
     );
 
-    return NextResponse.json({ success: true }, { status: 201 });
+    return NextResponse.json({ success: true, userId: user.id }, { status: 201 });
   } catch (err) {
     console.error("[REGISTER ERROR]", err);
     return NextResponse.json(

@@ -2,9 +2,12 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import Link from "next/link";
-import { sanitizeCallbackUrl } from "@/app/lib/auth-callback-url";
+import {
+  callbackUrlToPath,
+  sanitizeCallbackUrl,
+} from "@/app/lib/auth-callback-url";
 import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
 import {
   CREDENTIALS_ERROR_MESSAGE,
@@ -127,20 +130,36 @@ function SignInContent() {
     setError(null);
     setLoading(true);
     const emailNorm = email.trim().toLowerCase();
+    const redirectPath = callbackUrlToPath(callbackUrl);
     try {
       const result = await signIn("credentials", {
         email: emailNorm,
         password,
-        callbackUrl,
+        callbackUrl: redirectPath,
         redirect: false,
       });
-      if (result?.ok) {
-        router.push(callbackUrl);
+      if (!result) {
+        setError("Erreur de connexion, réessayez");
+        return;
+      }
+      if (result.ok) {
+        router.push(redirectPath);
+        router.refresh();
         return;
       }
       setError(parseCredentialsSignInError(result).message);
     } catch {
-      setError("Erreur de connexion.");
+      try {
+        const session = await getSession();
+        if (session?.user) {
+          router.push(redirectPath);
+          router.refresh();
+          return;
+        }
+      } catch {
+        /* session check failed */
+      }
+      setError("Erreur de connexion, réessayez");
     } finally {
       setLoading(false);
     }

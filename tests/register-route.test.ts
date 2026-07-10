@@ -70,6 +70,7 @@ describe("POST /api/auth/register", () => {
 
     expect(res.status).toBe(201);
     expect(data.success).toBe(true);
+    expect(data.userId).toBe("user-new-1");
     expect(clearLoginLockout).toHaveBeenCalledWith("user@example.com");
     expect(prismaMock.user.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -80,6 +81,20 @@ describe("POST /api/auth/register", () => {
         }),
       }),
     );
+  });
+
+  it("retourne 409 si l'email User existe déjà", async () => {
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: "existing-1",
+      email: "user@example.com",
+    });
+
+    const res = await registerPost(registerRequest(validBody));
+    const data = await res.json();
+
+    expect(res.status).toBe(409);
+    expect(data.error).toContain("déjà utilisé");
+    expect(prismaMock.user.create).not.toHaveBeenCalled();
   });
 
   it("retourne 400 si le mot de passe ne respecte pas la politique", async () => {

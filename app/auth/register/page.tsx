@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { getSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
@@ -10,6 +10,9 @@ import PasswordStrengthIndicator from "@/app/components/auth/PasswordStrengthInd
 import TurnstileWidget from "@/app/components/auth/TurnstileWidget";
 import { validatePassword } from "@/lib/password-policy";
 import { parseCredentialsSignInError } from "@/lib/auth-signin-errors";
+import {
+  isSessionForRegisteredEmail,
+} from "@/lib/register-signin";
 
 const cardClass =
   "mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-6";
@@ -136,28 +139,52 @@ export default function RegisterPage() {
           turnstileBypass: turnstileBypass || undefined,
         }),
       });
-      const data = (await res.json()) as { error?: string };
+      const data = (await res.json()) as { error?: string; success?: boolean; userId?: string };
 
-      if (res.status === 201) {
-        const signInResult = await signIn("credentials", {
+      if (!res.ok || res.status !== 201 || data.success !== true) {
+        setError(data.error || "Une erreur est survenue.");
+        return;
+      }
+
+      // Effacer toute session résiduelle (OAuth / autre compte) avant credentials.
+      await signOut({ redirect: false });
+
+      let signInResult;
+      try {
+        signInResult = await signIn("credentials", {
           email: emailNorm,
           password,
           callbackUrl: "/dashboard",
           redirect: false,
         });
-        if (signInResult?.ok) {
-          router.push("/dashboard");
-          return;
+      } catch {
+        signInResult = null;
+      }
+
+      let sessionOk = false;
+      if (signInResult?.ok) {
+        try {
+          const session = await getSession();
+          sessionOk = isSessionForRegisteredEmail(session, emailNorm);
+        } catch {
+          sessionOk = false;
         }
-        const parsed = parseCredentialsSignInError(signInResult);
-        router.push(
-          `/auth/signin?registered=1&callbackUrl=${encodeURIComponent("/dashboard")}${
-            parsed.code !== "credentials" ? `&error=${encodeURIComponent(parsed.code)}` : ""
-          }`,
-        );
+      }
+
+      if (sessionOk) {
+        router.push("/dashboard");
+        router.refresh();
         return;
       }
-      setError(data.error || "Une erreur est survenue.");
+
+      router.push(
+        `/auth/signin?registered=1&callbackUrl=${encodeURIComponent("/dashboard")}${
+          signInResult
+            ? `&error=${encodeURIComponent(parseCredentialsSignInError(signInResult).code)}`
+            : ""
+        }`,
+      );
+      return;
     } catch {
       setError("Erreur réseau. Réessayez.");
     } finally {

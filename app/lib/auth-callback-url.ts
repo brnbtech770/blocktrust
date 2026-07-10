@@ -26,3 +26,24 @@ export function sanitizeCallbackUrl(url: string | null | undefined): string {
   const candidate = trimmed.length > 0 ? trimmed : "/dashboard";
   return isSafeCallbackUrl(candidate) ? candidate : "/dashboard";
 }
+
+/** Chemin same-origin pour `router.push` (évite les URLs absolues qui ne naviguent pas). */
+export function callbackUrlToPath(url: string): string {
+  const safe = sanitizeCallbackUrl(url);
+  if (safe.startsWith("/")) {
+    return safe;
+  }
+  try {
+    const parsed = new URL(safe);
+    if (
+      parsed.hostname === "blocktrust.tech" ||
+      parsed.hostname === "localhost"
+    ) {
+      const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      return path.length > 0 ? path : "/dashboard";
+    }
+  } catch {
+    /* URL invalide */
+  }
+  return "/dashboard";
+}

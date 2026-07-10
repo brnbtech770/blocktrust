@@ -31,7 +31,7 @@ describe("auth-signin-errors", () => {
       error: "no_password",
     });
     expect(parsed.code).toBe("no_password");
-    expect(parsed.message).toContain("lien magique");
+    expect(parsed.message).toContain("Google");
   });
 
   it("parseCredentialsSignInError — identifiants incorrects par défaut", () => {
