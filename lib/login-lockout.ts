@@ -159,7 +159,7 @@ export async function checkLoginLockout(email: string): Promise<LoginLockoutStat
 
 /** Efface lockout + compteur d'échecs (inscription réussie, déblocage admin). */
 export async function clearLoginLockout(email: string): Promise<void> {
-  await redisDel(failKey(email), lockoutKey(email));
+  await redisDel(failKey(email), lockoutKey(email), lockoutCountKey(email));
 }
 
 export async function recordLoginFailure(
@@ -233,7 +233,7 @@ export async function recordLoginSuccess(
   email: string,
   options?: { ip?: string | null; userId?: string | null },
 ): Promise<void> {
-  await redisDel(failKey(email), lockoutKey(email));
+  await redisDel(failKey(email), lockoutKey(email), lockoutCountKey(email));
 
   writeSecurityAuditLogFireAndForget({
     action: "LOGIN_SUCCESS",

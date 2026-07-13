@@ -16,7 +16,7 @@ import { hasAuthJsSessionCookie } from '@/app/lib/session-cookie-hints'
 import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
 import { rethrowIfRedirect } from '@/app/lib/is-redirect-error'
 import { isDiscoveryExpired, resolveEffectivePlan } from '@/lib/plan-features'
-import { requiresEmailVerification } from '@/lib/email-verification'
+import { requiresEmailVerification, isAccountSuspendedForEmail } from '@/lib/email-verification'
 
 /** Évite cache / flux RSC sans cookies → auth() null alors que l'utilisateur est connecté */
 export const dynamic = 'force-dynamic'
@@ -80,11 +80,16 @@ export default async function DashboardSegmentLayout({
       )
     }
 
-    const showEmailVerificationBanner = requiresEmailVerification({
-      emailVerified: user.emailVerified,
-      createdAt: user.createdAt,
-      accountStatus: user.accountStatus,
-    })
+    const showAccountSuspendedBanner =
+      isAccountSuspendedForEmail(user) && Boolean(user.email)
+
+    const showEmailVerificationBanner =
+      !showAccountSuspendedBanner &&
+      requiresEmailVerification({
+        emailVerified: user.emailVerified,
+        createdAt: user.createdAt,
+        accountStatus: user.accountStatus,
+      })
 
     const effectivePlan = resolveEffectivePlan({
       subscription: user.subscription,
@@ -105,6 +110,11 @@ export default async function DashboardSegmentLayout({
             }}
             emailVerification={
               showEmailVerificationBanner && user.email
+                ? { showBanner: true, email: user.email }
+                : null
+            }
+            accountSuspended={
+              showAccountSuspendedBanner && user.email
                 ? { showBanner: true, email: user.email }
                 : null
             }

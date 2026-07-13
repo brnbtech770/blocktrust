@@ -11,6 +11,7 @@ import {
   getResendVerificationLimiter,
   tryRedisLimit,
 } from "@/lib/rate-limit-redis";
+import { bumpSessionVersion } from "@/lib/session-invalidation";
 
 /** Comptes créés avant cette date : pas de blocage (grandfathering). */
 export const EMAIL_VERIFICATION_REQUIRED_SINCE = new Date("2026-07-13T00:00:00.000Z");
@@ -129,7 +130,7 @@ export async function sendVerificationReminderForUser(
 
 export type VerifyEmailTokenResult =
   | { ok: true }
-  | { ok: false; reason: "missing" | "invalid" | "expired" };
+  | { ok: false; reason: "missing" | "invalid" | "expired"; email?: string };
 
 export async function verifyEmailByToken(token: string | null | undefined): Promise<VerifyEmailTokenResult> {
   const trimmed = token?.trim();
@@ -138,13 +139,14 @@ export async function verifyEmailByToken(token: string | null | undefined): Prom
   const tokenHash = hashToken(trimmed);
   const row = await prisma.emailVerificationToken.findUnique({
     where: { tokenHash },
-    include: { user: { select: { id: true, accountStatus: true } } },
+    include: { user: { select: { id: true, email: true, accountStatus: true } } },
   });
 
   if (!row) return { ok: false, reason: "invalid" };
   if (row.expiresAt.getTime() < Date.now()) {
+    const expiredEmail = row.user.email ?? undefined;
     await prisma.emailVerificationToken.delete({ where: { id: row.id } }).catch(() => null);
-    return { ok: false, reason: "expired" };
+    return { ok: false, reason: "expired", email: expiredEmail };
   }
 
   await prisma.$transaction([
@@ -249,23 +251,14 @@ export async function processEmailVerificationCron(): Promise<{
         where: { id: user.id },
         data: { accountStatus: "SUSPENDED" },
       });
+      await bumpSessionVersion(user.id).catch(() => null);
       suspended += 1;
       continue;
     }
 
-    if (ageMs >= REMINDER_72H_MS && user.emailVerificationReminderStage < 2) {
-      const sent = await sendVerificationReminderForUser(user.id, "72h");
-      if (sent) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { emailVerificationReminderStage: 2 },
-        });
-        reminders72h += 1;
-      }
-      continue;
-    }
+    let stage = user.emailVerificationReminderStage;
 
-    if (ageMs >= REMINDER_24H_MS && user.emailVerificationReminderStage < 1) {
+    if (ageMs >= REMINDER_24H_MS && stage < 1) {
       const sent = await sendVerificationReminderForUser(user.id, "24h");
       if (sent) {
         await prisma.user.update({
@@ -273,6 +266,18 @@ export async function processEmailVerificationCron(): Promise<{
           data: { emailVerificationReminderStage: 1 },
         });
         reminders24h += 1;
+        stage = 1;
+      }
+    }
+
+    if (ageMs >= REMINDER_72H_MS && stage < 2) {
+      const sent = await sendVerificationReminderForUser(user.id, "72h");
+      if (sent) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { emailVerificationReminderStage: 2 },
+        });
+        reminders72h += 1;
       }
     }
   }

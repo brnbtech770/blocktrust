@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   EMAIL_VERIFICATION_REQUIRED_SINCE,
   isGrandfatheredUser,
+  isAccountSuspendedForEmail,
   requiresEmailVerification,
 } from "@/lib/email-verification";
 
@@ -37,5 +38,10 @@ describe("email-verification", () => {
 
   it("EMAIL_VERIFICATION_REQUIRED_SINCE est défini", () => {
     expect(EMAIL_VERIFICATION_REQUIRED_SINCE).toBeInstanceOf(Date);
+  });
+
+  it("isAccountSuspendedForEmail — compte suspendu", () => {
+    expect(isAccountSuspendedForEmail({ accountStatus: "SUSPENDED" })).toBe(true);
+    expect(isAccountSuspendedForEmail({ accountStatus: "ACTIVE" })).toBe(false);
   });
 });

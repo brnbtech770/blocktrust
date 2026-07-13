@@ -16,6 +16,9 @@ export default async function VerifyEmailPage({ searchParams }: PageProps) {
   }
 
   const isExpired = result.reason === "expired";
+  const resendHref = result.email
+    ? `/auth/verify-email-sent?email=${encodeURIComponent(result.email)}`
+    : "/auth/verify-email-sent";
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden">
@@ -31,7 +34,7 @@ export default async function VerifyEmailPage({ searchParams }: PageProps) {
               : "Ce lien de confirmation est invalide ou a déjà été utilisé."}
           </p>
           <Link
-            href="/auth/verify-email-sent"
+            href={resendHref}
             className="mb-3 inline-flex w-full items-center justify-center rounded-lg py-3 font-bold transition-all hover:brightness-110"
             style={{ background: "#00d4ff", color: "#0a1628" }}
           >

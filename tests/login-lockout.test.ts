@@ -97,10 +97,14 @@ describe("login-lockout", () => {
   it("réinitialise le compteur après succès", async () => {
     await recordLoginSuccess("user@example.com", { userId: "u1" });
     expect(redisMock.del).toHaveBeenCalled();
+    const deletedKeys = redisMock.del.mock.calls[0] ?? [];
+    expect(deletedKeys.some((k: string) => k.includes("lockout-count"))).toBe(true);
   });
 
-  it("clearLoginLockout efface les clés Redis", async () => {
+  it("clearLoginLockout efface fail, lockout et lockout-count", async () => {
     await clearLoginLockout("user@example.com");
     expect(redisMock.del).toHaveBeenCalled();
+    const deletedKeys = redisMock.del.mock.calls.flat();
+    expect(deletedKeys.some((k: string) => k.includes("lockout-count"))).toBe(true);
   });
 });

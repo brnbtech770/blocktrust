@@ -52,6 +52,16 @@ class AccountSuspendedError extends CredentialsSignin {
   code = "account_suspended";
 }
 
+async function resolveUserAccountStatusByEmail(
+  emailNorm: string,
+): Promise<"ACTIVE" | "SUSPENDED" | null> {
+  const user = await prisma.user.findUnique({
+    where: { email: emailNorm },
+    select: { accountStatus: true },
+  });
+  return user?.accountStatus ?? null;
+}
+
 async function findUserByEmailForCredentials(emailNorm: string) {
   const byExact = await prisma.user.findUnique({
     where: { email: emailNorm },
@@ -266,13 +276,24 @@ export const authOptions: NextAuthConfig = {
     ...authEdgeConfig.callbacks,
     // Google OAuth : garantir un enregistrement User (avant JWT) — requis si l’adapter est en retard ou en échec partiel.
     async signIn({ user, account, profile }) {
+      const email = user.email?.trim().toLowerCase();
+      if (
+        email &&
+        (account?.provider === "google" || account?.provider === "email")
+      ) {
+        const status = await resolveUserAccountStatusByEmail(email);
+        if (status === "SUSPENDED") {
+          return "/auth/signin?error=account_suspended";
+        }
+      }
+
       if (account?.provider === 'google') {
-        const email = user.email?.trim();
-        if (!email) {
+        const googleEmail = user.email?.trim();
+        if (!googleEmail) {
           console.warn('[signIn google] email absent du profil, connexion refusée');
           return false;
         }
-        const emailNorm = email.toLowerCase();
+        const emailNorm = googleEmail.toLowerCase();
         try {
           await prisma.user.upsert({
             where: { email: emailNorm },
@@ -386,11 +407,13 @@ export const authOptions: NextAuthConfig = {
         const svRow = await prisma.user
           .findUnique({
             where: { id: token.sub },
-            select: { sessionVersion: true, email: true },
+            select: { sessionVersion: true, email: true, accountStatus: true },
           })
           .catch(() => null);
 
         if (!svRow || svRow.email?.startsWith("deleted_")) {
+          token.sessionInvalid = true;
+        } else if (svRow.accountStatus === "SUSPENDED") {
           token.sessionInvalid = true;
         } else if (
           typeof token.sessionVersion === "number" &&

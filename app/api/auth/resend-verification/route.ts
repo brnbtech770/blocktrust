@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     const parsed = bodySchema.safeParse(await req.json());
     const bodyEmail = parsed.success ? parsed.data.email?.trim().toLowerCase() : undefined;
-    const email = bodyEmail ?? session?.user?.email?.trim().toLowerCase();
+    // Session connectée : forcer l'email de la session (évite le spam vers des tiers)
+    const email = session?.user?.email?.trim().toLowerCase() ?? bodyEmail;
 
     if (!email) {
       return NextResponse.json(

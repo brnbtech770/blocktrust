@@ -33,6 +33,9 @@ export function parseAuthRedirectUrl(
     if (url.includes("account_locked") || url.includes("AccountLocked")) {
       return { error: "AccountLocked", code: "account_locked" };
     }
+    if (url.includes("account_suspended") || url.includes("AccountSuspended")) {
+      return { error: "AccountSuspended", code: "account_suspended" };
+    }
     if (url.includes("no_password") || url.includes("NoPassword")) {
       return { error: "NoPassword", code: "no_password" };
     }

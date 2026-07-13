@@ -8,6 +8,7 @@ import BlockchainTicker from './BlockchainTicker'
 import DashboardHeader from './DashboardHeader'
 import OnboardingAssistant from '@/app/components/onboarding/OnboardingAssistant'
 import EmailVerificationBanner from '@/app/components/dashboard/EmailVerificationBanner'
+import AccountSuspendedBanner from '@/app/components/dashboard/AccountSuspendedBanner'
 
 export type DashboardOnboardingState = {
   onboardingCompletedAt: string | null
@@ -19,10 +20,16 @@ export type DashboardEmailVerificationState = {
   email: string
 }
 
+export type DashboardAccountSuspendedState = {
+  showBanner: boolean
+  email: string
+}
+
 interface DashboardLayoutProps {
   children: React.ReactNode
   onboarding?: DashboardOnboardingState | null
   emailVerification?: DashboardEmailVerificationState | null
+  accountSuspended?: DashboardAccountSuspendedState | null
   showOnboardingAssistant?: boolean
 }
 
@@ -30,12 +37,15 @@ export default function DashboardLayout({
   children,
   onboarding,
   emailVerification,
+  accountSuspended,
   showOnboardingAssistant = true,
 }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen overflow-x-hidden">
       <DashboardHeader />
-      {emailVerification?.showBanner ? (
+      {accountSuspended?.showBanner ? (
+        <AccountSuspendedBanner email={accountSuspended.email} />
+      ) : emailVerification?.showBanner ? (
         <EmailVerificationBanner email={emailVerification.email} />
       ) : null}
       <BlockchainTicker />
