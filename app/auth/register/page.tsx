@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { getSession, signIn, signOut } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
 import PasswordStrengthIndicator from "@/app/components/auth/PasswordStrengthIndicator";
 import TurnstileWidget from "@/app/components/auth/TurnstileWidget";
 import { validatePassword } from "@/lib/password-policy";
-import { parseCredentialsSignInError } from "@/lib/auth-signin-errors";
 import {
-  isSessionForRegisteredEmail,
-} from "@/lib/register-signin";
+  redirectAfterCredentialsSignIn,
+  signInWithCredentialsClient,
+} from "@/lib/auth-credentials-client";
 
 const cardClass =
   "mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-6";
@@ -149,40 +149,19 @@ export default function RegisterPage() {
       // Effacer toute session résiduelle (OAuth / autre compte) avant credentials.
       await signOut({ redirect: false });
 
-      let signInResult;
-      try {
-        signInResult = await signIn("credentials", {
-          email: emailNorm,
-          password,
-          callbackUrl: "/dashboard",
-          redirect: false,
-        });
-      } catch {
-        signInResult = null;
-      }
+      const signInOutcome = await signInWithCredentialsClient({
+        email: emailNorm,
+        password,
+        callbackUrl: "/dashboard",
+      });
 
-      let sessionOk = false;
-      if (signInResult?.ok) {
-        try {
-          const session = await getSession();
-          sessionOk = isSessionForRegisteredEmail(session, emailNorm);
-        } catch {
-          sessionOk = false;
-        }
-      }
-
-      if (sessionOk) {
-        router.push("/dashboard");
-        router.refresh();
+      if (signInOutcome.ok) {
+        redirectAfterCredentialsSignIn(signInOutcome.redirectPath);
         return;
       }
 
       router.push(
-        `/auth/signin?registered=1&callbackUrl=${encodeURIComponent("/dashboard")}${
-          signInResult
-            ? `&error=${encodeURIComponent(parseCredentialsSignInError(signInResult).code)}`
-            : ""
-        }`,
+        `/auth/signin?registered=1&callbackUrl=${encodeURIComponent("/dashboard")}`,
       );
       return;
     } catch {

@@ -1,8 +1,8 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { getSession, signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import {
   callbackUrlToPath,
@@ -12,8 +12,11 @@ import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
 import {
   CREDENTIALS_ERROR_MESSAGE,
   oauthOrSignInErrorMessage,
-  parseCredentialsSignInError,
 } from "@/lib/auth-signin-errors";
+import {
+  redirectAfterCredentialsSignIn,
+  signInWithCredentialsClient,
+} from "@/lib/auth-credentials-client";
 
 const pageBg = "#0a1628";
 
@@ -100,7 +103,6 @@ function googleSignInCallbackUrl(safeCallbackUrl: string): string {
 }
 
 function SignInContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = sanitizeCallbackUrl(searchParams.get("callbackUrl"));
   const errorParam = searchParams.get("error");
@@ -125,40 +127,33 @@ function SignInContent() {
   const [magicLoading, setMagicLoading] = useState(false);
   const [magicError, setMagicError] = useState<string | null>(null);
 
-  async function handleCredentialsSubmit(e: React.FormEvent) {
+  async function handleCredentialsSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const emailNorm = email.trim().toLowerCase();
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const emailNorm = String(formData.get("email") ?? email)
+      .trim()
+      .toLowerCase();
+    const passwordValue = String(formData.get("password") ?? password);
     const redirectPath = callbackUrlToPath(callbackUrl);
+
     try {
-      const result = await signIn("credentials", {
+      const outcome = await signInWithCredentialsClient({
         email: emailNorm,
-        password,
+        password: passwordValue,
         callbackUrl: redirectPath,
-        redirect: false,
       });
-      if (!result) {
-        setError("Erreur de connexion, réessayez");
+
+      if (outcome.ok) {
+        redirectAfterCredentialsSignIn(outcome.redirectPath);
         return;
       }
-      if (result.ok) {
-        router.push(redirectPath);
-        router.refresh();
-        return;
-      }
-      setError(parseCredentialsSignInError(result).message);
+
+      setError(outcome.message);
     } catch {
-      try {
-        const session = await getSession();
-        if (session?.user) {
-          router.push(redirectPath);
-          router.refresh();
-          return;
-        }
-      } catch {
-        /* session check failed */
-      }
       setError("Erreur de connexion, réessayez");
     } finally {
       setLoading(false);
@@ -341,12 +336,14 @@ function SignInContent() {
           <span style={{ flex: 1, height: 1, background: "rgba(0,212,255,0.2)" }} />
         </div>
 
-        <form onSubmit={handleCredentialsSubmit}>
+        <form id="credentials-signin-form" onSubmit={handleCredentialsSubmit}>
           <div style={{ marginBottom: "1rem" }}>
-            <label className="mb-2 block text-sm text-white/75">
+            <label htmlFor="signin-email" className="mb-2 block text-sm text-white/75">
               Email
             </label>
             <input
+              id="signin-email"
+              name="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -357,10 +354,12 @@ function SignInContent() {
             />
           </div>
           <div style={{ marginBottom: "1rem" }}>
-            <label className="mb-2 block text-sm text-white/75">
+            <label htmlFor="signin-password" className="mb-2 block text-sm text-white/75">
               Mot de passe
             </label>
             <input
+              id="signin-password"
+              name="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
