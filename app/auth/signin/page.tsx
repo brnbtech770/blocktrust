@@ -120,6 +120,7 @@ function SignInContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(() => initialCredentialsError(errorParam));
+  const [errorTone, setErrorTone] = useState<"error" | "warning">("error");
   const [loading, setLoading] = useState(false);
 
   const [magicEmail, setMagicEmail] = useState("");
@@ -130,6 +131,7 @@ function SignInContent() {
   async function handleCredentialsSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setErrorTone("error");
     setLoading(true);
 
     const form = e.currentTarget;
@@ -153,8 +155,10 @@ function SignInContent() {
       }
 
       setError(outcome.message);
+      setErrorTone(outcome.tone);
     } catch {
       setError("Erreur de connexion, réessayez");
+      setErrorTone("error");
     } finally {
       setLoading(false);
     }
@@ -375,7 +379,23 @@ function SignInContent() {
             </p>
           </div>
           {error && (
-            <p role="alert" style={{ color: "#E05252", marginBottom: "1rem", fontSize: "0.9rem", lineHeight: 1.45 }}>
+            <p
+              role="alert"
+              style={{
+                color: errorTone === "warning" ? "#f59e0b" : "#E05252",
+                marginBottom: "1rem",
+                fontSize: "0.9rem",
+                lineHeight: 1.45,
+                padding: errorTone === "warning" ? "12px" : undefined,
+                borderRadius: errorTone === "warning" ? "8px" : undefined,
+                background:
+                  errorTone === "warning" ? "rgba(245,158,11,0.12)" : undefined,
+                border:
+                  errorTone === "warning"
+                    ? "1px solid rgba(245,158,11,0.35)"
+                    : undefined,
+              }}
+            >
               {error}
             </p>
           )}

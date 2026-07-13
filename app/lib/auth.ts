@@ -18,14 +18,30 @@ import { isSafeCallbackUrl } from "./auth-callback-url";
 import { isInternalAccount } from "@/lib/admin-utils";
 import { DEFAULT_B2C_PLAN, resolveEffectivePlan } from "@/lib/plan-features";
 import {
+  buildFailedErrorCode,
+  buildLockedErrorCode,
   checkLoginLockout,
   recordLoginFailure,
   recordLoginSuccess,
 } from "@/lib/login-lockout";
 import { cancelScheduledAccountDeletion } from "@/lib/account-deletion";
 
-class AccountLockedError extends CredentialsSignin {
+class LockoutCredentialsError extends CredentialsSignin {
   code = "account_locked";
+
+  constructor(lockoutCode: string) {
+    super();
+    this.code = lockoutCode;
+  }
+}
+
+class FailedAttemptsCredentialsError extends CredentialsSignin {
+  code = "CredentialsSignin";
+
+  constructor(failedCode: string) {
+    super();
+    this.code = failedCode;
+  }
 }
 
 class NoPasswordError extends CredentialsSignin {
@@ -171,7 +187,7 @@ export const authOptions: NextAuthConfig = {
 
         const lockout = await checkLoginLockout(emailNorm);
         if (lockout.locked) {
-          throw new AccountLockedError();
+          throw new LockoutCredentialsError(lockout.errorCode);
         }
 
         const user = await findUserByEmailForCredentials(emailNorm);
@@ -179,9 +195,11 @@ export const authOptions: NextAuthConfig = {
         if (user?.email?.startsWith("deleted_")) {
           const failStatus = await recordLoginFailure(emailNorm, { ip: clientIp });
           if (failStatus.locked) {
-            throw new AccountLockedError();
+            throw new LockoutCredentialsError(failStatus.errorCode);
           }
-          return null;
+          throw new FailedAttemptsCredentialsError(
+            buildFailedErrorCode(failStatus.attemptsRemaining),
+          );
         }
 
         if (user && !user.password) {
@@ -191,9 +209,11 @@ export const authOptions: NextAuthConfig = {
         if (!user?.password) {
           const failStatus = await recordLoginFailure(emailNorm, { ip: clientIp });
           if (failStatus.locked) {
-            throw new AccountLockedError();
+            throw new LockoutCredentialsError(failStatus.errorCode);
           }
-          return null;
+          throw new FailedAttemptsCredentialsError(
+            buildFailedErrorCode(failStatus.attemptsRemaining),
+          );
         }
 
         const isValid = await bcrypt.compare(password, user.password);
@@ -203,9 +223,11 @@ export const authOptions: NextAuthConfig = {
             userId: user.id,
           });
           if (failStatus.locked) {
-            throw new AccountLockedError();
+            throw new LockoutCredentialsError(failStatus.errorCode);
           }
-          return null;
+          throw new FailedAttemptsCredentialsError(
+            buildFailedErrorCode(failStatus.attemptsRemaining),
+          );
         }
 
         await recordLoginSuccess(emailNorm, { ip: clientIp, userId: user.id });

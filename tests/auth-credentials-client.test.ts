@@ -20,12 +20,11 @@ describe("auth-credentials-client", () => {
     expect(parsed.code).toBe("account_locked");
   });
 
-  it("parseAuthRedirectUrl — no_password", () => {
+  it("parseAuthRedirectUrl — codes lockout dans URL", () => {
     const parsed = parseAuthRedirectUrl(
-      "/auth/signin?error=NoPassword&code=no_password",
+      "https://blocktrust.tech/auth/signin?error=CredentialsSignin&code=FAILED:2",
       "https://blocktrust.tech",
     );
-    expect(parsed.error).toBe("NoPassword");
-    expect(parsed.code).toBe("no_password");
+    expect(parsed.code).toBe("FAILED:2");
   });
 });

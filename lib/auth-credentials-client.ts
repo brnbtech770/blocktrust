@@ -7,7 +7,7 @@ import { callbackUrlToPath } from "@/app/lib/auth-callback-url";
 
 export type CredentialsClientSignInResult =
   | { ok: true; redirectPath: string }
-  | { ok: false; message: string };
+  | { ok: false; message: string; tone: "error" | "warning" };
 
 type AuthRedirectParse = {
   error?: string;
@@ -38,6 +38,10 @@ export function parseAuthRedirectUrl(
     }
     if (url.includes("CredentialsSignin")) {
       return { error: "CredentialsSignin", code: "credentials" };
+    }
+    const lockMatch = url.match(/(LOCKED:\d+|FAILED:\d+)/);
+    if (lockMatch?.[1]) {
+      return { error: lockMatch[1], code: lockMatch[1] };
     }
     return {};
   }
@@ -107,14 +111,14 @@ export async function signInWithCredentialsClient(input: {
   }
 
   const parsed = parseAuthRedirectUrl(data.url);
-  const message = parseCredentialsSignInError({
+  const signInError = parseCredentialsSignInError({
     ok: false,
     error: parsed.error ?? parsed.code ?? "CredentialsSignin",
-    code: parsed.code,
+    code: parsed.code ?? parsed.error,
     url: data.url ?? null,
-  }).message;
+  });
 
-  return { ok: false, message };
+  return { ok: false, message: signInError.message, tone: signInError.tone };
 }
 
 /** Navigation pleine page — le cookie session est visible par le serveur / middleware. */

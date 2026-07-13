@@ -17,11 +17,15 @@ export type CredentialsSignInErrorCode =
   | "account_locked"
   | "no_password"
   | "credentials"
+  | "failed_attempts"
   | "unknown";
+
+export type CredentialsSignInMessageTone = "error" | "warning";
 
 export type ParsedCredentialsSignInError = {
   code: CredentialsSignInErrorCode;
   message: string;
+  tone: CredentialsSignInMessageTone;
 };
 
 type SignInResultLike = {
@@ -31,20 +35,53 @@ type SignInResultLike = {
   url?: string | null;
 };
 
+export function failedAttemptsMessage(attemptsRemaining: number): string {
+  if (attemptsRemaining <= 1) {
+    return "Email ou mot de passe incorrect. Dernière tentative avant blocage.";
+  }
+  return `Email ou mot de passe incorrect. ${attemptsRemaining} tentatives restantes avant blocage du compte.`;
+}
+
+export function lockedMinutesMessage(minutes: number): string {
+  const safeMinutes = Math.max(1, minutes);
+  return `Compte temporairement verrouillé. Réessayez dans ${safeMinutes} minute${safeMinutes > 1 ? "s" : ""}.`;
+}
+
+export function parseLockoutErrorCode(
+  raw: string | null | undefined,
+): { type: "locked"; minutes: number } | { type: "failed"; remaining: number } | null {
+  if (!raw) return null;
+  const normalized = decodeURIComponent(raw);
+  if (normalized.startsWith("LOCKED:")) {
+    const minutes = Number.parseInt(normalized.slice("LOCKED:".length), 10);
+    return { type: "locked", minutes: Number.isFinite(minutes) ? minutes : 15 };
+  }
+  if (normalized.startsWith("FAILED:")) {
+    const remaining = Number.parseInt(normalized.slice("FAILED:".length), 10);
+    return { type: "failed", remaining: Number.isFinite(remaining) ? remaining : 0 };
+  }
+  return null;
+}
+
 function errorFromQueryParam(param: string | null): CredentialsSignInErrorCode | null {
   if (!param) return null;
+  if (parseLockoutErrorCode(param)) return null;
   if (param === "account_locked" || param === "AccountLocked") return "account_locked";
   if (param === "no_password" || param === "NoPassword") return "no_password";
   if (param === "CredentialsSignin") return "credentials";
   return null;
 }
 
-function parseErrorFromUrl(url: string | null | undefined): CredentialsSignInErrorCode | null {
+function parseErrorFromUrl(url: string | null | undefined): string | null {
   if (!url) return null;
   try {
     const parsed = new URL(url, "https://blocktrust.tech");
-    return errorFromQueryParam(parsed.searchParams.get("error"));
+    return parsed.searchParams.get("code") ?? parsed.searchParams.get("error");
   } catch {
+    if (url.includes("LOCKED:") || url.includes("FAILED:")) {
+      const match = url.match(/(LOCKED:\d+|FAILED:\d+)/);
+      return match?.[1] ?? null;
+    }
     if (url.includes("account_locked") || url.includes("AccountLocked")) {
       return "account_locked";
     }
@@ -62,22 +99,40 @@ export function parseCredentialsSignInError(
 ): ParsedCredentialsSignInError {
   const rawCode = result?.code ?? result?.error ?? null;
   const fromUrl = parseErrorFromUrl(result?.url);
+  const lockoutParsed = parseLockoutErrorCode(rawCode) ?? parseLockoutErrorCode(fromUrl);
+
+  if (lockoutParsed?.type === "locked") {
+    return {
+      code: "account_locked",
+      message: lockedMinutesMessage(lockoutParsed.minutes),
+      tone: "error",
+    };
+  }
+
+  if (lockoutParsed?.type === "failed") {
+    return {
+      code: "failed_attempts",
+      message: failedAttemptsMessage(lockoutParsed.remaining),
+      tone: "warning",
+    };
+  }
 
   let code: CredentialsSignInErrorCode = "credentials";
+  const fromUrlCode = errorFromQueryParam(fromUrl);
 
   if (
     rawCode === "account_locked" ||
     rawCode === "AccountLocked" ||
-    fromUrl === "account_locked"
+    fromUrlCode === "account_locked"
   ) {
     code = "account_locked";
   } else if (
     rawCode === "no_password" ||
     rawCode === "NoPassword" ||
-    fromUrl === "no_password"
+    fromUrlCode === "no_password"
   ) {
     code = "no_password";
-  } else if (rawCode === "CredentialsSignin" || fromUrl === "credentials") {
+  } else if (rawCode === "CredentialsSignin" || fromUrlCode === "credentials") {
     code = "credentials";
   } else if (rawCode) {
     code = "unknown";
@@ -86,6 +141,7 @@ export function parseCredentialsSignInError(
   return {
     code,
     message: credentialsErrorMessage(code, options?.extendedLockout),
+    tone: code === "failed_attempts" ? "warning" : "error",
   };
 }
 
@@ -99,6 +155,9 @@ export function credentialsErrorMessage(
   if (code === "no_password") {
     return NO_PASSWORD_ERROR_MESSAGE;
   }
+  if (code === "failed_attempts") {
+    return failedAttemptsMessage(2);
+  }
   if (code === "credentials" || code === "unknown") {
     return CREDENTIALS_ERROR_MESSAGE;
   }
@@ -108,6 +167,13 @@ export function credentialsErrorMessage(
 /** Messages pour ?error= sur /auth/signin (redirect OAuth ou credentials). */
 export function oauthOrSignInErrorMessage(code: string | null): string | null {
   if (!code) return null;
+  const lockout = parseLockoutErrorCode(code);
+  if (lockout?.type === "locked") {
+    return lockedMinutesMessage(lockout.minutes);
+  }
+  if (lockout?.type === "failed") {
+    return failedAttemptsMessage(lockout.remaining);
+  }
   const map: Record<string, string> = {
     AccessDenied: "Connexion refusée.",
     Verification: "Le lien de vérification a expiré ou a déjà été utilisé.",

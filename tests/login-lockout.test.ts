@@ -6,6 +6,7 @@ const redisMock = vi.hoisted(() => ({
   incr: vi.fn(),
   expire: vi.fn(),
   del: vi.fn(),
+  ttl: vi.fn(),
 }));
 
 vi.mock("@/lib/rate-limit-redis", () => ({
@@ -25,7 +26,16 @@ vi.mock("@/lib/email", () => ({
   sendEmailFireAndForget: vi.fn(),
 }));
 
-import { checkLoginLockout, recordLoginFailure, recordLoginSuccess, clearLoginLockout } from "@/lib/login-lockout";
+import {
+  FAIL_THRESHOLD,
+  buildFailedErrorCode,
+  buildLockedErrorCode,
+  checkLoginLockout,
+  recordLoginFailure,
+  recordLoginSuccess,
+  clearLoginLockout,
+  minutesFromRetrySec,
+} from "@/lib/login-lockout";
 
 describe("login-lockout", () => {
   beforeEach(() => {
@@ -33,41 +43,54 @@ describe("login-lockout", () => {
     redisMock.get.mockResolvedValue(null);
     redisMock.incr.mockResolvedValue(1);
     redisMock.del.mockResolvedValue(1);
+    redisMock.ttl.mockResolvedValue(900);
   });
 
   it("autorise la connexion si aucun lockout actif", async () => {
     const status = await checkLoginLockout("user@example.com");
     expect(status.locked).toBe(false);
+    if (!status.locked) {
+      expect(status.attemptsRemaining).toBe(FAIL_THRESHOLD);
+    }
   });
 
-  it("bloque si la clé lockout est présente", async () => {
+  it("bloque si la clé lockout est présente avec TTL dynamique", async () => {
     redisMock.get.mockResolvedValue("standard");
+    redisMock.ttl.mockResolvedValue(720);
     const status = await checkLoginLockout("user@example.com");
     expect(status.locked).toBe(true);
     if (status.locked) {
-      expect(status.extended).toBe(false);
+      expect(status.errorCode).toBe(buildLockedErrorCode(720));
+      expect(status.retryAfterMinutes).toBe(minutesFromRetrySec(720));
     }
   });
 
-  it("signale un lockout étendu (1 h)", async () => {
-    redisMock.get.mockResolvedValue("extended");
-    const status = await checkLoginLockout("user@example.com");
-    expect(status.locked).toBe(true);
-    if (status.locked) {
-      expect(status.extended).toBe(true);
-    }
-  });
-
-  it("incrémente les échecs sans lockout avant le seuil", async () => {
-    redisMock.incr.mockResolvedValue(3);
+  it("incrémente les échecs avec tentatives restantes", async () => {
+    redisMock.incr.mockResolvedValue(2);
     const status = await recordLoginFailure("user@example.com");
     expect(status.locked).toBe(false);
+    if (!status.locked) {
+      expect(status.attemptsRemaining).toBe(3);
+    }
+  });
+
+  it("retourne FAILED:1 avant le dernier essai", async () => {
+    redisMock.incr.mockResolvedValue(4);
+    const status = await recordLoginFailure("user@example.com");
+    expect(status.locked).toBe(false);
+    if (!status.locked) {
+      expect(status.attemptsRemaining).toBe(1);
+      expect(buildFailedErrorCode(status.attemptsRemaining)).toBe("FAILED:1");
+    }
   });
 
   it("verrouille après 5 tentatives échouées", async () => {
     redisMock.incr.mockResolvedValueOnce(5).mockResolvedValueOnce(1);
     const status = await recordLoginFailure("user@example.com", { userId: "u1" });
     expect(status.locked).toBe(true);
+    if (status.locked) {
+      expect(status.errorCode.startsWith("LOCKED:")).toBe(true);
+    }
     expect(redisMock.set).toHaveBeenCalled();
   });
 

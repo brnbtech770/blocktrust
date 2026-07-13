@@ -16,14 +16,27 @@ const FAIL_PREFIX = "bt:login:fail:";
 const LOCKOUT_PREFIX = "bt:login:lockout:";
 const LOCKOUT_COUNT_PREFIX = "bt:login:lockout-count:";
 
-const FAIL_THRESHOLD = 5;
+export const FAIL_THRESHOLD = 5;
 const FAIL_TTL_SEC = 15 * 60;
 const EXTENDED_LOCKOUT_SEC = 60 * 60;
 const EXTENDED_LOCKOUT_COUNT = 3;
 
-export type LoginLockoutStatus =
-  | { locked: false }
-  | { locked: true; message: string; retryAfterSec?: number; extended?: boolean };
+export type LoginLockoutOpen = {
+  locked: false;
+  failCount: number;
+  attemptsRemaining: number;
+};
+
+export type LoginLockoutClosed = {
+  locked: true;
+  message: string;
+  retryAfterSec: number;
+  retryAfterMinutes: number;
+  extended?: boolean;
+  errorCode: string;
+};
+
+export type LoginLockoutStatus = LoginLockoutOpen | LoginLockoutClosed;
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -41,12 +54,40 @@ function lockoutCountKey(email: string): string {
   return `${LOCKOUT_COUNT_PREFIX}${hashAuditEmail(normalizeEmail(email))}`;
 }
 
+function attemptsRemainingFromFailCount(failCount: number): number {
+  return Math.max(0, FAIL_THRESHOLD - failCount);
+}
+
+export function minutesFromRetrySec(retryAfterSec: number): number {
+  if (retryAfterSec <= 0) return 1;
+  return Math.max(1, Math.ceil(retryAfterSec / 60));
+}
+
+export function buildLockedErrorCode(retryAfterSec: number): string {
+  return `LOCKED:${minutesFromRetrySec(retryAfterSec)}`;
+}
+
+export function buildFailedErrorCode(attemptsRemaining: number): string {
+  return `FAILED:${Math.max(0, attemptsRemaining)}`;
+}
+
 async function redisGet(key: string): Promise<string | null> {
   const redis = getRedis();
   if (!redis) return null;
   try {
     const val = await redis.get<string>(key);
     return val ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function redisTtl(key: string): Promise<number | null> {
+  const redis = getRedis();
+  if (!redis) return null;
+  try {
+    const ttl = await redis.ttl(key);
+    return typeof ttl === "number" && ttl > 0 ? ttl : null;
   } catch {
     return null;
   }
@@ -86,20 +127,34 @@ async function redisDel(...keys: string[]): Promise<void> {
   }
 }
 
+async function buildLockedStatus(
+  email: string,
+  extended: boolean,
+  fallbackSec: number,
+): Promise<LoginLockoutClosed> {
+  const ttl = (await redisTtl(lockoutKey(email))) ?? fallbackSec;
+  const retryAfterMinutes = minutesFromRetrySec(ttl);
+  return {
+    locked: true,
+    extended,
+    retryAfterSec: ttl,
+    retryAfterMinutes,
+    errorCode: buildLockedErrorCode(ttl),
+    message: `Compte temporairement verrouillé. Réessayez dans ${retryAfterMinutes} minute${retryAfterMinutes > 1 ? "s" : ""}.`,
+  };
+}
+
 export async function checkLoginLockout(email: string): Promise<LoginLockoutStatus> {
   const locked = await redisGet(lockoutKey(email));
   if (locked) {
     const extended = locked === "extended";
-    return {
-      locked: true,
+    return buildLockedStatus(
+      email,
       extended,
-      message: extended
-        ? "Compte temporairement verrouillé. Réessayez dans 1 heure."
-        : "Compte temporairement verrouillé. Réessayez dans 15 minutes.",
-      retryAfterSec: extended ? EXTENDED_LOCKOUT_SEC : FAIL_TTL_SEC,
-    };
+      extended ? EXTENDED_LOCKOUT_SEC : FAIL_TTL_SEC,
+    );
   }
-  return { locked: false };
+  return { locked: false, failCount: 0, attemptsRemaining: FAIL_THRESHOLD };
 }
 
 /** Efface lockout + compteur d'échecs (inscription réussie, déblocage admin). */
@@ -112,6 +167,7 @@ export async function recordLoginFailure(
   options?: { ip?: string | null; userId?: string | null },
 ): Promise<LoginLockoutStatus> {
   const failCount = await redisIncrEx(failKey(email), FAIL_TTL_SEC);
+  const attemptsRemaining = attemptsRemainingFromFailCount(failCount);
 
   writeSecurityAuditLogFireAndForget({
     action: "LOGIN_FAILED",
@@ -119,11 +175,11 @@ export async function recordLoginFailure(
     resource: "auth",
     resourceId: hashAuditEmail(normalizeEmail(email)),
     ip: options?.ip,
-    metadata: { attempts: failCount },
+    metadata: { attempts: failCount, attemptsRemaining },
   });
 
   if (failCount < FAIL_THRESHOLD) {
-    return { locked: false };
+    return { locked: false, failCount, attemptsRemaining };
   }
 
   const lockoutCount = await redisIncrEx(lockoutCountKey(email), 24 * 60 * 60);
@@ -170,14 +226,7 @@ export async function recordLoginFailure(
     }
   }
 
-  return {
-    locked: true,
-    extended,
-    message: extended
-      ? "Compte temporairement verrouillé. Réessayez dans 1 heure."
-      : "Compte temporairement verrouillé. Réessayez dans 15 minutes.",
-    retryAfterSec: lockoutTtl,
-  };
+  return buildLockedStatus(email, extended, lockoutTtl);
 }
 
 export async function recordLoginSuccess(
