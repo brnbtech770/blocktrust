@@ -13,8 +13,12 @@ export const LOCKOUT_15M_MESSAGE = "Compte verrouillé 15 minutes.";
 export const LOCKOUT_1H_MESSAGE =
   "Compte verrouillé 1 heure après de nombreuses tentatives incorrectes.";
 
+export const ACCOUNT_SUSPENDED_MESSAGE =
+  "Compte suspendu. Confirmez votre email pour le réactiver.";
+
 export type CredentialsSignInErrorCode =
   | "account_locked"
+  | "account_suspended"
   | "no_password"
   | "credentials"
   | "failed_attempts"
@@ -67,6 +71,7 @@ function errorFromQueryParam(param: string | null): CredentialsSignInErrorCode |
   if (!param) return null;
   if (parseLockoutErrorCode(param)) return null;
   if (param === "account_locked" || param === "AccountLocked") return "account_locked";
+  if (param === "account_suspended" || param === "AccountSuspended") return "account_suspended";
   if (param === "no_password" || param === "NoPassword") return "no_password";
   if (param === "CredentialsSignin") return "credentials";
   return null;
@@ -127,6 +132,12 @@ export function parseCredentialsSignInError(
   ) {
     code = "account_locked";
   } else if (
+    rawCode === "account_suspended" ||
+    rawCode === "AccountSuspended" ||
+    fromUrlCode === "account_suspended"
+  ) {
+    code = "account_suspended";
+  } else if (
     rawCode === "no_password" ||
     rawCode === "NoPassword" ||
     fromUrlCode === "no_password"
@@ -141,7 +152,7 @@ export function parseCredentialsSignInError(
   return {
     code,
     message: credentialsErrorMessage(code, options?.extendedLockout),
-    tone: code === "failed_attempts" ? "warning" : "error",
+    tone: "error",
   };
 }
 
@@ -151,6 +162,9 @@ export function credentialsErrorMessage(
 ): string {
   if (code === "account_locked") {
     return extendedLockout ? LOCKOUT_1H_MESSAGE : LOCKOUT_15M_MESSAGE;
+  }
+  if (code === "account_suspended") {
+    return ACCOUNT_SUSPENDED_MESSAGE;
   }
   if (code === "no_password") {
     return NO_PASSWORD_ERROR_MESSAGE;
@@ -186,6 +200,8 @@ export function oauthOrSignInErrorMessage(code: string | null): string | null {
     CredentialsSignin: CREDENTIALS_ERROR_MESSAGE,
     account_locked: LOCKOUT_15M_MESSAGE,
     AccountLocked: LOCKOUT_15M_MESSAGE,
+    account_suspended: ACCOUNT_SUSPENDED_MESSAGE,
+    AccountSuspended: ACCOUNT_SUSPENDED_MESSAGE,
     no_password: NO_PASSWORD_ERROR_MESSAGE,
     NoPassword: NO_PASSWORD_ERROR_MESSAGE,
   };

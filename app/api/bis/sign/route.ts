@@ -34,6 +34,7 @@ import {
 } from '@/lib/extension-cors'
 import { checkRateLimitExtensionAsync } from '@/lib/rate-limit-extension'
 import { btErrorDevDetails } from '@/lib/prodLog'
+import { assertEmailVerifiedForFeature } from '@/lib/require-email-verified'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -142,6 +143,15 @@ export async function POST(req: NextRequest) {
         return bisJson(req, EXTENSION_UNAUTHORIZED_BODY, 401)
       }
       return bisJson(req, { error: 'Non autorisé' }, 401)
+    }
+
+    const emailGuard = await assertEmailVerifiedForFeature(actor.userId)
+    if (!emailGuard.ok) {
+      return bisJson(
+        req,
+        { error: emailGuard.code, message: emailGuard.message },
+        emailGuard.status,
+      )
     }
 
     let body: unknown

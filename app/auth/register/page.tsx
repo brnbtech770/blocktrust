@@ -2,17 +2,12 @@
 
 import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
 import PasswordStrengthIndicator from "@/app/components/auth/PasswordStrengthIndicator";
 import TurnstileWidget from "@/app/components/auth/TurnstileWidget";
 import { validatePassword } from "@/lib/password-policy";
-import {
-  redirectAfterCredentialsSignIn,
-  signInWithCredentialsClient,
-} from "@/lib/auth-credentials-client";
 
 const cardClass =
   "mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-6";
@@ -146,23 +141,7 @@ export default function RegisterPage() {
         return;
       }
 
-      // Effacer toute session résiduelle (OAuth / autre compte) avant credentials.
-      await signOut({ redirect: false });
-
-      const signInOutcome = await signInWithCredentialsClient({
-        email: emailNorm,
-        password,
-        callbackUrl: "/dashboard",
-      });
-
-      if (signInOutcome.ok) {
-        redirectAfterCredentialsSignIn(signInOutcome.redirectPath);
-        return;
-      }
-
-      router.push(
-        `/auth/signin?registered=1&callbackUrl=${encodeURIComponent("/dashboard")}`,
-      );
+      router.push(`/auth/verify-email-sent?email=${encodeURIComponent(emailNorm)}`);
       return;
     } catch {
       setError("Erreur réseau. Réessayez.");

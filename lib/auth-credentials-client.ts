@@ -71,12 +71,12 @@ export async function signInWithCredentialsClient(input: {
   const redirectPath = callbackUrlToPath(input.callbackUrl ?? "/dashboard");
 
   if (!emailNorm || !password) {
-    return { ok: false, message: "Email ou mot de passe incorrect." };
+    return { ok: false, message: "Email ou mot de passe incorrect.", tone: "error" };
   }
 
   const csrfToken = await fetchCsrfToken();
   if (!csrfToken) {
-    return { ok: false, message: "Erreur de connexion, réessayez" };
+    return { ok: false, message: "Erreur de connexion, réessayez", tone: "error" };
   }
 
   let res: Response;
@@ -96,14 +96,14 @@ export async function signInWithCredentialsClient(input: {
       }),
     });
   } catch {
-    return { ok: false, message: "Erreur de connexion, réessayez" };
+    return { ok: false, message: "Erreur de connexion, réessayez", tone: "error" };
   }
 
   let data: { url?: string };
   try {
     data = (await res.json()) as { url?: string };
   } catch {
-    return { ok: false, message: "Erreur de connexion, réessayez" };
+    return { ok: false, message: "Erreur de connexion, réessayez", tone: "error" };
   }
 
   if (res.ok) {

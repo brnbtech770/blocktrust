@@ -7,26 +7,37 @@
 import BlockchainTicker from './BlockchainTicker'
 import DashboardHeader from './DashboardHeader'
 import OnboardingAssistant from '@/app/components/onboarding/OnboardingAssistant'
+import EmailVerificationBanner from '@/app/components/dashboard/EmailVerificationBanner'
 
 export type DashboardOnboardingState = {
   onboardingCompletedAt: string | null
   lastLoginAt: string | null
 }
 
+export type DashboardEmailVerificationState = {
+  showBanner: boolean
+  email: string
+}
+
 interface DashboardLayoutProps {
   children: React.ReactNode
   onboarding?: DashboardOnboardingState | null
+  emailVerification?: DashboardEmailVerificationState | null
   showOnboardingAssistant?: boolean
 }
 
 export default function DashboardLayout({
   children,
   onboarding,
+  emailVerification,
   showOnboardingAssistant = true,
 }: DashboardLayoutProps) {
   return (
     <div className="min-h-screen overflow-x-hidden">
       <DashboardHeader />
+      {emailVerification?.showBanner ? (
+        <EmailVerificationBanner email={emailVerification.email} />
+      ) : null}
       <BlockchainTicker />
       <div
         data-dashboard-main

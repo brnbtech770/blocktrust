@@ -17,6 +17,7 @@ import {
 import { validatePassword } from "@/lib/password-policy";
 import { verifyTurnstileForRegister } from "@/lib/turnstile";
 import { clearLoginLockout } from "@/lib/login-lockout";
+import { sendVerificationEmailForUser } from "@/lib/email-verification";
 import { LEGAL_DOC_VERSION } from "@/lib/legal";
 
 const MIN_FORM_MS = 3000;
@@ -212,7 +213,14 @@ export async function POST(req: NextRequest) {
       resolveWelcomeFirstName(user.name, emailNorm),
     );
 
-    return NextResponse.json({ success: true, userId: user.id }, { status: 201 });
+    void sendVerificationEmailForUser(user.id).catch((err) =>
+      console.error("[register] verification email failed", err),
+    );
+
+    return NextResponse.json(
+      { success: true, userId: user.id, verificationSent: true },
+      { status: 201 },
+    );
   } catch (err) {
     console.error("[REGISTER ERROR]", err);
     return NextResponse.json(

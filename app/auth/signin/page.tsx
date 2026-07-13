@@ -108,6 +108,7 @@ function SignInContent() {
   const errorParam = searchParams.get("error");
   const reasonParam = searchParams.get("reason");
   const registered = searchParams.get("registered") === "1";
+  const verified = searchParams.get("verified") === "1";
   const clearedOAuth = searchParams.get("cleared") === "oauth";
   const oauthError =
     errorParam &&
@@ -212,6 +213,20 @@ function SignInContent() {
         <h1 className="font-syne mb-4 text-2xl font-bold text-white sm:text-3xl">
           Connexion
         </h1>
+
+        {verified && (
+          <p
+            role="status"
+            style={{
+              color: "#1DB87E",
+              marginBottom: "1.25rem",
+              fontSize: "0.9rem",
+              lineHeight: 1.45,
+            }}
+          >
+            Email confirmé ! Vous pouvez vous connecter.
+          </p>
+        )}
 
         {registered && (
           <p

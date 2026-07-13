@@ -76,6 +76,11 @@ model ProcessedStripeEvent {
   createdAt DateTime @default(now())
 }
 
+enum UserAccountStatus {
+  ACTIVE
+  SUSPENDED
+}
+
 model User {
   id            String      @id @default(cuid())
   name          String?
@@ -86,6 +91,10 @@ model User {
   phone         String?
   password      String?
   accountType   AccountType @default(PERSONAL)
+  accountStatus UserAccountStatus @default(ACTIVE)
+
+  /// Rappels vérification email : 0=aucun, 1=24h, 2=72h
+  emailVerificationReminderStage Int @default(0)
 
   // Relation plan & paiement
   planId           String?
@@ -175,8 +184,22 @@ model User {
   certifiedDomains String[] @default([])
 
   sentBisSignatures InteractionSignature[] @relation("SentSignatures")
+  emailVerificationTokens EmailVerificationToken[]
 
   @@index([trustScore])
+  @@index([accountStatus])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 enum AccountType {

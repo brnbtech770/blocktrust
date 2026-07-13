@@ -90,6 +90,10 @@ export const getApiLimiter = () => getLimiter("bt:api", 30, "1 m");
 export const getRegisterHourLimiter = () => getLimiter("bt:register:h", 3, "1 h");
 export const getRegisterDayLimiter = () => getLimiter("bt:register:d", 10, "1 d");
 
+// Renvoi email de vérification : 3 / h par email
+export const getResendVerificationLimiter = () =>
+  getLimiter("bt:verify-email:resend", 3, "1 h");
+
 // Magic link (Auth.js email) : 3 envois / h par identifiant (IP ou email)
 export const getMagicLinkHourLimiter = () => getLimiter("bt:magiclink:h", 3, "1 h");
 

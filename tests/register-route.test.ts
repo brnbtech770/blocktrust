@@ -29,6 +29,9 @@ vi.mock("@/lib/turnstile", () => ({
 vi.mock("@/lib/login-lockout", () => ({
   clearLoginLockout: vi.fn().mockResolvedValue(undefined),
 }));
+vi.mock("@/lib/email-verification", () => ({
+  sendVerificationEmailForUser: vi.fn().mockResolvedValue({ ok: true }),
+}));
 
 import { POST as registerPost } from "@/app/api/auth/register/route";
 import { clearLoginLockout } from "@/lib/login-lockout";

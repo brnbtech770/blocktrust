@@ -6,6 +6,7 @@ import { tryPromoteMutualOnAdd } from '@/lib/trust-circle-mutual'
 import { checkPlanRateLimit } from '@/lib/rate-limit-plan'
 import { resolveEffectivePlan, planAllowsTrustCircle } from '@/lib/plan-features'
 import { writeSecurityAuditLogFireAndForget } from '@/lib/security-audit'
+import { assertEmailVerifiedForFeature } from '@/lib/require-email-verified'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -32,6 +33,14 @@ export async function POST(req: NextRequest) {
 
   const { email, name, entityType, note } = parsed.data
   const userId = session.user.id
+
+  const emailGuard = await assertEmailVerifiedForFeature(userId)
+  if (!emailGuard.ok) {
+    return NextResponse.json(
+      { error: emailGuard.code, message: emailGuard.message },
+      { status: emailGuard.status },
+    )
+  }
 
   // Plan effectif (statut Stripe inclus) — Trust Circle réservé à Premium et plus.
   const subscription = await prisma.subscription.findUnique({

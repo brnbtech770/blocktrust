@@ -48,6 +48,10 @@ class NoPasswordError extends CredentialsSignin {
   code = "no_password";
 }
 
+class AccountSuspendedError extends CredentialsSignin {
+  code = "account_suspended";
+}
+
 async function findUserByEmailForCredentials(emailNorm: string) {
   const byExact = await prisma.user.findUnique({
     where: { email: emailNorm },
@@ -191,6 +195,10 @@ export const authOptions: NextAuthConfig = {
         }
 
         const user = await findUserByEmailForCredentials(emailNorm);
+
+        if (user?.accountStatus === "SUSPENDED") {
+          throw new AccountSuspendedError();
+        }
 
         if (user?.email?.startsWith("deleted_")) {
           const failStatus = await recordLoginFailure(emailNorm, { ip: clientIp });
