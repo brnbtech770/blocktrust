@@ -4,11 +4,14 @@
 
 import { prisma } from "@/app/lib/db";
 import {
-  EMAIL_VERIFICATION_REQUIRED_SINCE,
   isGrandfatheredUser,
   requiresEmailVerification,
 } from "@/lib/email-verification";
 import { ACCOUNT_SUSPENDED_MESSAGE } from "@/lib/auth-signin-errors";
+import {
+  assertNotDiscoveryExpired,
+  type DiscoveryGuardResult,
+} from "@/lib/require-discovery-active";
 
 export const EMAIL_NOT_VERIFIED_MESSAGE =
   "Confirmez votre adresse email pour accéder à cette fonctionnalité.";
@@ -16,6 +19,11 @@ export const EMAIL_NOT_VERIFIED_MESSAGE =
 export type EmailVerificationGuardResult =
   | { ok: true }
   | { ok: false; status: 403; code: "EMAIL_NOT_VERIFIED" | "ACCOUNT_SUSPENDED"; message: string };
+
+export type DashboardMutationGuardResult =
+  | { ok: true }
+  | Extract<EmailVerificationGuardResult, { ok: false }>
+  | Extract<DiscoveryGuardResult, { ok: false }>;
 
 export async function assertEmailVerifiedForFeature(
   userId: string,
@@ -55,6 +63,20 @@ export async function assertEmailVerifiedForFeature(
       message: EMAIL_NOT_VERIFIED_MESSAGE,
     };
   }
+
+  return { ok: true };
+}
+
+/** Email vérifié + plan Découverte non expiré (mutations dashboard). */
+export async function assertDashboardMutationAllowed(
+  userId: string,
+  email?: string | null,
+): Promise<DashboardMutationGuardResult> {
+  const emailGuard = await assertEmailVerifiedForFeature(userId);
+  if (!emailGuard.ok) return emailGuard;
+
+  const discoveryGuard = await assertNotDiscoveryExpired(userId, email);
+  if (!discoveryGuard.ok) return discoveryGuard;
 
   return { ok: true };
 }

@@ -20,6 +20,7 @@ import {
   TEAM_SEATS_MAX,
   FAMILLE_ADDON_MAX,
 } from '@/lib/pricing'
+import { assertEmailVerifiedForFeature } from '@/lib/require-email-verified'
 import { LEGAL_DOC_VERSION } from '@/lib/legal'
 
 type CheckoutQuantities = { quantity?: number; addonQuantity?: number }
@@ -239,6 +240,14 @@ export async function POST(req: NextRequest) {
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+    }
+
+    const emailGuard = await assertEmailVerifiedForFeature(session.user.id)
+    if (!emailGuard.ok) {
+      return NextResponse.json(
+        { error: emailGuard.code, message: emailGuard.message },
+        { status: emailGuard.status },
+      )
     }
 
     let json: unknown

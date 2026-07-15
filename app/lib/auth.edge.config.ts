@@ -14,8 +14,9 @@ export const googleProvider =
     ? GoogleProvider({
         clientId,
         clientSecret,
-        // Opt-in explicite — true par défaut : Google vérifie l'email, permet la liaison
-        // avec un compte credentials existant (même adresse).
+        // Opt-in explicite (désactivé en prod par défaut).
+        // Les comptes créés via Google n'en ont pas besoin : signIn upsert + emailVerified.
+        // Activer uniquement si un utilisateur credentials existant doit lier le même email Google.
         allowDangerousEmailAccountLinking:
           process.env.ALLOW_DANGEROUS_EMAIL_LINKING === "true",
       })

@@ -86,7 +86,7 @@ describe("POST /api/auth/register", () => {
     );
   });
 
-  it("retourne 409 si l'email User existe déjà", async () => {
+  it("retourne 400 générique si l'email User existe déjà (anti-énumération)", async () => {
     prismaMock.user.findUnique.mockResolvedValue({
       id: "existing-1",
       email: "user@example.com",
@@ -95,8 +95,9 @@ describe("POST /api/auth/register", () => {
     const res = await registerPost(registerRequest(validBody));
     const data = await res.json();
 
-    expect(res.status).toBe(409);
-    expect(data.error).toContain("déjà utilisé");
+    expect(res.status).toBe(400);
+    expect(data.error).toBe("Une erreur est survenue. Vérifiez vos informations.");
+    expect(data.error).not.toContain("déjà utilisé");
     expect(prismaMock.user.create).not.toHaveBeenCalled();
   });
 

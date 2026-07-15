@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
+import { assertDashboardMutationAllowed } from '@/lib/require-email-verified'
 import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import { redactEmailRecipient, sendEmail } from '@/lib/email'
@@ -26,6 +27,18 @@ export async function POST(
     }
 
     const userId = session.user.id
+
+    const mutationGuard = await assertDashboardMutationAllowed(userId, session.user.email)
+    if (!mutationGuard.ok) {
+      return NextResponse.json(
+        {
+          error: mutationGuard.code,
+          message: mutationGuard.message,
+          ...(mutationGuard.code === 'DISCOVERY_EXPIRED' ? { upgradeUrl: mutationGuard.upgradeUrl } : {}),
+        },
+        { status: mutationGuard.status },
+      )
+    }
 
     // Valider l'ID du certificat
     const resolvedParams = await params

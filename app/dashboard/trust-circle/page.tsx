@@ -7,7 +7,7 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { UserPlus, Trash2, Link2, Check } from 'lucide-react'
+import { UserPlus, Trash2, Link2, Check, X } from 'lucide-react'
 import TrustCircleInviteModal from '@/app/components/TrustCircleInviteModal'
 import TrustCircleManualModal from '@/app/components/TrustCircleManualModal'
 import { QuotaBanner } from '@/app/components/trust-circle/QuotaBanner'
@@ -169,6 +169,26 @@ export default function TrustCirclePage() {
     }
   }
 
+  const handleDeclineInvitation = async (id: string) => {
+    if (!confirm('Refuser cette invitation Trust Circle ?')) return
+    try {
+      const res = await fetch(`/api/trust-circle/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ type: 'relation' }),
+      })
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}))
+        throw new Error(errData.error || 'Erreur lors du refus')
+      }
+      setToastMessage('Invitation refusée')
+      await fetchTrustCircle()
+    } catch (err: unknown) {
+      alert(getErrorMessage(err))
+    }
+  }
+
   const handleDelete = async (id: string, deleteType: 'relation' | 'manual') => {
     if (!confirm('Supprimer ce contact du Trust Circle ?')) return
     try {
@@ -302,6 +322,7 @@ export default function TrustCirclePage() {
                 key={r.id}
                 data={r}
                 onAccept={() => handleAcceptInvitation(r.inviteToken)}
+                onDecline={() => handleDeclineInvitation(r.id)}
               />
             )),
             ...(data.manualEntries || []).map((e) => (
@@ -319,6 +340,7 @@ export default function TrustCirclePage() {
               key={r.id}
               data={r}
               onAccept={() => handleAcceptInvitation(r.inviteToken)}
+              onDecline={() => handleDeclineInvitation(r.id)}
             />
           ))}
           {activeTab === 'manual' && (data.manualEntries || []).map((e) => (
@@ -420,9 +442,11 @@ function Card({ type, data, onDelete }: { type: 'mutual' | 'unilateral' | 'pendi
 function ReceivedCard({
   data,
   onAccept,
+  onDecline,
 }: {
   data: ReceivedTrustRelation
   onAccept: () => void
+  onDecline: () => void
 }) {
   const name = data.fromUser?.name || data.fromUser?.email || '—'
   const email = data.fromUser?.email
@@ -442,14 +466,24 @@ function ReceivedCard({
           <h3 className="font-syne mt-1 break-words text-base font-bold text-white sm:text-lg">{name}</h3>
           {email && <p className="text-xs sm:text-sm text-gray-400 break-all">{email}</p>}
         </div>
-        <button
-          type="button"
-          onClick={onAccept}
-          className="flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/25 sm:text-sm"
-        >
-          <Check size={14} aria-hidden />
-          Accepter
-        </button>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onDecline}
+            className="flex items-center justify-center gap-1.5 rounded-lg border border-red-500/25 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-400 transition hover:bg-red-500/20 sm:text-sm"
+          >
+            <X size={14} aria-hidden />
+            Refuser
+          </button>
+          <button
+            type="button"
+            onClick={onAccept}
+            className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-400 transition hover:bg-emerald-500/25 sm:text-sm"
+          >
+            <Check size={14} aria-hidden />
+            Accepter
+          </button>
+        </div>
       </div>
     </div>
   )

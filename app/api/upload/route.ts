@@ -3,7 +3,7 @@ import { put } from '@vercel/blob'
 import { z } from 'zod'
 import { auth } from '@/app/lib/auth-server'
 import { jsonInvalidBody } from '@/lib/api-json-body'
-import { assertEmailVerifiedForFeature } from '@/lib/require-email-verified'
+import { assertDashboardMutationAllowed } from '@/lib/require-email-verified'
 
 /**
  * Types MIME acceptés pour l'upload de documents (KYC + Trust manuel).
@@ -48,11 +48,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
   }
 
-  const emailGuard = await assertEmailVerifiedForFeature(session.user.id)
-  if (!emailGuard.ok) {
+  const mutationGuard = await assertDashboardMutationAllowed(session.user.id, session.user.email)
+  if (!mutationGuard.ok) {
     return NextResponse.json(
-      { error: emailGuard.code, message: emailGuard.message },
-      { status: emailGuard.status },
+      {
+        error: mutationGuard.code,
+        message: mutationGuard.message,
+        ...(mutationGuard.code === 'DISCOVERY_EXPIRED' ? { upgradeUrl: mutationGuard.upgradeUrl } : {}),
+      },
+      { status: mutationGuard.status },
     )
   }
 

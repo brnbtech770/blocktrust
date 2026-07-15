@@ -21,7 +21,7 @@ import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 import { getUserEmailSignature } from '@/lib/email-signature'
 import { isAdmin } from '@/app/lib/admin'
 import { isDiscoveryPlan, resolveEffectivePlan, BLOCKCHAIN_STATUS_NOT_ANCHORED } from '@/lib/plan-features'
-import { assertEmailVerifiedForFeature } from '@/lib/require-email-verified'
+import { assertDashboardMutationAllowed } from '@/lib/require-email-verified'
 import {
   checkIsOrgAdmin,
   countActiveCertificatesForSubject,
@@ -135,11 +135,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 })
     }
 
-    const emailGuard = await assertEmailVerifiedForFeature(session.user.id)
-    if (!emailGuard.ok) {
+    const mutationGuard = await assertDashboardMutationAllowed(session.user.id, session.user.email)
+    if (!mutationGuard.ok) {
       return NextResponse.json(
-        { error: emailGuard.code, message: emailGuard.message },
-        { status: emailGuard.status },
+        {
+          error: mutationGuard.code,
+          message: mutationGuard.message,
+          ...(mutationGuard.code === 'DISCOVERY_EXPIRED' ? { upgradeUrl: mutationGuard.upgradeUrl } : {}),
+        },
+        { status: mutationGuard.status },
       )
     }
 

@@ -6,7 +6,7 @@ import { tryPromoteMutualOnAdd } from '@/lib/trust-circle-mutual'
 import { checkPlanRateLimit } from '@/lib/rate-limit-plan'
 import { resolveEffectivePlan, planAllowsTrustCircle } from '@/lib/plan-features'
 import { writeSecurityAuditLogFireAndForget } from '@/lib/security-audit'
-import { assertEmailVerifiedForFeature } from '@/lib/require-email-verified'
+import { assertDashboardMutationAllowed } from '@/lib/require-email-verified'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -42,11 +42,15 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const emailGuard = await assertEmailVerifiedForFeature(userId)
-  if (!emailGuard.ok) {
+  const mutationGuard = await assertDashboardMutationAllowed(userId, session.user.email)
+  if (!mutationGuard.ok) {
     return NextResponse.json(
-      { error: emailGuard.code, message: emailGuard.message },
-      { status: emailGuard.status },
+      {
+        error: mutationGuard.code,
+        message: mutationGuard.message,
+        ...(mutationGuard.code === 'DISCOVERY_EXPIRED' ? { upgradeUrl: mutationGuard.upgradeUrl } : {}),
+      },
+      { status: mutationGuard.status },
     )
   }
 

@@ -37,7 +37,7 @@ export default function Hero() {
           </div>
 
           {/* H1 — mobile : 2 lignes propres · desktop lg+ : 1 ligne */}
-          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 max-w-[18rem] text-balance text-[1.375rem] font-bold leading-[1.25] tracking-tight text-white sm:mt-6 sm:max-w-md sm:text-2xl md:max-w-lg md:text-3xl lg:max-w-none lg:whitespace-nowrap lg:text-[1.875rem] lg:leading-tight xl:text-[2.125rem]">
+          <h1 className="opacity-0 animate-fade-up [animation-delay:120ms] font-syne mt-5 max-w-[18rem] text-balance text-[1.375rem] font-bold leading-[1.25] tracking-tight text-white sm:mt-6 sm:max-w-md sm:text-2xl md:max-w-lg md:text-3xl lg:max-w-2xl lg:text-[1.875rem] lg:leading-tight xl:text-[2.125rem]">
             L&apos;identité numérique
             <br className="lg:hidden" aria-hidden="true" />
             <span className="text-bt-cyan"> protège vos échanges.</span>

@@ -14,6 +14,7 @@ import {
 } from "@/lib/extension-api-key-crypto";
 import { extensionJsonResponse, extensionOptionsResponse } from "@/lib/extension-cors";
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
+import { assertDashboardMutationAllowed } from "@/lib/require-email-verified";
 import { writeSecurityAuditLogFireAndForget } from "@/lib/security-audit";
 import { z } from "zod";
 
@@ -78,6 +79,19 @@ export async function GET(req: NextRequest) {
     return extensionJsonResponse(req, { error: "unauthorized", message: "Connexion requise." }, 401);
   }
 
+  const mutationGuard = await assertDashboardMutationAllowed(session.user.id, session.user.email);
+  if (!mutationGuard.ok) {
+    return extensionJsonResponse(
+      req,
+      {
+        error: mutationGuard.code,
+        message: mutationGuard.message,
+        ...(mutationGuard.code === "DISCOVERY_EXPIRED" ? { upgradeUrl: mutationGuard.upgradeUrl } : {}),
+      },
+      mutationGuard.status,
+    );
+  }
+
   const rate = await checkRateLimitExtensionAsync("keygen", session.user.id);
   if (!rate.ok) {
     return extensionJsonResponse(
@@ -119,6 +133,19 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return extensionJsonResponse(req, { error: "unauthorized", message: "Connexion requise." }, 401);
+  }
+
+  const mutationGuard = await assertDashboardMutationAllowed(session.user.id, session.user.email);
+  if (!mutationGuard.ok) {
+    return extensionJsonResponse(
+      req,
+      {
+        error: mutationGuard.code,
+        message: mutationGuard.message,
+        ...(mutationGuard.code === "DISCOVERY_EXPIRED" ? { upgradeUrl: mutationGuard.upgradeUrl } : {}),
+      },
+      mutationGuard.status,
+    );
   }
 
   const rate = await checkRateLimitExtensionAsync("keygen", session.user.id);

@@ -120,8 +120,7 @@ export default async function DashboardSegmentLayout({
             }
             showOnboardingAssistant={!discoveryExpired}
           >
-            {discoveryExpired ? <DiscoveryExpiredWall /> : null}
-            {children}
+            {discoveryExpired ? <DiscoveryExpiredWall /> : children}
           </DashboardPageChrome>
         </DashboardChrome>
       </AuthenticatedProviders>

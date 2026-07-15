@@ -159,10 +159,7 @@ export async function POST(req: NextRequest) {
       }));
 
     if (existing) {
-      return NextResponse.json(
-        { error: "Cet email est déjà utilisé." },
-        { status: 409 },
-      );
+      return generic400();
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
@@ -186,10 +183,7 @@ export async function POST(req: NextRequest) {
         "code" in createErr &&
         (createErr as { code?: string }).code;
       if (code === "P2002") {
-        return NextResponse.json(
-          { error: "Cet email est déjà utilisé." },
-          { status: 409 },
-        );
+        return generic400();
       }
       throw createErr;
     }

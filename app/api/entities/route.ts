@@ -18,7 +18,7 @@ import {
 import { deriveCertificateLevelFromPlan } from '@/lib/certificate-plan-level';
 import { checkPlanRateLimit } from '@/lib/rate-limit-plan';
 import { assertSafeDisplayText } from '@/lib/sanitize-display-text';
-import { assertEmailVerifiedForFeature } from '@/lib/require-email-verified';
+import { assertDashboardMutationAllowed } from '@/lib/require-email-verified';
 
 // ─────────────────────────────────────────────
 // Schémas de validation
@@ -74,11 +74,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
-    const emailGuard = await assertEmailVerifiedForFeature(session.user.id);
-    if (!emailGuard.ok) {
+    const mutationGuard = await assertDashboardMutationAllowed(session.user.id, session.user.email);
+    if (!mutationGuard.ok) {
       return NextResponse.json(
-        { error: emailGuard.code, message: emailGuard.message },
-        { status: emailGuard.status },
+        { error: mutationGuard.code, message: mutationGuard.message, ...(mutationGuard.code === 'DISCOVERY_EXPIRED' ? { upgradeUrl: mutationGuard.upgradeUrl } : {}) },
+        { status: mutationGuard.status },
       );
     }
 
