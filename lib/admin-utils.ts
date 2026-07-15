@@ -111,9 +111,9 @@ export function getAdminEmailList(): string[] {
     } else {
       warnOnce(
         'admin',
-        '[admin-utils] DASHBOARD_ADMIN_EMAILS absent en production — fallback hardcodé',
+        '[admin-utils] DASHBOARD_ADMIN_EMAILS absent en production — aucun accès admin (fail-closed)',
       )
-      candidates = hardcodedAdmins
+      candidates = []
     }
   } else {
     candidates = [...new Set([...fromDashboardEnv, ...legacyEnv, ...hardcodedAdmins])]

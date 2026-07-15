@@ -9,6 +9,8 @@ import { sendWebhook } from '@/lib/webhooks'
 import { isPublicWebhookUrl } from '@/lib/ssrf-guard'
 import { ensureStrictEmptyBody } from '@/lib/api-json-body'
 import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
+import { checkRateLimitWhitelabelTestAsync } from '@/lib/rate-limit-sensitive'
+import { assertSameOriginMutation } from '@/lib/csrf-origin-guard'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -20,6 +22,11 @@ export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
+  }
+
+  const originGuard = assertSameOriginMutation(req)
+  if (!originGuard.ok) {
+    return NextResponse.json({ error: originGuard.message }, { status: originGuard.status })
   }
 
   const user = await prisma.user.findUnique({
@@ -57,8 +64,18 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Anti-SSRF : revalider à chaque test (couvre un URL enregistré avant le contrôle
-  // ou un DNS qui résout désormais vers une cible interne).
+  const testRate = await checkRateLimitWhitelabelTestAsync(user.id)
+  if (!testRate.ok) {
+    return NextResponse.json(
+      { error: 'rate_limited', message: 'Trop de tests webhook. Réessayez plus tard.' },
+      {
+        status: 429,
+        headers: testRate.retryAfter ? { 'Retry-After': String(testRate.retryAfter) } : {},
+      },
+    )
+  }
+
+  // Anti-SSRF : revalider à chaque test
   const urlCheck = await isPublicWebhookUrl(config.webhookUrl)
   if (!urlCheck.ok) {
     return NextResponse.json(

@@ -3,7 +3,10 @@ import { put } from '@vercel/blob'
 import { z } from 'zod'
 import { auth } from '@/app/lib/auth-server'
 import { jsonInvalidBody } from '@/lib/api-json-body'
+import { assertSameOriginMutation } from '@/lib/csrf-origin-guard'
 import { assertDashboardMutationAllowed } from '@/lib/require-email-verified'
+import { checkRateLimitUploadAsync } from '@/lib/rate-limit-sensitive'
+import { validateUploadFileContent } from '@/lib/upload-file-validation'
 
 /**
  * Types MIME acceptés pour l'upload de documents (KYC + Trust manuel).
@@ -48,6 +51,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
   }
 
+  const originGuard = assertSameOriginMutation(req)
+  if (!originGuard.ok) {
+    return NextResponse.json({ error: originGuard.message }, { status: originGuard.status })
+  }
+
   const mutationGuard = await assertDashboardMutationAllowed(session.user.id, session.user.email)
   if (!mutationGuard.ok) {
     return NextResponse.json(
@@ -57,6 +65,14 @@ export async function POST(req: NextRequest) {
         ...(mutationGuard.code === 'DISCOVERY_EXPIRED' ? { upgradeUrl: mutationGuard.upgradeUrl } : {}),
       },
       { status: mutationGuard.status },
+    )
+  }
+
+  const uploadRate = await checkRateLimitUploadAsync(session.user.id)
+  if (!uploadRate.ok) {
+    return NextResponse.json(
+      { error: 'Trop de téléversements. Réessayez plus tard.' },
+      { status: 429, headers: uploadRate.retryAfter ? { 'Retry-After': String(uploadRate.retryAfter) } : {} },
     )
   }
 
@@ -84,6 +100,12 @@ export async function POST(req: NextRequest) {
       { error: 'Fichier trop volumineux (max 10 MB)' },
       { status: 400 },
     )
+  }
+
+  const fileBytes = new Uint8Array(await file.arrayBuffer())
+  const contentCheck = validateUploadFileContent(file.type, fileBytes)
+  if (!contentCheck.ok) {
+    return NextResponse.json({ error: contentCheck.message }, { status: 400 })
   }
 
   const purposeMetaSchema = z
@@ -116,20 +138,19 @@ export async function POST(req: NextRequest) {
   try {
     const blob = await put(
       `${prefix}/${session.user.id}/${safeUploadFilename(file.name || 'upload')}`,
-      file,
+      Buffer.from(fileBytes),
       {
         // RGPD : pièces d'identité / justificatifs = données sensibles. Stockage PRIVÉ
         // (jamais accessible publiquement par URL). La lecture passe par un endpoint
         // admin authentifié qui streame le blob.
         access: 'private',
         addRandomSuffix: true,
-        contentType: file.type,
+        contentType: contentCheck.mime,
         token,
       },
     )
 
-    // On renvoie le `pathname` (stable) : c'est lui qui sert à la relecture privée.
-    return NextResponse.json({ url: blob.url, pathname: blob.pathname })
+    return NextResponse.json({ pathname: blob.pathname })
   } catch (err) {
     // NE PAS logger le token / contenu du fichier
     console.error('[UPLOAD ERROR]', err instanceof Error ? err.message : 'unknown')

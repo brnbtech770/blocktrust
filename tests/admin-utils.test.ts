@@ -45,6 +45,13 @@ describe('admin-utils — getAdminEmailList', () => {
     expect(getAdminEmailList()).toEqual(['only-admin@example.com'])
   })
 
+  it('production : fail-closed si aucune variable admin', () => {
+    vi.stubEnv('NODE_ENV', 'production')
+    delete process.env.DASHBOARD_ADMIN_EMAILS
+    delete process.env.ADMIN_EMAILS
+    expect(getAdminEmailList()).toEqual([])
+  })
+
   it('production : filtre les INTERNAL_EMAILS d’une liste ADMIN_EMAILS erronée', () => {
     vi.stubEnv('NODE_ENV', 'production')
     delete process.env.DASHBOARD_ADMIN_EMAILS

@@ -41,6 +41,12 @@ describe("auth-credentials-client", () => {
     fetchMock.mockResolvedValueOnce({
       ok: true,
       status: 200,
+      json: async () => ({ csrfToken: "csrf-test-token" }),
+    });
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
       json: async () => ({
         ok: false,
         error: "locked",

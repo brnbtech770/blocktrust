@@ -103,6 +103,15 @@ export async function preCheckCredentialsLogin(input: {
   email: string;
   password: string;
 }): Promise<CredentialsClientSignInResult | null> {
+  const csrfToken = await fetchCsrfToken();
+  if (!csrfToken) {
+    return {
+      ok: false,
+      message: "Session expirée. Rechargez la page.",
+      tone: "error",
+    };
+  }
+
   try {
     const res = await fetch("/api/auth/login-check", {
       method: "POST",
@@ -111,6 +120,7 @@ export async function preCheckCredentialsLogin(input: {
       body: JSON.stringify({
         email: input.email.trim().toLowerCase(),
         password: input.password,
+        csrfToken,
       }),
     });
 
@@ -131,6 +141,14 @@ export async function preCheckCredentialsLogin(input: {
         message: data.message ?? "Trop de tentatives. Réessayez plus tard.",
         tone: "error",
         errorKind: "rate_limited",
+      };
+    }
+
+    if (res.status === 403 || data.error === "csrf") {
+      return {
+        ok: false,
+        message: data.message ?? "Session expirée. Rechargez la page.",
+        tone: "error",
       };
     }
 

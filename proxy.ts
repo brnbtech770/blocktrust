@@ -30,19 +30,25 @@ function hasAuthJsSessionCookieOnRequest(req: NextRequest): boolean {
   )
 }
 
-async function getEmailFromSession(req: NextRequest): Promise<string | null> {
+async function getSessionToken(req: NextRequest): Promise<Record<string, unknown> | null> {
   const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET
   if (!secret) return null
 
   const primary = inferSecureCookie(req)
   let token = await getToken({ req, secret, secureCookie: primary })
 
-  if (!token?.email) {
+  if (!token) {
     const other = await getToken({ req, secret, secureCookie: !primary })
-    if (other?.email) token = other
+    if (other) token = other
   }
 
-  return (token?.email as string | undefined) ?? null
+  return (token as Record<string, unknown> | null) ?? null
+}
+
+async function getEmailFromSession(req: NextRequest): Promise<string | null> {
+  const token = await getSessionToken(req)
+  if (!token || token.sessionInvalid === true) return null
+  return (token.email as string | undefined) ?? null
 }
 
 /**

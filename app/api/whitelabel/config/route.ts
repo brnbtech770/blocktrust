@@ -158,7 +158,25 @@ export async function PATCH(req: NextRequest) {
   }
   if (typeof body.logoUrl === 'string') {
     const trimmed = body.logoUrl.trim()
-    patch.logoUrl = trimmed.length > 0 ? trimmed.slice(0, 500) : null
+    if (trimmed.length === 0) {
+      patch.logoUrl = null
+    } else {
+      try {
+        const parsed = new URL(trimmed)
+        if (parsed.protocol !== 'https:') {
+          return NextResponse.json(
+            { error: 'invalid_logo_url', message: 'Le logo doit être une URL HTTPS.' },
+            { status: 400 },
+          )
+        }
+        patch.logoUrl = parsed.toString().slice(0, 500)
+      } catch {
+        return NextResponse.json(
+          { error: 'invalid_logo_url', message: 'URL de logo invalide.' },
+          { status: 400 },
+        )
+      }
+    }
   }
   if (typeof body.webhookUrl === 'string') {
     const trimmed = body.webhookUrl.trim()

@@ -9,6 +9,7 @@ import {
   getLoginCheckHourLimiter,
   tryRedisLimit,
 } from "@/lib/rate-limit-redis";
+import { validateAuthJsCsrf } from "@/lib/csrf-origin-guard";
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -50,6 +51,13 @@ export async function POST(req: NextRequest) {
         message: fallback.message,
         tone: fallback.tone,
       });
+    }
+
+    if (!validateAuthJsCsrf(req, parsed.data.csrfToken)) {
+      return NextResponse.json(
+        { ok: false, error: "csrf", message: "Session expirée. Rechargez la page." },
+        { status: 403 },
+      );
     }
 
     const emailNorm = parsed.data.email.trim().toLowerCase();

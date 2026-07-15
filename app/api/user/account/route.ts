@@ -13,6 +13,7 @@ import {
   OrgOwnershipTransferRequiredError,
 } from "@/lib/account-deletion";
 import { writeSecurityAuditLogFireAndForget } from "@/lib/security-audit";
+import { assertSameOriginMutation } from "@/lib/csrf-origin-guard";
 
 const deleteBodySchema = z
   .object({
@@ -24,6 +25,11 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   const session = await auth();
   if (!session?.user?.id || !session.user.email) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  const originGuard = assertSameOriginMutation(req);
+  if (!originGuard.ok) {
+    return NextResponse.json({ error: originGuard.message }, { status: originGuard.status });
   }
 
   let body: unknown;

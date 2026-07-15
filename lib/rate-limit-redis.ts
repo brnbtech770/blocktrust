@@ -136,6 +136,18 @@ export const getMcpLimiter = () => getLimiter("bt:mcp", 60, "1 m");
 // Coffre-fort organisation — 60 req/min par userId
 export const getVaultLimiter = () => getLimiter("bt:vault", 60, "1 m");
 
+// Upload documents (KYC / trust-manual) — 10 / h par userId
+export const getUploadHourLimiter = () => getLimiter("bt:upload:h", 10, "1 h");
+
+// Changement MDP — échecs mot de passe actuel — 5 / h par userId
+export const getPasswordChangeLimiter = () => getLimiter("bt:password-change:h", 5, "1 h");
+
+// Test webhook White Label — 5 / min par userId
+export const getWhitelabelTestLimiter = () => getLimiter("bt:whitelabel:test", 5, "1 m");
+
+// Génération lien verify rotatif — 20 / h par userId
+export const getVerifyLinkHourLimiter = () => getLimiter("bt:verify-link:h", 20, "1 h");
+
 // ── Limites différenciées par tier (anti-abus Sybil du plan gratuit Découverte) ──
 // Tier strict (DISCOVERY / DISCOVERY_EXPIRED) vs tier généreux (comptes payants).
 export const getVerifyPlanDiscoveryLimiter = () => getLimiter("bt:plan:verify:disc", 10, "1 m");

@@ -7,6 +7,7 @@ import { getAuthUser } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/db'
 import { stripe } from '@/lib/stripe'
 import { getPlanDisplayLabel, planAllowsTrustCircle, resolveEffectivePlan } from '@/lib/plan-features'
+import { btErrorDevDetails } from '@/lib/prodLog'
 
 export async function GET(req: NextRequest) {
   try {
@@ -169,17 +170,11 @@ export async function GET(req: NextRequest) {
       limits,
     })
   } catch (error: unknown) {
-    console.error('❌ Subscription status error:', error)
-    const err = error instanceof Error ? error : new Error(String(error))
-    console.error('Error details:', {
-      message: err.message,
-      stack: err.stack,
-      name: err.name,
-    })
+    btErrorDevDetails(error, 'Erreur récupération abonnement')
     return NextResponse.json(
       { 
         error: 'Erreur récupération abonnement',
-        details: process.env.NODE_ENV === 'development' ? err.message : undefined,
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined,
       },
       { status: 500 }
     )

@@ -7,6 +7,8 @@ import {
   assertCertificateOwnedByUser,
   createCertificateVerifyToken,
 } from '@/lib/certificate-verify-token'
+import { assertSameOriginMutation } from '@/lib/csrf-origin-guard'
+import { checkRateLimitVerifyLinkAsync } from '@/lib/rate-limit-sensitive'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +21,22 @@ export async function POST(req: NextRequest) {
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
+  }
+
+  const originGuard = assertSameOriginMutation(req)
+  if (!originGuard.ok) {
+    return NextResponse.json({ error: originGuard.message }, { status: originGuard.status })
+  }
+
+  const linkRate = await checkRateLimitVerifyLinkAsync(session.user.id)
+  if (!linkRate.ok) {
+    return NextResponse.json(
+      { error: 'Trop de liens générés. Réessayez plus tard.' },
+      {
+        status: 429,
+        headers: linkRate.retryAfter ? { 'Retry-After': String(linkRate.retryAfter) } : {},
+      },
+    )
   }
 
   let body: GenerateLinkBody

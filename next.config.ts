@@ -57,6 +57,47 @@ const CONTENT_SECURITY_POLICY = [
   "worker-src blob:",
 ].join("; ");
 
+/** CSP stricte (sans unsafe-inline) — Report-Only sur previews Vercel pour mesurer les violations. */
+const CONTENT_SECURITY_POLICY_REPORT_ONLY = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  [
+    "script-src",
+    "'self'",
+    "https://js.stripe.com",
+    "https://challenges.cloudflare.com",
+  ].join(" "),
+  ["style-src", "'self'", "https://fonts.googleapis.com"].join(" "),
+  ["font-src", "'self'", "data:", "https://fonts.gstatic.com"].join(" "),
+  ["img-src", "'self'", "data:", "https:", "blob:"].join(" "),
+  [
+    "connect-src",
+    "'self'",
+    "https://api.stripe.com",
+    "https://polygon-mainnet.g.alchemy.com",
+    "https://api.anthropic.com",
+    "https://*.ingest.sentry.io",
+    "https://*.ingest.de.sentry.io",
+    "https://accounts.google.com",
+    "https://oauth2.googleapis.com",
+    "https://www.googleapis.com",
+    "https://challenges.cloudflare.com",
+  ].join(" "),
+  [
+    "frame-src",
+    "https://js.stripe.com",
+    "https://hooks.stripe.com",
+    "https://*.stripe.com",
+    "https://accounts.google.com",
+    "https://challenges.cloudflare.com",
+  ].join(" "),
+  "worker-src blob:",
+].join("; ");
+
+const isVercelPreview = process.env.VERCEL_ENV === "preview";
+
 const nextConfig: NextConfig = {
   serverExternalPackages: ["stripe"],
   experimental: {
@@ -100,6 +141,14 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: CONTENT_SECURITY_POLICY,
           },
+          ...(isVercelPreview
+            ? [
+                {
+                  key: "Content-Security-Policy-Report-Only",
+                  value: CONTENT_SECURITY_POLICY_REPORT_ONLY,
+                },
+              ]
+            : []),
         ],
       },
     ];

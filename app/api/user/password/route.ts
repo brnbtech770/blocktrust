@@ -9,6 +9,8 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { validatePassword } from "@/lib/password-policy";
 import { invalidateUserSessions } from "@/lib/session-invalidation";
+import { assertSameOriginMutation } from "@/lib/csrf-origin-guard";
+import { checkRateLimitPasswordChangeAsync } from "@/lib/rate-limit-sensitive";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +44,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
+  const originGuard = assertSameOriginMutation(req);
+  if (!originGuard.ok) {
+    return NextResponse.json({ error: originGuard.message }, { status: originGuard.status });
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { id: true, password: true, email: true },
@@ -72,6 +79,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       user.password as string,
     );
     if (!currentValid) {
+      const pwRate = await checkRateLimitPasswordChangeAsync(user.id);
+      if (!pwRate.ok) {
+        return NextResponse.json(
+          { error: "Trop de tentatives. Réessayez plus tard." },
+          {
+            status: 429,
+            headers: pwRate.retryAfter ? { "Retry-After": String(pwRate.retryAfter) } : {},
+          },
+        );
+      }
       return NextResponse.json({ error: "Mot de passe actuel incorrect." }, { status: 400 });
     }
 
