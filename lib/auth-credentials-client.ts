@@ -7,7 +7,14 @@ import { callbackUrlToPath } from "@/app/lib/auth-callback-url";
 
 export type CredentialsClientSignInResult =
   | { ok: true; redirectPath: string }
-  | { ok: false; message: string; tone: "error" | "warning" };
+  | {
+      ok: false;
+      message: string;
+      tone: "error" | "warning";
+      errorKind?: "locked" | "invalid" | "no_password" | "account_suspended" | "rate_limited";
+      attemptsRemaining?: number;
+      minutesRemaining?: number;
+    };
 
 type AuthRedirectParse = {
   error?: string;
@@ -61,6 +68,78 @@ async function fetchCsrfToken(): Promise<string | null> {
   }
 }
 
+type LoginCheckResponse = {
+  ok?: boolean;
+  error?: string;
+  message?: string;
+  tone?: "error" | "warning";
+  attemptsRemaining?: number;
+  minutesRemaining?: number;
+};
+
+function mapLoginCheckFailure(data: LoginCheckResponse): CredentialsClientSignInResult {
+  const tone = data.tone === "warning" ? "warning" : "error";
+  const errorKind =
+    data.error === "locked" ||
+    data.error === "invalid" ||
+    data.error === "no_password" ||
+    data.error === "account_suspended" ||
+    data.error === "rate_limited"
+      ? data.error
+      : undefined;
+
+  return {
+    ok: false,
+    message: data.message ?? "Email ou mot de passe incorrect.",
+    tone,
+    errorKind,
+    attemptsRemaining: data.attemptsRemaining,
+    minutesRemaining: data.minutesRemaining,
+  };
+}
+
+/** Pré-vérification lockout + credentials (messages explicites avant callback NextAuth). */
+export async function preCheckCredentialsLogin(input: {
+  email: string;
+  password: string;
+}): Promise<CredentialsClientSignInResult | null> {
+  try {
+    const res = await fetch("/api/auth/login-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        email: input.email.trim().toLowerCase(),
+        password: input.password,
+      }),
+    });
+
+    let data: LoginCheckResponse;
+    try {
+      data = (await res.json()) as LoginCheckResponse;
+    } catch {
+      return null;
+    }
+
+    if (data.ok) {
+      return null;
+    }
+
+    if (res.status === 429 || data.error === "rate_limited") {
+      return {
+        ok: false,
+        message: data.message ?? "Trop de tentatives. Réessayez plus tard.",
+        tone: "error",
+        errorKind: "rate_limited",
+      };
+    }
+
+    return mapLoginCheckFailure(data);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * POST direct vers /api/auth/callback/credentials (évite signIn() next-auth/react).
  */
@@ -75,6 +154,11 @@ export async function signInWithCredentialsClient(input: {
 
   if (!emailNorm || !password) {
     return { ok: false, message: "Email ou mot de passe incorrect.", tone: "error" };
+  }
+
+  const preCheck = await preCheckCredentialsLogin({ email: emailNorm, password });
+  if (preCheck) {
+    return preCheck;
   }
 
   const csrfToken = await fetchCsrfToken();

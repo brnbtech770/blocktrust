@@ -10,7 +10,6 @@ import type { NextAuthConfig } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { CredentialsSignin } from "next-auth";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { headers } from "next/headers";
 import authEdgeConfig from "./auth.edge.config";
@@ -18,12 +17,12 @@ import { isSafeCallbackUrl } from "./auth-callback-url";
 import { isInternalAccount } from "@/lib/admin-utils";
 import { DEFAULT_B2C_PLAN, resolveEffectivePlan } from "@/lib/plan-features";
 import {
-  buildFailedErrorCode,
-  buildLockedErrorCode,
-  checkLoginLockout,
-  recordLoginFailure,
   recordLoginSuccess,
 } from "@/lib/login-lockout";
+import {
+  checkCredentialsLogin,
+  credentialsCheckToAuthErrorCode,
+} from "@/lib/credentials-login-check";
 import { cancelScheduledAccountDeletion } from "@/lib/account-deletion";
 
 class LockoutCredentialsError extends CredentialsSignin {
@@ -60,19 +59,6 @@ async function resolveUserAccountStatusByEmail(
     select: { accountStatus: true },
   });
   return user?.accountStatus ?? null;
-}
-
-async function findUserByEmailForCredentials(emailNorm: string) {
-  const byExact = await prisma.user.findUnique({
-    where: { email: emailNorm },
-    include: { subscription: true, plan: { select: { type: true } } },
-  });
-  if (byExact) return byExact;
-
-  return prisma.user.findFirst({
-    where: { email: { equals: emailNorm, mode: "insensitive" } },
-    include: { subscription: true, plan: { select: { type: true } } },
-  });
 }
 
 async function touchLastLogin(userId: string): Promise<void> {
@@ -199,76 +185,40 @@ export const authOptions: NextAuthConfig = {
           hdrs.get("x-real-ip") ||
           null;
 
-        const lockout = await checkLoginLockout(emailNorm);
-        if (lockout.locked) {
-          throw new LockoutCredentialsError(lockout.errorCode);
-        }
-
-        const user = await findUserByEmailForCredentials(emailNorm);
-
-        if (user?.accountStatus === "SUSPENDED") {
-          throw new AccountSuspendedError();
-        }
-
-        if (user?.email?.startsWith("deleted_")) {
-          const failStatus = await recordLoginFailure(emailNorm, { ip: clientIp });
-          if (failStatus.locked) {
-            throw new LockoutCredentialsError(failStatus.errorCode);
-          }
-          throw new FailedAttemptsCredentialsError(
-            buildFailedErrorCode(failStatus.attemptsRemaining),
-          );
-        }
-
-        if (user && !user.password) {
-          throw new NoPasswordError();
-        }
-
-        if (!user?.password) {
-          const failStatus = await recordLoginFailure(emailNorm, { ip: clientIp });
-          if (failStatus.locked) {
-            throw new LockoutCredentialsError(failStatus.errorCode);
-          }
-          throw new FailedAttemptsCredentialsError(
-            buildFailedErrorCode(failStatus.attemptsRemaining),
-          );
-        }
-
-        const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) {
-          const failStatus = await recordLoginFailure(emailNorm, {
-            ip: clientIp,
-            userId: user.id,
-          });
-          if (failStatus.locked) {
-            throw new LockoutCredentialsError(failStatus.errorCode);
-          }
-          throw new FailedAttemptsCredentialsError(
-            buildFailedErrorCode(failStatus.attemptsRemaining),
-          );
-        }
-
-        await recordLoginSuccess(emailNorm, { ip: clientIp, userId: user.id });
-
-        if (user.accountDeletionScheduledAt) {
-          await cancelScheduledAccountDeletion(user.id);
-        }
-
-        const plan = resolveEffectivePlan({
-          subscription: user.subscription,
-          email: user.email,
-          planType: user.plan?.type,
+        const check = await checkCredentialsLogin({
+          email: emailNorm,
+          password,
+          clientIp,
         });
 
-        return {
-          id: user.id,
-          email: user.email ?? undefined,
-          name: user.name ?? undefined,
-          plan,
-          kycStatus: user.kycStatus ?? "PENDING",
-          accountType: user.accountType ?? "PERSONAL",
-          cookieConsent: user.cookieConsent ?? false,
-        };
+        if (!check.ok) {
+          const code = credentialsCheckToAuthErrorCode(check);
+          if (check.error === "locked") {
+            throw new LockoutCredentialsError(code);
+          }
+          if (check.error === "invalid") {
+            throw new FailedAttemptsCredentialsError(code);
+          }
+          if (check.error === "account_suspended") {
+            throw new AccountSuspendedError();
+          }
+          if (check.error === "no_password") {
+            throw new NoPasswordError();
+          }
+          return null;
+        }
+
+        await recordLoginSuccess(emailNorm, { ip: clientIp, userId: check.user.id });
+
+        const deletionRow = await prisma.user.findUnique({
+          where: { id: check.user.id },
+          select: { accountDeletionScheduledAt: true },
+        });
+        if (deletionRow?.accountDeletionScheduledAt) {
+          await cancelScheduledAccountDeletion(check.user.id);
+        }
+
+        return check.user;
       },
     }),
   ],

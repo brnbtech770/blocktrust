@@ -1,7 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { parseAuthRedirectUrl } from "@/lib/auth-credentials-client";
 
+const fetchMock = vi.fn();
+
 describe("auth-credentials-client", () => {
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
   it("parseAuthRedirectUrl — URL absolue avec erreur", () => {
     const parsed = parseAuthRedirectUrl(
       "https://blocktrust.tech/auth/signin?error=CredentialsSignin&code=credentials",
@@ -26,5 +33,37 @@ describe("auth-credentials-client", () => {
       "https://blocktrust.tech",
     );
     expect(parsed.code).toBe("FAILED:2");
+  });
+
+  it("preCheckCredentialsLogin — retourne lockout sans appeler callback", async () => {
+    const { preCheckCredentialsLogin } = await import("@/lib/auth-credentials-client");
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        ok: false,
+        error: "locked",
+        minutesRemaining: 14,
+        message: "Compte temporairement verrouillé. Réessayez dans 14 minutes.",
+        tone: "error",
+      }),
+    });
+
+    const result = await preCheckCredentialsLogin({
+      email: "user@example.com",
+      password: "secret",
+    });
+
+    expect(result?.ok).toBe(false);
+    if (result && !result.ok) {
+      expect(result.errorKind).toBe("locked");
+      expect(result.minutesRemaining).toBe(14);
+      expect(result.tone).toBe("error");
+    }
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/auth/login-check",
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 });

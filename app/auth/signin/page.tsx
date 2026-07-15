@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { Lock } from "lucide-react";
 import {
   callbackUrlToPath,
   sanitizeCallbackUrl,
@@ -122,6 +123,10 @@ function SignInContent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(() => initialCredentialsError(errorParam));
   const [errorTone, setErrorTone] = useState<"error" | "warning">("error");
+  const [errorKind, setErrorKind] = useState<
+    "locked" | "invalid" | "no_password" | "account_suspended" | "rate_limited" | null
+  >(null);
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   const [magicEmail, setMagicEmail] = useState("");
@@ -133,6 +138,8 @@ function SignInContent() {
     e.preventDefault();
     setError(null);
     setErrorTone("error");
+    setErrorKind(null);
+    setAttemptsRemaining(null);
     setLoading(true);
 
     const form = e.currentTarget;
@@ -157,6 +164,10 @@ function SignInContent() {
 
       setError(outcome.message);
       setErrorTone(outcome.tone);
+      setErrorKind(outcome.errorKind ?? null);
+      setAttemptsRemaining(
+        typeof outcome.attemptsRemaining === "number" ? outcome.attemptsRemaining : null,
+      );
     } catch {
       setError("Erreur de connexion, réessayez");
       setErrorTone("error");
@@ -394,25 +405,43 @@ function SignInContent() {
             </p>
           </div>
           {error && (
-            <p
+            <div
               role="alert"
               style={{
-                color: errorTone === "warning" ? "#f59e0b" : "#E05252",
+                color: errorKind === "locked" || errorTone === "error" ? "#E05252" : "#f59e0b",
                 marginBottom: "1rem",
                 fontSize: "0.9rem",
                 lineHeight: 1.45,
-                padding: errorTone === "warning" ? "12px" : undefined,
-                borderRadius: errorTone === "warning" ? "8px" : undefined,
+                padding: "12px",
+                borderRadius: "8px",
                 background:
-                  errorTone === "warning" ? "rgba(245,158,11,0.12)" : undefined,
+                  errorKind === "locked" || errorTone === "error"
+                    ? "rgba(224,82,82,0.12)"
+                    : "rgba(245,158,11,0.12)",
                 border:
-                  errorTone === "warning"
-                    ? "1px solid rgba(245,158,11,0.35)"
-                    : undefined,
+                  errorKind === "locked" || errorTone === "error"
+                    ? "1px solid rgba(224,82,82,0.35)"
+                    : "1px solid rgba(245,158,11,0.35)",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "8px",
               }}
             >
-              {error}
-            </p>
+              {errorKind === "locked" ? (
+                <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              ) : null}
+              <p
+                style={{
+                  margin: 0,
+                  fontWeight:
+                    errorKind === "invalid" && attemptsRemaining !== null && attemptsRemaining <= 1
+                      ? 700
+                      : 400,
+                }}
+              >
+                {error}
+              </p>
+            </div>
           )}
           <button
             type="submit"
