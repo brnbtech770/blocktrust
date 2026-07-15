@@ -53,14 +53,22 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // UserTrustRelation (mutuel, unilatéral, invitation PENDING, etc.)
+    // UserTrustRelation — expéditeur ou destinataire (refus invitation)
     if (type === 'mutual' || type === 'relation') {
-      const userRel = await prisma.userTrustRelation.findFirst({
+      const asSender = await prisma.userTrustRelation.findFirst({
         where: { id, fromUserId: user.id },
       })
-      if (userRel) {
+      if (asSender) {
         await prisma.userTrustRelation.delete({ where: { id } })
         return NextResponse.json({ success: true, deletedCount: 1, type: 'mutual' })
+      }
+
+      const asRecipient = await prisma.userTrustRelation.findFirst({
+        where: { id, toUserId: user.id },
+      })
+      if (asRecipient) {
+        await prisma.userTrustRelation.delete({ where: { id } })
+        return NextResponse.json({ success: true, deletedCount: 1, type: 'declined' })
       }
     }
 

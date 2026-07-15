@@ -9,6 +9,8 @@ import { openCookieSettings } from "@/app/lib/cookie-consent";
 const links: { label: string; href: string }[] = [
   { label: "Accueil", href: "/" },
   { label: "Tarifs", href: "/pricing" },
+  { label: "Comment ça marche", href: "/how-to" },
+  { label: "FAQ", href: "/faq" },
   { label: "Actualités", href: "/menaces" },
   { label: "Vérifier", href: "/verify" },
   { label: "CGU", href: "/cgu" },

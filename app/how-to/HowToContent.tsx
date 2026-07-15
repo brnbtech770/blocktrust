@@ -53,8 +53,8 @@ const STEPS: StepItem[] = [
     description:
       "Installez l'extension Chrome BLOCKTRUST™ TrustScan. Elle vérifie automatiquement l'identité de chaque expéditeur et détecte les signatures BIS — directement dans Gmail.",
     duration: "installation en 1 minute",
-    href: "/dashboard/extension",
-    linkLabel: "Installer l'extension →",
+    href: "/auth/register?callbackUrl=%2Fdashboard%2Fextension",
+    linkLabel: "Créer un compte pour installer →",
   },
 ];
 

@@ -4,6 +4,7 @@ import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { canPromoteToMutual, promoteToMutual } from '@/lib/trust-circle-mutual'
 import { persistUserTrustScore } from '@/lib/trustscore'
+import { userCanAcceptInvite } from '@/lib/trust-circle-invites'
 
 export async function POST(
   _req: NextRequest,
@@ -39,11 +40,18 @@ export async function POST(
     )
   }
 
-  if (relation.toUserId !== session.user.id) {
+  if (!userCanAcceptInvite(relation, session.user.id, session.user.email)) {
     return NextResponse.json(
       { error: 'Non autorisé' },
       { status: 403 }
     )
+  }
+
+  if (!relation.toUserId) {
+    await prisma.userTrustRelation.update({
+      where: { id: relation.id },
+      data: { toUserId: session.user.id },
+    })
   }
 
   await prisma.userTrustRelation.update({

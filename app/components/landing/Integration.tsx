@@ -27,6 +27,7 @@ const tabs: Tab[] = [
 ];
 
 const SAMPLE_ID = "bt-7f3a92";
+const PUBLIC_VERIFY_URL = `https://blocktrust.tech/verify?certId=${SAMPLE_ID}`;
 
 export default function Integration() {
   const [active, setActive] = useState<string>("web");
@@ -42,21 +43,22 @@ export default function Integration() {
     }
   };
 
-  const iframeSnippet = `<iframe
-  src="https://blocktrust.tech/badge/${SAMPLE_ID}"
+  const iframeSnippet = `<img
+  src="https://blocktrust.tech/api/badge/${SAMPLE_ID}?size=sm"
+  alt="Badge certifié BLOCKTRUST™"
   width="220"
   height="280"
-  style="border:0;background:transparent"
   loading="lazy"
-></iframe>`;
+/>`;
 
-  const apiSnippet = `GET https://blocktrust.tech/api/v2/verify/${SAMPLE_ID}
+  const apiSnippet = `GET https://blocktrust.tech/api/public/verify/${SAMPLE_ID}
+Header: X-API-Key: votre_cle_api
 
 {
   "valid": true,
-  "entity": "Acme Corp",
-  "score": 85,
-  "anchored_at": "2026-04-26T18:00:00Z"
+  "name": "Acme Corp",
+  "status": "ACTIVE",
+  "trustScore": 85
 }`;
 
   return (
@@ -210,12 +212,10 @@ export default function Integration() {
               </p>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <code className="flex-1 overflow-x-auto rounded-lg border border-white/10 bg-[#060e1a] px-4 py-3 text-xs text-bt-cyan font-mono sm:text-sm">
-                  blocktrust.tech/verify/{SAMPLE_ID}
+                  blocktrust.tech/verify?certId={SAMPLE_ID}
                 </code>
                 <button
-                  onClick={() =>
-                    copy("visio", `https://blocktrust.tech/verify/${SAMPLE_ID}`)
-                  }
+                  onClick={() => copy("visio", PUBLIC_VERIFY_URL)}
                   className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-3 text-sm font-medium text-white hover:bg-white/5 sm:w-auto"
                 >
                   {copied === "visio" ? (

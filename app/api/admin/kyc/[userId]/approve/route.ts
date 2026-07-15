@@ -16,6 +16,17 @@ export async function PATCH(
 
   const { userId } = await params
 
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, kycStatus: true },
+  })
+  if (!target) {
+    return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 })
+  }
+  if (target.kycStatus === 'VERIFIED') {
+    return NextResponse.json({ error: 'Déjà vérifié' }, { status: 409 })
+  }
+
   await prisma.$transaction([
     prisma.user.update({
       where: { id: userId },

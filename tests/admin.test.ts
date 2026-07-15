@@ -99,6 +99,7 @@ describe('Admin — accès', () => {
 describe('Admin — KYC', () => {
   it('approve → success', async () => {
     authMock.mockResolvedValue({ user: { email: ADMIN_EMAIL, id: 'admin-1' } })
+    prismaMock.user.findUnique.mockResolvedValue({ id: 'u1', kycStatus: 'PENDING' })
     prismaMock.user.update.mockResolvedValue({})
     prismaMock.kYCVerification.updateMany.mockResolvedValue({ count: 1 })
 

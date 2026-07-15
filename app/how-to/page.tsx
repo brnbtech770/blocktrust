@@ -4,7 +4,7 @@ import Footer from "@/app/components/landing/Footer";
 import HowToContent from "./HowToContent";
 
 export const metadata: Metadata = {
-  title: "Comment ça marche — BLOCKTRUST™",
+  title: { absolute: "Comment ça marche · BLOCKTRUST™" },
   description:
     "Comprenez BLOCKTRUST™ en 3 minutes : création de badge, signatures, vérification de contacts et lexique des termes techniques expliqués simplement.",
   alternates: { canonical: "/how-to" },

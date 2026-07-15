@@ -99,9 +99,12 @@ export async function checkCredentialsLogin(input: {
   email: string;
   password: string;
   clientIp?: string | null;
+  /** Pré-check UI : n'incrémente pas le lockout pour emails inconnus (anti-DoS). */
+  precheck?: boolean;
 }): Promise<CredentialsLoginCheckResult> {
   const emailNorm = input.email.trim().toLowerCase();
   const password = input.password;
+  const precheck = input.precheck ?? false;
 
   const lockout = await checkLoginLockout(emailNorm);
   if (lockout.locked) {
@@ -120,6 +123,9 @@ export async function checkCredentialsLogin(input: {
   }
 
   if (user && !user.password) {
+    if (precheck) {
+      return failedResult(Math.max(1, lockout.attemptsRemaining - 1));
+    }
     return {
       ok: false,
       error: "no_password",
@@ -140,6 +146,15 @@ export async function checkCredentialsLogin(input: {
   };
 
   if (user?.email?.startsWith("deleted_") || !user?.password) {
+    if (precheck) {
+      return {
+        ok: false,
+        error: "invalid",
+        attemptsRemaining: Math.max(1, lockout.attemptsRemaining - 1),
+        message: CREDENTIALS_ERROR_MESSAGE,
+        tone: "warning",
+      };
+    }
     return recordFailure(user?.id);
   }
 

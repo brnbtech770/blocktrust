@@ -34,6 +34,14 @@ export async function POST(req: NextRequest) {
   const { email, name, entityType, note } = parsed.data
   const userId = session.user.id
 
+  const selfEmail = session.user.email?.trim().toLowerCase()
+  if (selfEmail && email.trim().toLowerCase() === selfEmail) {
+    return NextResponse.json(
+      { error: 'Vous ne pouvez pas vous ajouter vous-même à votre Trust Circle.' },
+      { status: 400 },
+    )
+  }
+
   const emailGuard = await assertEmailVerifiedForFeature(userId)
   if (!emailGuard.ok) {
     return NextResponse.json(

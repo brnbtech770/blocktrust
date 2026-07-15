@@ -23,9 +23,14 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await resendVerificationByEmail(email);
+    const status = !result.ok
+      ? result.message.includes("Trop de demandes")
+        ? 429
+        : 503
+      : 200;
     return NextResponse.json(
       { ok: result.ok, message: result.message },
-      { status: result.ok ? 200 : 429 },
+      { status },
     );
   } catch (err) {
     console.error("[resend-verification]", err);

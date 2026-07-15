@@ -7,6 +7,7 @@ import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
 import { syncMutualRelationsForUser } from '@/lib/trust-circle-mutual'
+import { linkPendingInvitesToUser, pendingReceivedInviteWhere } from '@/lib/trust-circle-invites'
 
 export async function GET() {
   const session = await auth()
@@ -22,6 +23,10 @@ export async function GET() {
   // Pas de blocage 403 — le quota gère les limites.
 
   await syncMutualRelationsForUser(userId)
+
+  if (session.user.email) {
+    await linkPendingInvitesToUser(userId, session.user.email).catch(() => null)
+  }
 
   const [mutual, unilateral, pending, received, manualEntries, quota] = await Promise.all([
     prisma.userTrustRelation.findMany({
@@ -53,10 +58,11 @@ export async function GET() {
       },
     }),
     prisma.userTrustRelation.findMany({
-      where: { toUserId: userId, status: 'PENDING', isMutual: false },
+      where: pendingReceivedInviteWhere(userId, session.user.email),
       select: {
         id: true,
         inviteToken: true,
+        toEmail: true,
         fromUser: {
           select: { id: true, name: true, email: true, kycStatus: true },
         },

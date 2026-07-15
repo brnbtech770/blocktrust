@@ -4,6 +4,7 @@ import { prisma } from '@/app/lib/db'
 import { stripe } from '@/lib/stripe'
 import { z } from 'zod'
 import { isDiscoveryExpired, isDiscoveryPlan, resolveEffectivePlan } from '@/lib/plan-features'
+import { assertEmailVerifiedForFeature } from '@/lib/require-email-verified'
 import { checkKycRateLimit } from '@/lib/rate-limit-cost'
 
 const schema = z.object({
@@ -19,6 +20,14 @@ export async function POST(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json(
       { error: 'Non authentifié' }, { status: 401 }
+    )
+  }
+
+  const emailGuard = await assertEmailVerifiedForFeature(session.user.id)
+  if (!emailGuard.ok) {
+    return NextResponse.json(
+      { error: emailGuard.code, message: emailGuard.message },
+      { status: emailGuard.status },
     )
   }
 
@@ -105,8 +114,7 @@ export async function POST(req: NextRequest) {
             ],
           },
         },
-        return_url:
-          'https://blocktrust.tech/onboarding/verify?status=complete',
+        return_url: `${(process.env.NEXT_PUBLIC_APP_URL ?? 'https://blocktrust.tech').replace(/\/$/, '')}/onboarding/verify?status=complete`,
       })
 
     if (!verificationSession?.url) {

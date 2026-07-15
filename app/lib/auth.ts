@@ -189,6 +189,7 @@ export const authOptions: NextAuthConfig = {
           email: emailNorm,
           password,
           clientIp,
+          precheck: false,
         });
 
         if (!check.ok) {
@@ -250,6 +251,7 @@ export const authOptions: NextAuthConfig = {
             update: {
               name: user.name,
               image: user.image,
+              emailVerified: new Date(),
             },
             create: {
               email: emailNorm,
@@ -257,6 +259,7 @@ export const authOptions: NextAuthConfig = {
               image: user.image,
               kycStatus: 'PENDING',
               accountType: 'PERSONAL',
+              emailVerified: new Date(),
             },
           });
         } catch (err) {

@@ -17,7 +17,7 @@ export const googleProvider =
         // Opt-in explicite — true par défaut : Google vérifie l'email, permet la liaison
         // avec un compte credentials existant (même adresse).
         allowDangerousEmailAccountLinking:
-          process.env.ALLOW_DANGEROUS_EMAIL_LINKING !== "false",
+          process.env.ALLOW_DANGEROUS_EMAIL_LINKING === "true",
       })
     : null;
 

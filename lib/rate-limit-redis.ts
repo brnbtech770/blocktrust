@@ -94,6 +94,10 @@ export const getRegisterDayLimiter = () => getLimiter("bt:register:d", 10, "1 d"
 export const getResendVerificationLimiter = () =>
   getLimiter("bt:verify-email:resend", 3, "1 h");
 
+// Pré-check login credentials : 30 / h par IP, 20 / h par email (séparé du magic link)
+export const getLoginCheckHourLimiter = () => getLimiter("bt:login-check:h", 30, "1 h");
+export const getLoginCheckEmailLimiter = () => getLimiter("bt:login-check:email", 20, "1 h");
+
 // Magic link (Auth.js email) : 3 envois / h par identifiant (IP ou email)
 export const getMagicLinkHourLimiter = () => getLimiter("bt:magiclink:h", 3, "1 h");
 

@@ -18,6 +18,7 @@ import {
 import { deriveCertificateLevelFromPlan } from '@/lib/certificate-plan-level';
 import { checkPlanRateLimit } from '@/lib/rate-limit-plan';
 import { assertSafeDisplayText } from '@/lib/sanitize-display-text';
+import { assertEmailVerifiedForFeature } from '@/lib/require-email-verified';
 
 // ─────────────────────────────────────────────
 // Schémas de validation
@@ -71,6 +72,14 @@ export async function POST(req: NextRequest) {
       // Ne jamais logger cookies/headers de session (fuite de données sensibles).
       console.warn('[entities] POST non authentifié');
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const emailGuard = await assertEmailVerifiedForFeature(session.user.id);
+    if (!emailGuard.ok) {
+      return NextResponse.json(
+        { error: emailGuard.code, message: emailGuard.message },
+        { status: emailGuard.status },
+      );
     }
 
     // Récupérer l'utilisateur depuis la base de données

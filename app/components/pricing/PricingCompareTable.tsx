@@ -152,7 +152,7 @@ export default function PricingCompareTable({ mode }: Props) {
     <section
       id="compare"
       aria-labelledby="compare-heading"
-      className="mx-auto mt-12 max-w-6xl px-4 sm:mt-16 sm:px-6 lg:px-8"
+      className="mx-auto mt-12 max-w-6xl scroll-mt-24 px-4 sm:mt-16 sm:px-6 lg:px-8"
     >
       <h2
         id="compare-heading"
