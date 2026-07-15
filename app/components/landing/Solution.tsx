@@ -51,17 +51,17 @@ export default function Solution() {
         </h2>
       </div>
 
-      <div className="relative mt-14 mx-auto max-w-3xl">
-        <ol className="space-y-10 sm:space-y-12">
+      <div className="relative mt-10 sm:mt-14 mx-auto w-full max-w-md sm:max-w-lg md:max-w-xl">
+        <ol className="w-full space-y-10 sm:space-y-12">
           {steps.map((step, i) => {
             const Icon = step.icon;
             const isLast = i === steps.length - 1;
             return (
-              <li key={step.step} className="relative pl-16 sm:pl-20">
+              <li key={step.step} className="relative min-w-0 pl-14 sm:pl-20">
                 {!isLast && (
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute left-6 top-12 -bottom-10 w-px sm:left-7 sm:top-14 sm:-bottom-12"
+                    className="pointer-events-none absolute left-[1.375rem] top-12 -bottom-10 w-px sm:left-7 sm:top-14 sm:-bottom-12"
                     style={{
                       background:
                         "linear-gradient(180deg, rgba(0,212,255,0.6), rgba(189,167,107,0.4), rgba(0,212,255,0.6))",
@@ -69,7 +69,7 @@ export default function Solution() {
                   />
                 )}
                 <div
-                  className="absolute left-0 top-0 flex h-12 w-12 items-center justify-center rounded-full border-2 sm:h-14 sm:w-14"
+                  className="absolute left-0 top-0 flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-2 sm:h-14 sm:w-14"
                   style={{
                     background: "rgba(10,22,40,0.95)",
                     borderColor: step.ringColor,
@@ -78,13 +78,15 @@ export default function Solution() {
                 >
                   <Icon className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: step.iconColor }} />
                 </div>
-                <h3 className="font-syne mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-balance text-lg font-semibold leading-snug text-white sm:text-xl">
-                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">
+                <h3 className="font-syne mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-balance break-words text-base font-semibold leading-snug text-white sm:mt-1 sm:text-lg md:text-xl">
+                  <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-white/50 sm:text-xs">
                     {step.step}
                   </span>
                   <span>{step.title}</span>
                 </h3>
-                <p className="mt-2 max-w-sm text-sm leading-relaxed text-white/70">{step.text}</p>
+                <p className="mt-2 min-w-0 text-sm leading-relaxed text-white/70 break-words sm:text-[0.9375rem]">
+                  {step.text}
+                </p>
               </li>
             );
           })}
