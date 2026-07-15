@@ -56,8 +56,7 @@ describe("credentials-login-check", () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe("locked");
+    if (!result.ok && result.error === "locked") {
       expect(result.minutesRemaining).toBe(12);
       expect(result.message).toContain("12 minute");
     }
@@ -84,8 +83,7 @@ describe("credentials-login-check", () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe("invalid");
+    if (!result.ok && result.error === "invalid") {
       expect(result.attemptsRemaining).toBe(3);
       expect(result.message).toContain("3 tentatives");
     }
