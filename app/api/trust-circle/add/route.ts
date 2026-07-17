@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
-import { prisma } from '@/app/lib/db'
-import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
-import { tryPromoteMutualOnAdd } from '@/lib/trust-circle-mutual'
+import { assertDashboardMutationAllowed } from '@/lib/require-email-verified'
+import { addContactToTrustNetwork } from '@/lib/add-contact-trust-network'
 import { checkPlanRateLimit } from '@/lib/rate-limit-plan'
 import { resolveEffectivePlan, planAllowsTrustCircle } from '@/lib/plan-features'
-import { writeSecurityAuditLogFireAndForget } from '@/lib/security-audit'
-import { assertDashboardMutationAllowed } from '@/lib/require-email-verified'
+import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -27,20 +25,12 @@ export async function POST(req: NextRequest) {
     const first = parsed.error.issues?.[0]
     return NextResponse.json(
       { error: (first?.message ?? parsed.error.message) || 'Données invalides' },
-      { status: 400 }
-    )
-  }
-
-  const { email, name, entityType, note } = parsed.data
-  const userId = session.user.id
-
-  const selfEmail = session.user.email?.trim().toLowerCase()
-  if (selfEmail && email.trim().toLowerCase() === selfEmail) {
-    return NextResponse.json(
-      { error: 'Vous ne pouvez pas vous ajouter vous-même à votre Trust Circle.' },
       { status: 400 },
     )
   }
+
+  const { email, name, entityType } = parsed.data
+  const userId = session.user.id
 
   const mutationGuard = await assertDashboardMutationAllowed(userId, session.user.email)
   if (!mutationGuard.ok) {
@@ -54,7 +44,6 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Plan effectif (statut Stripe inclus) — Trust Circle réservé à Premium et plus.
   const subscription = await prisma.subscription.findUnique({
     where: { userId },
     select: { plan: true, status: true },
@@ -71,7 +60,6 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // Anti-Sybil (plan Découverte) : limite d'ajouts de contacts par tier.
   const rate = await checkPlanRateLimit('contacts', plan, userId)
   if (!rate.ok) {
     return NextResponse.json(
@@ -79,111 +67,40 @@ export async function POST(req: NextRequest) {
       {
         status: 429,
         headers: rate.retryAfter ? { 'Retry-After': String(rate.retryAfter) } : undefined,
-      }
+      },
     )
   }
 
-  const quota = await checkTrustCircleQuota(userId, plan)
-  if (!quota.allowed) {
-    return NextResponse.json({
-      error:      'QUOTA_EXCEEDED',
-      message:    `Limite atteinte pour le plan ${plan}.`,
-      current:    quota.current,
-      limit:      quota.limit,
-      upgradeUrl: '/pricing',
-    }, { status: 403 })
-  }
-
-  const targetUser = await prisma.user.findFirst({
-    where: { email, kycStatus: 'VERIFIED' },
+  const result = await addContactToTrustNetwork({
+    fromUserId: userId,
+    fromUserEmail: session.user.email,
+    fromUserName: session.user.name,
+    contactEmail: email,
+    contactName: name,
+    entityType,
   })
 
-  if (targetUser) {
-    const existing = await prisma.userTrustRelation.findFirst({
-      where: {
-        fromUserId: userId,
-        toUserId:   targetUser.id,
+  if (!result.ok) {
+    return NextResponse.json(
+      {
+        error: result.code,
+        message: result.message,
+        ...(result.code === 'QUOTA_EXCEEDED' ? { upgradeUrl: '/pricing' } : {}),
       },
-    })
-    if (existing) {
-      return NextResponse.json(
-        { error: 'Relation déjà existante' },
-        { status: 409 }
-      )
-    }
+      { status: result.status },
+    )
   }
-
-  const inviteToken = crypto.randomUUID()
-  const inviteExpiry = new Date(Date.now() + (targetUser ? 7 : 30) * 24 * 3600 * 1000)
-
-  const relation = await prisma.userTrustRelation.create({
-    data: {
-      fromUserId:   userId,
-      toUserId:     targetUser?.id ?? null,
-      toEmail:      email,
-      toName:       name,
-      toEntityType: entityType,
-      trustType:    targetUser ? 'UNILATERAL' : 'UNVERIFIED',
-      status:       'PENDING',
-      inviteToken,
-      inviteExpiry,
-      inviteSentAt: new Date(),
-    },
-  })
-
-  if (targetUser) {
-    const promoted = await tryPromoteMutualOnAdd({
-      relationId: relation.id,
-      fromUserId: userId,
-      toUserId:   targetUser.id,
-    })
-
-    if (promoted) {
-      const { sendMutualTrustEmail } = await import('@/lib/trust-circle-email')
-      await sendMutualTrustEmail(userId, targetUser.id).catch(console.error)
-      writeSecurityAuditLogFireAndForget({
-        action: 'TRUST_CIRCLE_ADDED',
-        userId,
-        resource: 'trust_circle',
-        resourceId: targetUser.id,
-        metadata: { trustType: 'MUTUAL' },
-      })
-      return NextResponse.json({
-        success:   true,
-        trustType: 'MUTUAL',
-        message:   'Confiance mutuelle activée !',
-      })
-    }
-
-    const { sendTrustCircleInviteEmail } = await import('@/lib/trust-circle-email')
-    await sendTrustCircleInviteEmail(
-      targetUser.id,
-      session.user.id,
-      session.user.name ?? 'Un utilisateur BLOCKTRUST™',
-      session.user.email ?? '',
-      inviteToken
-    ).catch(console.error)
-  } else {
-    const { sendTrustCircleExternalInviteEmail } = await import('@/lib/trust-circle-email')
-    await sendTrustCircleExternalInviteEmail(
-      email,
-      name,
-      session.user.name ?? 'Un utilisateur BLOCKTRUST™',
-      inviteToken
-    ).catch(console.error)
-  }
-
-  writeSecurityAuditLogFireAndForget({
-    action: 'TRUST_CIRCLE_ADDED',
-    userId,
-    resource: 'trust_circle',
-    resourceId: targetUser?.id ?? email,
-    metadata: { trustType: targetUser ? 'UNILATERAL' : 'UNVERIFIED' },
-  })
 
   return NextResponse.json({
-    success:   true,
-    trustType: targetUser ? 'UNILATERAL' : 'UNVERIFIED',
-    message:   'Invitation envoyée.',
+    success: true,
+    trustType:
+      result.action === 'mutual'
+        ? 'MUTUAL'
+        : result.action === 'trust_circle_invite'
+          ? 'UNILATERAL'
+          : result.action === 'external_invite'
+            ? 'UNVERIFIED'
+            : 'CONTACT_ONLY',
+    message: result.message,
   })
 }

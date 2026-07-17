@@ -19,6 +19,8 @@ import { deriveCertificateLevelFromPlan } from '@/lib/certificate-plan-level';
 import { checkPlanRateLimit } from '@/lib/rate-limit-plan';
 import { assertSafeDisplayText } from '@/lib/sanitize-display-text';
 import { assertDashboardMutationAllowed } from '@/lib/require-email-verified';
+import { isUserOwnProfileEntity } from '@/lib/entity-contacts';
+import { addContactToTrustNetwork } from '@/lib/add-contact-trust-network';
 
 // ─────────────────────────────────────────────
 // Schémas de validation
@@ -31,6 +33,10 @@ const walletFields = {
   certifiedPhones: z.array(z.string()).max(10).optional(),
 };
 
+const purposeField = {
+  purpose: z.enum(['contact', 'badge']).optional(),
+};
+
 const individualSchema = z.object({
   entityType: z.literal('INDIVIDUAL'),
   firstName: z.string().min(1).max(100),
@@ -40,6 +46,7 @@ const individualSchema = z.object({
   website: z.string().max(500).optional().nullable().or(z.literal('')),
   description: z.string().max(1000).optional().nullable(),
   ...walletFields,
+  ...purposeField,
 });
 
 const businessSchema = z.object({
@@ -52,6 +59,7 @@ const businessSchema = z.object({
   website: z.string().url(), // Requis pour BUSINESS
   description: z.string().max(1000).optional().nullable(),
   ...walletFields,
+  ...purposeField,
 });
 
 const createEntitySchema = z.discriminatedUnion('entityType', [
@@ -183,6 +191,25 @@ export async function POST(req: NextRequest) {
     if (!certified.ok) {
       return NextResponse.json(
         { error: `${certified.error.field}: ${certified.error.reason}` },
+        { status: 400 },
+      );
+    }
+
+    const isOwnBadge =
+      data.purpose === 'badge' ||
+      (data.purpose !== 'contact' &&
+        isUserOwnProfileEntity({ email: data.email }, user.email));
+
+    if (data.purpose === 'badge' && !isUserOwnProfileEntity({ email: data.email }, user.email)) {
+      return NextResponse.json(
+        { error: 'Le badge personnel doit utiliser l’email de votre compte.' },
+        { status: 400 },
+      );
+    }
+
+    if (data.purpose === 'contact' && isUserOwnProfileEntity({ email: data.email }, user.email)) {
+      return NextResponse.json(
+        { error: 'Utilisez « Créer mon badge » pour votre profil personnel.' },
         { status: 400 },
       );
     }
@@ -327,17 +354,52 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Créer un certificat automatiquement avec status PENDING
-    // Seul l'admin peut passer en ACTIVE via /api/admin/certificates/[id]
-    const isDiscovery = isDiscoveryPlan(effectivePlan);
-    const certificate = await prisma.certificate.create({
-      data: {
-        entityId: entity.id,
-        status: 'PENDING', // PAS 'ACTIVE' - seul l'admin peut activer
-        level: certLevel,
-        ...(isDiscovery ? { blockchainStatus: BLOCKCHAIN_STATUS_NOT_ANCHORED } : {}),
-      },
-    });
+    let certificate: { id: string; publicId: string | null; status: string } | null = null;
+    let network: { action: string; message: string } | null = null;
+
+    if (isOwnBadge) {
+      const isDiscovery = isDiscoveryPlan(effectivePlan);
+      const createdCert = await prisma.certificate.create({
+        data: {
+          entityId: entity.id,
+          status: 'PENDING',
+          level: certLevel,
+          ...(isDiscovery ? { blockchainStatus: BLOCKCHAIN_STATUS_NOT_ANCHORED } : {}),
+        },
+      });
+      certificate = {
+        id: createdCert.id,
+        publicId: createdCert.publicId,
+        status: createdCert.status,
+      };
+    } else {
+      const contactName =
+        data.entityType === 'INDIVIDUAL'
+          ? `${data.firstName} ${data.lastName}`.trim()
+          : (data.tradeName || data.legalName).trim();
+
+      const networkResult = await addContactToTrustNetwork({
+        fromUserId: user.id,
+        fromUserEmail: user.email,
+        fromUserName: session.user.name,
+        contactEmail: data.email,
+        contactName,
+        entityType: data.entityType === 'BUSINESS' ? 'BUSINESS' : 'INDIVIDUAL',
+      });
+
+      if (!networkResult.ok) {
+        await prisma.entity.delete({ where: { id: entity.id } }).catch(() => undefined);
+        return NextResponse.json(
+          { error: networkResult.code, message: networkResult.message },
+          { status: networkResult.status },
+        );
+      }
+
+      network = {
+        action: networkResult.action,
+        message: networkResult.message,
+      };
+    }
 
     // Créer le TrustScore initial et le calculer
     const { updateTrustScore } = await import('@/app/lib/trust-score')
@@ -360,11 +422,14 @@ export async function POST(req: NextRequest) {
             }),
         email: entity.email,
       },
-      certificate: {
-        id: certificate.id,
-        publicId: certificate.publicId,
-        status: certificate.status,
-      },
+      certificate: certificate
+        ? {
+            id: certificate.id,
+            publicId: certificate.publicId,
+            status: certificate.status,
+          }
+        : null,
+      network,
     });
   } catch (error: unknown) {
     console.error('❌ Entity creation error:', error);

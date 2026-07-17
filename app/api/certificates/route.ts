@@ -21,6 +21,7 @@ import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 import { getUserEmailSignature } from '@/lib/email-signature'
 import { isAdmin } from '@/app/lib/admin'
 import { isDiscoveryPlan, resolveEffectivePlan, BLOCKCHAIN_STATUS_NOT_ANCHORED } from '@/lib/plan-features'
+import { isUserOwnProfileEntity } from '@/lib/entity-contacts'
 import { assertDashboardMutationAllowed } from '@/lib/require-email-verified'
 import {
   checkIsOrgAdmin,
@@ -267,6 +268,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: 'Entité non trouvée ou non autorisée' },
         { status: 404 }
+      )
+    }
+
+    if (!isUserOwnProfileEntity(entity, session.user.email)) {
+      return NextResponse.json(
+        {
+          error: 'BADGE_ONLY',
+          message: 'Seul votre badge personnel peut recevoir un certificat.',
+        },
+        { status: 403 },
       )
     }
 

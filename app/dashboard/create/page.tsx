@@ -12,7 +12,7 @@ import {
   CertifiedPhonesTagInput,
   DomainTagInput,
 } from "@/app/components/ui/TagInput";
-import { AlertCircle, Building2, Loader2, Shield, User } from "lucide-react";
+import { AlertCircle, Building2, Loader2, Shield, User, UserPlus } from "lucide-react";
 
 type EntityType = "INDIVIDUAL" | "BUSINESS";
 
@@ -167,7 +167,7 @@ export default function CreateCertificate() {
   }, [editIdParam]);
 
   useEffect(() => {
-    if (step !== 2) return;
+    if (step !== 2 || isContactIntent) return;
     let cancelled = false;
     (async () => {
       try {
@@ -195,7 +195,7 @@ export default function CreateCertificate() {
     return () => {
       cancelled = true;
     };
-  }, [step]);
+  }, [step, isContactIntent]);
 
   // Normaliser le website (ajouter https:// si manquant)
   const normalizeWebsite = (website: string | undefined | null): string | null => {
@@ -253,93 +253,127 @@ export default function CreateCertificate() {
     }
   };
 
-  // Générer le certificat (étape 2)
+  const buildEntityPayload = (): Record<string, unknown> => {
+    if (entityType === "INDIVIDUAL") {
+      return {
+        entityType: "INDIVIDUAL",
+        firstName: individualData.firstName,
+        lastName: individualData.lastName,
+        email: individualData.email,
+        phone: individualData.phone || null,
+        website: individualData.website || null,
+        description: individualData.description || null,
+        walletAddress: walletAddress.trim() || null,
+        walletNetwork: walletNetwork.trim() || null,
+        certifiedDomains,
+        certifiedEmails,
+        certifiedPhones,
+      };
+    }
+
+    const siretClean = businessData.siret?.replace(/\s/g, "") || "";
+    const websiteNormalized = normalizeWebsite(businessData.website);
+    return {
+      entityType: "BUSINESS",
+      legalName: businessData.legalName,
+      tradeName: businessData.tradeName || null,
+      siret: siretClean,
+      email: businessData.email,
+      phone: businessData.phone || null,
+      website: websiteNormalized,
+      description: businessData.description || null,
+      walletAddress: walletAddress.trim() || null,
+      walletNetwork: walletNetwork.trim() || null,
+      certifiedDomains,
+      certifiedEmails,
+      certifiedPhones,
+    };
+  };
+
+  const handleCreateContact = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const entityResponse = await fetch("/api/entities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          ...buildEntityPayload(),
+          purpose: "contact",
+        }),
+      });
+
+      const entityResult = await entityResponse.json();
+
+      if (!entityResponse.ok) {
+        throw new Error(entityResult.message || entityResult.error || "Erreur lors de la création du contact");
+      }
+
+      setCreatedEntity(entityResult.entity);
+      const networkMsg =
+        typeof entityResult.network?.message === "string"
+          ? entityResult.network.message
+          : "Contact ajouté à votre réseau.";
+      router.push(`/dashboard/entities?success=contact&message=${encodeURIComponent(networkMsg)}`);
+    } catch (err: unknown) {
+      console.error("Erreur:", err);
+      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Générer le certificat (badge personnel — étape 2)
   const handleGenerateCertificate = async () => {
     setLoading(true);
     setError("");
 
     try {
-      // Préparer les données selon le type
-      let entityPayload: Record<string, unknown>;
-
-      if (entityType === "INDIVIDUAL") {
-        entityPayload = {
-          entityType: "INDIVIDUAL",
-          firstName: individualData.firstName,
-          lastName: individualData.lastName,
-          email: individualData.email,
-          phone: individualData.phone || null,
-          website: individualData.website || null,
-          description: individualData.description || null,
-          walletAddress: walletAddress.trim() || null,
-          walletNetwork: walletNetwork.trim() || null,
-          certifiedDomains,
-          certifiedEmails,
-          certifiedPhones,
-        };
-      } else {
-        // Nettoyer le SIRET
-        const siretClean = businessData.siret?.replace(/\s/g, "") || "";
-        // Normaliser le website (l'API le fera aussi, mais on le fait ici pour être sûr)
-        const websiteNormalized = normalizeWebsite(businessData.website);
-        entityPayload = {
-          entityType: "BUSINESS",
-          legalName: businessData.legalName,
-          tradeName: businessData.tradeName || null,
-          siret: siretClean,
-          email: businessData.email,
-          phone: businessData.phone || null,
-          website: websiteNormalized,
-          description: businessData.description || null,
-          walletAddress: walletAddress.trim() || null,
-          walletNetwork: walletNetwork.trim() || null,
-          certifiedDomains,
-          certifiedEmails,
-          certifiedPhones,
-        };
-      }
-
-      // Étape 1 : Créer l'entité
       const entityResponse = await fetch("/api/entities", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify(entityPayload),
+        body: JSON.stringify({
+          ...buildEntityPayload(),
+          purpose: "badge",
+        }),
       });
 
       const entityResult = await entityResponse.json();
 
       if (!entityResponse.ok) {
-        throw new Error(entityResult.error || "Erreur lors de la création du contact");
+        throw new Error(entityResult.error || "Erreur lors de la création du badge");
       }
 
       setCreatedEntity(entityResult.entity);
 
-      // Étape 2 : Obtenir le certificat avec QR code
-      // L'API /api/entities crée déjà un certificat automatiquement
-      // On appelle /api/certificates pour obtenir le QR code (il retournera le certificat existant si déjà créé)
-      const certResponse = await fetch("/api/certificates", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          entityId: entityResult.entity.id,
-        }),
-      });
+      let certificate = entityResult.certificate;
+      if (!certificate?.id) {
+        const certResponse = await fetch("/api/certificates", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            entityId: entityResult.entity.id,
+          }),
+        });
 
-      const certResult = await certResponse.json();
+        const certResult = await certResponse.json();
 
-      if (!certResponse.ok) {
-        throw new Error(certResult.error || "Erreur lors de la récupération du certificat");
+        if (!certResponse.ok) {
+          throw new Error(certResult.error || "Erreur lors de la récupération du certificat");
+        }
+
+        certificate = certResult.certificate;
       }
 
-      setCreatedCertificate(certResult.certificate);
-      
-      // Rediriger vers le dashboard avec message de succès
+      setCreatedCertificate(certificate);
       router.push("/dashboard?success=true&certificateCreated=true");
     } catch (err: unknown) {
       console.error("Erreur:", err);
@@ -601,7 +635,14 @@ export default function CreateCertificate() {
               </div>
             </div>
 
-            {certQuota && !certQuota.allowed ? (
+            {isContactIntent ? (
+              <div className="rounded-xl border border-bt-cyan/20 bg-bt-cyan/5 p-4 text-sm leading-relaxed text-white/80">
+                Aucun badge ne sera créé pour ce contact. S&apos;il a déjà BLOCKTRUST™, il sera
+                invité dans votre Trust Circle. Sinon, une invitation lui sera envoyée par email.
+              </div>
+            ) : null}
+
+            {!isContactIntent && certQuota && !certQuota.allowed ? (
               <UpgradePrompt
                 {...buildUpgradePromptProps(certQuota.plan, certQuota.max)}
               />
@@ -615,7 +656,26 @@ export default function CreateCertificate() {
               >
                 ← Retour
               </button>
-              {certQuota && !certQuota.allowed ? null : (
+              {isContactIntent ? (
+                <button
+                  type="button"
+                  onClick={handleCreateContact}
+                  disabled={loading}
+                  className="min-w-0 w-full rounded-lg bg-bt-cyan py-4 text-sm font-semibold text-navy transition-all hover:bg-bt-cyan/90 disabled:opacity-50 sm:flex-1 sm:text-base"
+                >
+                  {loading ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin" aria-hidden />
+                      Enregistrement...
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <UserPlus className="h-5 w-5" aria-hidden />
+                      Ajouter au réseau
+                    </span>
+                  )}
+                </button>
+              ) : certQuota && !certQuota.allowed ? null : (
                 <button
                   type="button"
                   onClick={handleGenerateCertificate}
