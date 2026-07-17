@@ -115,6 +115,28 @@ describe("credentials-login-check", () => {
     expect(lockoutMock.recordLoginFailure).not.toHaveBeenCalled();
   });
 
+  it("retourne no_password en precheck si compte OAuth sans MDP", async () => {
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: "u1",
+      email: "oauth@example.com",
+      password: null,
+      accountStatus: "ACTIVE",
+      subscription: null,
+      plan: null,
+    });
+
+    const result = await checkCredentialsLogin({
+      email: "oauth@example.com",
+      password: "x",
+      precheck: true,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe("no_password");
+    }
+  });
+
   it("credentialsCheckToAuthErrorCode — FAILED et LOCKED", () => {
     expect(
       credentialsCheckToAuthErrorCode({

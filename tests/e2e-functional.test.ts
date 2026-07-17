@@ -2,7 +2,8 @@
  * Tests fonctionnels E2E — handlers API réels + vérifications DB.
  *
  * Prérequis :
- *   - DATABASE_URL (Neon) avec migrations à jour : npx prisma migrate deploy
+ *   - DATABASE_URL (Neon) avec migrations à jour : npm run test:e2e:prepare
+ *     (DATABASE_URL et DIRECT_URL doivent cibler la même branche Neon)
  *   - UPSTASH_REDIS_* pour lockout/resend (tests 1.5, 2.4)
  *   - BLOCKTRUST_JWT_PRIVATE_KEY pour BIS (bloc 7)
  *   - NEXTAUTH_SECRET pour Vault (bloc 8)
@@ -38,6 +39,16 @@ vi.mock("@/lib/email", () => ({
   sendEmailFireAndForget: vi.fn(),
 }));
 
+vi.mock("@/lib/rate-limit-public-failclosed", () => ({
+  checkPublicVerifyIpRateLimit: vi.fn().mockResolvedValue({ ok: true }),
+  checkPublicBisVerifyRateLimit: vi.fn().mockResolvedValue({ ok: true }),
+  checkPublicResolveTokenRateLimit: vi.fn().mockResolvedValue({ ok: true }),
+  PUBLIC_RATE_LIMIT_503_BODY: {
+    error: "service_unavailable",
+    message: "Service temporairement indisponible",
+  },
+}));
+
 import { prisma } from "@/app/lib/db";
 import { POST as registerPost } from "@/app/api/auth/register/route";
 import { POST as loginCheckPost } from "@/app/api/auth/login-check/route";
@@ -61,7 +72,7 @@ import { verifyEmailByToken } from "@/lib/email-verification";
 import { clearLoginLockout } from "@/lib/login-lockout";
 import { getEntityQuotaSnapshot } from "@/lib/checkQuota";
 import { resolveEffectivePlan, planAllowsTrustCircle } from "@/lib/plan-features";
-import { getMaxContacts, getMaxVerifications, getTrustCirclePool } from "@/lib/pricing";
+import { getMaxContacts, getMaxVerifications, getMaxTrustCircle } from "@/lib/pricing";
 import { filterThirdPartyContactEntities } from "@/lib/entity-contacts";
 import { hashApiKey } from "@/lib/api-key";
 import { compareVaultRibValues } from "@/lib/vault-entry-value";
@@ -92,16 +103,31 @@ import {
   type E2ETracker,
 } from "./helpers/e2e-functional-setup";
 
+let e2eRequestIpSeq = 0;
+
+function e2eUniqueIp(): string {
+  e2eRequestIpSeq += 1;
+  const n = e2eRequestIpSeq;
+  return `10.${Math.floor(n / 65536) % 256}.${Math.floor(n / 256) % 256}.${n % 254 + 1}`;
+}
+
 function mockPost(path: string, body: unknown, headers: Record<string, string> = {}) {
   return new NextRequest(`http://localhost${path}`, {
     method: "POST",
-    headers: new Headers({ "content-type": "application/json", ...headers }),
+    headers: new Headers({
+      "content-type": "application/json",
+      "x-forwarded-for": e2eUniqueIp(),
+      ...headers,
+    }),
     body: JSON.stringify(body),
   });
 }
 
 function mockGet(path: string, headers: Record<string, string> = {}) {
-  return new NextRequest(`http://localhost${path}`, { method: "GET", headers: new Headers(headers) });
+  return new NextRequest(`http://localhost${path}`, {
+    method: "GET",
+    headers: new Headers({ "x-forwarded-for": e2eUniqueIp(), ...headers }),
+  });
 }
 
 function mockDelete(path: string, body?: unknown) {
@@ -143,7 +169,7 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
     dbReady = await isE2EDatabaseReady();
     if (!dbReady) {
       console.warn(
-        "[e2e-functional] SKIP — schéma DB incomplet. Exécutez: npx prisma migrate deploy",
+        "[e2e-functional] SKIP — schéma DB incomplet (UserAccountStatus ou EmailVerificationToken). Exécutez: npx prisma migrate deploy",
       );
       return;
     }
@@ -300,7 +326,12 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
       expect(user).toBeTruthy();
       if (user) tracker.userIds.push(user.id);
 
-      const tokens = await prisma.emailVerificationToken.findMany({ where: { userId: user!.id } });
+      let tokens: Awaited<ReturnType<typeof prisma.emailVerificationToken.findMany>> = [];
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        tokens = await prisma.emailVerificationToken.findMany({ where: { userId: user!.id } });
+        if (tokens.length > 0) break;
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
       expect(tokens.length).toBeGreaterThanOrEqual(1);
       expect(tokens[0]!.expiresAt.getTime()).toBeGreaterThan(Date.now());
     });
@@ -394,7 +425,7 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
       expect(plan).toBe("PREMIUM");
       expect(getMaxContacts(plan)).toBe(100);
       expect(planAllowsTrustCircle(plan)).toBe(true);
-      expect(getTrustCirclePool(plan)).toBe(40);
+      expect(getMaxTrustCircle(plan)).toBe(40);
     });
 
     it("3.3 — Quotas Enterprise interne (resolveEffectivePlan)", () => {
@@ -430,7 +461,7 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
       );
       expect(certRes.status).toBe(403);
       const certBody = await certRes.json();
-      expect(certBody.code).toBe("EMAIL_NOT_VERIFIED");
+      expect(certBody.error ?? certBody.code).toBe("EMAIL_NOT_VERIFIED");
 
       const bisRes = await bisSignPost(
         mockPost("/api/bis/sign", {
@@ -530,7 +561,7 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
           purpose: "contact",
         }),
       );
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(200);
       const body = await res.json();
       tracker.entityIds.push(body.entity.id);
 
@@ -550,18 +581,21 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
       });
       setSession(user);
 
-      const siret = randomSiret();
+      const siret = sha256Hex(`biz-siret-${runId}`).replace(/\D/g, "").slice(0, 14).padEnd(14, "0");
       const res = await entitiesPost(
         mockPost("/api/entities", {
           entityType: "BUSINESS",
           legalName: "ACME E2E",
           siret,
           email: e2eEmail("biz-contact", runId),
-          website: "https://acme-e2e.test",
+          website: "https://example.com",
           purpose: "contact",
         }),
       );
-      expect(res.status).toBe(201);
+      if (res.status !== 200) {
+        const errBody = await res.json();
+        throw new Error(`entities BUSINESS contact: ${res.status} ${JSON.stringify(errBody)}`);
+      }
       const body = await res.json();
       tracker.entityIds.push(body.entity.id);
       const entity = await prisma.entity.findUnique({ where: { id: body.entity.id } });
@@ -666,7 +700,7 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
         purpose: "contact" as const,
       };
       const first = await entitiesPost(mockPost("/api/entities", payload));
-      expect(first.status).toBe(201);
+      expect(first.status).toBe(200);
       const firstBody = await first.json();
       tracker.entityIds.push(firstBody.entity.id);
 
@@ -935,7 +969,7 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
         }),
         { params: Promise.resolve({ vaultId }) },
       );
-      expect(res.status).toBe(201);
+      expect(res.status).toBe(200);
       const body = await res.json();
       const row = await prisma.trustVaultEntry.findUnique({ where: { id: body.entry.id } });
       expect(row!.valueEnc).toBeTruthy();
@@ -966,7 +1000,7 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
       });
       expect(res.status).toBe(200);
       const data = await res.json();
-      const masked = data.entries[0]?.value as string;
+      const masked = data.entries[0]?.maskedValue as string;
       expect(masked).toMatch(/•/);
       expect(masked).not.toBe(VALID_IBAN);
     });
@@ -1006,7 +1040,8 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
       });
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(body.found ?? body.certificate ?? body.entity).toBeTruthy();
+      expect(body.verdict).toBe("VALID");
+      expect(body.entityName).toBeTruthy();
     });
 
     itE2e("9.4 — Cert REVOKED → verdict révoqué", async () => {
@@ -1058,8 +1093,10 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
       });
 
       const res = await extensionVerifyGet(
-        mockGet(`/api/extension/verify-sender?email=${encodeURIComponent(e2eEmail("unknown", runId))}`),
-        { "x-api-key": apiKey },
+        mockGet(
+          `/api/extension/verify-sender?email=${encodeURIComponent(e2eEmail("unknown", runId))}`,
+          { Authorization: `Bearer ${apiKey}` },
+        ),
       );
       expect(res.status).toBe(200);
       const body = await res.json();

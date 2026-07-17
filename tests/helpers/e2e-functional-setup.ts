@@ -82,7 +82,7 @@ export async function createE2EUser(
       email: opts.email,
       name: opts.name ?? "E2E User",
       password: opts.password === null ? null : await hashE2EPassword(opts.password ?? E2E_PASSWORD),
-      emailVerified: opts.emailVerified ?? new Date(),
+      emailVerified: opts.emailVerified !== undefined ? opts.emailVerified : new Date(),
       sessionVersion: opts.sessionVersion ?? 0,
       createdAt: opts.createdAt,
       accountStatus: "ACTIVE",
@@ -231,15 +231,21 @@ export function sha256Hex(input: string): string {
 export async function isE2EDatabaseReady(): Promise<boolean> {
   if (!hasDatabase) return false;
   try {
-    const rows = await prisma.$queryRaw<Array<{ ok: boolean }>>`
-      SELECT EXISTS (
-        SELECT 1
-        FROM pg_type t
-        JOIN pg_namespace n ON n.oid = t.typnamespace
-        WHERE n.nspname = 'public' AND t.typname = 'UserAccountStatus'
-      ) AS ok
+    const rows = await prisma.$queryRaw<Array<{ enum_ok: boolean; table_ok: boolean }>>`
+      SELECT
+        EXISTS (
+          SELECT 1
+          FROM pg_type t
+          JOIN pg_namespace n ON n.oid = t.typnamespace
+          WHERE n.nspname = 'public' AND t.typname = 'UserAccountStatus'
+        ) AS enum_ok,
+        EXISTS (
+          SELECT 1
+          FROM information_schema.tables
+          WHERE table_schema = 'public' AND table_name = 'EmailVerificationToken'
+        ) AS table_ok
     `;
-    return rows[0]?.ok === true;
+    return rows[0]?.enum_ok === true && rows[0]?.table_ok === true;
   } catch {
     return false;
   }

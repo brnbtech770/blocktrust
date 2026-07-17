@@ -17,6 +17,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:e2e": "vitest run tests/e2e-functional.test.ts",
+    "test:e2e:prepare": "prisma migrate deploy && tsx scripts/repair-email-verification-token.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "seed": "node prisma/seed.js",

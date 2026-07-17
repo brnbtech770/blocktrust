@@ -123,9 +123,6 @@ export async function checkCredentialsLogin(input: {
   }
 
   if (user && !user.password) {
-    if (precheck) {
-      return failedResult(Math.max(1, lockout.attemptsRemaining - 1));
-    }
     return {
       ok: false,
       error: "no_password",
@@ -145,7 +142,7 @@ export async function checkCredentialsLogin(input: {
     return failedResult(failStatus.attemptsRemaining);
   };
 
-  if (user?.email?.startsWith("deleted_") || !user?.password) {
+  if (user?.email?.startsWith("deleted_")) {
     if (precheck) {
       return {
         ok: false,
@@ -155,10 +152,28 @@ export async function checkCredentialsLogin(input: {
         tone: "warning",
       };
     }
-    return recordFailure(user?.id);
+    return recordFailure(user.id);
   }
 
-  const isValid = await bcrypt.compare(password, user.password);
+  if (!user) {
+    if (precheck) {
+      return {
+        ok: false,
+        error: "invalid",
+        attemptsRemaining: Math.max(1, lockout.attemptsRemaining - 1),
+        message: CREDENTIALS_ERROR_MESSAGE,
+        tone: "warning",
+      };
+    }
+    return recordFailure(null);
+  }
+
+  const passwordHash = user.password;
+  if (!passwordHash) {
+    return recordFailure(user.id);
+  }
+
+  const isValid = await bcrypt.compare(password, passwordHash);
   if (!isValid) {
     return recordFailure(user.id);
   }
