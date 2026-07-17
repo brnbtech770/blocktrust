@@ -1379,7 +1379,7 @@
       }
     });
 
-    console.log("[BLOCKTRUST] Compose BIS v1.0.9 — mode:", currentMode);
+    console.log("[BLOCKTRUST] Compose BIS v1.1.0 — mode:", currentMode);
 
     if (composeObserver) composeObserver.disconnect();
     composeObserver = new MutationObserver((mutations) => {
