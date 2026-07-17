@@ -16,6 +16,7 @@
   const COMPOSE_SCAN_DEBOUNCE_MS = 300;
   const BIS_WARM_DEBOUNCE_MS = 1200;
   const TOAST_DURATION_MS = 2000;
+  const SENDER_VERIFY_CACHE_TTL = 5 * 60 * 1000;
 
   const BIS_BLOCK_MARKER = "data-bt-bis-block";
   const ATTR_BIS_BTN = "data-bt-bis-btn";
@@ -24,6 +25,9 @@
   const ATTR_BIS_PENDING = "data-bt-bis-pending";
   const ATTR_BIS_RELEASED = "data-bt-bis-released";
   const ATTR_WATCHDOG_RETRY = "data-bt-watchdog-retry";
+  const ATTR_BIS_UNAVAILABLE = "data-bt-bis-unavailable";
+  const ATTR_BIS_UNAVAIL_MSG = "data-bt-bis-unavail-msg";
+  const ATTR_SENDER_CERT = "data-bt-sender-cert";
   const BT_UI_MARKER = "data-bt-ui";
   const CIRCUIT_BREAKER_KEY = "bt_bis_auto_failures";
   const CIRCUIT_BREAKER_THRESHOLD = 2;
@@ -58,6 +62,9 @@
   /** @type {WeakSet<Element>} */
   const bodyInvalidationBound = new WeakSet();
 
+  /** @type {Map<string, { certified: boolean, timestamp: number }>} */
+  const senderVerifyCache = new Map();
+
   let autoSendHookInstalled = false;
   let composeObserver = null;
   let autoBadgeEl = null;
@@ -91,6 +98,14 @@
   ];
 
   const SUBJECT_SELECTORS = ['input[name="subjectbox"]', 'input[name="subject"]'];
+
+  const FROM_SELECTORS = [
+    "span[email].afV",
+    ".afV span[email]",
+    'input[name="from"]',
+    ".wO span[email]",
+    "span[email].go",
+  ];
 
   const SHIELD_SVG =
     '<svg class="bt-bis-btn-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>';
@@ -127,6 +142,7 @@
     if (node.hasAttribute(BIS_BLOCK_MARKER)) return true;
     if (node.id === "bt-compose-toast" || node.id === "bt-bis-auto-badge") return true;
     if (node.classList?.contains("bt-bis-btn")) return true;
+    if (node.classList?.contains("bt-bis-unavailable-msg")) return true;
     if (node.closest(`[${BT_UI_MARKER}]`)) return true;
     if (node.closest(`[${BIS_BLOCK_MARKER}]`)) return true;
     return false;
@@ -437,6 +453,169 @@
 
   /**
    * @param {Element} root
+   * @returns {string | null}
+   */
+  function extractSenderEmail(root) {
+    const toArea =
+      root.querySelector('[aria-label="À"], [aria-label="To"], [name="to"]')?.closest("tr, div") ||
+      null;
+
+    for (const selector of FROM_SELECTORS) {
+      const nodes = root.querySelectorAll(selector);
+      for (const node of nodes) {
+        if (!(node instanceof HTMLElement)) continue;
+        if (toArea?.contains(node)) continue;
+        const email = normalizeEmail(
+          node.getAttribute("email") ||
+            node.getAttribute("data-hovercard-id") ||
+            node.getAttribute("data-email") ||
+            node.value ||
+            node.textContent ||
+            "",
+        );
+        if (email) return email;
+      }
+    }
+
+    const candidates = root.querySelectorAll('span[email], [data-hovercard-id*="@"]');
+    for (const node of candidates) {
+      if (!(node instanceof HTMLElement)) continue;
+      if (toArea?.contains(node)) continue;
+      const email = normalizeEmail(
+        node.getAttribute("email") ||
+          node.getAttribute("data-hovercard-id") ||
+          node.textContent ||
+          "",
+      );
+      if (email) return email;
+    }
+
+    return null;
+  }
+
+  /**
+   * @param {string} email
+   * @returns {Promise<boolean>}
+   */
+  async function fetchSenderCertified(email) {
+    const cacheKey = `${email.toLowerCase()}:-`;
+    const cached = senderVerifyCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < SENDER_VERIFY_CACHE_TTL) {
+      return cached.certified;
+    }
+
+    if (!deps) return false;
+
+    const apiKey = await deps.getApiKey();
+    if (!apiKey) return false;
+
+    let certified = false;
+    try {
+      const url = new URL(`${deps.apiBase}/api/extension/verify-sender`);
+      url.searchParams.set("email", email);
+      const response = await fetch(url.toString(), {
+        headers: { Authorization: `Bearer ${apiKey.trim()}` },
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok && data?.status === "CERTIFIED") {
+        certified = true;
+      }
+    } catch {
+      certified = false;
+    }
+
+    senderVerifyCache.set(cacheKey, { certified, timestamp: Date.now() });
+    return certified;
+  }
+
+  /**
+   * @param {Element} root
+   * @returns {Promise<boolean>}
+   */
+  async function isSenderCertifiedForRoot(root) {
+    const senderEmail = extractSenderEmail(root);
+    if (!senderEmail) return false;
+    return fetchSenderCertified(senderEmail);
+  }
+
+  /**
+   * @param {Element} root
+   * @returns {boolean}
+   */
+  function isPopupCompose(root) {
+    return Boolean(root.closest('div[role="dialog"]'));
+  }
+
+  /**
+   * @param {Element} root
+   * @returns {boolean}
+   */
+  function isInlineCompose(root) {
+    return !isPopupCompose(root);
+  }
+
+  /**
+   * @param {Element} root
+   */
+  function showBisUnavailable(root) {
+    hideBisUnavailable(root);
+
+    const toolbar = findComposeToolbar(root);
+    if (!toolbar) return;
+
+    const msg = document.createElement("div");
+    msg.className = "bt-bis-unavailable-msg";
+    msg.setAttribute(BT_UI_MARKER, "1");
+    msg.setAttribute(ATTR_BIS_UNAVAIL_MSG, "1");
+    msg.textContent = "BIS indisponible — aucun badge actif sur cet email";
+
+    const host = toolbar.closest(".btC") || toolbar.parentElement || toolbar;
+    host.insertAdjacentElement("afterend", msg);
+    root.setAttribute(ATTR_BIS_UNAVAILABLE, "1");
+    root.setAttribute(ATTR_SENDER_CERT, "0");
+  }
+
+  /**
+   * @param {Element} root
+   */
+  function hideBisUnavailable(root) {
+    root.removeAttribute(ATTR_BIS_UNAVAILABLE);
+    root.removeAttribute(ATTR_SENDER_CERT);
+    root.querySelectorAll(`[${ATTR_BIS_UNAVAIL_MSG}]`).forEach((el) => el.remove());
+  }
+
+  /**
+   * @param {Element} root
+   * @param {HTMLElement} toolbar
+   * @param {HTMLElement} button
+   */
+  function applyComposeButtonLayout(root, toolbar, button) {
+    if (isInlineCompose(root)) {
+      button.classList.add("bt-bis-btn--inline");
+      const composeWidth = root.getBoundingClientRect().width || toolbar.clientWidth;
+      if (composeWidth > 0 && composeWidth < 520) {
+        button.classList.add("bt-bis-btn--compact");
+        button.title = "Signer avec BLOCKTRUST BIS";
+      }
+    } else {
+      button.classList.remove("bt-bis-btn--inline", "bt-bis-btn--compact");
+    }
+  }
+
+  /**
+   * @param {Element} root
+   */
+  function clearComposeBisUi(root) {
+    root.querySelector(`[${ATTR_BIS_BTN}]`)?.remove();
+    hideBisUnavailable(root);
+    root.removeAttribute(ATTR_BIS_READY);
+    initializedComposers.delete(root);
+    composeState.delete(root);
+    bisSignatureByRoot.delete(root);
+  }
+
+  /**
+   * @param {Element} root
    * @returns {boolean}
    */
   function hasAttachments(root) {
@@ -639,13 +818,20 @@
       bisWarmDebounceByRoot.delete(root);
       if (!root.isConnected) return;
 
-      const bodyEl = findComposeBody(root);
-      if (!bodyEl) return;
-
-      const { recipientEmail, bodyText } = extractComposeData(root);
-      if (!recipientEmail || !bodyText) return;
-
       void (async () => {
+        const certified = await isSenderCertifiedForRoot(root);
+        if (!certified) {
+          showBisUnavailable(root);
+          return;
+        }
+        hideBisUnavailable(root);
+
+        const bodyEl = findComposeBody(root);
+        if (!bodyEl) return;
+
+        const { recipientEmail, bodyText } = extractComposeData(root);
+        if (!recipientEmail || !bodyText) return;
+
         const contentHash = await sha256Text(bodyText);
         const cached = bisSignatureByRoot.get(root);
         if (cached?.contentHash === contentHash) return;
@@ -864,6 +1050,11 @@
 
   function removeAllComposeButtons() {
     document.querySelectorAll(`[${ATTR_BIS_BTN}]`).forEach((btn) => btn.remove());
+    document.querySelectorAll(`[${ATTR_BIS_UNAVAIL_MSG}]`).forEach((el) => el.remove());
+    document.querySelectorAll(`[${ATTR_BIS_UNAVAILABLE}]`).forEach((root) => {
+      root.removeAttribute(ATTR_BIS_UNAVAILABLE);
+      root.removeAttribute(ATTR_SENDER_CERT);
+    });
     document.querySelectorAll(`[${ATTR_BIS_READY}]`).forEach((root) => {
       root.removeAttribute(ATTR_BIS_READY);
     });
@@ -880,6 +1071,19 @@
     if (!deps || currentMode !== BIS_MODES.SELECTIVE) return;
     if (initializedComposers.has(root)) return;
     if (root.getAttribute(ATTR_BIS_READY) === "1") return;
+
+    const certified = await isSenderCertifiedForRoot(root);
+    if (!certified) {
+      clearComposeBisUi(root);
+      showBisUnavailable(root);
+      root.setAttribute(ATTR_BIS_READY, "1");
+      initializedComposers.add(root);
+      return;
+    }
+
+    hideBisUnavailable(root);
+    root.setAttribute(ATTR_SENDER_CERT, "1");
+
     if (root.querySelector(`[${ATTR_BIS_BTN}]`)) {
       root.setAttribute(ATTR_BIS_READY, "1");
       initializedComposers.add(root);
@@ -904,6 +1108,7 @@
 
     const apiKey = await deps.getApiKey();
     setButtonState(button, apiKey ? "ready" : "disabled");
+    applyComposeButtonLayout(root, toolbar, button);
 
     const onActivate = (e) => {
       e.preventDefault();
@@ -933,6 +1138,13 @@
 
   function updateAutoBadge() {
     if (currentMode !== BIS_MODES.AUTO) {
+      autoBadgeEl?.remove();
+      autoBadgeEl = null;
+      return;
+    }
+
+    const popupRoots = findComposeRoots().filter(isPopupCompose);
+    if (popupRoots.length === 0) {
       autoBadgeEl?.remove();
       autoBadgeEl = null;
       return;
@@ -1010,6 +1222,14 @@
 
     if (root.getAttribute(ATTR_BIS_PENDING) === "1") return;
 
+    const senderCertified = await isSenderCertifiedForRoot(root);
+    if (!senderCertified) {
+      showBisUnavailable(root);
+      return;
+    }
+
+    hideBisUnavailable(root);
+
     const bodyEl = findComposeBody(root);
     const data = extractComposeData(root);
     if (!data.recipientEmail || !data.bodyText) return;
@@ -1070,6 +1290,13 @@
 
     if (currentMode === BIS_MODES.SELECTIVE) {
       findComposeRoots().forEach((root) => {
+        if (
+          root.getAttribute(ATTR_BIS_UNAVAILABLE) === "1" ||
+          root.getAttribute(ATTR_SENDER_CERT) === "0"
+        ) {
+          root.removeAttribute(ATTR_BIS_READY);
+          initializedComposers.delete(root);
+        }
         if (initializedComposers.has(root) || root.getAttribute(ATTR_BIS_READY) === "1") {
           return;
         }
@@ -1081,6 +1308,12 @@
 
     if (currentMode === BIS_MODES.AUTO) {
       findComposeRoots().forEach((root) => {
+        if (isInlineCompose(root)) {
+          void isSenderCertifiedForRoot(root).then((certified) => {
+            if (!certified) showBisUnavailable(root);
+            else hideBisUnavailable(root);
+          });
+        }
         bindBodyInvalidation(root);
         scheduleBisWarmUp(root);
       });

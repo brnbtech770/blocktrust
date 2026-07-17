@@ -6,8 +6,9 @@
 
 const API_BASE = "https://blocktrust.tech";
 const BT_UI_MARKER = "data-bt-ui";
-const TOOLTIP_AUTO_DISMISS_MS = 8000;
-const TOOLTIP_MOUSELEAVE_MS = 200;
+const TOOLTIP_AUTO_DISMISS_MS = 15000;
+const TOOLTIP_MOUSELEAVE_MS = 800;
+const TOOLTIP_MIN_VISIBLE_MS = 5000;
 const GMAIL_SCAN_DEBOUNCE_MS = 300;
 
 /** Cache résultats pour éviter re-appels (5 min). */
@@ -365,6 +366,9 @@ let activeTooltip = null;
 let tooltipDismissListenersInstalled = false;
 let tooltipHideTimerId = null;
 let tooltipAutoDismissId = null;
+/** @type {number} */
+let tooltipShownAt = 0;
+let tooltipHovering = false;
 /** @type {Element | null} */
 let tooltipAnchor = null;
 
@@ -382,6 +386,16 @@ function destroyTooltip() {
     activeTooltip = null;
   }
   tooltipAnchor = null;
+  tooltipHovering = false;
+  tooltipShownAt = 0;
+}
+
+function scheduleAutoDismissTooltip() {
+  if (tooltipAutoDismissId !== null) clearTimeout(tooltipAutoDismissId);
+  tooltipAutoDismissId = setTimeout(() => {
+    tooltipAutoDismissId = null;
+    if (!tooltipHovering) destroyTooltip();
+  }, TOOLTIP_AUTO_DISMISS_MS);
 }
 
 /** Affiche ou masque la tooltip (inline !important — Gmail ignore les classes seules). */
@@ -400,11 +414,15 @@ function hideBadgeTooltip() {
 }
 
 function scheduleHideBadgeTooltip(delayMs = TOOLTIP_MOUSELEAVE_MS) {
+  const elapsed = tooltipShownAt > 0 ? Date.now() - tooltipShownAt : TOOLTIP_MIN_VISIBLE_MS;
+  const minRemain = Math.max(0, TOOLTIP_MIN_VISIBLE_MS - elapsed);
+  const effectiveDelay = minRemain + delayMs;
+
   if (tooltipHideTimerId !== null) clearTimeout(tooltipHideTimerId);
   tooltipHideTimerId = setTimeout(() => {
     tooltipHideTimerId = null;
-    destroyTooltip();
-  }, delayMs);
+    if (!tooltipHovering) destroyTooltip();
+  }, effectiveDelay);
 }
 
 function ensureTooltipDismissListeners() {
@@ -453,40 +471,47 @@ function openTooltip(anchor, html, interactive) {
   activeTooltip.innerHTML = html;
 
   if (interactive) {
-    const link = activeTooltip.querySelector("a");
-    if (link) styleTooltipLink(link);
+    activeTooltip.querySelectorAll("a").forEach((link) => {
+      styleTooltipLink(link);
+    });
     bindInteractiveTooltipDismiss(activeTooltip);
   }
 
   tooltipAnchor = anchor;
+  tooltipShownAt = Date.now();
+  tooltipHovering = false;
   positionTooltip(activeTooltip, anchor);
 
   requestAnimationFrame(() => {
     if (activeTooltip) setTooltipVisible(activeTooltip, true);
   });
 
-  tooltipAutoDismissId = setTimeout(() => {
-    tooltipAutoDismissId = null;
-    destroyTooltip();
-  }, TOOLTIP_AUTO_DISMISS_MS);
+  scheduleAutoDismissTooltip();
 }
 
 function bindInteractiveTooltipDismiss(tooltip) {
   tooltip.addEventListener("mouseenter", () => {
+    tooltipHovering = true;
     if (tooltipHideTimerId !== null) {
       clearTimeout(tooltipHideTimerId);
       tooltipHideTimerId = null;
     }
     if (tooltipAutoDismissId !== null) {
       clearTimeout(tooltipAutoDismissId);
-      tooltipAutoDismissId = setTimeout(() => {
-        tooltipAutoDismissId = null;
-        destroyTooltip();
-      }, TOOLTIP_AUTO_DISMISS_MS);
+      tooltipAutoDismissId = null;
     }
     setTooltipVisible(tooltip, true);
   });
-  tooltip.addEventListener("mouseleave", () => scheduleHideBadgeTooltip(TOOLTIP_MOUSELEAVE_MS));
+  tooltip.addEventListener("mouseleave", () => {
+    tooltipHovering = false;
+    scheduleHideBadgeTooltip(TOOLTIP_MOUSELEAVE_MS);
+    scheduleAutoDismissTooltip();
+  });
+  tooltip.querySelectorAll("a").forEach((link) => {
+    link.addEventListener("click", () => {
+      window.setTimeout(() => destroyTooltip(), 80);
+    });
+  });
 }
 
 function positionTooltip(tooltip, anchor) {

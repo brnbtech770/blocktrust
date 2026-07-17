@@ -9,7 +9,7 @@
   gap: 4px !important;
   min-width: 56px !important;
   height: 28px !important;
-  margin: 0 4px 0 8px !important;
+  margin: 0 !important;
   padding: 0 10px !important;
   border-radius: 4px !important;
   border: 1px solid transparent !important;
@@ -23,7 +23,37 @@
   vertical-align: middle !important;
   box-sizing: border-box !important;
   user-select: none !important;
+  flex-shrink: 0 !important;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
+}
+
+.bt-bis-btn--inline {
+  height: 24px !important;
+  min-width: auto !important;
+  padding: 0 4px !important;
+  font-size: 11px !important;
+  margin: 0 0 0 4px !important;
+}
+
+.bt-bis-btn--compact {
+  min-width: 24px !important;
+  padding: 0 4px !important;
+}
+
+.bt-bis-btn--compact .bt-bis-btn-label {
+  display: none !important;
+}
+
+.bt-bis-unavailable-msg {
+  display: block !important;
+  margin: 2px 0 0 0 !important;
+  padding: 0 8px 4px !important;
+  font-family: Inter, Arial, sans-serif !important;
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+  color: #94a3b8 !important;
+  pointer-events: none !important;
+  user-select: none !important;
 }
 
 .bt-bis-btn-icon {
