@@ -169,10 +169,7 @@ async function assertSenderCanSign(
   }
 
   if (!isCertificateBisEligible(cert)) {
-    throw new BisSignError(
-      'Certificat actif et ancré sur Polygon requis',
-      403,
-    )
+    throw new BisSignError('Certificat actif requis pour signer une interaction BIS', 403)
   }
 
   if (cert.status === 'REVOKED') {
@@ -488,7 +485,7 @@ export async function verifyBisSignature(
   }
 }
 
-/** Résout le certificat actif ancré de l'utilisateur pour signature BIS. */
+/** Résout le certificat actif de l'utilisateur pour signature BIS. */
 export async function resolveSenderBisCertificate(userId: string): Promise<{
   id: string
   polygonTxHash: string | null
@@ -498,8 +495,7 @@ export async function resolveSenderBisCertificate(userId: string): Promise<{
     where: {
       entity: { userId },
       status: { in: ['ACTIVE', 'ANCHORED'] },
-      OR: [{ blockchainStatus: 'ANCHORED' }, { polygonTxHash: { not: null } }],
-      NOT: { blockchainStatus: 'NOT_ANCHORED' },
+      revokedAt: null,
     },
     orderBy: { issuedAt: 'desc' },
     select: {

@@ -137,6 +137,15 @@ describe('plan-features — resolveEffectivePlan', () => {
       }),
     ).toBe('B2B_ENTERPRISE')
   })
+
+  it('subscription DISCOVERY_EXPIRED inactive → DISCOVERY_EXPIRED (mur + guards API)', () => {
+    expect(
+      resolveEffectivePlan({
+        subscription: { plan: 'DISCOVERY_EXPIRED', status: 'inactive' },
+        email: 'client@example.com',
+      }),
+    ).toBe('DISCOVERY_EXPIRED')
+  })
 })
 
 describe('plan-features — resolveAccountPlan', () => {

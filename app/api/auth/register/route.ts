@@ -162,6 +162,16 @@ export async function POST(req: NextRequest) {
       return generic400();
     }
 
+    const conflictingEntity = await prisma.entity.findFirst({
+      where: { email: { equals: emailNorm, mode: "insensitive" } },
+      select: { id: true, userId: true },
+    });
+    if (conflictingEntity?.userId) {
+      console.log(
+        `[register] entity email collision entityId=${conflictingEntity.id.slice(0, 8)}… ownerUserId=${conflictingEntity.userId.slice(0, 8)}…`,
+      );
+    }
+
     const hashedPassword = await bcrypt.hash(password, 12);
 
     let user;

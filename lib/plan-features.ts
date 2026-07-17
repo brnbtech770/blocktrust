@@ -103,6 +103,7 @@ function planTypeToEffectivePlan(planType?: string | null): string | null {
  *  - abonnement Stripe actif (active / trialing + stripeSubscriptionId) → subscription.plan ;
  *  - trial interne sans Stripe : active + currentPeriodEnd > now → subscription.plan ;
  *  - trial interne expiré (active + currentPeriodEnd passée, sans Stripe) → Découverte ;
+ *  - subscription.plan DISCOVERY_EXPIRED (J+30) → DISCOVERY_EXPIRED (lecture seule) ;
  *  - sinon Découverte (abonnement inactif / canceled / past_due).
  * Fail-soft : ne lève jamais.
  */
@@ -117,6 +118,9 @@ export function resolveEffectivePlan(params: {
   if (params.isAdmin || isInternalAccount(params.email)) return 'B2B_ENTERPRISE'
   const sub = params.subscription
   if (!sub) return DEFAULT_B2C_PLAN
+
+  // Période Découverte terminée (J+30) — prioritaire même si status inactive (onboarding-monitor).
+  if (isDiscoveryExpired(sub.plan)) return DISCOVERY_EXPIRED_PLAN
 
   const activePlan = resolveActiveSubscriptionPlan(sub)
   if (activePlan && !isDiscoveryPlan(activePlan)) return activePlan

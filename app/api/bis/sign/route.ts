@@ -200,7 +200,7 @@ export async function POST(req: NextRequest) {
         req,
         {
           error:
-            'Certificat actif ancré requis — disponible à partir de Premium ou plans professionnels',
+            'Certificat actif requis — disponible à partir de Premium ou plans professionnels',
         },
         403,
       )

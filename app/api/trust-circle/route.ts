@@ -8,6 +8,7 @@ import { prisma } from '@/app/lib/db'
 import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
 import { syncMutualRelationsForUser } from '@/lib/trust-circle-mutual'
 import { linkPendingInvitesToUser, pendingReceivedInviteWhere } from '@/lib/trust-circle-invites'
+import { resolveEffectivePlan } from '@/lib/plan-features'
 
 export async function GET() {
   const session = await auth()
@@ -16,7 +17,28 @@ export async function GET() {
   }
 
   const userId = session.user.id
-  const plan = (session.user as { plan?: string }).plan ?? 'ESSENTIEL'
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      email: true,
+      plan: { select: { type: true } },
+      subscription: {
+        select: {
+          plan: true,
+          status: true,
+          stripeSubscriptionId: true,
+          currentPeriodEnd: true,
+        },
+      },
+    },
+  })
+
+  const plan = resolveEffectivePlan({
+    subscription: user?.subscription,
+    email: user?.email ?? session.user.email,
+    planType: user?.plan?.type,
+  })
 
   // Trust Circle accessible à tous les utilisateurs vérifiés.
   // Les quotas (checkTrustCircleQuota) limitent selon le plan.

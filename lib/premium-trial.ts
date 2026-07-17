@@ -103,12 +103,11 @@ async function linkEntityByEmailToUser(email: string, userId: string): Promise<b
     return false
   }
 
-  await prisma.entity.update({
-    where: { id: entity.id },
-    data: { userId },
-  })
-
-  return true
+  // Ne jamais réassigner une entité déjà rattachée à un autre compte (carnet de contacts).
+  console.log(
+    `[premium-trial] skip entity link entityId=${entity.id.slice(0, 8)}… ownerUserId=${entity.userId.slice(0, 8)}…`,
+  )
+  return false
 }
 
 async function ensureUserForPremiumTrial(email: string) {
@@ -146,34 +145,40 @@ async function ensureUserForPremiumTrial(email: string) {
     include: { subscription: true },
   })
 
+  let linkedOnCreate = false
   if (existingEntity) {
-    await prisma.entity.update({
+    const owner = await prisma.entity.findUnique({
       where: { id: existingEntity.id },
-      data: { userId: user.id },
+      select: { userId: true },
     })
+    if (!owner?.userId) {
+      await prisma.entity.update({
+        where: { id: existingEntity.id },
+        data: { userId: user.id },
+      })
+      linkedOnCreate = true
+    } else if (owner.userId !== user.id) {
+      console.log(
+        `[premium-trial] skip entity link on create entityId=${existingEntity.id.slice(0, 8)}… ownerUserId=${owner.userId.slice(0, 8)}…`,
+      )
+    }
   }
 
-  return { user, userCreated: true as const, linkedEntity: existingEntity != null }
+  return { user, userCreated: true as const, linkedEntity: linkedOnCreate }
 }
 
 async function resolveTrialEntity(email: string, userId: string) {
-  let linkedEntity = await linkEntityByEmailToUser(email, userId)
+  const linkedEntity = await linkEntityByEmailToUser(email, userId)
 
-  let entity = await prisma.entity.findFirst({
-    where: {
-      OR: [{ userId }, { email: { equals: email, mode: 'insensitive' } }],
-    },
-    orderBy: { createdAt: 'asc' },
-  })
-
-  if (entity && entity.userId !== userId) {
-    await prisma.entity.update({
-      where: { id: entity.id },
-      data: { userId },
-    })
-    linkedEntity = true
-    entity = await prisma.entity.findUniqueOrThrow({ where: { id: entity.id } })
-  }
+  const entity =
+    (await prisma.entity.findFirst({
+      where: { userId, email: { equals: email, mode: 'insensitive' } },
+      orderBy: { createdAt: 'asc' },
+    })) ??
+    (await prisma.entity.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'asc' },
+    }))
 
   return { entity, linkedEntity }
 }

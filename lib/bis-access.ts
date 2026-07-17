@@ -7,7 +7,6 @@ import {
   isActiveBillingStatus,
   isDiscoveryExpired,
   isDiscoveryPlan,
-  isNotAnchored,
 } from '@/lib/plan-features'
 
 export const BIS_INTERACTION_TYPES = [
@@ -48,7 +47,7 @@ export function canCreateBisSignature(params: {
   return isActiveBillingStatus(params.subscriptionStatus)
 }
 
-/** Certificat éligible : ACTIVE/ANCHORED + ancré Polygon (pas NOT_ANCHORED). */
+/** Certificat éligible BIS : ACTIVE ou ANCHORED (ancrage Polygon = enrichissement, pas prérequis). */
 export function isCertificateBisEligible(cert: {
   status: string
   blockchainStatus?: string | null
@@ -56,9 +55,7 @@ export function isCertificateBisEligible(cert: {
   revokedAt?: Date | null
 }): boolean {
   if (cert.revokedAt) return false
-  if (cert.status !== 'ACTIVE' && cert.status !== 'ANCHORED') return false
-  if (isNotAnchored(cert.blockchainStatus)) return false
-  return cert.blockchainStatus === 'ANCHORED' || Boolean(cert.polygonTxHash)
+  return cert.status === 'ACTIVE' || cert.status === 'ANCHORED'
 }
 
 export function getBisLevelLabel(level: number): string {

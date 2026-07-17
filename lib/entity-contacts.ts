@@ -7,6 +7,10 @@ export type EntityEmailLike = {
   organizationId?: string | null;
 };
 
+export type EntityContactLike = EntityEmailLike & {
+  certificates?: ReadonlyArray<unknown> | null;
+};
+
 export function normalizeEntityEmail(email: string): string {
   return email.trim().toLowerCase();
 }
@@ -20,12 +24,21 @@ export function isUserOwnProfileEntity(
   return normalizeEntityEmail(entity.email) === normalizeEntityEmail(userEmail);
 }
 
-/** Contacts tiers = entités hors profil personnel. */
-export function filterThirdPartyContactEntities<T extends EntityEmailLike>(
+/** Badge propre : certificat lié OU email identique au compte (profil personnel). */
+export function isUserOwnBadgeEntity(
+  entity: EntityContactLike,
+  userEmail: string | null | undefined,
+): boolean {
+  if (entity.certificates != null && entity.certificates.length > 0) return true;
+  return isUserOwnProfileEntity(entity, userEmail);
+}
+
+/** Contacts tiers = entités hors badges propres (certificat ou profil email compte). */
+export function filterThirdPartyContactEntities<T extends EntityContactLike>(
   entities: T[],
   userEmail: string | null | undefined,
 ): T[] {
-  return entities.filter((e) => !isUserOwnProfileEntity(e, userEmail));
+  return entities.filter((e) => !isUserOwnBadgeEntity(e, userEmail));
 }
 
 /** Filtre Prisma : entités comptées dans le quota contacts personnels. */
@@ -37,6 +50,7 @@ export function personalContactEntitiesWhere(
   return {
     userId,
     organizationId: null,
+    certificates: { none: {} },
     ...(emailNorm
       ? {
           NOT: {

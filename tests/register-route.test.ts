@@ -7,6 +7,9 @@ const prismaMock = vi.hoisted(() => ({
     findFirst: vi.fn(),
     create: vi.fn(),
   },
+  entity: {
+    findFirst: vi.fn(),
+  },
 }));
 
 vi.mock("@/app/lib/db", () => ({ prisma: prismaMock }));
@@ -60,6 +63,7 @@ describe("POST /api/auth/register", () => {
     vi.clearAllMocks();
     prismaMock.user.findUnique.mockResolvedValue(null);
     prismaMock.user.findFirst.mockResolvedValue(null);
+    prismaMock.entity.findFirst.mockResolvedValue(null);
     prismaMock.user.create.mockResolvedValue({
       id: "user-new-1",
       email: "user@example.com",
