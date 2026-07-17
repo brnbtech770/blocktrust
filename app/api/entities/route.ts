@@ -71,6 +71,8 @@ const createEntitySchema = z.discriminatedUnion('entityType', [
 // POST — Créer une entité
 // ─────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  let requestPurpose: 'contact' | 'badge' | undefined;
+
   try {
     // Vérifier l'authentification avec NextAuth v5
     // auth() lit automatiquement les cookies depuis les headers de la requête
@@ -143,6 +145,7 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parsed.data;
+    requestPurpose = data.purpose;
 
     if (data.entityType === 'INDIVIDUAL') {
       const fnCheck = assertSafeDisplayText(data.firstName, 'Prénom');
@@ -220,36 +223,63 @@ export async function POST(req: NextRequest) {
     // Vérifier le quota selon le plan
     const quotaCheck = await checkEntityQuota(user.id);
     if (!quotaCheck.allowed) {
+      const quotaError =
+        data.purpose === "contact"
+          ? `Limite de contacts atteinte (${quotaCheck.max ?? "—"} max)`
+          : quotaCheck.reason || "Quota dépassé";
       return NextResponse.json(
         {
-          error: quotaCheck.reason || 'Quota dépassé',
-          code: 'QUOTA_EXCEEDED',
+          error: quotaError,
+          code: "QUOTA_EXCEEDED",
           current: quotaCheck.current,
           max: quotaCheck.max,
-          upgradeUrl: '/pricing',
+          upgradeUrl: "/pricing",
         },
-        { status: 403 }
+        { status: 403 },
       );
+    }
+
+    const isContactPurpose = data.purpose === "contact";
+
+    if (isContactPurpose) {
+      const existingContact = await prisma.entity.findFirst({
+        where: {
+          userId: user.id,
+          email: { equals: data.email, mode: "insensitive" },
+        },
+      });
+      if (existingContact) {
+        return NextResponse.json(
+          { error: "Ce contact existe déjà dans votre carnet" },
+          { status: 409 },
+        );
+      }
     }
 
     // Préparer les données selon le type
     let entityData: Prisma.EntityUncheckedCreateInput;
 
     if (data.entityType === 'INDIVIDUAL') {
-      // Vérifier si un particulier avec cet email existe déjà
-      const existing = await prisma.entity.findFirst({
-        where: {
-          email: data.email,
-          userId: user.id,
-          entityType: 'INDIVIDUAL',
-        },
-      });
+      if (!isContactPurpose) {
+        const existing = await prisma.entity.findFirst({
+          where: {
+            email: data.email,
+            userId: user.id,
+            entityType: 'INDIVIDUAL',
+          },
+        });
 
-      if (existing) {
-        return NextResponse.json(
-          { error: 'Un profil avec cet email existe déjà' },
-          { status: 409 }
-        );
+        if (existing) {
+          return NextResponse.json(
+            {
+              error:
+                data.purpose === 'badge'
+                  ? 'Vous avez déjà un badge avec cet email'
+                  : 'Ce contact existe déjà dans votre carnet',
+            },
+            { status: 409 },
+          );
+        }
       }
 
       // Normaliser le website (peut être vide string ou null)
@@ -294,19 +324,26 @@ export async function POST(req: NextRequest) {
       }
 
       // Vérifier si une entreprise avec cet email existe déjà pour cet utilisateur
-      const existingEmail = await prisma.entity.findFirst({
-        where: {
-          email: data.email,
-          userId: user.id,
-          entityType: 'BUSINESS',
-        },
-      });
+      if (!isContactPurpose) {
+        const existingEmail = await prisma.entity.findFirst({
+          where: {
+            email: data.email,
+            userId: user.id,
+            entityType: 'BUSINESS',
+          },
+        });
 
-      if (existingEmail) {
-        return NextResponse.json(
-          { error: 'Une entreprise avec cet email existe déjà' },
-          { status: 409 }
-        );
+        if (existingEmail) {
+          return NextResponse.json(
+            {
+              error:
+                data.purpose === 'badge'
+                  ? 'Vous avez déjà un badge avec cet email'
+                  : 'Ce contact existe déjà dans votre carnet',
+            },
+            { status: 409 },
+          );
+        }
       }
 
       // Normaliser le website (ajouter https:// si manquant)
@@ -447,8 +484,13 @@ export async function POST(req: NextRequest) {
       }
       if (Array.isArray(target) && target.includes('email')) {
         return NextResponse.json(
-          { error: 'Cet email est déjà utilisé' },
-          { status: 409 }
+          {
+            error:
+              requestPurpose === 'contact'
+                ? 'Ce contact existe déjà dans votre carnet'
+                : 'Vous avez déjà un badge avec cet email',
+          },
+          { status: 409 },
         );
       }
     }

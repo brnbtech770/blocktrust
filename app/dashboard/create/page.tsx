@@ -56,7 +56,7 @@ export default function CreateCertificate() {
   const isContactIntent = editIdParam ? true : intentParam !== "badge";
 
   const [step, setStep] = useState<1 | 2>(1);
-  const [entityType, setEntityType] = useState<EntityType>("BUSINESS");
+  const [entityType, setEntityType] = useState<EntityType>("INDIVIDUAL");
   const [editEntityId, setEditEntityId] = useState<string | null>(null);
   const [editLoadError, setEditLoadError] = useState("");
   const [loadingEdit, setLoadingEdit] = useState(false);
@@ -308,7 +308,11 @@ export default function CreateCertificate() {
       const entityResult = await entityResponse.json();
 
       if (!entityResponse.ok) {
-        throw new Error(entityResult.message || entityResult.error || "Erreur lors de la création du contact");
+        const fallback =
+          entityResult.error ||
+          entityResult.message ||
+          "Erreur lors de la création du contact";
+        throw new Error(fallback);
       }
 
       setCreatedEntity(entityResult.entity);
@@ -346,7 +350,11 @@ export default function CreateCertificate() {
       const entityResult = await entityResponse.json();
 
       if (!entityResponse.ok) {
-        throw new Error(entityResult.error || "Erreur lors de la création du badge");
+        throw new Error(
+          entityResult.error ||
+            entityResult.message ||
+            "Erreur lors de la création du badge",
+        );
       }
 
       setCreatedEntity(entityResult.entity);
