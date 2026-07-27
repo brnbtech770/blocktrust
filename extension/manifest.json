@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "BLOCKTRUST TrustScan pour Gmail",
   "short_name": "TrustScan",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Vérifiez l'identité des expéditeurs et signez vos emails dans Gmail. Anti-usurpation, badges certifiés et signature BIS BLOCKTRUST™.",
   "permissions": ["storage", "activeTab"],
   "host_permissions": ["https://mail.google.com/*", "https://blocktrust.tech/*"],

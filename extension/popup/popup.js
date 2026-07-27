@@ -171,6 +171,21 @@ function extensionAuthHeaders(apiKey) {
 }
 
 /**
+ * Erreur attendue (clé absente, révoquée ou régénérée côté dashboard).
+ * @param {unknown} err
+ */
+function isExpectedAuthFailure(err) {
+  const msg = err instanceof Error ? err.message : String(err ?? "");
+  return (
+    /non autorisée/i.test(msg) ||
+    /unauthorized/i.test(msg) ||
+    /401/i.test(msg) ||
+    /session invalide/i.test(msg) ||
+    /clé refusée/i.test(msg)
+  );
+}
+
+/**
  * Appelle GET /api/extension/me
  * @param {string} apiKey
  */
@@ -181,6 +196,11 @@ async function fetchMe(apiKey) {
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error(
+        "Clé API invalide ou expirée. Régénérez-la dans blocktrust.tech → Dashboard → Extensions, puis reconnectez.",
+      );
+    }
     const msg = data.message || data.error || "Erreur serveur";
     throw new Error(msg);
   }
@@ -216,8 +236,10 @@ async function refreshConnectedView() {
     const data = await fetchMe(key);
     showConnectedState(data);
   } catch (e) {
-    console.warn("[TrustScan] /me:", e);
-    const msg = e.message || "Session invalide — reconnectez-vous.";
+    if (!isExpectedAuthFailure(e)) {
+      console.warn("[TrustScan] /me:", e);
+    }
+    const msg = e instanceof Error ? e.message : "Session invalide — reconnectez-vous.";
     showStatus(msg, true);
     await new Promise((resolve) => {
       chrome.storage.local.remove(["apiKey"], resolve);
@@ -277,11 +299,16 @@ document.addEventListener("DOMContentLoaded", () => {
         const user = await fetchMe(key);
         showConnectedState(user);
       } catch (e) {
-        console.warn("[TrustScan] /me:", e);
+        if (!isExpectedAuthFailure(e)) {
+          console.warn("[TrustScan] /me:", e);
+        }
         await new Promise((resolve) => {
           chrome.storage.local.remove(["apiKey"], resolve);
         });
         showDisconnectedState();
+        if (e instanceof Error && isExpectedAuthFailure(e)) {
+          showStatus(e.message, true);
+        }
       }
     } else {
       showDisconnectedState();
