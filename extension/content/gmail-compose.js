@@ -65,6 +65,9 @@
   /** @type {Map<string, { certified: boolean, timestamp: number }>} */
   const senderVerifyCache = new Map();
 
+  /** @type {Map<Element, string>} */
+  const lastSenderEmailByRoot = new Map();
+
   let autoSendHookInstalled = false;
   let composeObserver = null;
   let autoBadgeEl = null;
@@ -539,6 +542,44 @@
   }
 
   /**
+   * Re-vérifie si l'email expéditeur a changé (alias Gmail, compte « envoyer en tant que »).
+   * @param {Element} root
+   */
+  async function refreshComposeSenderCert(root) {
+    const senderEmail = extractSenderEmail(root) || "";
+    const previous = lastSenderEmailByRoot.get(root) ?? "";
+    if (senderEmail === previous && root.getAttribute(ATTR_BIS_READY) === "1") {
+      return;
+    }
+
+    lastSenderEmailByRoot.set(root, senderEmail);
+
+    if (!senderEmail) {
+      clearComposeBisUi(root);
+      showBisUnavailable(root);
+      return;
+    }
+
+    root.removeAttribute(ATTR_BIS_READY);
+    initializedComposers.delete(root);
+    clearComposeBisUi(root);
+
+    const certified = await isSenderCertifiedForRoot(root);
+    if (!certified) {
+      showBisUnavailable(root);
+      root.setAttribute(ATTR_BIS_READY, "1");
+      initializedComposers.add(root);
+      return;
+    }
+
+    hideBisUnavailable(root);
+
+    if (currentMode === BIS_MODES.SELECTIVE) {
+      await injectSelectiveButton(root);
+    }
+  }
+
+  /**
    * @param {Element} root
    * @returns {boolean}
    */
@@ -860,6 +901,10 @@
    */
   async function signBisForSend(root, options = {}) {
     if (!deps) return { ok: false, reason: "not_initialized" };
+    if (!(await isSenderCertifiedForRoot(root))) {
+      showBisUnavailable(root);
+      return { ok: false, reason: "sender_not_certified" };
+    }
     if (root.getAttribute(ATTR_BIS_DONE) === "1") {
       return { ok: false, reason: "send_already_triggered" };
     }
@@ -920,6 +965,10 @@
    */
   async function signBisSelective(root) {
     if (!deps) return { ok: false, reason: "not_initialized" };
+    if (!(await isSenderCertifiedForRoot(root))) {
+      showBisUnavailable(root);
+      return { ok: false, reason: "sender_not_certified" };
+    }
 
     const bodyEl = findComposeBody(root);
     if (!bodyEl) return { ok: false, reason: "no_body" };
@@ -1002,6 +1051,12 @@
   async function handleSelectiveSignClick(root, button) {
     const state = composeState.get(root);
     if (state?.signed || state?.signing) return;
+
+    if (!(await isSenderCertifiedForRoot(root))) {
+      showBisUnavailable(root);
+      showToast("BIS indisponible — aucun badge actif sur cet email", "error");
+      return;
+    }
 
     composeState.set(root, { signed: false, signing: true });
     setButtonState(button, "signing");
@@ -1290,17 +1345,7 @@
 
     if (currentMode === BIS_MODES.SELECTIVE) {
       findComposeRoots().forEach((root) => {
-        if (
-          root.getAttribute(ATTR_BIS_UNAVAILABLE) === "1" ||
-          root.getAttribute(ATTR_SENDER_CERT) === "0"
-        ) {
-          root.removeAttribute(ATTR_BIS_READY);
-          initializedComposers.delete(root);
-        }
-        if (initializedComposers.has(root) || root.getAttribute(ATTR_BIS_READY) === "1") {
-          return;
-        }
-        void injectSelectiveButton(root);
+        void refreshComposeSenderCert(root);
       });
     } else {
       removeAllComposeButtons();
@@ -1308,14 +1353,11 @@
 
     if (currentMode === BIS_MODES.AUTO) {
       findComposeRoots().forEach((root) => {
-        if (isInlineCompose(root)) {
-          void isSenderCertifiedForRoot(root).then((certified) => {
-            if (!certified) showBisUnavailable(root);
-            else hideBisUnavailable(root);
-          });
-        }
-        bindBodyInvalidation(root);
-        scheduleBisWarmUp(root);
+        void refreshComposeSenderCert(root).then(() => {
+          if (root.getAttribute(ATTR_SENDER_CERT) !== "1") return;
+          bindBodyInvalidation(root);
+          scheduleBisWarmUp(root);
+        });
       });
       installAutoSendHook();
       updateAutoBadge();

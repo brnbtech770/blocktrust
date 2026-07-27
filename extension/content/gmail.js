@@ -640,11 +640,14 @@ function bisTooltipSectionHtml(result) {
       </div>`;
   }
 
+  const invalidLabel =
+    result.status === "CERTIFIED" ? "BIS expiré ou invalide" : "Signature BIS non vérifiable";
+
   return `
     <div class="bt-tooltip-section">
       <span class="bt-tooltip-title" style="color:#f59e0b !important;">Signature BIS</span>
       <div class="bt-tooltip-row bt-tooltip-warn">
-        Signature invalide ou expirée
+        ${escapeHtml(invalidLabel)}
         ${bis.reason ? `<br><span style="font-size:10px !important;">${escapeHtml(bis.reason)}</span>` : ""}
       </div>
     </div>`;
@@ -682,9 +685,9 @@ function extractBisIdFromOpenEmail() {
  * @param {{ status: string, entityName?: string|null, trustScore?: number|null, signals?: { kycVerified?: boolean, inNetwork?: boolean, polygonAnchored?: boolean } }} result
  */
 function attachBadgeTooltip(badge, result) {
-  if (result.status !== "CERTIFIED" && !(result.bisSignatureDetected && result.bisVerification)) {
-    return;
-  }
+  const isCertified = result.status === "CERTIFIED";
+  const hasBisDetails = Boolean(result.bisSignatureDetected && result.bisVerification);
+  if (!isCertified && !hasBisDetails) return;
 
   ensureTooltipDismissListeners();
   badge.style.cursor = "help";
@@ -705,11 +708,11 @@ function attachBadgeTooltip(badge, result) {
     const html = `
       <span class="bt-tooltip-title">BLOCKTRUST™</span>
       ${entityLine}
-      ${result.status === "CERTIFIED" && result.officialAccount ? officialAccountBadgeHtml(true) : ""}
-      ${result.status === "CERTIFIED" ? trustScoreBarHtml(result.trustScore) : ""}
-      ${result.status === "CERTIFIED" ? rows.map((row) => signalRowHtml(row.label, row.ok)).join("") : ""}
+      ${isCertified && result.officialAccount ? officialAccountBadgeHtml(true) : ""}
+      ${isCertified ? trustScoreBarHtml(result.trustScore) : ""}
+      ${isCertified ? rows.map((row) => signalRowHtml(row.label, row.ok)).join("") : ""}
       ${bisTooltipSectionHtml(result)}
-      ${bisMissingAlertHtml(result)}
+      ${isCertified ? bisMissingAlertHtml(result) : ""}
     `;
     openTooltip(badge, html, false);
   });
@@ -738,19 +741,35 @@ function attachUnknownBadgeTooltip(badge, result) {
           : "";
 
   badge.addEventListener("mouseenter", () => {
-    const html = `
+    void (async () => {
+      const apiKey = await getApiKey();
+      const viewerHasApiKey = Boolean(apiKey?.trim());
+
+      const html = viewerHasApiKey
+        ? `
       <span class="bt-tooltip-title">BLOCKTRUST™ — Non certifié</span>
       <div class="bt-tooltip-row bt-tooltip-muted">
         ${knownHint}
-        Expéditeur non certifié BLOCKTRUST™<br>
-        Aucune preuve d'identité disponible<br>
+        Cet expéditeur n&apos;est pas certifié BLOCKTRUST™.<br>
+        Aucune preuve d&apos;identité disponible.
+      </div>
+      <a class="bt-tooltip-link" href="https://blocktrust.tech/pricing" target="_blank" rel="noopener noreferrer">
+        → Inviter cet expéditeur sur blocktrust.tech
+      </a>
+    `
+        : `
+      <span class="bt-tooltip-title">BLOCKTRUST™ — Non certifié</span>
+      <div class="bt-tooltip-row bt-tooltip-muted">
+        ${knownHint}
+        Expéditeur non certifié BLOCKTRUST™.<br>
         <span class="bt-tooltip-highlight">Certifiez-vous gratuitement</span>
       </div>
       <a class="bt-tooltip-link" href="https://blocktrust.tech/pricing" target="_blank" rel="noopener noreferrer">
-        → Certifier son identité sur blocktrust.tech
+        → blocktrust.tech
       </a>
     `;
-    openTooltip(badge, html, true);
+      openTooltip(badge, html, true);
+    })();
   });
 
   badge.addEventListener("mouseleave", (e) => {
@@ -792,19 +811,28 @@ function createVerifyBadge(result) {
   let statusClass = "bt-unknown";
   let innerHtml = "";
 
-  const bis = result.bisVerification;
-  const hasValidBis = Boolean(result.bisSignatureDetected && bis?.valid);
-  const hasInvalidBis = Boolean(result.bisSignatureDetected && bis && !bis.valid);
+  const unknownMutedStyles = `
+      background: rgba(100,116,139,0.15) !important;
+      border: 1px solid rgba(100,116,139,0.3) !important;
+      color: #94a3b8 !important;
+    `;
 
-  if (hasInvalidBis) {
-    statusClass = "bt-bis-invalid";
+  const bis = result.bisVerification;
+  const isCertified = result.status === "CERTIFIED";
+  const hasBisLink = Boolean(result.bisSignatureDetected);
+  const hasValidBis = Boolean(hasBisLink && bis?.valid);
+  const hasInvalidBis = Boolean(hasBisLink && bis && !bis.valid);
+  const hasUnverifiableBis = Boolean(hasBisLink && !bis);
+
+  if (result.status === "FRAUD") {
+    statusClass = "bt-fraud";
     colorStyles = `
-      background: #f59e0b !important;
-      color: #0a1628 !important;
+      background: #ef4444 !important;
+      color: #ffffff !important;
       border: none !important;
     `;
-    innerHtml = `<span>⚠ Signature BIS invalide ou expirée</span>`;
-  } else if (result.status === "CERTIFIED") {
+    innerHtml = "⚠ FRAUDE";
+  } else if (isCertified) {
     statusClass = "bt-certified";
     colorStyles = `
       background: #10b981 !important;
@@ -831,45 +859,36 @@ function createVerifyBadge(result) {
           : result.signals?.inContact
             ? `<span class="bt-bis-sub">Contact vérifié</span>`
             : "";
-    const bisLine = hasValidBis
-      ? `<span class="bt-bis-sub">${fileCheckIconSvg(10)} BIS Niveau ${bis.bisLevel} — Signé</span>`
-      : result.bisMissingAlert
-        ? `<span class="bt-bis-sub" style="color:#fef3c7 !important;">⚠ Sans signature BIS</span>`
-        : "";
+    let bisLine = "";
+    if (hasValidBis) {
+      bisLine = `<span class="bt-bis-sub">${fileCheckIconSvg(10)} BIS Niveau ${bis.bisLevel} — Signé</span>`;
+    } else if (hasInvalidBis || hasUnverifiableBis) {
+      bisLine = `<span class="bt-bis-sub" style="color:#fef3c7 !important;">BIS expiré</span>`;
+    } else if (result.bisMissingAlert) {
+      bisLine = `<span class="bt-bis-sub" style="color:#fef3c7 !important;">⚠ Sans signature BIS</span>`;
+    }
     innerHtml = `<span style="display:inline-flex !important;align-items:center !important;gap:4px !important;">${mainLine}</span>${networkLine}${bisLine}`;
+  } else if (hasBisLink) {
+    statusClass = "bt-bis-invalid";
+    colorStyles = `
+      background: #f59e0b !important;
+      color: #0a1628 !important;
+      border: none !important;
+    `;
+    innerHtml = `<span>Signature BIS non vérifiable</span>`;
   } else if (result.status === "IN_CONTACTS") {
     statusClass = "bt-unknown";
-    colorStyles = `
-      background: rgba(100,116,139,0.15) !important;
-      border: 1px solid rgba(100,116,139,0.3) !important;
-      color: #94a3b8 !important;
-    `;
+    colorStyles = unknownMutedStyles;
     innerHtml = result.signals?.inNetwork
       ? "◎ Réseau — non certifié"
       : "? Connu — non certifié";
-  } else if (result.status === "FRAUD") {
-    statusClass = "bt-fraud";
-    colorStyles = `
-      background: #ef4444 !important;
-      color: #ffffff !important;
-      border: none !important;
-    `;
-    innerHtml = "⚠ FRAUDE";
   } else if (result.status === "UNKNOWN") {
     statusClass = "bt-unknown";
-    colorStyles = `
-      background: rgba(100,116,139,0.15) !important;
-      border: 1px solid rgba(100,116,139,0.3) !important;
-      color: #94a3b8 !important;
-    `;
-    innerHtml = "? Non vérifié BLOCKTRUST™";
+    colorStyles = unknownMutedStyles;
+    innerHtml = "? Non certifié BLOCKTRUST™";
   } else {
     statusClass = "bt-unknown";
-    colorStyles = `
-      background: rgba(100,116,139,0.15) !important;
-      border: 1px solid rgba(100,116,139,0.3) !important;
-      color: #94a3b8 !important;
-    `;
+    colorStyles = unknownMutedStyles;
     innerHtml = "? Non certifié";
   }
 
@@ -878,7 +897,9 @@ function createVerifyBadge(result) {
   badge.setAttribute("style", baseStyles + colorStyles);
   badge.innerHTML = innerHtml;
 
-  if (result.status === "CERTIFIED" || hasInvalidBis || hasValidBis) {
+  if (isCertified) {
+    attachBadgeTooltip(badge, result);
+  } else if (hasBisLink && bis) {
     attachBadgeTooltip(badge, result);
   } else if (result.status === "UNKNOWN" || result.status === "IN_CONTACTS") {
     attachUnknownBadgeTooltip(badge, result);
