@@ -10,7 +10,7 @@ const root = resolve(process.cwd(), "extension");
 const manifestPath = join(root, "manifest.json");
 const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { version: string };
 const version = manifest.version;
-const folderName = `blocktrust-trustscan-${version}`;
+const folderName = `blocktrust-trustscan-gmail-${version}`;
 const stagingDir = join(root, "dist", folderName);
 const zipName = `${folderName}.zip`;
 const zipDist = join(root, "dist", zipName);
@@ -39,7 +39,7 @@ function main(): void {
   console.log(`\n✅ Extension v${version} empaquetée :`);
   console.log(`   • ${zipDist}`);
   console.log(`   • ${zipRoot}`);
-  console.log("\n→ Chrome Web Store : Developer Dashboard → TrustScan → Package → Upload");
+  console.log("\n→ Chrome Web Store : Developer Dashboard → TrustScan pour Gmail → Package → Upload");
 }
 
 main();

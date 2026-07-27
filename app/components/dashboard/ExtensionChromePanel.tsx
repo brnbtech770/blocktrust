@@ -162,7 +162,7 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
               Extension Chrome BLOCKTRUST™
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-white/65">
-              Installez TrustScan depuis le Chrome Web Store, puis connectez votre clé API pour
+              Installez TrustScan pour Gmail depuis le Chrome Web Store, puis connectez votre clé API pour
               vérifier l&apos;identité de vos correspondants dans Gmail.
             </p>
           </div>
@@ -311,7 +311,7 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
           <li className="flex gap-3">
             <span className="font-mono text-xs font-semibold text-bt-cyan">1</span>
             <span>
-              Installez l&apos;extension BLOCKTRUST TrustScan depuis le{" "}
+              Installez l&apos;extension BLOCKTRUST TrustScan pour Gmail depuis le{" "}
               <a
                 href={CHROME_EXTENSION_STORE_URL}
                 target="_blank"

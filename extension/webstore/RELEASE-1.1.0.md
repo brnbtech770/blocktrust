@@ -1,9 +1,9 @@
-# Chrome Web Store — TrustScan v1.1.0
+# Chrome Web Store — TrustScan pour Gmail v1.1.0
 
 ## Fichier à uploader
 
 ```
-extension/dist/blocktrust-trustscan-1.1.0.zip
+extension/dist/blocktrust-trustscan-gmail-1.1.0.zip
 ```
 
 Génération : `npm run extension:pack`
@@ -14,6 +14,7 @@ Génération : `npm run extension:pack`
 
 | Champ | Valeur |
 |-------|--------|
+| Nom fiche store | **BLOCKTRUST TrustScan pour Gmail** |
 | Version | **1.1.0** |
 | Version précédente store | 1.0.9 (ou dernière publiée) |
 

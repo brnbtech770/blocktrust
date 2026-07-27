@@ -35,5 +35,5 @@ Principe : **l'envoi ne doit jamais être bloqué** — le BIS est un bonus.
 
 ```bash
 npm run extension:pack
-# → extension/dist/blocktrust-trustscan-1.1.0.zip
+# → extension/dist/blocktrust-trustscan-gmail-1.1.0.zip
 ```

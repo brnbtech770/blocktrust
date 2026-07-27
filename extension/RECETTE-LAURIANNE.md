@@ -1,7 +1,7 @@
 # BLOCKTRUST™ — Recette Laurianne (≈ 15 min)
 
 **Compte test :** laurianne@winter-keys.com  
-**Extension :** TrustScan v1.1.0 (Chrome Web Store ou rechargement local)  
+**Extension :** TrustScan pour Gmail v1.1.0 (Chrome Web Store ou rechargement local)  
 **Prérequis :** clé API `bt_ext_…` connectée dans la popup extension
 
 ---
@@ -9,7 +9,7 @@
 ## 1. Connexion extension (2 min)
 
 1. Ouvrir [Gmail](https://mail.google.com/) avec `laurianne@winter-keys.com`.
-2. Cliquer l’icône **BLOCKTRUST TrustScan** → coller la clé API → **Connecter**.
+2. Cliquer l’icône **BLOCKTRUST TrustScan pour Gmail** → coller la clé API → **Connecter**.
 3. Vérifier : statut **Connecté**, plan et TrustScore affichés.
 
 **OK si :** popup verte « Connecté », pas d’erreur 401.
