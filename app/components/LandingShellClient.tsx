@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import Navbar from "./landing/Navbar";
 import Hero from "./landing/Hero";
 

@@ -41,7 +41,7 @@ export function getTrustCircleInviteSubject(inviterName: string) {
 
 export function TrustCircleInviteEmail({
   inviterName,
-  inviterEmail,
+  inviterEmail: _inviterEmail,
   confirmUrl,
   senderCertId,
   senderVerifyUrl,

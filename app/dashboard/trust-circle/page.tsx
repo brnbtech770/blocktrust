@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { UserPlus, Trash2, Link2, Check, X } from 'lucide-react'
@@ -74,7 +74,7 @@ interface TrustCircleData {
 
 export default function TrustCirclePage() {
   const router = useRouter()
-  const { data: session, status: sessionStatus } = useSession()
+  const { status: sessionStatus } = useSession()
   const [data, setData] = useState<TrustCircleData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -90,18 +90,7 @@ export default function TrustCirclePage() {
     return () => window.clearTimeout(t)
   }, [toastMessage])
 
-  useEffect(() => {
-    if (sessionStatus === 'loading') return
-    if (sessionStatus === 'unauthenticated') {
-      router.push('/')
-      return
-    }
-    if (sessionStatus === 'authenticated') {
-      fetchTrustCircle()
-    }
-  }, [sessionStatus, router])
-
-  const fetchTrustCircle = async () => {
+  const fetchTrustCircle = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/trust-circle', { credentials: 'include' })
@@ -142,7 +131,18 @@ export default function TrustCirclePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    if (sessionStatus === 'loading') return
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/')
+      return
+    }
+    if (sessionStatus === 'authenticated') {
+      fetchTrustCircle()
+    }
+  }, [sessionStatus, router, fetchTrustCircle])
 
   const handleAcceptInvitation = async (inviteToken: string | null) => {
     if (!inviteToken) {

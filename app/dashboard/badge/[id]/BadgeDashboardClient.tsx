@@ -7,6 +7,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { truncateVerificationPublicId } from '@/lib/truncate-public-id'
 import { copyToClipboard } from '@/lib/copy-to-clipboard'
@@ -67,17 +68,6 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
   const [ttlHours, setTtlHours] = useState<number>(24)
   const [tokenHistory, setTokenHistory] = useState<VerifyTokenListItem[]>([])
   const [historyLoading, setHistoryLoading] = useState(false)
-
-  useEffect(() => {
-    if (sessionStatus === 'loading') return
-    if (sessionStatus === 'unauthenticated') {
-      router.push('/')
-      return
-    }
-    if (sessionStatus === 'authenticated') {
-      fetchBadge()
-    }
-  }, [sessionStatus, router, params.id])
 
   const fetchTokenHistory = useCallback(async (certificateId: string) => {
     setHistoryLoading(true)
@@ -152,7 +142,7 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
     [fetchTokenHistory, generateRotatingLink],
   )
 
-  const fetchBadge = async () => {
+  const fetchBadge = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/certificates`, {
@@ -193,7 +183,18 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
     } finally {
       setLoading(false)
     }
-  }
+  }, [params.id, ensureRotatingLink])
+
+  useEffect(() => {
+    if (sessionStatus === 'loading') return
+    if (sessionStatus === 'unauthenticated') {
+      router.push('/')
+      return
+    }
+    if (sessionStatus === 'authenticated') {
+      void fetchBadge()
+    }
+  }, [sessionStatus, router, fetchBadge])
 
   const getEmbedCode = () => {
     if (!badgeData) return ''
@@ -389,9 +390,12 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
           <h2 className="font-syne mb-4 text-2xl font-bold tracking-tight text-white">Aperçu du badge</h2>
           <div className="flex flex-col items-center justify-center py-8">
             <div className="flex w-full items-center justify-center overflow-hidden rounded-xl bg-[#060d1a] p-6">
-              <img
+              <Image
                 src={`/api/badge/${badgeId}?size=md`}
                 alt="Aperçu du badge BLOCKTRUST"
+                width={320}
+                height={420}
+                unoptimized
                 className="h-auto max-w-full"
                 style={{ maxWidth: '320px' }}
               />
@@ -542,11 +546,12 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
           <div className="mx-auto shrink-0 sm:mx-0">
             <div className="flex h-[200px] w-[200px] items-center justify-center rounded-xl bg-white p-4">
               {rotatingQrSrc && !generating ? (
-                <img
+                <Image
                   src={rotatingQrSrc}
                   alt="QR code de vérification rotatif"
                   width={168}
                   height={168}
+                  unoptimized
                   className="h-full w-full"
                 />
               ) : (

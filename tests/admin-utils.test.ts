@@ -1,7 +1,6 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
   getAdminEmailList,
-  getInternalEmailList,
   getAllInternalEmails,
   isAdmin,
   isDashboardAdmin,

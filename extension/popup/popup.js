@@ -289,31 +289,8 @@ function onDisconnect() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  showLoadingState();
   void initBisModeSettings();
-
-  chrome.storage.local.get(["apiKey"], async (data) => {
-    const key = data.apiKey;
-    if (key && looksLikeExtensionKey(key)) {
-      try {
-        const user = await fetchMe(key);
-        showConnectedState(user);
-      } catch (e) {
-        if (!isExpectedAuthFailure(e)) {
-          console.warn("[TrustScan] /me:", e);
-        }
-        await new Promise((resolve) => {
-          chrome.storage.local.remove(["apiKey"], resolve);
-        });
-        showDisconnectedState();
-        if (e instanceof Error && isExpectedAuthFailure(e)) {
-          showStatus(e.message, true);
-        }
-      }
-    } else {
-      showDisconnectedState();
-    }
-  });
+  void refreshConnectedView();
 
   if (el.connectBtn) el.connectBtn.addEventListener("click", onConnect);
   if (el.disconnectBtn) el.disconnectBtn.addEventListener("click", onDisconnect);

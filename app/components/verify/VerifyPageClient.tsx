@@ -270,7 +270,7 @@ function VerifyContent({
           setVtResolveError("invalid");
           setVtResolveStatus("error");
         }
-      } catch (e: unknown) {
+      } catch (_e: unknown) {
         clearTimeout(timeoutId);
         if (cancelled) return;
         setVtResolveError("invalid");
@@ -441,7 +441,7 @@ function VerifyContent({
       clearTimeout(timeoutId);
       ac.abort();
     };
-  }, [hasValidToken, certIdForVerify]);
+  }, [hasValidToken, certIdForVerify, initialCertId, initialCertData]);
 
   const dateLabel = formatCertifiedDate(certifiedAt);
   const displayName = entityName?.trim() || "Titulaire certifié";

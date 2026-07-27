@@ -4,7 +4,6 @@
 
 import { prisma } from "@/app/lib/db";
 import {
-  isGrandfatheredUser,
   requiresEmailVerification,
 } from "@/lib/email-verification";
 import { ACCOUNT_SUSPENDED_MESSAGE } from "@/lib/auth-signin-errors";

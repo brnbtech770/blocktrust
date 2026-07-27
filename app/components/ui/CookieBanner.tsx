@@ -9,7 +9,6 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { Cookie, ShieldCheck, BarChart3 } from 'lucide-react'
 import {
-  CONSENT_CHANGED_EVENT,
   CONSENT_OPEN_SETTINGS_EVENT,
   readConsent,
   writeConsent,

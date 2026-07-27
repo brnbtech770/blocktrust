@@ -4,7 +4,6 @@
 
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import CertificateCard from './CertificateCard'
 
@@ -32,14 +31,11 @@ type DashboardCertificatesListProps = {
 
 export default function DashboardCertificatesList({ certificates }: DashboardCertificatesListProps) {
   const router = useRouter()
-  const [revokingId, setRevokingId] = useState<string | null>(null)
 
   const handleRevoke = async (certificateId: string) => {
     if (!confirm('Êtes-vous sûr de vouloir révoquer ce certificat ? Cette action est irréversible.')) {
       return
     }
-
-    setRevokingId(certificateId)
 
     try {
       const response = await fetch(`/api/certificates/${certificateId}/revoke`, {
@@ -58,8 +54,6 @@ export default function DashboardCertificatesList({ certificates }: DashboardCer
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Erreur inconnue'
       alert(`Erreur : ${message}`)
-    } finally {
-      setRevokingId(null)
     }
   }
 

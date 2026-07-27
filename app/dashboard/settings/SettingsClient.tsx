@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSession } from 'next-auth/react'
+import Image from 'next/image'
 import {
   ArrowUpRight,
   Check,
@@ -673,7 +674,7 @@ export default function SettingsClient({
           <div className="space-y-4">
             <div className="flex items-center space-x-4">
               {user.image ? (
-                <img src={user.image} alt="" className="h-16 w-16 rounded-full" />
+                <Image src={user.image} alt="" width={64} height={64} unoptimized className="h-16 w-16 rounded-full" />
               ) : (
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10">
                   <span className="text-2xl text-white/80">

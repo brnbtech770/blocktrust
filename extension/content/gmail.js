@@ -369,8 +369,6 @@ let tooltipAutoDismissId = null;
 /** @type {number} */
 let tooltipShownAt = 0;
 let tooltipHovering = false;
-/** @type {Element | null} */
-let tooltipAnchor = null;
 
 function destroyTooltip() {
   if (tooltipHideTimerId !== null) {
@@ -385,7 +383,6 @@ function destroyTooltip() {
     activeTooltip.remove();
     activeTooltip = null;
   }
-  tooltipAnchor = null;
   tooltipHovering = false;
   tooltipShownAt = 0;
 }
@@ -407,10 +404,6 @@ function setTooltipVisible(tooltip, visible) {
     "important",
   );
   tooltip.style.setProperty("pointer-events", visible ? "auto" : "none", "important");
-}
-
-function hideBadgeTooltip() {
-  destroyTooltip();
 }
 
 function scheduleHideBadgeTooltip(delayMs = TOOLTIP_MOUSELEAVE_MS) {
@@ -477,7 +470,6 @@ function openTooltip(anchor, html, interactive) {
     bindInteractiveTooltipDismiss(activeTooltip);
   }
 
-  tooltipAnchor = anchor;
   tooltipShownAt = Date.now();
   tooltipHovering = false;
   positionTooltip(activeTooltip, anchor);

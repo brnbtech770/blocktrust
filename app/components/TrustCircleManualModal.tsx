@@ -5,7 +5,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, UserPlus, Save } from 'lucide-react'
+import { X, Save } from 'lucide-react'
 
 interface TrustCircleManualModalProps {
   isOpen: boolean
@@ -20,7 +20,7 @@ export default function TrustCircleManualModal({
   isOpen,
   onClose,
   onSuccess,
-  userEntities,
+  userEntities: _userEntities,
 }: TrustCircleManualModalProps) {
   const [entityName, setEntityName] = useState('')
   const [entityEmail, setEntityEmail] = useState('')

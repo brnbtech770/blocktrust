@@ -35,7 +35,7 @@ export function getMutualTrustSubject(partnerName: string) {
   return `🤝 Confiance mutuelle activée avec ${partnerName}`
 }
 
-export function MutualTrustEmail({ userName, partnerName }: MutualTrustEmailProps) {
+export function MutualTrustEmail({ userName: _userName, partnerName }: MutualTrustEmailProps) {
   const dashboardUrl = 'https://blocktrust.tech/dashboard/trust-circle'
   return (
     <Html>

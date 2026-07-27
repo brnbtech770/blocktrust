@@ -39,7 +39,7 @@ export function getTrustCircleExternalInviteSubject(inviterName: string) {
 
 export function TrustCircleExternalInviteEmail({
   inviterName,
-  recipientName,
+  recipientName: _recipientName,
   inviteUrl,
 }: TrustCircleExternalInviteEmailProps) {
   const benefits = [

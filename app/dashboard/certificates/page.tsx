@@ -53,7 +53,7 @@ interface Certificate {
 
 export default function CertificatesPage() {
   const router = useRouter();
-  const { data: session, status: sessionStatus } = useSession();
+  const { status: sessionStatus } = useSession();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

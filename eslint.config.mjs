@@ -31,7 +31,9 @@ const eslintConfig = defineConfig([
     "prisma/seed.js",
     // Scripts debug locaux (non versionnés en prod)
     "check-passwords.js",
+    "check-login.js",
     "debug-login.js",
+    "extension/dist/**",
     "find-entity.js",
     "find-user.js",
     "fix-critical-db.js",

@@ -114,7 +114,7 @@ export default function ActivityFeed({ initialEvents = [] }: ActivityFeedProps) 
 
   useEffect(() => {
     if (initialEvents.length > 0) setEvents(initialEvents)
-  }, [initialEvents.length])
+  }, [initialEvents])
 
   useEffect(() => {
     fetchActivity()

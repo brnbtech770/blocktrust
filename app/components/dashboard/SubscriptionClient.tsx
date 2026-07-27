@@ -5,11 +5,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Loader2, Settings } from 'lucide-react'
 
 export default function SubscriptionClient() {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
 
   const handleManageSubscription = async () => {

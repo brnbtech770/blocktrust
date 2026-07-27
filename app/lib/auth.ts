@@ -226,7 +226,7 @@ export const authOptions: NextAuthConfig = {
   callbacks: {
     ...authEdgeConfig.callbacks,
     // Google OAuth : garantir un enregistrement User (avant JWT) — requis si l’adapter est en retard ou en échec partiel.
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile: _profile }) {
       const email = user.email?.trim().toLowerCase();
       if (
         email &&
@@ -528,7 +528,7 @@ export const authOptions: NextAuthConfig = {
  * Helper pour vérifier l'authentification
  * Utilise NextAuth v5 auth() depuis auth-server
  */
-export async function getAuthUser(req: NextRequest) {
+export async function getAuthUser(_req: NextRequest) {
   try {
     // Pour NextAuth v5, on utilise auth() depuis auth-server
     // Import dynamique pour éviter les erreurs de circular dependency

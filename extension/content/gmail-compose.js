@@ -1001,18 +1001,6 @@
   }
 
   /**
-   * @deprecated Alias interne — utiliser signBisForSend ou signBisSelective.
-   * @param {Element} root
-   * @param {{ silent?: boolean, timeoutMs?: number }} [options]
-   */
-  async function signBis(root, options = {}) {
-    if (options.silent) {
-      return signBisForSend(root, { timeoutMs: options.timeoutMs });
-    }
-    return signBisSelective(root);
-  }
-
-  /**
    * @param {HTMLElement} button
    * @param {"ready"|"signing"|"signed"|"disabled"} state
    */

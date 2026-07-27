@@ -12,7 +12,6 @@ import {
   entityIsCertified,
   loadUserTrustCircleMap,
   mapEntityToContact,
-  loadUserEntities,
 } from "@/lib/mcp/helpers/contacts";
 import { runExtensionVerifySender } from "@/lib/extension-verify-sender-service";
 import { mcpErrorResult, mcpJsonResult } from "@/lib/mcp/sanitize-output";

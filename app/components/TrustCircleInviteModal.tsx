@@ -20,7 +20,7 @@ export default function TrustCircleInviteModal({
   isOpen,
   onClose,
   onSuccess,
-  userEntities,
+  userEntities: _userEntities,
 }: TrustCircleInviteModalProps) {
   const [toEmail, setToEmail] = useState('')
   const [toName, setToName] = useState('')

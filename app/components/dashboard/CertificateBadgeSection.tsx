@@ -5,6 +5,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Check } from 'lucide-react'
 
 import VerifyBadgeButton from '@/app/components/VerifyBadgeButton'
@@ -318,11 +319,12 @@ export default function CertificateBadgeSection({
             <div
               className="flex w-full items-center justify-center overflow-hidden rounded-xl bg-[#060d1a] p-6 shadow-[0_0_40px_rgba(0,212,255,0.1)] sm:p-8"
             >
-              <img
+              <Image
                 src={`/api/badge/${badgeId}?size=${size}`}
                 alt="Aperçu du badge BLOCKTRUST"
                 width={dims.w}
                 height={dims.h}
+                unoptimized
                 className="h-auto max-w-full rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
                 style={{ maxWidth: dims.w }}
                 key={`${size}-${badgeId}`}

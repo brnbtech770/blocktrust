@@ -90,7 +90,6 @@ import {
   E2E_PASSWORD,
   VALID_IBAN,
   VALID_IBAN_SPACED,
-  VALID_SIRET,
   randomSiret,
   hasDatabase,
   hasRedis,
@@ -402,7 +401,7 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
     itE2e("3.2 — Quotas Premium trial", async () => {
       const email = e2eEmail("premium-trial", runId);
       const future = new Date(Date.now() + 7 * 864e5);
-      const user = await createE2EUser(tracker, {
+      await createE2EUser(tracker, {
         email,
         planType: "B2C_PREMIUM",
         subscription: {
@@ -1089,7 +1088,7 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
 
     itE2e("10.3 — Email inconnu", async () => {
       const apiKey = validExtensionApiKey(runId);
-      const user = await createE2EUser(tracker, {
+      await createE2EUser(tracker, {
         email: e2eEmail("ext-user", runId),
         emailVerified: new Date(),
         extensionApiKeyHash: hashApiKey(apiKey),

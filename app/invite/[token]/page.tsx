@@ -1,4 +1,3 @@
-import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Check, Clock } from 'lucide-react'
 import { prisma } from '@/app/lib/db'

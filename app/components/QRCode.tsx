@@ -1,4 +1,5 @@
 import QRCode from "qrcode";
+import Image from "next/image";
 
 type QRCodeProps = {
   url: string;
@@ -17,12 +18,13 @@ export default async function QRCodeImage({
   });
 
   return (
-    <img
+    <Image
       src={dataUrl}
       width={size}
       height={size}
       alt="QR code de vérification"
       className={className}
+      unoptimized
     />
   );
 }
