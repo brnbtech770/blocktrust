@@ -569,6 +569,11 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
       expect(certs).toBe(0);
       const entity = await prisma.entity.findUnique({ where: { id: body.entity.id } });
       expect(entity!.userId).toBe(user.id);
+
+      const tcRelations = await prisma.userTrustRelation.count({
+        where: { fromUserId: user.id, toEmail: contactEmail },
+      });
+      expect(tcRelations).toBe(0);
     });
 
     itE2e("4.2 — Contact BUSINESS", async () => {

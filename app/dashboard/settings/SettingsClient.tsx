@@ -156,7 +156,9 @@ function ProCertifiedSection({
             Domaines officiels
           </label>
           <p className="text-xs text-white/30">
-            Ex. monentreprise.fr — protège contre les sites miroirs
+            Ajouter un domaine permet de certifier que ce site web vous appartient. La vérification se fait par DNS
+            (ajout d&apos;un enregistrement TXT) ou par fichier (upload d&apos;un fichier de vérification sur votre
+            serveur). Vous ne pouvez certifier que les domaines que vous possédez réellement.
           </p>
           <DomainTagInput
             values={certifiedDomains}

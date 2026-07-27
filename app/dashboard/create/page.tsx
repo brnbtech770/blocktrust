@@ -319,7 +319,7 @@ export default function CreateCertificate() {
       const networkMsg =
         typeof entityResult.network?.message === "string"
           ? entityResult.network.message
-          : "Contact ajouté à votre réseau.";
+          : "Contact ajouté à votre carnet.";
       router.push(`/dashboard/entities?success=contact&message=${encodeURIComponent(networkMsg)}`);
     } catch (err: unknown) {
       console.error("Erreur:", err);

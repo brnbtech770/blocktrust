@@ -43,9 +43,14 @@ export default async function OrganizationIndexPage() {
     <div className="mx-auto max-w-3xl font-sans text-white/85">
       <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-syne text-2xl font-bold tracking-tight text-white">Organisation</h1>
-          <p className="mt-1 text-sm text-white/50">
-            Équipe, invitations et coffres BLOCKTRUST™ Vault pour votre entreprise.
+          <h1 className="font-syne text-2xl font-bold tracking-tight text-white">Équipe &amp; organisation</h1>
+          <p className="mt-3 rounded-lg border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-white/55">
+            Votre équipe regroupe les membres de votre organisation qui partagent le même abonnement.
+            Pour stocker des données sensibles (RIB, IBAN), voir{' '}
+            <Link href="/dashboard/vault" className="text-bt-cyan underline-offset-2 hover:underline">
+              Coffre-fort
+            </Link>
+            .
           </p>
         </div>
       </div>

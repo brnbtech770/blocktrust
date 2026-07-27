@@ -266,6 +266,18 @@ export default function TrustCirclePage() {
               de confiance mutuelle ; protection Cas&nbsp;1 / Cas&nbsp;2. Ajoutez vos contacts certifiés au Trust Circle
               pour activer la protection contre l&apos;usurpation.
             </p>
+            <div className="mb-4 max-w-2xl rounded-lg border border-white/10 bg-white/[0.03] p-3 text-xs leading-relaxed text-white/45">
+              <p className="mb-2">
+                <span className="font-semibold text-emerald-400/90">Protection Cas 1</span> — confiance{' '}
+                <span className="font-semibold text-white/60">MUTUELLE</span> : les deux contacts sont sur BLOCKTRUST™
+                et se sont mutuellement ajoutés. Niveau de confiance maximal.
+              </p>
+              <p>
+                <span className="font-semibold text-amber-400/90">Protection Cas 2</span> — confiance{' '}
+                <span className="font-semibold text-white/60">UNILATÉRALE</span> : vous avez ajouté ce contact mais il
+                n&apos;est pas encore sur BLOCKTRUST™ ou ne vous a pas ajouté. Niveau de confiance partiel.
+              </p>
+            </div>
           </div>
           <button
             onClick={() => setShowInviteModal(true)}

@@ -143,14 +143,17 @@ export default async function DashboardSidebar() {
           ...(showB2BOrgVault
             ? [
                 {
-                  name: 'BLOCKTRUST™ Vault',
+                  name: 'Coffre-fort',
                   href: '/dashboard/vault',
                   icon: 'ShieldCheck' as const,
+                  lockTooltip:
+                    'Stockez et protégez vos données de référence (RIB, IBAN)',
                 },
                 {
-                  name: 'Mon équipe',
+                  name: 'Équipe & organisation',
                   href: '/dashboard/organization',
                   icon: 'Building2' as const,
+                  lockTooltip: 'Gérez les membres de votre organisation',
                 },
               ]
             : []),

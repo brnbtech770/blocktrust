@@ -60,7 +60,9 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
 
   const loadOrg = useCallback(async () => {
     setErr(null)
-    const res = await fetch(`/api/organization/${encodeURIComponent(orgSlug)}`)
+    const res = await fetch(`/api/organization/${encodeURIComponent(orgSlug)}`, {
+      credentials: 'include',
+    })
     const j = (await res.json()) as OrgPayload & { error?: string }
     if (!res.ok) {
       setErr(j.error ?? 'Chargement impossible')
@@ -72,7 +74,9 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
 
   const loadVaults = useCallback(async () => {
     setVaultsLoading(true)
-    const res = await fetch(`/api/organization/${encodeURIComponent(orgSlug)}/vaults`)
+    const res = await fetch(`/api/organization/${encodeURIComponent(orgSlug)}/vaults`, {
+      credentials: 'include',
+    })
     const j = (await res.json()) as { vaults?: VaultRow[]; error?: string }
     if (!res.ok) {
       setErr(j.error ?? 'Impossible de charger les coffres')
@@ -98,6 +102,7 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
     try {
       const res = await fetch(`/api/organization/${encodeURIComponent(orgSlug)}/vaults`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ name: vaultName.trim() }),
       })
@@ -123,6 +128,7 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
     try {
       const res = await fetch(`/api/organization/${encodeURIComponent(orgSlug)}/invite`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ email: inviteEmail.trim() }),
       })
@@ -148,6 +154,7 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
         `/api/organization/${encodeURIComponent(orgSlug)}/members/${encodeURIComponent(memberId)}`,
         {
           method: 'PATCH',
+          credentials: 'include',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ role }),
         },
@@ -165,18 +172,34 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
   }
 
   async function removeMember(memberId: string) {
-    if (!data || busy || !canManageOrg(data.membership.role)) return
+    if (!data || busy) return
+    if (!canManageOrg(data.membership.role)) {
+      showToast('Seuls le propriétaire et les administrateurs peuvent retirer un membre.', 'error')
+      return
+    }
+    const target = data.members.find((m) => m.id === memberId)
+    if (!target || target.role === 'OWNER') {
+      showToast('Impossible de retirer le propriétaire.', 'error')
+      return
+    }
     if (!confirm('Retirer ce membre de l’équipe ?')) return
     setBusy(true)
     setErr(null)
     try {
       const res = await fetch(
         `/api/organization/${encodeURIComponent(orgSlug)}/members/${encodeURIComponent(memberId)}`,
-        { method: 'DELETE' },
+        { method: 'DELETE', credentials: 'include' },
       )
-      const j = (await res.json()) as { error?: string }
+      let j: { error?: string } = {}
+      try {
+        j = (await res.json()) as { error?: string }
+      } catch {
+        j = {}
+      }
       if (!res.ok) {
-        setErr(j.error ?? 'Suppression impossible')
+        const msg = j.error ?? 'Suppression impossible'
+        setErr(msg)
+        showToast(msg, 'error')
         return
       }
       showToast('Membre retiré', 'warning')
@@ -210,7 +233,15 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
     <div className="mx-auto max-w-3xl font-sans text-white/85">
       <div className="mb-6">
         <h1 className="font-syne text-2xl font-bold tracking-tight text-white">{o.name}</h1>
-        <p className="mt-1 text-sm text-white/50">
+        <p className="mt-3 rounded-lg border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-white/55">
+          Votre équipe regroupe les membres de votre organisation qui partagent le même abonnement.
+          Pour stocker des données sensibles (RIB, IBAN), voir{' '}
+          <Link href="/dashboard/vault" className="text-bt-cyan underline-offset-2 hover:underline">
+            Coffre-fort
+          </Link>
+          .
+        </p>
+        <p className="mt-2 text-sm text-white/50">
           Plan coffre{' '}
           <span className="font-mono text-bt-cyan/90">{o.tier}</span>
           {' · '}
@@ -330,7 +361,7 @@ export default function OrganizationSlugDashboard({ orgSlug }: { orgSlug: string
               {canManageOrg(role) && m.role !== 'OWNER' ? (
                 <button
                   type="button"
-                  onClick={() => removeMember(m.id)}
+                  onClick={() => void removeMember(m.id)}
                   disabled={busy}
                   className="shrink-0 rounded p-1.5 text-red-400 transition hover:bg-red-500/10 disabled:opacity-40"
                   aria-label="Retirer le membre"

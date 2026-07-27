@@ -9,6 +9,10 @@ import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
 import { syncMutualRelationsForUser } from '@/lib/trust-circle-mutual'
 import { linkPendingInvitesToUser, pendingReceivedInviteWhere } from '@/lib/trust-circle-invites'
 import { resolveEffectivePlan } from '@/lib/plan-features'
+import {
+  buildOwnEmailSet,
+  filterOwnTrustCircleRelations,
+} from '@/lib/trust-circle-own-filter'
 
 export async function GET() {
   const session = await auth()
@@ -50,7 +54,16 @@ export async function GET() {
     await linkPendingInvitesToUser(userId, session.user.email).catch(() => null)
   }
 
-  const [mutual, unilateral, pending, received, manualEntries, quota] = await Promise.all([
+  const ownEntityEmails = await prisma.entity.findMany({
+    where: { userId },
+    select: { email: true },
+  })
+  const ownEmails = buildOwnEmailSet(
+    session.user.email,
+    ownEntityEmails.map((e) => e.email),
+  )
+
+  const [mutualRaw, unilateralRaw, pendingRaw, receivedRaw, manualEntries, quota] = await Promise.all([
     prisma.userTrustRelation.findMany({
       where: { fromUserId: userId, isMutual: true },
       include: {
@@ -96,6 +109,11 @@ export async function GET() {
     }),
     checkTrustCircleQuota(userId, plan),
   ])
+
+  const mutual = filterOwnTrustCircleRelations(mutualRaw, userId, ownEmails)
+  const unilateral = filterOwnTrustCircleRelations(unilateralRaw, userId, ownEmails)
+  const pending = filterOwnTrustCircleRelations(pendingRaw, userId, ownEmails)
+  const received = receivedRaw.filter((r) => r.fromUser.id !== userId)
 
   return NextResponse.json({
     mutual,

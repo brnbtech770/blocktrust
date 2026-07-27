@@ -409,6 +409,11 @@ export async function POST(req: NextRequest) {
         publicId: createdCert.publicId,
         status: createdCert.status,
       };
+    } else if (isContactPurpose) {
+      network = {
+        action: 'contact_only',
+        message: 'Contact ajouté à votre carnet.',
+      };
     } else {
       const contactName =
         data.entityType === 'INDIVIDUAL'

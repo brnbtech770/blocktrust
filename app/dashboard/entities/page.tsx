@@ -6,13 +6,11 @@ import { prisma } from "@/app/lib/db";
 import { auth } from "@/app/lib/auth-server";
 import Link from "next/link";
 import {
-  AlertTriangle,
   Building2,
   CheckCircle,
   Clock,
   Inbox,
   Plus,
-  RefreshCw,
   User,
   XCircle,
 } from "lucide-react";
@@ -24,51 +22,46 @@ import {
 import { resolveEffectivePlan, getPlanDisplayLabel } from "@/lib/plan-features";
 import { getMaxContacts } from "@/lib/pricing";
 
-function KycStatusBadge({ status }: { status: string }) {
+function ContactStatusBadge({
+  certificates,
+}: {
+  certificates: Array<{ status: string }>;
+}) {
   const base =
     "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold";
-  if (status === "VERIFIED") {
+  const active = certificates.find((c) => c.status === "ACTIVE");
+  const pending = certificates.find((c) => c.status === "PENDING");
+  const revoked = certificates.find((c) => c.status === "REVOKED");
+
+  if (active) {
     return (
       <span className={`${base} bg-green-500/20 text-green-400`}>
         <CheckCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        Validé
+        Certifié BLOCKTRUST
       </span>
     );
   }
-  if (status === "PENDING") {
+  if (pending) {
     return (
       <span className={`${base} bg-yellow-500/20 text-yellow-400`}>
         <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        En cours de vérification
+        Badge en attente d&apos;activation
       </span>
     );
   }
-  if (status === "IN_PROGRESS") {
-    return (
-      <span className={`${base} bg-yellow-500/20 text-yellow-400`}>
-        <RefreshCw className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        En cours de vérification
-      </span>
-    );
-  }
-  if (status === "REJECTED") {
+  if (revoked) {
     return (
       <span className={`${base} bg-red-500/20 text-red-400`}>
         <XCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        Rejeté
-      </span>
-    );
-  }
-  if (status === "EXPIRED") {
-    return (
-      <span className={`${base} bg-orange-500/20 text-orange-400`}>
-        <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        Expiré
+        Certificat révoqué
       </span>
     );
   }
   return (
-    <span className={`${base} bg-gray-500/20 text-gray-400`}>{status}</span>
+    <span className={`${base} bg-gray-500/20 text-gray-400`}>
+      <User className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      Contact · non certifié BLOCKTRUST
+    </span>
   );
 }
 
@@ -228,8 +221,8 @@ export default async function EntitiesPage() {
                 ) : null}
 
                 <div className="mb-4">
-                  <p className="mb-1 text-base font-medium text-gray-400">Identité vérifiée</p>
-                  <KycStatusBadge status={entity.kycStatus} />
+                  <p className="mb-1 text-base font-medium text-gray-400">Statut</p>
+                  <ContactStatusBadge certificates={entity.certificates} />
                 </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row">
