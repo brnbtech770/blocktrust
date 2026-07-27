@@ -52,6 +52,7 @@ blocktrust-trustscan.zip
 # Scripts SQL ad hoc locaux (unsafe — ne pas versionner)
 /check-plans.js
 /check-trial.js
+/check-login.js
 /fix-trial.js
 
 # Builds extension Chrome (générer à la release, pas versionner)
