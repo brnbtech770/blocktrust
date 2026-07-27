@@ -1,10 +1,10 @@
-# BLOCKTRUST TrustScan — Tests manuels v1.1.0
+# BLOCKTRUST TrustScan pour Gmail — Tests manuels v1.1.1
 
 Principe : **l'envoi ne doit jamais être bloqué** — le BIS est un bonus.
 
 ## Prérequis
 
-- Chrome desktop, extension v1.1.0 (`extension/` ou `npm run extension:pack`)
+- Chrome desktop, extension v1.1.1 (`extension/` ou `npm run extension:pack`)
 - Clé API connectée dans le popup
 - Compte Premium+ pour les scénarios BIS
 - **Badge ACTIVE** sur l'email Gmail expéditeur pour les scénarios BIS
@@ -35,5 +35,5 @@ Principe : **l'envoi ne doit jamais être bloqué** — le BIS est un bonus.
 
 ```bash
 npm run extension:pack
-# → extension/dist/blocktrust-trustscan-gmail-1.1.0.zip
+# → extension/dist/blocktrust-trustscan-gmail-1.1.1.zip
 ```

@@ -1,7 +1,7 @@
 # BLOCKTRUST™ — Recette Laurianne (≈ 15 min)
 
 **Compte test :** laurianne@winter-keys.com  
-**Extension :** TrustScan pour Gmail v1.1.0 (Chrome Web Store ou rechargement local)  
+**Extension :** TrustScan pour Gmail v1.1.1 (Chrome Web Store ou rechargement local)  
 **Prérequis :** clé API `bt_ext_…` connectée dans la popup extension
 
 ---
@@ -88,10 +88,10 @@
 
 | Symptôme | Action |
 |----------|--------|
-| Extension ancienne | Chrome → `chrome://extensions` → **Recharger** ou installer v1.1.0 |
+| Extension ancienne | Chrome → `chrome://extensions` → **Recharger** ou installer v1.1.1 |
 | BIS sur mauvais email | Vérifier quel email a le badge ACTIVE dans le dashboard |
 | Contact = message badge | Hard refresh dashboard (Cmd+Shift+R) |
-| Tooltip disparaît vite | Confirmer version **1.1.0** dans `chrome://extensions` |
+| Tooltip disparaît vite | Confirmer version **1.1.1** dans `chrome://extensions` |
 
 ---
 
