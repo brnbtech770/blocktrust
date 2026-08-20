@@ -204,7 +204,7 @@ export async function cleanupE2EData(tracker: E2ETracker): Promise<void> {
 
 export function registerPayload(email: string) {
   return {
-    firstName: "E2E",
+    firstName: "Jean",
     lastName: "Test",
     email,
     password: E2E_PASSWORD,

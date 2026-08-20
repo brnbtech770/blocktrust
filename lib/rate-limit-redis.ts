@@ -86,6 +86,10 @@ export const getVerifyHourLimiter = () => getLimiter("bt:verify:h", 50, "1 h");
 // API publique White Label : 30 req / min par apiKeyHash
 export const getApiLimiter = () => getLimiter("bt:api", 30, "1 m");
 
+// Turnstile bypass inscription : 3 / h par IP → blocage 24 h
+export const getTurnstileBypassHourLimiter = () =>
+  getLimiter("bt:turnstile:bypass", 3, "1 h");
+
 // Inscription : 3 req / h + 10 req / jour par IP
 export const getRegisterHourLimiter = () => getLimiter("bt:register:h", 3, "1 h");
 export const getRegisterDayLimiter = () => getLimiter("bt:register:d", 10, "1 d");

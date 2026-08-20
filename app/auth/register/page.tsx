@@ -8,6 +8,7 @@ import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
 import PasswordStrengthIndicator from "@/app/components/auth/PasswordStrengthIndicator";
 import TurnstileWidget from "@/app/components/auth/TurnstileWidget";
 import { validatePassword } from "@/lib/password-policy";
+import { normalizeEmail } from "@/lib/email-utils";
 
 const cardClass =
   "mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-6";
@@ -66,13 +67,13 @@ export default function RegisterPage() {
     if (turnstileToken || turnstileBypass) return;
 
     const timeout = window.setTimeout(() => {
-      console.warn("[register] Turnstile token absent after 8s — bypass enabled");
+      console.warn("[register] Turnstile token absent after 5s — bypass enabled");
       setTurnstileBypass(true);
       setTurnstileToken("");
       setTurnstileUnavailableMsg(
         "Vérification de sécurité indisponible. Vous pouvez créer votre compte.",
       );
-    }, 8000);
+    }, 5000);
 
     return () => window.clearTimeout(timeout);
   }, [turnstileSiteKey, turnstileToken, turnstileBypass]);
@@ -118,7 +119,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const website = websiteHoneypotRef.current?.value ?? "";
-      const emailNorm = email.trim().toLowerCase();
+      const emailNorm = normalizeEmail(email);
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

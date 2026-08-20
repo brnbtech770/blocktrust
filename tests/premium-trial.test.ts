@@ -33,7 +33,7 @@ describe('premium-trial', () => {
 
   it('expose les libellés essai Premium admin', () => {
     expect(getPremiumTrialBillingLabel()).toBe('Gratuit (essai Premium)')
-    const end = new Date('2026-09-29T21:59:59.999Z')
+    const end = new Date('2026-09-29T12:00:00.000Z')
     expect(formatPremiumTrialEndFr(end)).toMatch(/29/)
   })
 

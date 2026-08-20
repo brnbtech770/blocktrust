@@ -4,7 +4,13 @@ vi.mock("@/lib/security-audit", () => ({
   writeSecurityAuditLogFireAndForget: vi.fn(),
 }));
 
+vi.mock("@/lib/turnstile-ip-block", () => ({
+  isTurnstileIpBlocked: vi.fn().mockResolvedValue(false),
+  recordTurnstileBypass: vi.fn().mockResolvedValue(true),
+}));
+
 import { verifyTurnstileForRegister } from "@/lib/turnstile";
+import { isTurnstileIpBlocked, recordTurnstileBypass } from "@/lib/turnstile-ip-block";
 
 describe("verifyTurnstileForRegister", () => {
   const originalSecret = process.env.TURNSTILE_SECRET_KEY;
@@ -62,5 +68,17 @@ describe("verifyTurnstileForRegister", () => {
     });
 
     expect(result).toEqual({ ok: false, reason: "missing_token" });
+  });
+
+  it("bloque si l'IP est déjà bloquée", async () => {
+    vi.mocked(isTurnstileIpBlocked).mockResolvedValueOnce(true);
+
+    const result = await verifyTurnstileForRegister({
+      bypass: true,
+      ip: "203.0.113.1",
+    });
+
+    expect(result).toEqual({ ok: false, reason: "ip_blocked" });
+    expect(recordTurnstileBypass).not.toHaveBeenCalled();
   });
 });

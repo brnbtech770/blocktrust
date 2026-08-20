@@ -7,8 +7,12 @@ import { checkRateLimitRegisterAsync } from "@/lib/rate-limit-register";
 import {
   isDisposableEmailDomain,
   matchesBotEmailPattern,
-  validateRegisterNames,
 } from "@/lib/register-anti-bot";
+import {
+  REGISTRATION_NAME_ERROR,
+  validateRegistrationNames,
+} from "@/lib/registration-validation";
+import { findUserByNormalizedEmail, normalizeEmail } from "@/lib/email-utils";
 import { hashIp } from "@/app/lib/auth";
 import {
   resolveWelcomeFirstName,
@@ -83,9 +87,11 @@ export async function POST(req: NextRequest) {
     });
     if (!turnstile.ok) {
       const message =
-        turnstile.reason === "invalid_token"
-          ? "Vérification de sécurité échouée."
-          : "Vérification de sécurité requise.";
+        turnstile.reason === "ip_blocked"
+          ? "Trop de tentatives. Réessayez plus tard."
+          : turnstile.reason === "invalid_token"
+            ? "Vérification de sécurité échouée."
+            : "Vérification de sécurité requise.";
       return NextResponse.json({ error: message }, { status: 403 });
     }
 
@@ -109,7 +115,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const emailNorm = email.trim().toLowerCase();
+    const emailNorm = normalizeEmail(email);
 
     const passwordCheck = validatePassword(password, emailNorm);
     if (!passwordCheck.valid) {
@@ -136,27 +142,14 @@ export async function POST(req: NextRequest) {
       return generic400();
     }
 
-    const nameCheck = validateRegisterNames(firstName, lastName);
+    const nameCheck = validateRegistrationNames(firstName, lastName);
     if (!nameCheck.ok) {
-      if (nameCheck.code === "format") {
-        return NextResponse.json(
-          {
-            error:
-              "Indiquez un prénom et un nom valides (ex. Jean Dupont). Le nom complet ne doit pas dépasser 60 caractères.",
-          },
-          { status: 400 },
-        );
-      }
-      return generic400();
+      return NextResponse.json({ error: REGISTRATION_NAME_ERROR }, { status: 400 });
     }
 
     await new Promise((r) => setTimeout(r, Math.random() * 400 + 100));
 
-    const existing =
-      (await prisma.user.findUnique({ where: { email: emailNorm } })) ??
-      (await prisma.user.findFirst({
-        where: { email: { equals: emailNorm, mode: "insensitive" } },
-      }));
+    const existing = await findUserByNormalizedEmail(emailNorm);
 
     if (existing) {
       return generic400();

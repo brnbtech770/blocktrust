@@ -35,9 +35,14 @@ vi.mock("@/lib/login-lockout", () => ({
 vi.mock("@/lib/email-verification", () => ({
   sendVerificationEmailForUser: vi.fn().mockResolvedValue({ ok: true }),
 }));
+vi.mock("@/lib/email-utils", () => ({
+  normalizeEmail: vi.fn((email: string) => email.trim().toLowerCase()),
+  findUserByNormalizedEmail: vi.fn().mockResolvedValue(null),
+}));
 
 import { POST as registerPost } from "@/app/api/auth/register/route";
 import { clearLoginLockout } from "@/lib/login-lockout";
+import { findUserByNormalizedEmail } from "@/lib/email-utils";
 
 function registerRequest(body: Record<string, unknown>) {
   return new NextRequest("http://localhost/api/auth/register", {
@@ -91,7 +96,7 @@ describe("POST /api/auth/register", () => {
   });
 
   it("retourne 400 générique si l'email User existe déjà (anti-énumération)", async () => {
-    prismaMock.user.findUnique.mockResolvedValue({
+    vi.mocked(findUserByNormalizedEmail).mockResolvedValueOnce({
       id: "existing-1",
       email: "user@example.com",
     });
@@ -116,6 +121,21 @@ describe("POST /api/auth/register", () => {
 
     expect(res.status).toBe(400);
     expect(data.error).toBeTruthy();
+    expect(prismaMock.user.create).not.toHaveBeenCalled();
+  });
+
+  it("retourne 400 si le nom semble généré par un bot", async () => {
+    const res = await registerPost(
+      registerRequest({
+        ...validBody,
+        firstName: "Ccyo",
+        lastName: "Rfxdifwx",
+      }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toBe("Veuillez saisir un nom valide");
     expect(prismaMock.user.create).not.toHaveBeenCalled();
   });
 });
