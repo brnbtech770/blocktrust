@@ -11,7 +11,6 @@ import { prisma } from "@/app/lib/db";
 import { getInternalEmailList } from "@/lib/admin-utils";
 import {
   EMAIL_VERIFICATION_REQUIRED_SINCE,
-  isGrandfatheredUser,
 } from "@/lib/email-verification";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -56,7 +55,7 @@ function partitionCandidates(candidates: Candidate[]): {
   const spam: Candidate[] = [];
 
   for (const u of candidates) {
-    if (isGrandfatheredUser(u)) {
+    if (u.createdAt < EMAIL_VERIFICATION_REQUIRED_SINCE) {
       grandfathered.push(u);
       continue;
     }
