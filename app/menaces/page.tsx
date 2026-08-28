@@ -59,11 +59,17 @@ const featuredArticles = [
 ] as const
 
 export default async function MenacesPage() {
-  const fetched = await prisma.threatArticle.findMany({
-    where: { processedAt: { not: null } },
-    orderBy: [{ relevanceScore: "desc" }, { publishedAt: "desc" }],
-    take: 100,
-  })
+  let fetched: Awaited<ReturnType<typeof prisma.threatArticle.findMany>> = [];
+  try {
+    fetched = await prisma.threatArticle.findMany({
+      where: { processedAt: { not: null } },
+      orderBy: [{ relevanceScore: "desc" }, { publishedAt: "desc" }],
+      take: 100,
+    });
+  } catch (err) {
+    console.warn("[menaces] Prisma indisponible, affichage des articles épinglés uniquement");
+    console.warn(err);
+  }
 
   const failedPlaceholder =
     "(Synthèse indisponible — vérifiez ANTHROPIC_API_KEY ou réessayez demain.)"
