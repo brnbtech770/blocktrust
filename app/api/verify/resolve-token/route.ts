@@ -49,5 +49,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     certId: result.certId,
     used: result.used,
+    expiresAt: result.expiresAt || null,
   })
 }

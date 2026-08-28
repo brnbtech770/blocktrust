@@ -35,6 +35,7 @@ export type VerifyApiSuccess = {
   walletAddress?: string;
   walletNetwork?: string;
   walletNetworkDisplay?: string;
+  holderEmail?: string | null;
   certifiedDomains?: string[];
   certifiedEmails?: string[];
   certifiedPhones?: string[];

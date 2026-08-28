@@ -34,6 +34,7 @@ function applyVerifyApiPayload(
   setters: {
     setVerdict: (v: Verdict) => void;
     setEntityName: (v: string | null) => void;
+    setHolderEmail: (v: string | null) => void;
     setCertifiedAt: (v: string | null) => void;
     setWalletAddress: (v: string | null) => void;
     setWalletNetworkDisplay: (v: string | null) => void;
@@ -46,6 +47,7 @@ function applyVerifyApiPayload(
 ) {
   setters.setVerdict((data.verdict as Verdict) ?? "ERROR");
   setters.setEntityName(data.entityName ?? null);
+  setters.setHolderEmail(data.holderEmail ?? null);
   setters.setCertifiedAt(data.certifiedAt ?? null);
   setters.setWalletAddress(data.walletAddress?.trim() ? data.walletAddress : null);
   setters.setWalletNetworkDisplay(
@@ -83,6 +85,8 @@ function VerifyContent({
   const [tokenFixApplied, setTokenFixApplied] = useState(false);
   const [verdict, setVerdict] = useState<Verdict | null>(null);
   const [entityName, setEntityName] = useState<string | null>(null);
+  const [holderEmail, setHolderEmail] = useState<string | null>(null);
+  const [vtExpiresAt, setVtExpiresAt] = useState<string | null>(null);
   const [certifiedAt, setCertifiedAt] = useState<string | null>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [walletNetworkDisplay, setWalletNetworkDisplay] = useState<string | null>(null);
@@ -174,6 +178,7 @@ function VerifyContent({
     applyVerifyApiPayload(initialCertData, {
       setVerdict,
       setEntityName,
+      setHolderEmail,
       setCertifiedAt,
       setWalletAddress,
       setWalletNetworkDisplay,
@@ -234,6 +239,7 @@ function VerifyContent({
       setVtResolveStatus("idle");
       setVtResolveError(null);
       setVtWasUsed(false);
+      setVtExpiresAt(null);
       return;
     }
 
@@ -257,11 +263,13 @@ function VerifyContent({
           certId?: string;
           error?: string;
           used?: boolean;
+          expiresAt?: string | null;
         };
         if (cancelled) return;
         if (typeof data.certId === "string" && data.certId.length > 0) {
           setResolvedVtCertId(data.certId);
           setVtWasUsed(Boolean(data.used));
+          setVtExpiresAt(typeof data.expiresAt === "string" && data.expiresAt ? data.expiresAt : null);
           setVtResolveStatus("ok");
         } else if (data.error === "expired") {
           setVtResolveError("expired");
@@ -299,6 +307,7 @@ function VerifyContent({
     setVerifyErrorMessage(null);
     setIdentityVerified(false);
     setEntityName(null);
+    setHolderEmail(null);
     setCertifiedAt(null);
     setWalletAddress(null);
     setWalletNetworkDisplay(null);
@@ -326,6 +335,7 @@ function VerifyContent({
         if (cancelled) return;
         setVerdict((data.verdict as Verdict) ?? "ERROR");
         setEntityName(data.entityName ?? null);
+        setHolderEmail(data.holderEmail ?? null);
         setCertifiedAt(data.certifiedAt ?? null);
         setWalletAddress(data.walletAddress?.trim() ? data.walletAddress : null);
         setWalletNetworkDisplay(
@@ -379,6 +389,7 @@ function VerifyContent({
     setVerifyErrorMessage(null);
     setIdentityVerified(false);
     setEntityName(null);
+    setHolderEmail(null);
     setCertifiedAt(null);
     setWalletAddress(null);
     setWalletNetworkDisplay(null);
@@ -403,6 +414,7 @@ function VerifyContent({
         if (cancelled) return;
         setVerdict((data.verdict as Verdict) ?? "ERROR");
         setEntityName(data.entityName ?? null);
+        setHolderEmail(data.holderEmail ?? null);
         setCertifiedAt(data.certifiedAt ?? null);
         setWalletAddress(data.walletAddress?.trim() ? data.walletAddress : null);
         setWalletNetworkDisplay(
@@ -511,6 +523,7 @@ function VerifyContent({
     setVtResolveError(null);
     setVtWasUsed(false);
     setEntityName(null);
+    setHolderEmail(null);
     setCertifiedAt(null);
     setWalletAddress(null);
     setWalletNetworkDisplay(null);
@@ -572,7 +585,10 @@ function VerifyContent({
         {verdict && showSuccess ? (
           <ValidWowView
             displayName={displayName}
+            holderEmail={holderEmail ?? certifiedEmails[0] ?? null}
             dateLabel={dateLabel}
+            linkKind={activeVt ? "rotating" : "permanent"}
+            rotatingExpiresAt={vtExpiresAt}
             trustEngine={trustEngine}
             identityVerified={identityVerified}
             walletAddress={walletAddress}

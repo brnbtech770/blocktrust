@@ -11,7 +11,6 @@ import Link from "next/link";
 import {
   AlertCircle,
   Building2,
-  Check,
   Copy,
   Inbox,
   Plus,
@@ -62,7 +61,6 @@ export default function CertificatesPage() {
     plan: string;
     max: number;
   } | null>(null);
-  const [copiedCertId, setCopiedCertId] = useState<string | null>(null);
 
   useEffect(() => {
     if (sessionStatus === "loading") {
@@ -177,13 +175,8 @@ export default function CertificatesPage() {
     }
   };
 
-  const handleCopyVerifyLink = (certificate: Certificate) => {
-    const certId = certificate.publicId || certificate.id;
-    const url = `https://blocktrust.tech/verify?certId=${encodeURIComponent(certId)}`;
-    void navigator.clipboard.writeText(url);
-    setCopiedCertId(certificate.id);
-    setTimeout(() => setCopiedCertId(null), 2000);
-  };
+  const badgeShareHref = (certificate: Certificate) =>
+    `/dashboard/badge/${certificate.publicId ?? certificate.id}#partage`;
 
   const handleCopyEmbed = (certificate: Certificate) => {
     const badgeId = certificate.publicId || certificate.id;
@@ -249,14 +242,10 @@ export default function CertificatesPage() {
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 className="font-syne mb-2 text-2xl font-bold text-white sm:text-3xl lg:text-4xl">
-            Mes Certificats
+            Mon badge
           </h1>
-          <p className="font-sans mb-4 max-w-xl text-xs leading-relaxed text-white/40">
-            ID de vérification : affiché en partie pour le partage. L’identifiant technique interne n&apos;est pas
-            exposé ici.
-          </p>
-          <p className="font-sans text-base leading-relaxed text-white/80">
-            Gérez vos badges de certification
+          <p className="font-sans mb-4 max-w-xl text-sm leading-relaxed text-white/50">
+            Partagez votre identité vérifiée avec un lien temporaire — plus sûr qu&apos;un lien permanent.
           </p>
         </div>
         <Link
@@ -339,25 +328,18 @@ export default function CertificatesPage() {
                 <div className="flex gap-2 flex-wrap">
                   {certificate.status === "ACTIVE" || certificate.status === "ANCHORED" ? (
                     <>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyVerifyLink(certificate)}
-                        className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-bt-cyan/20 px-4 py-2.5 text-sm font-medium text-bt-cyan transition hover:bg-bt-cyan/30"
-                        aria-label="Copier le lien de vérification"
+                      <Link
+                        href={badgeShareHref(certificate)}
+                        className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-bt-cyan px-4 py-2.5 text-sm font-semibold text-navy transition hover:bg-bt-cyan/90"
                       >
-                        {copiedCertId === certificate.id ? (
-                          <>
-                            <Check className="h-4 w-4 shrink-0" aria-hidden />
-                            <span className="hidden sm:inline">Lien copié !</span>
-                            <span className="sm:hidden">Copié</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="h-4 w-4 shrink-0" aria-hidden />
-                            <span className="hidden sm:inline">Copier le lien de vérification</span>
-                          </>
-                        )}
-                      </button>
+                        Partager mon badge
+                      </Link>
+                      <Link
+                        href={`/dashboard/badge/${certificate.publicId ?? certificate.id}`}
+                        className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg border border-white/20 px-4 py-2.5 text-sm font-medium text-white transition hover:border-white/40"
+                      >
+                        Voir mon badge
+                      </Link>
                       <button
                         type="button"
                         onClick={() => handleCopyEmbed(certificate)}

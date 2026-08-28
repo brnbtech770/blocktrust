@@ -87,6 +87,9 @@ export async function GET() {
       revocationReason: cert.revocationReason || null,
       verificationCount: cert.verificationCount || 0,
       lastVerifiedAt: cert.verifications[0]?.verifiedAt.toISOString() || null,
+      polygonTxHash: cert.polygonTxHash,
+      polygonBlock: cert.polygonBlock,
+      polygonExplorerUrl: cert.polygonExplorerUrl,
       entity: {
         id: cert.entity.id,
         entityType: cert.entity.entityType,

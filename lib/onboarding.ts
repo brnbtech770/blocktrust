@@ -156,6 +156,14 @@ export const ONBOARDING_TOUR_STEP_IDS: OnboardingStepId[] = [
   "finish",
 ];
 
+export const ONBOARDING_FAQ: Array<{ question: string; stepId: OnboardingStepId }> = [
+  { question: "Comment partager mon badge ?", stepId: "badge" },
+  { question: "Comment ajouter un contact ?", stepId: "contacts" },
+  { question: "C'est quoi le Trust Circle ?", stepId: "trust-circle" },
+  { question: "Comment fonctionne le Coffre-fort ?", stepId: "vault" },
+  { question: "Comment installer l'extension ?", stepId: "extension" },
+];
+
 export const ONBOARDING_ENCYCLOPEDIA: EncyclopediaEntry[] = [
   { icon: "Shield", label: "Mon badge certifié", stepId: "badge" },
   { icon: "Puzzle", label: "Extension Chrome TrustScan", stepId: "extension" },
@@ -187,17 +195,17 @@ export const ONBOARDING_STEP_CONTENT: Record<OnboardingStepId, OnboardingStep> =
     useCase:
       "Vous êtes agent immobilier. Vous ajoutez votre lien de vérification dans votre signature email. Chaque client peut vérifier en un clic que vous êtes bien qui vous prétendez être — pas un usurpateur.",
     practicalSteps: [
-      "Allez dans votre Dashboard → votre badge est déjà actif",
-      "Copiez votre lien de vérification (permanent ou code rotatif)",
+      "Allez dans Dashboard → Mon badge → Partagez votre badge vérifié",
+      "Choisissez la durée (1 h, 24 h, 7 j, 30 j) puis copiez le lien sécurisé",
       "Ajoutez-le dans votre signature email, site web, réseaux sociaux",
-      "Partagez le QR code pour les rencontres en personne",
+      "Pour un site ou une signature fixe, utilisez le lien permanent (secondaire)",
     ],
     extraInfo: [
       "Les codes rotatifs : par défaut, votre lien utilise un code qui change périodiquement — plus sécurisé contre le tracking. Vous pouvez aussi utiliser le lien permanent si vous préférez.",
     ],
     highlightTarget: "badge-section",
-    linkHref: "/dashboard",
-    linkLabel: "Voir mon badge",
+    linkHref: "/dashboard/certificates",
+    linkLabel: "Ouvrir Mon badge",
   },
   extension: {
     id: "extension",

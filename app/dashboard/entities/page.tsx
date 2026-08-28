@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { walletNetworkLabelFr } from "@/lib/wallet-validation";
 import DeleteContactButton from "@/app/components/dashboard/DeleteContactButton";
+import ImportContactsButton from "@/app/components/dashboard/ImportContactsButton";
 import {
   filterThirdPartyContactEntities,
 } from "@/lib/entity-contacts";
@@ -145,19 +146,22 @@ export default async function EntitiesPage() {
             </p>
           ) : null}
         </div>
-        <Link
-          href="/dashboard/create?intent=contact"
-          className={`inline-flex items-center justify-center gap-2 rounded-lg py-3 px-6 font-bold transition-all ${
-            limitReached
-              ? "cursor-not-allowed bg-gray-700 text-gray-400"
-              : "bg-bt-cyan text-navy hover:bg-bt-cyan/90"
-          }`}
-          aria-disabled={limitReached}
-          tabIndex={limitReached ? -1 : undefined}
-        >
-          <Plus className="h-5 w-5 shrink-0" aria-hidden />
-          Ajouter un contact
-        </Link>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <ImportContactsButton />
+          <Link
+            href="/dashboard/create?intent=contact"
+            className={`inline-flex items-center justify-center gap-2 rounded-lg py-3 px-6 font-bold transition-all ${
+              limitReached
+                ? "cursor-not-allowed bg-gray-700 text-gray-400"
+                : "bg-bt-cyan text-navy hover:bg-bt-cyan/90"
+            }`}
+            aria-disabled={limitReached}
+            tabIndex={limitReached ? -1 : undefined}
+          >
+            <Plus className="h-5 w-5 shrink-0" aria-hidden />
+            Ajouter un contact
+          </Link>
+        </div>
       </div>
 
       {contacts.length > 0 ? (

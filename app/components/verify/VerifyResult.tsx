@@ -60,7 +60,10 @@ function mainTrustSignals(engine: TrustEngineResult | null) {
 
 export function ValidWowView({
   displayName,
+  holderEmail,
   dateLabel,
+  linkKind,
+  rotatingExpiresAt,
   trustEngine,
   identityVerified,
   walletAddress,
@@ -75,7 +78,10 @@ export function ValidWowView({
   onAddContact,
 }: {
   displayName: string;
+  holderEmail: string | null;
   dateLabel: string;
+  linkKind: "rotating" | "permanent";
+  rotatingExpiresAt: string | null;
   trustEngine: TrustEngineResult | null;
   identityVerified: boolean;
   walletAddress: string | null;
@@ -132,6 +138,46 @@ export function ValidWowView({
       >
         {displayName}
       </p>
+
+      <div
+        className="w-full rounded-xl border border-[#f59e0b]/35 bg-[#1a1a2e] px-4 py-3 text-left text-sm leading-relaxed text-white/70"
+        style={{ borderLeftWidth: 3, borderLeftColor: "#f59e0b" }}
+        role="note"
+      >
+        <p>
+          Ce badge appartient à <strong className="text-white">{displayName}</strong>
+          {holderEmail ? (
+            <>
+              {" "}
+              (<span className="font-mono text-white/80">{holderEmail}</span>)
+            </>
+          ) : null}
+          . Vérifiez que cette personne correspond bien à votre interlocuteur.
+        </p>
+        <p className="mt-2">
+          Un badge copié par un tiers ne garantit PAS son identité. En cas de doute, demandez un
+          nouveau lien de vérification directement à votre interlocuteur.
+        </p>
+        {linkKind === "rotating" ? (
+          <p className="mt-2 text-[#10b981]">
+            Ce lien a été généré spécifiquement pour ce partage
+            {rotatingExpiresAt
+              ? ` et expirera le ${new Date(rotatingExpiresAt).toLocaleString("fr-FR", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}.`
+              : "."}
+          </p>
+        ) : (
+          <p className="mt-2 text-white/55">
+            Ce lien est permanent. Si vous avez un doute sur l&apos;identité de la personne qui vous
+            l&apos;a envoyé, demandez-lui un lien de vérification temporaire.
+          </p>
+        )}
+      </div>
 
       {!identityVerified ? (
         <div

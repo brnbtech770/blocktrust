@@ -28,6 +28,7 @@ import {
 import {
   ONBOARDING_AUTO_DISMISS_KEY,
   ONBOARDING_ENCYCLOPEDIA,
+  ONBOARDING_FAQ,
   ONBOARDING_TOUR_STEP_IDS,
   getOnboardingStep,
   shouldAutoOpenOnboarding,
@@ -266,6 +267,25 @@ export default function OnboardingAssistant({
                     );
                   })}
                 </ul>
+                <div className="mt-6">
+                  <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-widest text-white/35">
+                    FAQ rapide
+                  </p>
+                  <ul className="space-y-2">
+                    {ONBOARDING_FAQ.map((item) => (
+                      <li key={item.question}>
+                        <button
+                          type="button"
+                          onClick={() => openStep(item.stepId)}
+                          className="flex w-full min-h-[44px] items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-white/70 transition hover:bg-white/5 hover:text-white"
+                        >
+                          <HelpCircle className="h-4 w-4 shrink-0 text-bt-cyan" aria-hidden />
+                          {item.question}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             ) : (
               <>

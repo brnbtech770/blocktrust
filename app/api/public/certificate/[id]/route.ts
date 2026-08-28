@@ -341,6 +341,7 @@ export async function GET(
   return NextResponse.json({
     verdict,
     entityName,
+    holderEmail: entity.email,
     certifiedAt,
     certificateId: certificatePublicId,
     certificateStatus: status,

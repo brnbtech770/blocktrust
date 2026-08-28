@@ -6,9 +6,7 @@ import { nanoid } from 'nanoid'
 import { hashIp } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/db'
 import {
-  DEFAULT_TTL_HOURS,
-  MAX_TTL_HOURS,
-  MIN_TTL_HOURS,
+  normalizeTtlHours,
   type VerifyTokenListItem,
 } from '@/lib/certificate-verify-token-constants'
 import { getBlocktrustBaseUrl } from '@/lib/public-verify-url'
@@ -19,14 +17,9 @@ export {
   MAX_TTL_HOURS,
   MIN_TTL_HOURS,
   TTL_PRESETS,
+  normalizeTtlHours,
   type VerifyTokenListItem,
 } from '@/lib/certificate-verify-token-constants'
-
-export function normalizeTtlHours(ttlHours?: number): number {
-  const raw = ttlHours ?? DEFAULT_TTL_HOURS
-  if (!Number.isFinite(raw)) return DEFAULT_TTL_HOURS
-  return Math.min(MAX_TTL_HOURS, Math.max(MIN_TTL_HOURS, Math.floor(raw)))
-}
 
 export function buildRotatingVerifyUrl(token: string): string {
   return `${getBlocktrustBaseUrl()}/verify?vt=${encodeURIComponent(token)}`
@@ -63,7 +56,7 @@ export async function createCertificateVerifyToken(params: {
 }
 
 export type ResolveCertificateVerifyTokenResult =
-  | { status: 'ok'; certId: string; used: boolean }
+  | { status: 'ok'; certId: string; used: boolean; expiresAt: string }
   | { status: 'expired' }
   | { status: 'not_found' }
 
@@ -106,7 +99,12 @@ export async function resolveCertificateVerifyToken(
       )
     }
 
-    return { status: 'ok', certId: certKey, used: wasUsed }
+    return {
+      status: 'ok',
+      certId: certKey,
+      used: wasUsed,
+      expiresAt: row.expiresAt.toISOString(),
+    }
   }
 
   const redis = getRedis()
@@ -114,7 +112,7 @@ export async function resolveCertificateVerifyToken(
     try {
       const certId = await redis.get(`vt:${token}`)
       if (certId && typeof certId === 'string') {
-        return { status: 'ok', certId, used: false }
+        return { status: 'ok', certId, used: false, expiresAt: '' }
       }
     } catch (err: unknown) {
       console.warn('[verify-token] Redis fallback failed', err)

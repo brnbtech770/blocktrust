@@ -777,7 +777,10 @@ export default function SettingsClient({
           ) : null}
         </section>
 
-        <section className="mb-6 rounded-xl border border-white/10 bg-[#0d1f3c] p-6">
+        <section
+          id="mes-domaines"
+          className="mb-6 scroll-mt-6 rounded-xl border border-white/10 bg-[#0d1f3c] p-6"
+        >
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#00d4ff]/20 bg-[#00d4ff]/10">
               <ShieldCheck className="h-4 w-4 text-[#00d4ff]" aria-hidden />
