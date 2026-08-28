@@ -1,0 +1,16 @@
+---
+description: Git, secrets, et actions production sensibles nécessitant validation.
+alwaysApply: true
+---
+
+# Git et actions sensibles
+
+Commits atomiques, messages `feat|fix|security|refactor|perf|test|docs|chore`. Relire `git diff` avant commit.
+
+Ne jamais committer : `.env`, private keys, tokens, secrets Stripe / Alchemy / Resend / Neon / Upstash.
+
+Ne pas exécuter automatiquement une action destructive, financière, irréversible ou critique production (données, migration destructive, secrets, Stripe Live, tx blockchain réelle, contrat mainnet, DNS, suppression d’environnement).
+
+Dans ce cas : `ACTION SENSIBLE — VALIDATION REQUISE` avec action, impact, risque, rollback, commande prévue.
+
+Imports : `prisma` depuis `@/app/lib/db`, `auth` depuis `@/app/lib/auth-server`. Jamais un `PrismaClient` ad hoc.

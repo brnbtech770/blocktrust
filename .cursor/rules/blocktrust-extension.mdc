@@ -1,0 +1,17 @@
+---
+description: Après toute modif de l’extension Chrome, suivre la recette manuelle extension/TESTING.md.
+globs: extension/**
+alwaysApply: false
+---
+
+# Extension Chrome BlockTrust
+
+Après **chaque** modification de l’extension : suivre la recette manuelle dans `extension/TESTING.md`.
+
+Un build ou des tests TypeScript réussis ne suffisent pas.
+
+Si la recette ne peut pas être exécutée ici, indiquer explicitement dans le rapport :
+
+`RECETTE MANUELLE TESTING.md À EXÉCUTER`
+
+Ne pas déclarer la tâche extension entièrement validée sans cette étape.

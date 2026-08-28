@@ -1,0 +1,20 @@
+---
+description: Workflow DB Prisma/Neon — additif, rétrocompatible, sync-db-columns.ts après migration.
+globs: prisma/**,scripts/sync-db-columns.ts,**/schema.prisma
+alwaysApply: false
+---
+
+# Base de données BlockTrust
+
+Avant toute modification DB :
+
+1. Lire `prisma/schema.prisma`
+2. Identifier relations et contraintes legacy (dont PlanType BRONZE/SILVER/GOLD/PLATINUM)
+3. Rechercher les usages dans le code
+4. Modifications additives, rétrocompatibilité, rollback si besoin
+5. Tests
+6. Exécuter `scripts/sync-db-columns.ts` conformément au workflow existant
+
+Une migration n’est pas terminée tant que `sync-db-columns.ts` n’a pas été traité.
+
+Ne jamais exécuter automatiquement en production : DROP TABLE, TRUNCATE, suppression globale, suppression destructive de colonnes, suppression de valeurs PlanType legacy.

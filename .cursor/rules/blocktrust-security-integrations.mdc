@@ -1,0 +1,30 @@
+---
+description: Sécurité des routes et règles Redis, Resend, Turnstile, Stripe, Polygon.
+alwaysApply: true
+---
+
+# Sécurité et intégrations
+
+Ne jamais faire confiance à une valeur client pour identité, rôle, plan, certification, score, ownership, privilège.
+
+Sur les routes sensibles : auth, autorisation, ownership, tenant/org, validation, rate limit, IDOR, injections, XSS, CSRF, replay, signatures, timestamps, expiration, logs, exposition de données.
+
+## Redis (Upstash)
+
+TTL, namespacing, collisions, idempotence, invalidation, cohérence cache/DB, fail-soft si indisponible. Pas de secrets inutilement stockés. PostgreSQL/Neon reste la vérité métier persistante sauf architecture explicite contraire.
+
+## Resend
+
+Identité émetteur, templates, erreurs, retries, idempotence. Un succès API n’est pas une preuve de confiance métier. Email ≠ certification.
+
+## Turnstile
+
+Validation **côté serveur**. Gérer token absent, expiré, refusé, timeout, erreur réseau, réponse inattendue.
+
+## Stripe
+
+Cloisonner test / production. Signatures webhook, idempotence, retries, événements dupliqués. Ne jamais modifier automatiquement Stripe Live, prix live, abonnements réels, remboursements. Pricing figé : voir règle plan/pricing.
+
+## Polygon / ethers / Alchemy
+
+Utiliser les abstractions existantes. Distinguer testnet / mainnet. Ne jamais automatiquement : déployer un contrat mainnet, signer une tx financière, déplacer des fonds, exposer une private key, modifier wallet ou contrat production. On-chain : hash, preuve minimale, pas de données personnelles.

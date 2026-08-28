@@ -1,0 +1,38 @@
+---
+description: Invariants produit — certification objective, Root of Trust, Contact ≠ Trust Circle ≠ Badge, BIS, liens rotatifs, claims.
+alwaysApply: true
+---
+
+# Invariants produit BlockTrust
+
+## Certification = fait objectif
+
+Une certification n’est jamais viewer-dependent. Sa validité ne dépend pas du consultant, de son plan, Trust Circle, relation, auth frontend ou UI.
+
+L’accès et le niveau de détail peuvent varier. La vérité du fait certifié, non.
+
+## Root of Trust
+
+Si `isOfficialEmail === true` → `score = 100`. Ne pas recalculer, pondérer ou diluer cette règle.
+
+## Trois flux séparés
+
+CONTACT ≠ TRUST CIRCLE ≠ BADGE. Ne pas fusionner tables, services, états, endpoints ou règles d’accès pour simplifier.
+
+- Contact : pas automatiquement Trust Circle ni Badge.
+- Trust Circle : pas un carnet ; pas automatiquement un Badge.
+- Badge : pas automatiquement contact ni Trust Circle.
+
+## BIS
+
+BIS peut analyser, scorer, avertir, signaler, alerter, demander confirmation. BIS ne doit **jamais** bloquer définitivement l’envoi d’un email.
+
+## Liens rotatifs
+
+Le défaut est le **lien rotatif**, pas le permanent. Vérifier expiration, rotation, révocation, replay, invalidation, scope, usage unique. Le permanent est une exception.
+
+## Claims marketing
+
+Préférer : réduit / contribue à réduire le risque, renforce la vérification, améliore la confiance, éléments vérifiables.
+
+Interdit sans validation : empêche/élimine/garantit l’absence de fraude, fraude impossible, 100 % sécurisé, « infalsifiable » en affirmation absolue.

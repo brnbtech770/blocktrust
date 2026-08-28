@@ -1,0 +1,31 @@
+---
+description: PlanType legacy intouchable, pricing figé, resolveEffectivePlan obligatoire.
+alwaysApply: true
+---
+
+# Plan, pricing, resolveEffectivePlan
+
+## PlanType legacy — INTOUCHABLE
+
+L’enum `PlanType` PostgreSQL est un fossile historique. Ne jamais supprimer, renommer, recréer de façon destructive, ni migrer pour le « nettoyer ».
+
+Valeurs à conserver même si elles ne correspondent plus aux offres :
+
+- BRONZE
+- SILVER
+- GOLD
+- PLATINUM
+
+Si elles semblent inutilisées : vérifier l’historique et les dépendances avant toute conclusion.
+
+## Pricing figé
+
+Ne pas modifier prix, plans, quotas, limites, structure tarifaire, nomenclature, mensualisation/annualisation, ni logique commerciale associée, tant que BlockTrust n’a pas : 100 utilisateurs, 10 entreprises, 3 mois d’exploitation.
+
+Bug avéré dans le code tarifaire : corriger le bug sans changer le modèle commercial. Toute évolution tarifaire = recommandation non implémentée.
+
+## resolveEffectivePlan
+
+Pour toute décision métier liée au plan (droits, quotas, accès, features, restrictions, UI conditionnelle, capacités API) : **toujours** `resolveEffectivePlan`.
+
+Ne jamais prendre `planId` / `user.planId` / `organization.planId` comme source de vérité métier. Ne pas dupliquer une logique parallèle de résolution du plan.
