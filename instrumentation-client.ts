@@ -14,7 +14,7 @@ Sentry.init({
   tracesSampleRate: 0.1,
   replaysSessionSampleRate: 0.01,
   ignoreErrors: SENTRY_CLIENT_IGNORE_ERRORS,
-  sendDefaultPii: true,
+  sendDefaultPii: false,
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

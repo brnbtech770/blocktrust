@@ -9,5 +9,5 @@ Sentry.init({
   dsn: "https://506e82cf8b9cfb8ec032eef87f4014be@o4511299450306560.ingest.de.sentry.io/4511299453648976",
   enabled: isSentryRuntimeEnabled(),
   enableLogs: true,
-  sendDefaultPii: true,
+  sendDefaultPii: false,
 });
