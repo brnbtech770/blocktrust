@@ -6,11 +6,24 @@ import { usePathname } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
+  BadgeCheck,
+  BarChart3,
+  Bot,
+  Building,
   Check,
   ChevronRight,
+  FileSignature,
+  GitCompare,
+  Globe,
   HelpCircle,
+  KeyRound,
   Lightbulb,
+  Puzzle,
+  Shield,
+  ShieldCheck,
+  Users,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import {
   ONBOARDING_AUTO_DISMISS_KEY,
@@ -18,8 +31,24 @@ import {
   ONBOARDING_TOUR_STEP_IDS,
   getOnboardingStep,
   shouldAutoOpenOnboarding,
+  type EncyclopediaIcon,
   type OnboardingStepId,
 } from "@/lib/onboarding";
+
+const ENCYCLOPEDIA_ICONS: Record<EncyclopediaIcon, LucideIcon> = {
+  Shield,
+  Puzzle,
+  GitCompare,
+  Building,
+  Users,
+  BarChart3,
+  FileSignature,
+  Globe,
+  ShieldCheck,
+  BadgeCheck,
+  Bot,
+  KeyRound,
+};
 
 type Props = {
   onboardingCompletedAt: string | null;
@@ -218,21 +247,24 @@ export default function OnboardingAssistant({
                   d&apos;aide en bas à droite.
                 </p>
                 <ul className="space-y-2">
-                  {ONBOARDING_ENCYCLOPEDIA.map((entry) => (
+                  {ONBOARDING_ENCYCLOPEDIA.map((entry) => {
+                    const Icon = ENCYCLOPEDIA_ICONS[entry.icon];
+                    return (
                     <li key={entry.stepId}>
                       <button
                         type="button"
                         onClick={() => openStep(entry.stepId)}
                         className="flex w-full min-h-[44px] items-center gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-3 text-left transition hover:border-bt-cyan/30 hover:bg-bt-cyan/5"
                       >
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center text-base" aria-hidden>
-                          {entry.icon}
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-bt-cyan/25 bg-bt-cyan/10" aria-hidden>
+                          <Icon className="h-5 w-5 text-bt-cyan" strokeWidth={1.75} />
                         </span>
                         <span className="min-w-0 flex-1 text-sm font-medium text-white">{entry.label}</span>
                         <ChevronRight className="h-4 w-4 shrink-0 text-white/35" aria-hidden />
                       </button>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               </div>
             ) : (

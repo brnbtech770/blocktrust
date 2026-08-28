@@ -47,8 +47,23 @@ export type OnboardingStep = {
   externalLabel?: string;
 };
 
+/** Clés lucide-react — même vocabulaire que la sidebar dashboard. */
+export type EncyclopediaIcon =
+  | "Shield"
+  | "Puzzle"
+  | "GitCompare"
+  | "Building"
+  | "Users"
+  | "BarChart3"
+  | "FileSignature"
+  | "Globe"
+  | "ShieldCheck"
+  | "BadgeCheck"
+  | "Bot"
+  | "KeyRound";
+
 export type EncyclopediaEntry = {
-  icon: string;
+  icon: EncyclopediaIcon;
   label: string;
   stepId: OnboardingStepId;
 };
@@ -142,18 +157,18 @@ export const ONBOARDING_TOUR_STEP_IDS: OnboardingStepId[] = [
 ];
 
 export const ONBOARDING_ENCYCLOPEDIA: EncyclopediaEntry[] = [
-  { icon: "📌", label: "Mon badge certifié", stepId: "badge" },
-  { icon: "🧩", label: "Extension Chrome TrustScan", stepId: "extension" },
-  { icon: "📋", label: "Certification vs BIS — comprendre la différence", stepId: "certification-vs-bis" },
-  { icon: "👥", label: "Mes contacts", stepId: "contacts" },
-  { icon: "🛡️", label: "Trust Circle", stepId: "trust-circle" },
-  { icon: "📊", label: "TrustScore & Trust Graph", stepId: "trustscore" },
-  { icon: "✍️", label: "Signatures BIS", stepId: "bis" },
-  { icon: "🌐", label: "Protection domaines & sites web", stepId: "domains" },
-  { icon: "🔐", label: "Vault (coffre-fort)", stepId: "vault" },
-  { icon: "🪪", label: "KYC", stepId: "kyc" },
-  { icon: "🤖", label: "MCP & Agents IA", stepId: "mcp" },
-  { icon: "⚙️", label: "Extensions & API", stepId: "extensions-api" },
+  { icon: "Shield", label: "Mon badge certifié", stepId: "badge" },
+  { icon: "Puzzle", label: "Extension Chrome TrustScan", stepId: "extension" },
+  { icon: "GitCompare", label: "Certification vs BIS — comprendre la différence", stepId: "certification-vs-bis" },
+  { icon: "Building", label: "Mes contacts", stepId: "contacts" },
+  { icon: "Users", label: "Trust Circle", stepId: "trust-circle" },
+  { icon: "BarChart3", label: "TrustScore & Trust Graph", stepId: "trustscore" },
+  { icon: "FileSignature", label: "Signatures BIS", stepId: "bis" },
+  { icon: "Globe", label: "Protection domaines & sites web", stepId: "domains" },
+  { icon: "ShieldCheck", label: "Vault (coffre-fort)", stepId: "vault" },
+  { icon: "BadgeCheck", label: "Vérification d'identité", stepId: "kyc" },
+  { icon: "Bot", label: "MCP & Agents IA", stepId: "mcp" },
+  { icon: "KeyRound", label: "Extensions & API", stepId: "extensions-api" },
 ];
 
 export const ONBOARDING_STEP_CONTENT: Record<OnboardingStepId, OnboardingStep> = {

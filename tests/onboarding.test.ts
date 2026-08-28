@@ -22,6 +22,10 @@ describe("onboarding", () => {
     expect(ONBOARDING_ENCYCLOPEDIA.map((e) => e.stepId)).toContain("vault");
     expect(ONBOARDING_ENCYCLOPEDIA.map((e) => e.stepId)).toContain("domains");
     expect(ONBOARDING_ENCYCLOPEDIA.map((e) => e.stepId)).toContain("certification-vs-bis");
+    expect(ONBOARDING_ENCYCLOPEDIA.every((e) => /^[A-Z][A-Za-z0-9]+$/.test(e.icon))).toBe(true);
+    expect(ONBOARDING_ENCYCLOPEDIA.find((e) => e.stepId === "kyc")?.label).toBe(
+      "Vérification d'identité",
+    );
   });
 
   it("extension, BIS et domaines ancrent l'indépendance certification / BIS", () => {
