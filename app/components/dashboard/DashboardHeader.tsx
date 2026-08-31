@@ -5,9 +5,9 @@
 'use client'
 
 import Link from 'next/link'
-import { signOut } from 'next-auth/react'
 import { useSession } from 'next-auth/react'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
+import { signOutToHome } from '@/lib/sign-out-client'
 
 const B2B_PLAN_IDS = new Set([
   'SOLO_PRO',
@@ -78,7 +78,7 @@ export default function DashboardHeader() {
           {showProBadge ? <ProBadge className="sm:hidden" /> : null}
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: '/' })}
+            onClick={() => void signOutToHome()}
             className="min-w-0 shrink-0 rounded-lg border px-3 py-2 text-sm font-medium transition-colors hover:bg-[rgba(0,212,255,0.08)] sm:px-4 sm:text-base"
             style={{ borderColor: 'var(--bt-border)', color: 'white' }}
           >

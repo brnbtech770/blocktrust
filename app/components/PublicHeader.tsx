@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { Logo } from "@/app/components/ui/Logo";
+import { signOutToHome } from "@/lib/sign-out-client";
 
 export default function PublicHeader() {
   const { data: session, status } = useSession();
@@ -38,7 +39,7 @@ export default function PublicHeader() {
           <button
             onClick={() => {
               setMenuOpen(false);
-              signOut({ callbackUrl: "/" });
+              void signOutToHome();
             }}
             className="bg-blue-800/50 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-700/50 border border-blue-700/50 transition-all"
           >

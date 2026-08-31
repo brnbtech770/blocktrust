@@ -85,6 +85,8 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
       } catch {
         setKeyError("Copie impossible — vérifiez les permissions du navigateur.");
       }
+    } catch {
+      setKeyError("Connexion interrompue. Réessayez.");
     } finally {
       setCopyLoading(false);
     }
@@ -108,6 +110,8 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
         setCanReveal(true);
         return;
       }
+    } catch {
+      setKeyError("Connexion interrompue. Réessayez.");
     } finally {
       setKeyLoading(false);
     }
@@ -140,6 +144,8 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
         setHasExtensionKey(true);
         setCanReveal(true);
       }
+    } catch {
+      setKeyError("Connexion interrompue. Réessayez.");
     } finally {
       setKeyLoading(false);
     }
