@@ -5,6 +5,12 @@ import { auth } from "@/app/lib/auth-server";
 import { prisma } from "@/app/lib/db";
 import { getTrustEngineResultForApi } from "@/lib/trust-engine-cache";
 import type { VerifyApiSuccess } from "@/app/components/verify/verify-types";
+import {
+  DATABASE_UNAVAILABLE_VERIFY_PAYLOAD,
+  isPrismaUnreachableError,
+  withPrismaRetry,
+  type PrismaRetryOptions,
+} from "@/lib/prisma-unreachable";
 
 function entityDisplayName(entity: {
   entityType: string;
@@ -35,13 +41,7 @@ function mergeCertifiedLists(entityItems: string[], userItems: string[]): string
   return out;
 }
 
-/** Données initiales pour certId (SSR) — null si introuvable. */
-export async function prefetchVerifyCertPayload(
-  rawCertId: string,
-): Promise<VerifyApiSuccess | null> {
-  const lookupKey = rawCertId.trim();
-  if (!lookupKey) return null;
-
+async function loadVerifyCertPayload(lookupKey: string): Promise<VerifyApiSuccess> {
   const certificate = await prisma.certificate.findFirst({
     where: { OR: [{ id: lookupKey }, { publicId: lookupKey }] },
     include: { entity: true },
@@ -132,4 +132,26 @@ export async function prefetchVerifyCertPayload(
       ? { certifiedDomains, certifiedEmails, certifiedPhones }
       : {}),
   };
+}
+
+/**
+ * Données initiales pour certId (SSR).
+ * Neon injoignable → ERROR (pas FRAUD) : l'indisponibilité n'est pas un verdict d'identité.
+ */
+export async function prefetchVerifyCertPayload(
+  rawCertId: string,
+  retry?: PrismaRetryOptions,
+): Promise<VerifyApiSuccess | null> {
+  const lookupKey = rawCertId.trim();
+  if (!lookupKey) return null;
+
+  try {
+    return await withPrismaRetry(() => loadVerifyCertPayload(lookupKey), retry);
+  } catch (err) {
+    if (isPrismaUnreachableError(err)) {
+      console.warn("[verify-prefetch] database unreachable");
+      return { ...DATABASE_UNAVAILABLE_VERIFY_PAYLOAD };
+    }
+    throw err;
+  }
 }

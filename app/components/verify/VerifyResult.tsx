@@ -14,6 +14,7 @@ import {
   ShieldOff,
   UserPlus,
   Users,
+  WifiOff,
   X,
 } from "lucide-react";
 import BlockTrustBadge from "@/app/components/ui/BlockTrustBadge";
@@ -585,7 +586,7 @@ export function FailVerdictCard({
     labelClass: string;
     label: string;
     subtitle: string;
-    Icon: typeof ShieldAlert | typeof Clock | typeof ShieldOff;
+    Icon: typeof ShieldAlert | typeof Clock | typeof ShieldOff | typeof WifiOff;
     labelNormalCase?: boolean;
   };
 
@@ -641,9 +642,10 @@ export function FailVerdictCard({
       disk: "border-2 border-[#f59e0b]/65 bg-[#f59e0b]/08",
       iconClass: "text-[#f59e0b]",
       labelClass: "text-[#f59e0b]",
-      label: "Badge invalide",
-      subtitle: "La vérification n’a pas pu aboutir. Réessayez dans un instant ou utilisez un autre lien officiel.",
-      Icon: ShieldOff,
+      label: "Vérification indisponible",
+      subtitle:
+        "Le service est temporairement indisponible. Réessayez dans quelques instants — ce n’est pas un verdict sur le badge.",
+      Icon: WifiOff,
       labelNormalCase: true,
     };
   } else {

@@ -15,6 +15,11 @@ import {
 } from "@/lib/verify-fraud";
 import { persistUserTrustScore } from "@/lib/trustscore";
 import { getTrustEngineResultForApi } from "@/lib/trust-engine-cache";
+import {
+  DATABASE_UNAVAILABLE_VERIFY_PAYLOAD,
+  isPrismaUnreachableError,
+  withPrismaRetry,
+} from "@/lib/prisma-unreachable";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -115,7 +120,16 @@ export async function GET(
   }
 
   const ua = req.headers.get("user-agent") ?? "unknown";
-  const certificate = await resolveCertificateWithEntity(rawId);
+  let certificate: Awaited<ReturnType<typeof resolveCertificateWithEntity>>;
+  try {
+    certificate = await withPrismaRetry(() => resolveCertificateWithEntity(rawId));
+  } catch (err) {
+    if (isPrismaUnreachableError(err)) {
+      console.warn("[public/certificate] database unreachable");
+      return NextResponse.json(DATABASE_UNAVAILABLE_VERIFY_PAYLOAD, { status: 503 });
+    }
+    throw err;
+  }
 
   /** Si la saisie correspond au préfixe exactement d’un seul certificat (typo / ID falsifié), alerte le titulaire. */
   async function tryRecordFraudAlertForSinglePrefixMatch(): Promise<boolean> {
@@ -223,15 +237,29 @@ export async function GET(
   const entity = certificate.entity;
   const entityName = entityDisplayName(entity);
 
-  const owner = await prisma.user.findUnique({
-    where: { id: entity.userId },
-    select: {
-      certifiedEmails: true,
-      certifiedPhones: true,
-      certifiedDomains: true,
-      kycStatus: true,
-    },
-  });
+  let owner: {
+    certifiedEmails: string[];
+    certifiedPhones: string[];
+    certifiedDomains: string[];
+    kycStatus: string | null;
+  } | null;
+  try {
+    owner = await prisma.user.findUnique({
+      where: { id: entity.userId },
+      select: {
+        certifiedEmails: true,
+        certifiedPhones: true,
+        certifiedDomains: true,
+        kycStatus: true,
+      },
+    });
+  } catch (err) {
+    if (isPrismaUnreachableError(err)) {
+      console.warn("[public/certificate] database unreachable");
+      return NextResponse.json(DATABASE_UNAVAILABLE_VERIFY_PAYLOAD, { status: 503 });
+    }
+    throw err;
+  }
 
   const certifiedAt = certificate.issuedAt.toISOString();
   const certificatePublicId = certificate.publicId ?? certificate.id;

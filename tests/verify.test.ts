@@ -243,6 +243,26 @@ describe('/verify public flow (GET /api/public/certificate/:id)', () => {
     // Anonyme : score détaillé toujours masqué.
     expect(data.trustEngine).toBeUndefined()
   })
+
+  it('Neon injoignable → 503 ERROR, jamais FRAUD', async () => {
+    const err = Object.assign(
+      new Error("Can't reach database server at `ep-bold-frost-agajqrnv-pooler.c-2.eu-central-1.aws.neon.tech:5432`"),
+      { name: 'PrismaClientInitializationError' },
+    )
+    prismaMock.signature.findUnique.mockRejectedValue(err)
+    prismaMock.signature.findFirst.mockRejectedValue(err)
+    prismaMock.certificate.findFirst.mockRejectedValue(err)
+
+    const res = await getPublicCertificate(
+      mockGetRequest(`/api/public/certificate/${VALID_CERT_ID}`),
+      { params: Promise.resolve({ id: VALID_CERT_ID }) },
+    )
+    const data = await res.json()
+
+    expect(res.status).toBe(503)
+    expect(data.verdict).toBe('ERROR')
+    expect(data.error).toBe('service_unavailable')
+  })
 })
 
 describe('GET /api/public/verify/:id (White Label)', () => {

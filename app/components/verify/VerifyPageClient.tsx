@@ -169,6 +169,7 @@ function VerifyContent({
 
   useEffect(() => {
     if (!initialCertData || !initialCertId?.trim()) return;
+    if (initialCertData.verdict === "ERROR") return;
     const matchesQuery =
       certIdQuery === initialCertId ||
       submittedCertId === initialCertId ||
