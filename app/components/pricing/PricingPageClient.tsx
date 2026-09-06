@@ -30,20 +30,35 @@ function PricingContextMessage() {
 type PricingPageClientProps = {
   plans: PlanB2C[]
   plansB2B: PlanB2B[]
-  currentPlan: string | null
-  isAuthenticated: boolean
 }
 
 export default function PricingPageClient({
   plans,
   plansB2B,
-  currentPlan,
-  isAuthenticated,
 }: PricingPageClientProps) {
   const router = useRouter()
   const [interval, setInterval] = useState<'monthly' | 'yearly'>('yearly')
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
   const [mode, setMode] = useState<'B2C' | 'B2B'>('B2C')
+  const [currentPlan, setCurrentPlan] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/auth/session', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((session: { user?: { id?: string; plan?: string } } | null) => {
+        if (cancelled || !session?.user?.id) return
+        setIsAuthenticated(true)
+        setCurrentPlan(typeof session.user.plan === 'string' ? session.user.plan : null)
+      })
+      .catch(() => {
+        /* page publique — session optionnelle */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') return

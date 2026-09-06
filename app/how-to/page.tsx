@@ -3,6 +3,8 @@ import Navbar from "@/app/components/landing/Navbar";
 import Footer from "@/app/components/landing/Footer";
 import HowToContent from "./HowToContent";
 
+export const revalidate = 3600
+
 export const metadata: Metadata = {
   title: { absolute: "Comment ça marche · BLOCKTRUST™" },
   description:
