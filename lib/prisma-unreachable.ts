@@ -47,13 +47,15 @@ export function isPrismaUnreachableError(err: unknown): boolean {
 }
 
 /**
- * Retry Neon cold start uniquement — pas P1008 (timeout requête, écriture peut avoir eu lieu).
+ * Retry connexions Neon / pooler — pas P1008 (timeout requête, écriture peut avoir eu lieu).
+ * P1017 = "Server has closed the connection" (idle PgBouncer / scale-to-zero).
  */
 export function isPrismaConnectionRetryableError(err: unknown): boolean {
   const { name, code, message } = prismaErrorFields(err);
   if (name === "PrismaClientInitializationError") return true;
-  if (code === "P1001") return true;
+  if (code === "P1001" || code === "P1017") return true;
   if (message.includes("Can't reach database server")) return true;
+  if (message.includes("Server has closed the connection")) return true;
   return false;
 }
 

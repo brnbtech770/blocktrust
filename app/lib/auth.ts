@@ -24,6 +24,8 @@ import {
   credentialsCheckToAuthErrorCode,
 } from "@/lib/credentials-login-check";
 import { cancelScheduledAccountDeletion } from "@/lib/account-deletion";
+import { isPrismaUnreachableError } from "@/lib/prisma-unreachable";
+import { evaluateSessionSecurity } from "@/lib/auth-session-security";
 
 class LockoutCredentialsError extends CredentialsSignin {
   code = "account_locked";
@@ -357,24 +359,36 @@ export const authOptions: NextAuthConfig = {
         }
       }
       if (token.sub && !user) {
-        const svRow = await prisma.user
-          .findUnique({
+        let svRow: {
+          sessionVersion: number;
+          email: string | null;
+          accountStatus: string;
+        } | null = null;
+        let svUnreachable = false;
+        try {
+          svRow = await prisma.user.findUnique({
             where: { id: token.sub },
             select: { sessionVersion: true, email: true, accountStatus: true },
-          })
-          .catch(() => null);
+          });
+        } catch (err) {
+          if (isPrismaUnreachableError(err)) {
+            svUnreachable = true;
+            console.warn("[jwt] sessionVersion skip — db unreachable");
+          } else {
+            throw err;
+          }
+        }
 
-        if (!svRow || svRow.email?.startsWith("deleted_")) {
+        const decision = evaluateSessionSecurity({
+          dbUnreachable: svUnreachable,
+          row: svRow,
+          tokenSessionVersion:
+            typeof token.sessionVersion === "number" ? token.sessionVersion : undefined,
+        });
+        if (decision.invalid) {
           token.sessionInvalid = true;
-        } else if (svRow.accountStatus === "SUSPENDED") {
-          token.sessionInvalid = true;
-        } else if (
-          typeof token.sessionVersion === "number" &&
-          svRow.sessionVersion > token.sessionVersion
-        ) {
-          token.sessionInvalid = true;
-        } else if (typeof token.sessionVersion !== "number") {
-          token.sessionVersion = svRow.sessionVersion;
+        } else if (typeof decision.adoptSessionVersion === "number") {
+          token.sessionVersion = decision.adoptSessionVersion;
         }
       }
 

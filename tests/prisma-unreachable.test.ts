@@ -29,10 +29,15 @@ describe("isPrismaUnreachableError", () => {
 });
 
 describe("isPrismaConnectionRetryableError", () => {
-  it("ne retente que l’init / P1001 / Can't reach", () => {
+  it("retente init / P1001 / P1017 / messages Neon, pas les erreurs métier", () => {
     expect(isPrismaConnectionRetryableError(unreachableError())).toBe(true);
     expect(isPrismaConnectionRetryableError({ code: "P1001" })).toBe(true);
-    expect(isPrismaConnectionRetryableError({ code: "P1017" })).toBe(false);
+    expect(isPrismaConnectionRetryableError({ code: "P1017" })).toBe(true);
+    expect(
+      isPrismaConnectionRetryableError({
+        message: "Server has closed the connection.",
+      }),
+    ).toBe(true);
     expect(isPrismaConnectionRetryableError({ code: "P2002" })).toBe(false);
   });
 });
@@ -50,6 +55,16 @@ describe("isPrismaReadOperation", () => {
 });
 
 describe("withPrismaRetry", () => {
+  it("retente P1017 puis réussit", async () => {
+    const err = Object.assign(new Error("Server has closed the connection."), { code: "P1017" });
+    const fn = vi
+      .fn()
+      .mockRejectedValueOnce(err)
+      .mockResolvedValueOnce("ok");
+    await expect(withPrismaRetry(fn, { delayMs: 0 })).resolves.toBe("ok");
+    expect(fn).toHaveBeenCalledTimes(2);
+  });
+
   it("retente puis réussit après un Neon cold start", async () => {
     const fn = vi
       .fn()
