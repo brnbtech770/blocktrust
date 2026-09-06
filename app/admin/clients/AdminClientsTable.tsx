@@ -35,6 +35,8 @@ export type AdminClientRow = {
   periodLabel: string
   kycText: string
   kycClassName: string
+  accountStatusLabel: string
+  accountStatusClassName: string
   trustScore: number
   createdAtLabel: string
 }
@@ -47,7 +49,13 @@ function AnchorIcon({ kind }: { kind: AdminClientRow['anchorIcon'] }) {
   return <XCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
 }
 
-export default function AdminClientsTable({ rows }: { rows: AdminClientRow[] }) {
+export default function AdminClientsTable({
+  rows,
+  showAccountStatus = false,
+}: {
+  rows: AdminClientRow[]
+  showAccountStatus?: boolean
+}) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [badgeUserId, setBadgeUserId] = useState<string | null>(null)
@@ -124,10 +132,13 @@ export default function AdminClientsTable({ rows }: { rows: AdminClientRow[] }) 
       )}
 
       <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#0d1f3c]/80">
-        <table className="min-w-[1180px] w-full border-collapse text-left text-sm">
+        <table className={`w-full border-collapse text-left text-sm ${showAccountStatus ? 'min-w-[1280px]' : 'min-w-[1180px]'}`}>
           <thead>
             <tr className="border-b border-white/10 text-[10px] uppercase tracking-widest text-white/45">
               <th className="sticky left-0 z-10 bg-[#0d1f3c] px-4 py-3 font-semibold">User</th>
+              {showAccountStatus ? (
+                <th className="px-4 py-3 font-semibold">Statut</th>
+              ) : null}
               <th className="px-4 py-3 font-semibold">Badge</th>
               <th className="px-4 py-3 font-semibold">Ancrage</th>
               <th className="px-4 py-3 font-semibold">Plan</th>
@@ -168,6 +179,15 @@ export default function AdminClientsTable({ rows }: { rows: AdminClientRow[] }) 
                     </div>
                   </div>
                 </td>
+                {showAccountStatus ? (
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${r.accountStatusClassName}`}
+                    >
+                      {r.accountStatusLabel}
+                    </span>
+                  </td>
+                ) : null}
                 <td className="px-4 py-3">
                   <span
                     className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${r.badgeClassName}`}

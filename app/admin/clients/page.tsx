@@ -13,8 +13,12 @@ import {
   getBillingPeriodFromStripePriceId,
   getYearlyStripePriceIdSet,
 } from '@/lib/admin-revenue'
-import { Users } from 'lucide-react'
+import { Check, Users } from 'lucide-react'
 import AdminClientsTable, { type AdminClientRow } from '@/app/admin/clients/AdminClientsTable'
+import {
+  adminClientAccountBadge,
+  classifyAdminClientAccount,
+} from '@/lib/admin-clients-visibility'
 import {
   isDiscoveryPlan,
   isNotAnchored,
@@ -35,6 +39,24 @@ type ClientFilter = 'all' | 'active' | 'no-badge' | 'no-sub'
 function filterParam(v: string | undefined): ClientFilter {
   if (v === 'active' || v === 'no-badge' || v === 'no-sub') return v
   return 'all'
+}
+
+function showAllParam(v: string | undefined): boolean {
+  return v === 'true' || v === '1'
+}
+
+function clientsHref(opts: { all?: boolean; filter?: ClientFilter }): string {
+  const p = new URLSearchParams()
+  if (opts.all) p.set('all', 'true')
+  if (opts.filter && opts.filter !== 'all') p.set('filter', opts.filter)
+  const q = p.toString()
+  return q ? `/admin/clients?${q}` : '/admin/clients'
+}
+
+const defaultVisibleWhere = {
+  accountStatus: 'ACTIVE' as const,
+  accountDeletionScheduledAt: null,
+  OR: [{ email: null }, { email: { not: { startsWith: 'deleted_' } } }],
 }
 
 type CatalogPlan = {
@@ -155,20 +177,23 @@ function kycLabel(status: string): { text: string; className: string } {
 export default async function AdminClientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>
+  searchParams: Promise<{ filter?: string; all?: string }>
 }) {
   const session = await auth()
   if (!session?.user?.email || !isAdmin(session.user.email)) {
     redirect('/dashboard')
   }
 
-  const { filter: filterRaw } = await searchParams
+  const { filter: filterRaw, all: allRaw } = await searchParams
   const filter = filterParam(filterRaw)
+  const showAll = showAllParam(allRaw)
 
   const yearlyIds = getYearlyStripePriceIdSet()
 
-  const clientsRaw = await prisma.user.findMany({
+  const [clientsRaw, activeCount, suspendedCount, deletedCount] = await Promise.all([
+    prisma.user.findMany({
     orderBy: { createdAt: 'desc' },
+    where: showAll ? undefined : defaultVisibleWhere,
     select: {
       id: true,
       name: true,
@@ -177,6 +202,8 @@ export default async function AdminClientsPage({
       trustScore: true,
       createdAt: true,
       kycStatus: true,
+      accountStatus: true,
+      accountDeletionScheduledAt: true,
       plan: { select: { type: true } },
       subscription: {
         select: {
@@ -208,7 +235,30 @@ export default async function AdminClientsPage({
         },
       },
     },
-  })
+  }),
+    prisma.user.count({
+      where: {
+        accountStatus: 'ACTIVE',
+        accountDeletionScheduledAt: null,
+        OR: [{ email: null }, { email: { not: { startsWith: 'deleted_' } } }],
+      },
+    }),
+    prisma.user.count({
+      where: {
+        accountStatus: 'SUSPENDED',
+        accountDeletionScheduledAt: null,
+        OR: [{ email: null }, { email: { not: { startsWith: 'deleted_' } } }],
+      },
+    }),
+    prisma.user.count({
+      where: {
+        OR: [
+          { email: { startsWith: 'deleted_' } },
+          { accountDeletionScheduledAt: { not: null } },
+        ],
+      },
+    }),
+  ])
 
   const rows: AdminClientRow[] = clientsRaw
     .map((u) => {
@@ -240,6 +290,12 @@ export default async function AdminClientsPage({
         !isNotAnchored(cert.blockchainStatus) &&
         planAllowsPolygonAnchoring(effectivePlan)
       const k = kycLabel(u.kycStatus)
+      const accountKind = classifyAdminClientAccount({
+        accountStatus: u.accountStatus,
+        email: u.email,
+        accountDeletionScheduledAt: u.accountDeletionScheduledAt,
+      })
+      const accountBadge = adminClientAccountBadge(accountKind)
       const displayName = u.name?.trim() || u.email?.split('@')[0] || '—'
       const initials = (() => {
         if (u.name?.trim()) {
@@ -283,6 +339,8 @@ export default async function AdminClientsPage({
                 : '—',
         kycText: k.text,
         kycClassName: k.className,
+        accountStatusLabel: accountBadge.label,
+        accountStatusClassName: accountBadge.className,
         trustScore: u.trustScore ?? 0,
         createdAtLabel: u.createdAt.toLocaleDateString('fr-FR', {
           day: 'numeric',
@@ -319,28 +377,62 @@ export default async function AdminClientsPage({
           <div>
             <p className="text-sm text-white/50">
               {rows.length} client{rows.length > 1 ? 's' : ''}
-              {filter !== 'all' ? ' (filtre affiché)' : ''} · total base : {clientsRaw.length}
+              {filter !== 'all' ? ' (filtre affiché)' : ''}
+              {showAll ? ' · tous les comptes' : ' · actifs uniquement'}
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Link href="/admin/clients" className={filterLinkClass('all')}>
+          <Link href={clientsHref({ all: showAll, filter: 'all' })} className={filterLinkClass('all')}>
             Tous
           </Link>
-          <Link href="/admin/clients?filter=active" className={filterLinkClass('active')}>
+          <Link href={clientsHref({ all: showAll, filter: 'active' })} className={filterLinkClass('active')}>
             Actifs
           </Link>
-          <Link href="/admin/clients?filter=no-badge" className={filterLinkClass('no-badge')}>
+          <Link href={clientsHref({ all: showAll, filter: 'no-badge' })} className={filterLinkClass('no-badge')}>
             Sans badge
           </Link>
-          <Link href="/admin/clients?filter=no-sub" className={filterLinkClass('no-sub')}>
+          <Link href={clientsHref({ all: showAll, filter: 'no-sub' })} className={filterLinkClass('no-sub')}>
             Sans abonnement
           </Link>
         </div>
       </div>
 
-      <AdminClientsTable rows={rows} />
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Visibilité des comptes">
+          <Link
+            href={clientsHref({ filter })}
+            className={[
+              'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition',
+              !showAll
+                ? 'bg-[#00d4ff]/20 text-[#00d4ff] border border-[#00d4ff]/40'
+                : 'text-white/50 border border-transparent hover:text-white hover:bg-white/5',
+            ].join(' ')}
+          >
+            {!showAll ? <Check className="h-3.5 w-3.5" aria-hidden /> : null}
+            Comptes actifs uniquement
+          </Link>
+          <Link
+            href={clientsHref({ all: true, filter })}
+            className={[
+              'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition',
+              showAll
+                ? 'bg-[#00d4ff]/20 text-[#00d4ff] border border-[#00d4ff]/40'
+                : 'text-white/50 border border-transparent hover:text-white hover:bg-white/5',
+            ].join(' ')}
+          >
+            Tout afficher
+          </Link>
+        </div>
+        <p className="text-xs text-white/45">
+          {activeCount} actif{activeCount > 1 ? 's' : ''} · {suspendedCount} suspendu
+          {suspendedCount > 1 ? 's' : ''} · {deletedCount} supprimé
+          {deletedCount > 1 ? 's' : ''}
+        </p>
+      </div>
+
+      <AdminClientsTable rows={rows} showAccountStatus={showAll} />
     </div>
   )
 }
