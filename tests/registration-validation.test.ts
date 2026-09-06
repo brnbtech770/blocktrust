@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
   REGISTRATION_NAME_ERROR,
+  hasExcessiveConsecutiveConsonants,
+  isGibberishDisplayName,
+  latinTokenPhoneticFail,
   validateRegistrationNames,
 } from "@/lib/registration-validation";
 import { emailsCanonicallyEqual, normalizeEmail } from "@/lib/email-utils";
@@ -10,20 +13,34 @@ describe("validateRegistrationNames", () => {
     expect(validateRegistrationNames("Olivier", "Bernabé")).toEqual({ ok: true });
     expect(validateRegistrationNames("Jean-Pierre", "Dupont")).toEqual({ ok: true });
     expect(validateRegistrationNames("Patrick", "O'Brien")).toEqual({ ok: true });
+    expect(validateRegistrationNames("Anna", "Mc Donald")).toEqual({ ok: true });
+    expect(validateRegistrationNames("Christian", "Strauss")).toEqual({ ok: true });
+    expect(validateRegistrationNames("Hans", "Schmidt")).toEqual({ ok: true });
+    expect(validateRegistrationNames("Béatrice", "François")).toEqual({ ok: true });
+    expect(validateRegistrationNames("Jörg", "Müller")).toEqual({ ok: true });
+    expect(validateRegistrationNames("Li", "Wu")).toEqual({ ok: true });
+    expect(validateRegistrationNames("Al", "Hassan")).toEqual({ ok: true });
   });
 
   it("accepte les noms non-latins", () => {
     expect(validateRegistrationNames("محمد", "العربي")).toEqual({ ok: true });
     expect(validateRegistrationNames("Владимир", "Петров")).toEqual({ ok: true });
+    expect(validateRegistrationNames("李明", "王伟")).toEqual({ ok: true });
   });
 
-  it("rejette les noms sans voyelle (latin)", () => {
-    expect(validateRegistrationNames("Ccyo", "Rfxdifwx")).toEqual({ ok: false });
+  it("rejette les paires bot (prénom ET nom suspects)", () => {
+    expect(validateRegistrationNames("Rxhogkyr", "Drbubaw")).toEqual({ ok: false });
+    expect(validateRegistrationNames("Oxptulvw", "Exhgh")).toEqual({ ok: false });
+    expect(validateRegistrationNames("Ycjkdev", "Dkovc")).toEqual({ ok: false });
+    expect(validateRegistrationNames("Gcnuu", "Kzhaexrw")).toEqual({ ok: false });
+    expect(validateRegistrationNames("Catx", "Msgltwemi")).toEqual({ ok: false });
     expect(validateRegistrationNames("Txunjppo", "Rfxdifwx")).toEqual({ ok: false });
   });
 
-  it("rejette ratio consonnes/voyelles > 4", () => {
-    expect(validateRegistrationNames("Rfxdifwx", "Ab")).toEqual({ ok: false });
+  it("autorise un seul champ suspect (bénéfice du doute)", () => {
+    expect(validateRegistrationNames("Rxhogkyr", "Dupont")).toEqual({ ok: true });
+    expect(validateRegistrationNames("Olivier", "Drbubaw")).toEqual({ ok: true });
+    expect(validateRegistrationNames("Qxheok", "Ouxoceju")).toEqual({ ok: true });
   });
 
   it("rejette prénom ou nom trop court", () => {
@@ -38,6 +55,40 @@ describe("validateRegistrationNames", () => {
 
   it("expose le message d'erreur standard", () => {
     expect(REGISTRATION_NAME_ERROR).toBe("Veuillez saisir un nom valide");
+  });
+});
+
+describe("latinTokenPhoneticFail / ratio 2.5 et consonnes d'affilée", () => {
+  it("ratio Olivier 0.75 et Jean-Pierre OK, Rxhogkyr 3.0 suspect", () => {
+    expect(latinTokenPhoneticFail("Olivier")).toBe(false);
+    expect(latinTokenPhoneticFail("Jean")).toBe(false);
+    expect(latinTokenPhoneticFail("Pierre")).toBe(false);
+    expect(latinTokenPhoneticFail("Rxhogkyr")).toBe(true);
+  });
+
+  it("Schmidt (ratio élevé) est rattrapé par un prénom normal", () => {
+    expect(latinTokenPhoneticFail("Schmidt")).toBe(true);
+    expect(validateRegistrationNames("Hans", "Schmidt")).toEqual({ ok: true });
+  });
+
+  it("max 3 consonnes : chr/str OK, rxh et msgltw suspects", () => {
+    expect(hasExcessiveConsecutiveConsonants("Christian")).toBe(false);
+    expect(hasExcessiveConsecutiveConsonants("Strauss")).toBe(false);
+    expect(hasExcessiveConsecutiveConsonants("Rxhogkyr")).toBe(true);
+    expect(hasExcessiveConsecutiveConsonants("Msgltwemi")).toBe(true);
+  });
+});
+
+describe("isGibberishDisplayName", () => {
+  it("détecte les noms stockés « Prénom Nom » bots", () => {
+    expect(isGibberishDisplayName("Rxhogkyr Drbubaw")).toBe(true);
+    expect(isGibberishDisplayName("Oxptulvw Exhgh")).toBe(true);
+    expect(isGibberishDisplayName("Ycjkdev Dkovc")).toBe(true);
+    expect(isGibberishDisplayName("Gcnuu Kzhaexrw")).toBe(true);
+    expect(isGibberishDisplayName("Catx Msgltwemi")).toBe(true);
+    expect(isGibberishDisplayName("Olivier Bernabé")).toBe(false);
+    expect(isGibberishDisplayName(null)).toBe(false);
+    expect(isGibberishDisplayName("X")).toBe(false);
   });
 });
 

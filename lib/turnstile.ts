@@ -1,5 +1,6 @@
 // lib/turnstile.ts
 // Vérification Cloudflare Turnstile (inscription) — fail-safe si indisponible
+// Mode Turnstile : Managed (vérifier sur dash.cloudflare.com → Turnstile → BlockTrust)
 // ============================================================
 
 import { writeSecurityAuditLogFireAndForget } from "@/lib/security-audit";

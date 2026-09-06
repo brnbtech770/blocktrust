@@ -1,6 +1,6 @@
 /**
- * Suspend les comptes non vérifiés créés il y a plus de 7 jours (spam / bots).
- * Exclut : grandfathering (< 13/07/2026), internes/admins, emails E2E.
+ * Liste / suspend les comptes spam (noms gibberish, email non vérifié).
+ * Exclut : grandfathering (< 13/07/2026), internes/admins, emails E2E, comptes vérifiés.
  *
  * Usage :
  *   npx tsx scripts/cleanup-spam-accounts.ts          # dry-run (défaut)
@@ -9,11 +9,9 @@
 import "dotenv/config";
 import { prisma } from "@/app/lib/db";
 import { getInternalEmailList } from "@/lib/admin-utils";
-import {
-  EMAIL_VERIFICATION_REQUIRED_SINCE,
-} from "@/lib/email-verification";
+import { EMAIL_VERIFICATION_REQUIRED_SINCE } from "@/lib/email-verification";
+import { isGibberishDisplayName } from "@/lib/registration-validation";
 
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const E2E_EMAIL_SUFFIX = "@blocktrust-e2e.test";
 
 type Candidate = {
@@ -29,7 +27,7 @@ const protectedEmails = new Set(
 );
 
 function isE2ETestEmail(email: string | null): boolean {
-  return (email?.trim().toLowerCase().endsWith(E2E_EMAIL_SUFFIX) ?? false);
+  return email?.trim().toLowerCase().endsWith(E2E_EMAIL_SUFFIX) ?? false;
 }
 
 function isProtectedInternalEmail(email: string | null): boolean {
@@ -43,16 +41,18 @@ function printAccount(u: Candidate): void {
   );
 }
 
-function partitionCandidates(candidates: Candidate[]): {
+export function partitionGibberishCandidates(candidates: Candidate[]): {
   grandfathered: Candidate[];
   internal: Candidate[];
   e2e: Candidate[];
-  spam: Candidate[];
+  gibberish: Candidate[];
+  otherUnverified: Candidate[];
 } {
   const grandfathered: Candidate[] = [];
   const internal: Candidate[] = [];
   const e2e: Candidate[] = [];
-  const spam: Candidate[] = [];
+  const gibberish: Candidate[] = [];
+  const otherUnverified: Candidate[] = [];
 
   for (const u of candidates) {
     if (u.createdAt < EMAIL_VERIFICATION_REQUIRED_SINCE) {
@@ -67,20 +67,22 @@ function partitionCandidates(candidates: Candidate[]): {
       e2e.push(u);
       continue;
     }
-    spam.push(u);
+    if (isGibberishDisplayName(u.name)) {
+      gibberish.push(u);
+      continue;
+    }
+    otherUnverified.push(u);
   }
 
-  return { grandfathered, internal, e2e, spam };
+  return { grandfathered, internal, e2e, gibberish, otherUnverified };
 }
 
 async function main() {
   const apply = process.argv.includes("--apply");
-  const cutoff = new Date(Date.now() - SEVEN_DAYS_MS);
 
   const candidates = await prisma.user.findMany({
     where: {
       emailVerified: null,
-      createdAt: { lt: cutoff },
       accountStatus: { not: "SUSPENDED" },
     },
     select: {
@@ -93,12 +95,11 @@ async function main() {
     orderBy: { createdAt: "asc" },
   });
 
-  const { grandfathered, internal, e2e, spam } = partitionCandidates(candidates);
+  const { grandfathered, internal, e2e, gibberish, otherUnverified } =
+    partitionGibberishCandidates(candidates);
 
   console.log(`\nMode : ${apply ? "APPLY (suspension)" : "DRY-RUN (aucune modification)"}`);
-  console.log(
-    `Seuil : emailVerified=null, créé avant ${cutoff.toISOString()}, non SUSPENDED`,
-  );
+  console.log("Seuil : emailVerified=null, non SUSPENDED, nom gibberish (mêmes règles que l'inscription)");
   console.log(
     `Grandfathering : comptes créés avant ${EMAIL_VERIFICATION_REQUIRED_SINCE.toISOString()}\n`,
   );
@@ -120,14 +121,21 @@ async function main() {
     for (const u of e2e) printAccount(u);
   }
 
-  console.log(`\n=== Comptes spam à suspendre — ${spam.length} ===`);
-  if (spam.length === 0) {
+  if (otherUnverified.length > 0) {
+    console.log(
+      `\n=== Non vérifiés, nom OK (non suspendus) — ${otherUnverified.length} ===`,
+    );
+    for (const u of otherUnverified) printAccount(u);
+  }
+
+  console.log(`\n=== Comptes spam (nom gibberish) à suspendre — ${gibberish.length} ===`);
+  if (gibberish.length === 0) {
     console.log("(aucun)");
     await prisma.$disconnect();
     return;
   }
 
-  for (const u of spam) printAccount(u);
+  for (const u of gibberish) printAccount(u);
 
   if (!apply) {
     console.log("\nRelancez avec --apply pour passer ces comptes en SUSPENDED.");
@@ -136,7 +144,7 @@ async function main() {
   }
 
   const result = await prisma.user.updateMany({
-    where: { id: { in: spam.map((u) => u.id) } },
+    where: { id: { in: gibberish.map((u) => u.id) } },
     data: { accountStatus: "SUSPENDED" },
   });
 

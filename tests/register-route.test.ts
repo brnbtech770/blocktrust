@@ -128,8 +128,8 @@ describe("POST /api/auth/register", () => {
     const res = await registerPost(
       registerRequest({
         ...validBody,
-        firstName: "Ccyo",
-        lastName: "Rfxdifwx",
+        firstName: "Rxhogkyr",
+        lastName: "Drbubaw",
       }),
     );
     const data = await res.json();

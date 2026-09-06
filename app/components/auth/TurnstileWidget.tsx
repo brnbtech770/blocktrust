@@ -55,6 +55,9 @@ export default function TurnstileWidget({
     if (!ready || !containerRef.current || !window.turnstile) return;
     if (widgetIdRef.current) return;
 
+    // Mode Turnstile : Managed (vérifier sur dash.cloudflare.com → Turnstile → BlockTrust)
+    // Le mode (Managed / Non-interactive / Invisible) est lié au sitekey côté Cloudflare.
+    // Managed affiche un challenge si le trafic est suspect — ne pas passer en Non-interactive.
     try {
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
