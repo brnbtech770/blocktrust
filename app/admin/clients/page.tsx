@@ -1,5 +1,6 @@
 // app/admin/clients/page.tsx
-// Vue clients orientée business (admin)
+// Vue clients orientée business (admin) — Server Component (Prisma ici uniquement).
+// Interactivité : AdminClientsTable (pas d'import Prisma).
 // ============================================================
 
 import Link from 'next/link'

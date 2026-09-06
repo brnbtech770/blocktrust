@@ -1,8 +1,8 @@
 /**
  * © 2026 BRNB TECH — BLOCKTRUST™
  * Libellés certificat lisibles — nom + suffixe (…4 derniers caractères).
+ * Pur : pas de Prisma (safe côté client). Fetch DB → lib/fetch-certificate-label.ts
  */
-import { prisma } from '@/app/lib/db'
 
 export type EntityLikeForLabel = {
   entityType?: string | null
@@ -32,15 +32,6 @@ export interface FormatCertificateLabelResult {
   suffix: string
   displayName: string | null
 }
-
-const ENTITY_SELECT = {
-  entityType: true,
-  firstName: true,
-  lastName: true,
-  legalName: true,
-  tradeName: true,
-  email: true,
-} as const
 
 /** Nom affichable d'une entité (particulier ou entreprise). */
 export function entityDisplayNameFromEntity(
@@ -100,26 +91,6 @@ export function formatCertificateLabel(
     }
   }
   return { label: suffix, fullCode, suffix, displayName: null }
-}
-
-/** Charge certificat + entité et retourne le libellé formaté. */
-export async function fetchCertificateLabel(
-  certificateId: string,
-): Promise<FormatCertificateLabelResult | null> {
-  const cert = await prisma.certificate.findUnique({
-    where: { id: certificateId },
-    select: {
-      id: true,
-      publicId: true,
-      entity: { select: ENTITY_SELECT },
-    },
-  })
-  if (!cert) return null
-  return formatCertificateLabel({
-    id: cert.id,
-    publicId: cert.publicId,
-    entity: cert.entity,
-  })
 }
 
 /** Libellé utilisateur pour alertes sans certificat (TrustScore, etc.). */

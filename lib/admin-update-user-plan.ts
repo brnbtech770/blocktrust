@@ -1,5 +1,6 @@
 // lib/admin-update-user-plan.ts
-// Mise à jour manuelle du plan utilisateur (admin)
+// Mise à jour manuelle du plan utilisateur (admin) — serveur uniquement (Prisma).
+// Ne pas importer depuis un composant "use client" (codes → @/lib/pricing).
 // ============================================================
 
 import { prisma } from '@/app/lib/db'

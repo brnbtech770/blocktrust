@@ -21,9 +21,9 @@ import { sendEmailFireAndForget } from '@/lib/email'
 import { FraudAlertEmail, subject as fraudAlertCertificateSubject } from '@/emails/FraudAlertEmail'
 import {
   entityDisplayNameFromEntity,
-  fetchCertificateLabel,
   formatUserLabel,
 } from '@/lib/format-certificate-label'
+import { fetchCertificateLabel } from '@/lib/fetch-certificate-label'
 
 export const VERIFY_SECURITY_HEADERS = {
   'Cache-Control': 'no-store',

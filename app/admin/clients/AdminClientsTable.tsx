@@ -10,7 +10,10 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { CheckCircle2, Clock, Link2, XCircle, Eye, CreditCard, Mail, ExternalLink } from 'lucide-react'
 import BlockTrustBadge from '@/app/components/ui/BlockTrustBadge'
-import { VALID_PLAN_CODES, type AdminPlanCode } from '@/lib/admin-update-user-plan'
+import {
+  ADMIN_ASSIGNABLE_PLAN_CODES,
+  type AdminAssignablePlanCode,
+} from '@/lib/pricing'
 import { getPlanDisplayLabel } from '@/lib/plan-features'
 
 export type AdminClientRow = {
@@ -36,7 +39,7 @@ export type AdminClientRow = {
   createdAtLabel: string
 }
 
-const PLAN_OPTIONS = [...VALID_PLAN_CODES]
+const PLAN_OPTIONS = [...ADMIN_ASSIGNABLE_PLAN_CODES]
 
 function AnchorIcon({ kind }: { kind: AdminClientRow['anchorIcon'] }) {
   if (kind === 'check') return <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -49,7 +52,7 @@ export default function AdminClientsTable({ rows }: { rows: AdminClientRow[] }) 
   const [pending, startTransition] = useTransition()
   const [badgeUserId, setBadgeUserId] = useState<string | null>(null)
   const [planUser, setPlanUser] = useState<{ id: string; planCode: string } | null>(null)
-  const [selectedPlan, setSelectedPlan] = useState<AdminPlanCode>('ESSENTIEL')
+  const [selectedPlan, setSelectedPlan] = useState<AdminAssignablePlanCode>('ESSENTIEL')
   const [planError, setPlanError] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [anchoringCertId, setAnchoringCertId] = useState<string | null>(null)
@@ -227,7 +230,7 @@ export default function AdminClientsTable({ rows }: { rows: AdminClientRow[] }) 
                       onClick={() => {
                         setPlanUser({ id: r.id, planCode: r.planCode === '—' ? 'ESSENTIEL' : r.planCode })
                         setSelectedPlan(
-                          (r.planCode !== '—' ? r.planCode : 'ESSENTIEL') as AdminPlanCode
+                          (r.planCode !== '—' ? r.planCode : 'ESSENTIEL') as AdminAssignablePlanCode
                         )
                         setPlanError(null)
                       }}
@@ -312,7 +315,7 @@ export default function AdminClientsTable({ rows }: { rows: AdminClientRow[] }) 
             </p>
             <select
               value={selectedPlan}
-              onChange={(e) => setSelectedPlan(e.target.value as AdminPlanCode)}
+              onChange={(e) => setSelectedPlan(e.target.value as AdminAssignablePlanCode)}
               className="mt-4 w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:border-bt-cyan focus:outline-none"
             >
               {PLAN_OPTIONS.map((p) => (
