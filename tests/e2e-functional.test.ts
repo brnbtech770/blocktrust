@@ -1166,8 +1166,7 @@ describe.skipIf(!hasDatabase)("E2E functional — parcours BLOCKTRUST", () => {
 
   // ─── BLOC 12 ───────────────────────────────────────────────
   describe("Bloc 12 — Admin", () => {
-    it("12.1 — Admin autorisé → stats 200", async (ctx) => {
-      if (!hasDatabase) ctx.skip();
+    itE2e("12.1 — Admin autorisé → stats 200", async () => {
       setSession({ id: "admin-session", email: HARDCODED_ADMIN_EMAIL });
       const res = await adminStatsGet();
       expect(res.status).toBe(200);

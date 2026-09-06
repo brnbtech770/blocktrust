@@ -11,12 +11,32 @@ export type PrismaRetryOptions = {
 
 const UNREACHABLE_CODES = new Set(["P1001", "P1002", "P1008", "P1017"]);
 
-export function isPrismaUnreachableError(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
+const PRISMA_READ_OPERATIONS = new Set([
+  "findUnique",
+  "findUniqueOrThrow",
+  "findFirst",
+  "findFirstOrThrow",
+  "findMany",
+  "count",
+  "aggregate",
+  "groupBy",
+  "queryRaw",
+  "queryRawUnsafe",
+]);
+
+function prismaErrorFields(err: unknown): { name: string; code: string; message: string } {
+  if (!err || typeof err !== "object") return { name: "", code: "", message: "" };
   const rec = err as { name?: unknown; code?: unknown; message?: unknown };
-  const name = typeof rec.name === "string" ? rec.name : "";
-  const code = typeof rec.code === "string" ? rec.code : "";
-  const message = typeof rec.message === "string" ? rec.message : "";
+  return {
+    name: typeof rec.name === "string" ? rec.name : "",
+    code: typeof rec.code === "string" ? rec.code : "",
+    message: typeof rec.message === "string" ? rec.message : "",
+  };
+}
+
+/** UI fail-soft : panne DB (y compris timeout). Ne pas substituer un verdict FRAUD. */
+export function isPrismaUnreachableError(err: unknown): boolean {
+  const { name, code, message } = prismaErrorFields(err);
   if (name === "PrismaClientInitializationError") return true;
   if (UNREACHABLE_CODES.has(code)) return true;
   if (message.includes("Can't reach database server")) return true;
@@ -24,6 +44,21 @@ export function isPrismaUnreachableError(err: unknown): boolean {
     return true;
   }
   return false;
+}
+
+/**
+ * Retry Neon cold start uniquement — pas P1008 (timeout requête, écriture peut avoir eu lieu).
+ */
+export function isPrismaConnectionRetryableError(err: unknown): boolean {
+  const { name, code, message } = prismaErrorFields(err);
+  if (name === "PrismaClientInitializationError") return true;
+  if (code === "P1001") return true;
+  if (message.includes("Can't reach database server")) return true;
+  return false;
+}
+
+export function isPrismaReadOperation(operation: string): boolean {
+  return PRISMA_READ_OPERATIONS.has(operation);
 }
 
 function defaultSleep(ms: number): Promise<void> {
@@ -52,7 +87,7 @@ export async function withPrismaRetry<T>(
       return await fn();
     } catch (err) {
       last = err;
-      if (!isPrismaUnreachableError(err) || i === attempts - 1) {
+      if (!isPrismaConnectionRetryableError(err) || i === attempts - 1) {
         throw err;
       }
       await sleep(delayMs * (i + 1));

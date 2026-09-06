@@ -17,6 +17,8 @@ import { isRscPrefetchRequest } from '@/app/lib/is-rsc-prefetch-request'
 import { rethrowIfRedirect } from '@/app/lib/is-redirect-error'
 import { isDiscoveryExpired, resolveEffectivePlan } from '@/lib/plan-features'
 import { requiresEmailVerification, isAccountSuspendedForEmail } from '@/lib/email-verification'
+import { isPrismaUnreachableError } from '@/lib/prisma-unreachable'
+import { ServiceUnavailableScreen } from '@/app/components/ServiceUnavailableScreen'
 
 /** Évite cache / flux RSC sans cookies → auth() null alors que l'utilisateur est connecté */
 export const dynamic = 'force-dynamic'
@@ -41,6 +43,15 @@ export default async function DashboardSegmentLayout({
     session = await auth()
   } catch (error) {
     rethrowIfRedirect(error)
+    if (isPrismaUnreachableError(error)) {
+      console.warn('[DashboardSegmentLayout] database unreachable (auth)')
+      return (
+        <ServiceUnavailableScreen
+          title="Service temporairement indisponible"
+          message="Réessayez"
+        />
+      )
+    }
     console.error('[DashboardSegmentLayout] auth error:', error)
     redirect('/auth/signin?callbackUrl=%2Fdashboard&reason=auth-error')
   }
@@ -67,12 +78,25 @@ export default async function DashboardSegmentLayout({
       )
     }
 
-    const user = await prisma.user
-      .findUnique({
+    let user
+    try {
+      user = await prisma.user.findUnique({
         where: { email: session.user.email },
         include: { plan: true, subscription: { select: { plan: true, status: true, stripeSubscriptionId: true, currentPeriodEnd: true } } },
       })
-      .catch(() => null)
+    } catch (error) {
+      rethrowIfRedirect(error)
+      if (isPrismaUnreachableError(error)) {
+        console.warn('[DashboardSegmentLayout] database unreachable')
+        return (
+          <ServiceUnavailableScreen
+            title="Service temporairement indisponible"
+            message="Réessayez"
+          />
+        )
+      }
+      throw error
+    }
 
     if (!user) {
       redirect(
@@ -127,6 +151,15 @@ export default async function DashboardSegmentLayout({
     )
   } catch (error) {
     rethrowIfRedirect(error)
+    if (isPrismaUnreachableError(error)) {
+      console.warn('[DashboardSegmentLayout] database unreachable')
+      return (
+        <ServiceUnavailableScreen
+          title="Service temporairement indisponible"
+          message="Réessayez"
+        />
+      )
+    }
     console.error('[DashboardSegmentLayout]', error)
     redirect('/auth/signin?callbackUrl=%2Fdashboard&reason=layout-error')
   }
