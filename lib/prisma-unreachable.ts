@@ -1,6 +1,7 @@
 /**
- * Neon scale-to-zero : le pooler peut refuser la 1re connexion (P1001).
- * Retry court, puis fail-soft — jamais un verdict FRAUD / INVALID de substitution.
+ * Neon scale-to-zero : le pooler peut refuser la 1re connexion (P1001)
+ * ou couper une connexion idle (P1017). Retry puis fail-soft —
+ * jamais un verdict FRAUD / INVALID de substitution.
  */
 
 export type PrismaRetryOptions = {
@@ -10,6 +11,8 @@ export type PrismaRetryOptions = {
 };
 
 const UNREACHABLE_CODES = new Set(["P1001", "P1002", "P1008", "P1017"]);
+/** Connexion / cold start — pas P1008 (timeout requête, l'écriture peut avoir eu lieu). */
+const CONNECTION_RETRYABLE_CODES = new Set(["P1001", "P1017"]);
 
 const PRISMA_READ_OPERATIONS = new Set([
   "findUnique",
@@ -26,10 +29,17 @@ const PRISMA_READ_OPERATIONS = new Set([
 
 function prismaErrorFields(err: unknown): { name: string; code: string; message: string } {
   if (!err || typeof err !== "object") return { name: "", code: "", message: "" };
-  const rec = err as { name?: unknown; code?: unknown; message?: unknown };
+  const rec = err as {
+    name?: unknown;
+    code?: unknown;
+    errorCode?: unknown;
+    message?: unknown;
+  };
+  const code = typeof rec.code === "string" ? rec.code : "";
+  const errorCode = typeof rec.errorCode === "string" ? rec.errorCode : "";
   return {
     name: typeof rec.name === "string" ? rec.name : "",
-    code: typeof rec.code === "string" ? rec.code : "",
+    code: code || errorCode,
     message: typeof rec.message === "string" ? rec.message : "",
   };
 }
@@ -48,14 +58,14 @@ export function isPrismaUnreachableError(err: unknown): boolean {
 
 /**
  * Retry connexions Neon / pooler — pas P1008 (timeout requête, écriture peut avoir eu lieu).
- * P1017 = "Server has closed the connection" (idle PgBouncer / scale-to-zero).
+ * P1001 = unreachable ; P1017 = "Server has closed the connection" (idle / scale-to-zero).
  */
 export function isPrismaConnectionRetryableError(err: unknown): boolean {
   const { name, code, message } = prismaErrorFields(err);
   if (name === "PrismaClientInitializationError") return true;
-  if (code === "P1001" || code === "P1017") return true;
+  if (CONNECTION_RETRYABLE_CODES.has(code)) return true;
   if (message.includes("Can't reach database server")) return true;
-  if (message.includes("Server has closed the connection")) return true;
+  if (/server has closed the connection/i.test(message)) return true;
   return false;
 }
 
@@ -70,10 +80,14 @@ function defaultSleep(ms: number): Promise<void> {
   });
 }
 
-/** Vitest : pas d’attente réelle. Prod : 500 ms, 1 s entre tentatives. */
+/**
+ * Vitest : pas d’attente réelle.
+ * Prod / crons : 5 tentatives, 1 s fixe entre elles (~4 s d’attente, ~5 s avec les requêtes).
+ * Suffisant pour un cold start Neon (3–5 s), sans backoff linéaire trop long.
+ */
 export const PRISMA_RETRY_DEFAULTS: Required<Pick<PrismaRetryOptions, "attempts" | "delayMs">> = {
-  attempts: 3,
-  delayMs: process.env.VITEST ? 0 : 500,
+  attempts: 5,
+  delayMs: process.env.VITEST ? 0 : 1000,
 };
 
 export async function withPrismaRetry<T>(
@@ -92,7 +106,7 @@ export async function withPrismaRetry<T>(
       if (!isPrismaConnectionRetryableError(err) || i === attempts - 1) {
         throw err;
       }
-      await sleep(delayMs * (i + 1));
+      await sleep(delayMs);
     }
   }
   throw last;

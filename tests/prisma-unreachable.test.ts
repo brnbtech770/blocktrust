@@ -4,6 +4,7 @@ import {
   isPrismaConnectionRetryableError,
   isPrismaReadOperation,
   isPrismaUnreachableError,
+  PRISMA_RETRY_DEFAULTS,
   withPrismaRetry,
 } from "@/lib/prisma-unreachable";
 
@@ -18,6 +19,7 @@ describe("isPrismaUnreachableError", () => {
   it("reconnaît PrismaClientInitializationError / P1001", () => {
     expect(isPrismaUnreachableError(unreachableError())).toBe(true);
     expect(isPrismaUnreachableError({ code: "P1001", message: "x" })).toBe(true);
+    expect(isPrismaUnreachableError({ errorCode: "P1017", message: "x" })).toBe(true);
     expect(isPrismaUnreachableError(new Error("schema mismatch"))).toBe(false);
   });
 
@@ -33,6 +35,12 @@ describe("isPrismaConnectionRetryableError", () => {
     expect(isPrismaConnectionRetryableError(unreachableError())).toBe(true);
     expect(isPrismaConnectionRetryableError({ code: "P1001" })).toBe(true);
     expect(isPrismaConnectionRetryableError({ code: "P1017" })).toBe(true);
+    expect(isPrismaConnectionRetryableError({ errorCode: "P1017" })).toBe(true);
+    expect(
+      isPrismaConnectionRetryableError({
+        message: "the server has closed the connection",
+      }),
+    ).toBe(true);
     expect(
       isPrismaConnectionRetryableError({
         message: "Server has closed the connection.",
@@ -75,11 +83,32 @@ describe("withPrismaRetry", () => {
     expect(fn).toHaveBeenCalledTimes(2);
   });
 
+  it("expose 5 tentatives par défaut (délai nul sous Vitest)", () => {
+    expect(PRISMA_RETRY_DEFAULTS.attempts).toBe(5);
+    expect(PRISMA_RETRY_DEFAULTS.delayMs).toBe(0);
+  });
+
+  it("attend 1 s fixe entre 5 tentatives P1017 (cold start Neon)", async () => {
+    const err = Object.assign(new Error("Server has closed the connection."), { code: "P1017" });
+    const fn = vi.fn().mockRejectedValue(err);
+    const slept: number[] = [];
+    await expect(
+      withPrismaRetry(fn, {
+        delayMs: 1000,
+        sleep: async (ms) => {
+          slept.push(ms);
+        },
+      }),
+    ).rejects.toBe(err);
+    expect(fn).toHaveBeenCalledTimes(5);
+    expect(slept).toEqual([1000, 1000, 1000, 1000]);
+  });
+
   it("relance après épuisement des tentatives", async () => {
     const err = unreachableError();
     const fn = vi.fn().mockRejectedValue(err);
-    await expect(withPrismaRetry(fn, { attempts: 3, delayMs: 0 })).rejects.toBe(err);
-    expect(fn).toHaveBeenCalledTimes(3);
+    await expect(withPrismaRetry(fn, { delayMs: 0 })).rejects.toBe(err);
+    expect(fn).toHaveBeenCalledTimes(5);
   });
 
   it("ne retente pas une erreur métier Prisma", async () => {
