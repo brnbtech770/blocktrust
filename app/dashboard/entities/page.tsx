@@ -22,11 +22,15 @@ import {
 } from "@/lib/entity-contacts";
 import { resolveEffectivePlan, getPlanDisplayLabel } from "@/lib/plan-features";
 import { getMaxContacts } from "@/lib/pricing";
+import { lookupCertifiedEmails } from "@/lib/lookup-certified-emails";
+import { normalizeEmail } from "@/lib/email-normalize";
 
 function ContactStatusBadge({
   certificates,
+  certifiedElsewhere,
 }: {
   certificates: Array<{ status: string }>;
+  certifiedElsewhere: boolean;
 }) {
   const base =
     "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold";
@@ -34,11 +38,11 @@ function ContactStatusBadge({
   const pending = certificates.find((c) => c.status === "PENDING");
   const revoked = certificates.find((c) => c.status === "REVOKED");
 
-  if (active) {
+  if (active || certifiedElsewhere) {
     return (
       <span className={`${base} bg-green-500/20 text-green-400`}>
         <CheckCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        Certifié BLOCKTRUST
+        {certifiedElsewhere && !active ? "Certifié ✓" : "Certifié BLOCKTRUST"}
       </span>
     );
   }
@@ -61,7 +65,7 @@ function ContactStatusBadge({
   return (
     <span className={`${base} bg-gray-500/20 text-gray-400`}>
       <User className="h-3.5 w-3.5 shrink-0" aria-hidden />
-      Contact · non certifié BLOCKTRUST
+      Non certifié
     </span>
   );
 }
@@ -90,6 +94,7 @@ export default async function EntitiesPage() {
 
   const contacts = filterThirdPartyContactEntities(allEntities, user.email);
   const ownBadgeCount = allEntities.length - contacts.length;
+  const certifiedEmails = await lookupCertifiedEmails(contacts.map((c) => c.email));
 
   const effectivePlan = resolveEffectivePlan({
     subscription: user.subscription,
@@ -226,7 +231,10 @@ export default async function EntitiesPage() {
 
                 <div className="mb-4">
                   <p className="mb-1 text-base font-medium text-gray-400">Statut</p>
-                  <ContactStatusBadge certificates={entity.certificates} />
+                  <ContactStatusBadge
+                    certificates={entity.certificates}
+                    certifiedElsewhere={certifiedEmails.has(normalizeEmail(entity.email))}
+                  />
                 </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row">

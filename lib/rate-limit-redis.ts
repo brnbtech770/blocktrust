@@ -117,6 +117,14 @@ export const getKycSiretLimiter = () => getLimiter("bt:kyc:siret", 10, "1 h");
 // Mot de passe oublié (anti-spam d'emails) : 3 / h par identifiant (IP ou email)
 export const getForgotPasswordLimiter = () => getLimiter("bt:forgot", 3, "1 h");
 
+/** Import Google Contacts : 5 / jour par userId */
+export const getGoogleContactsImportDayLimiter = () =>
+  getLimiter("bt:gcontacts:import:d", 5, "1 d");
+
+/** Démarrage OAuth Google Contacts : 10 / h par userId */
+export const getGoogleContactsStartHourLimiter = () =>
+  getLimiter("bt:gcontacts:start:h", 10, "1 h");
+
 // Résolution de token rotatif /api/verify/resolve-token (anti brute-force) : 30 / min par IP hash
 export const getResolveTokenLimiter = () => getLimiter("bt:resolve-token", 30, "1 m");
 

@@ -8,6 +8,8 @@ import {
   getPasswordChangeLimiter,
   getWhitelabelTestLimiter,
   getVerifyLinkHourLimiter,
+  getGoogleContactsImportDayLimiter,
+  getGoogleContactsStartHourLimiter,
   tryRedisLimit,
 } from "@/lib/rate-limit-redis";
 
@@ -116,6 +118,32 @@ export async function checkRateLimitVerifyLinkAsync(
     userId,
     "verify-link:h",
     20,
+    3_600_000,
+  );
+}
+
+/** 5 imports Google Contacts / jour par utilisateur */
+export async function checkRateLimitGoogleContactsImportAsync(
+  userId: string,
+): Promise<SensitiveRateLimitResult> {
+  return redisOrMemory(
+    getGoogleContactsImportDayLimiter(),
+    userId,
+    "gcontacts-import:d",
+    5,
+    86_400_000,
+  );
+}
+
+/** 10 démarrages OAuth Google Contacts / h par utilisateur */
+export async function checkRateLimitGoogleContactsStartAsync(
+  userId: string,
+): Promise<SensitiveRateLimitResult> {
+  return redisOrMemory(
+    getGoogleContactsStartHourLimiter(),
+    userId,
+    "gcontacts-start:h",
+    10,
     3_600_000,
   );
 }

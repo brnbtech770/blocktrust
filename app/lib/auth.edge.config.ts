@@ -5,6 +5,7 @@ import "./auth-env-shim";
 import type { NextAuthConfig } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
+import { GOOGLE_LOGIN_SCOPES } from "@/lib/google-oauth-scopes";
 
 const clientId = process.env.GOOGLE_CLIENT_ID ?? "";
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET ?? "";
@@ -14,6 +15,12 @@ export const googleProvider =
     ? GoogleProvider({
         clientId,
         clientSecret,
+        authorization: {
+          params: {
+            // Login uniquement — ne jamais y coller contacts.readonly (OAuth one-shot séparé).
+            scope: GOOGLE_LOGIN_SCOPES,
+          },
+        },
         // Opt-in explicite (désactivé en prod par défaut).
         // Les comptes créés via Google n'en ont pas besoin : signIn upsert + emailVerified.
         // Activer uniquement si un utilisateur credentials existant doit lier le même email Google.
