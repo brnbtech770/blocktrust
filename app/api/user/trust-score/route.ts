@@ -10,6 +10,7 @@ import {
   getTrustScoreLabel,
 } from '@/lib/trustscore'
 import { ensureStrictEmptyBody } from '@/lib/api-json-body'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -38,6 +39,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const invalid = await ensureStrictEmptyBody(req)
   if (invalid) return invalid
 

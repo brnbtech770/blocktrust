@@ -10,6 +10,7 @@ import { prisma } from '@/app/lib/db';
 import { deleteRevokedCertificate, deleteRevokedCertificateAsAdmin } from '@/lib/delete-revoked-certificate';
 import { isDashboardAdmin } from '@/lib/admin-utils';
 import { z } from 'zod';
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard';
 
 const actionSchema = z
   .object({
@@ -22,7 +23,10 @@ interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function DELETE(_req: NextRequest, { params }: RouteParams) {
+export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  const csrf = sameOriginMutationResponse(req);
+  if (csrf) return csrf;
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
@@ -43,6 +47,9 @@ export async function DELETE(_req: NextRequest, { params }: RouteParams) {
 }
 
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
+  const csrf = sameOriginMutationResponse(req);
+  if (csrf) return csrf;
+
   try {
     // Vérifier l'authentification
     const user = await getAuthUser(req);

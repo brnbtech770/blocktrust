@@ -249,24 +249,28 @@ export async function runAnomalyDetection(): Promise<AnomalyDetectionResult> {
     revokedScanAlerts += 1
   }
 
-  await prisma.auditLog.create({
-    data: {
-      action: 'ANOMALY_DETECTOR_RUN',
-      resource: 'agent',
-      resourceId: 'anomaly-detector',
-      newValue: {
-        finishedAt: new Date().toISOString(),
-        highVolumeGroups: highVolumeGroups.length,
-        highVolumeAlertsCreated: highVolumeAlerts,
-        fraudRate,
-        revokedCertsDetected: revokedCertIds.length,
-        revokedAlertsCreated: revokedScanAlerts,
-        totalVerifs24h: totalVerifs,
-        fraudVerifs24h: fraudVerifs,
-        graceSkipped,
-      } as Prisma.InputJsonValue,
-    },
-  })
+  try {
+    await prisma.auditLog.create({
+      data: {
+        action: 'ANOMALY_DETECTOR_RUN',
+        resource: 'agent',
+        resourceId: 'anomaly-detector',
+        newValue: {
+          finishedAt: new Date().toISOString(),
+          highVolumeGroups: highVolumeGroups.length,
+          highVolumeAlertsCreated: highVolumeAlerts,
+          fraudRate,
+          revokedCertsDetected: revokedCertIds.length,
+          revokedAlertsCreated: revokedScanAlerts,
+          totalVerifs24h: totalVerifs,
+          fraudVerifs24h: fraudVerifs,
+          graceSkipped,
+        } as Prisma.InputJsonValue,
+      },
+    })
+  } catch (error) {
+    console.error('[anomaly-detector] auditLog.create failed', error)
+  }
 
   return {
     highVolume: highVolumeGroups.length,

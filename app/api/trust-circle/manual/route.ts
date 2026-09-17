@@ -5,6 +5,7 @@ import { checkTrustCircleQuota } from '@/lib/checkTrustCircleQuota'
 import { resolveEffectivePlan, planAllowsTrustCircle } from '@/lib/plan-features'
 import { z } from 'zod'
 import { createAdminAlert } from '@/lib/admin-alerts'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const schema = z.object({
   entityName:  z.string().min(1).max(200),
@@ -16,6 +17,9 @@ const schema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

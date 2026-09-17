@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { isDiscoveryExpired, isDiscoveryPlan, resolveEffectivePlan } from '@/lib/plan-features'
 import { assertEmailVerifiedForFeature } from '@/lib/require-email-verified'
 import { checkKycRateLimit } from '@/lib/rate-limit-cost'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const schema = z.object({
   accountType: z.enum(['INDIVIDUAL', 'BUSINESS']),
@@ -16,6 +17,9 @@ const schema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json(

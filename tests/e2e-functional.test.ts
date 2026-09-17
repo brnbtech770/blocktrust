@@ -31,7 +31,14 @@ vi.mock("@/lib/turnstile", () => ({
 vi.mock("@/lib/csrf-origin-guard", () => ({
   validateAuthJsCsrf: () => true,
   assertSameOriginMutation: () => ({ ok: true as const }),
+  sameOriginMutationResponse: () => null,
   readAuthJsCsrfCookie: () => null,
+  shouldEnforceCsrfOrigin: () => false,
+  csrfExemptReason: () => "not-mutating",
+  isSameOriginMutation: () => true,
+  isNextAuthInternalPath: () => false,
+  isMutatingHttpMethod: () => true,
+  hasApiKeyAuthHeader: () => false,
 }));
 
 vi.mock("@/lib/email", () => ({

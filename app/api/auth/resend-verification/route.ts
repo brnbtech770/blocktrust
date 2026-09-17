@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/app/lib/auth-server";
 import { resendVerificationByEmail } from "@/lib/email-verification";
+import { sameOriginMutationResponse } from "@/lib/csrf-origin-guard";
 
 const bodySchema = z.object({
   email: z.string().email().optional(),
@@ -9,6 +10,9 @@ const bodySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const csrf = sameOriginMutationResponse(req);
+    if (csrf) return csrf;
+
     const session = await auth();
     const parsed = bodySchema.safeParse(await req.json());
     const bodyEmail = parsed.success ? parsed.data.email?.trim().toLowerCase() : undefined;

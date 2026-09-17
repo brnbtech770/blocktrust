@@ -23,6 +23,7 @@ import { isAdmin } from '@/app/lib/admin'
 import { isDiscoveryPlan, resolveEffectivePlan, BLOCKCHAIN_STATUS_NOT_ANCHORED } from '@/lib/plan-features'
 import { isUserOwnProfileEntity } from '@/lib/entity-contacts'
 import { assertDashboardMutationAllowed } from '@/lib/require-email-verified'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 import {
   checkIsOrgAdmin,
   countActiveCertificatesForSubject,
@@ -127,6 +128,9 @@ const createCertificateSchema = z
   .strict()
 
 export async function POST(req: NextRequest) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   try {
     // Vérifier l'authentification avec NextAuth v5
     const session = await auth()

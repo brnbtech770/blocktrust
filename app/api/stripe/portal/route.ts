@@ -7,9 +7,13 @@ import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { stripe } from '@/lib/stripe'
 import { ensureStrictEmptyBody } from '@/lib/api-json-body'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 export async function POST(req: NextRequest) {
   try {
+    const csrf = sameOriginMutationResponse(req)
+    if (csrf) return csrf
+
     const invalid = await ensureStrictEmptyBody(req)
     if (invalid) return invalid
 

@@ -8,10 +8,14 @@ import { prisma } from '@/app/lib/db'
 import { isAdmin } from '@/lib/admin-utils'
 import { validateCertifiedContactArraysWithLimits } from '@/lib/certified-contact'
 import { getPlanWording, resolvePlanKeyForWording } from '@/lib/plan-wording'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 export const dynamic = 'force-dynamic'
 
 export async function PATCH(req: NextRequest): Promise<NextResponse> {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

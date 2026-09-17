@@ -9,11 +9,15 @@ import { auth } from '@/app/lib/auth-server'
 import { generateUniqueApiKeyPair, maskApiKey } from '@/lib/api-key'
 import { ensureStrictEmptyBody } from '@/lib/api-json-body'
 import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const invalid = await ensureStrictEmptyBody(req)
   if (invalid) return invalid
 

@@ -4,6 +4,7 @@ import { prisma } from "@/app/lib/db";
 import { redactEmailRecipient, sendEmail } from "@/lib/email";
 import { checkForgotPasswordRateLimit } from "@/lib/rate-limit-cost";
 import { writeSecurityAuditLogFireAndForget } from "@/lib/security-audit";
+import { sameOriginMutationResponse } from "@/lib/csrf-origin-guard";
 import crypto from "crypto";
 
 const bodySchema = z.object({ email: z.string().email() });
@@ -14,6 +15,9 @@ function clientIp(req: NextRequest): string {
 
 export async function POST(req: NextRequest) {
   try {
+    const csrf = sameOriginMutationResponse(req);
+    if (csrf) return csrf;
+
     const parsed = bodySchema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json({ success: true });

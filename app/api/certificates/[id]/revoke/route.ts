@@ -11,6 +11,7 @@ import { redactEmailRecipient, sendEmail } from '@/lib/email'
 import { invalidateTrustEngineCacheForCertificate } from '@/lib/trust-engine-cache'
 import { CertificateRevokedEmail, subject as certificateRevokedSubject } from '@/emails/CertificateRevokedEmail'
 import { writeSecurityAuditLogFireAndForget } from '@/lib/security-audit'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const certificateIdSchema = z.string().cuid()
 
@@ -18,6 +19,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   try {
     // Vérifier l'authentification
     const session = await auth()

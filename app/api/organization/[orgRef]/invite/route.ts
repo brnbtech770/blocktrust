@@ -10,6 +10,7 @@ import { findOrganizationByRef, orgRoleCanInvite, requireOrgMember } from '@/lib
 import { sendEmailFireAndForget } from '@/lib/email'
 import { getOrgUserQuota } from '@/lib/vault-utils'
 import React from 'react'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const inviteBody = z.object({
   email: z.string().email(),
@@ -19,6 +20,9 @@ export async function POST(
   req: Request,
   ctx: { params: Promise<{ orgRef: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

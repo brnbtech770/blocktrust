@@ -10,11 +10,15 @@ import { vaultCompareBodySchema } from '@/lib/vault-entry-schema'
 import { compareVaultRibValues } from '@/lib/vault-entry-value'
 import { vaultRateLimitResponse } from '@/lib/vault-api-utils'
 import { auditVaultAction } from '@/lib/vault-audit'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 export async function POST(
   req: Request,
   ctx: { params: Promise<{ vaultId: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

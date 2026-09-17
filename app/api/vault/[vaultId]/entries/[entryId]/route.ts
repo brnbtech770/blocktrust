@@ -17,6 +17,7 @@ import {
 } from '@/lib/vault-entry-value'
 import { vaultRateLimitResponse, orgRoleCanRevealVaultValues } from '@/lib/vault-api-utils'
 import { auditVaultAction } from '@/lib/vault-audit'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const patchBody = z.object({
   name: z.string().min(1).max(200).optional(),
@@ -29,6 +30,9 @@ export async function PATCH(
   req: Request,
   ctx: { params: Promise<{ vaultId: string; entryId: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
@@ -128,9 +132,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ vaultId: string; entryId: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

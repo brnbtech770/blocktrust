@@ -8,6 +8,7 @@ import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import { findOrganizationByRef, orgRoleCanManageOrgSettings, requireOrgMember } from '@/lib/org-vault-server'
 import { countOrgVaultEntries, countOrgVaults, getVaultQuota } from '@/lib/vault-utils'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const patchBody = z.object({
   name: z.string().min(2).max(120).optional(),
@@ -73,6 +74,9 @@ export async function PATCH(
   req: Request,
   ctx: { params: Promise<{ orgRef: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { BIOMETRIC_CONSENT_VERSION } from '@/lib/biometric-consent'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 export async function GET() {
   const session = await auth()
@@ -24,7 +25,10 @@ export async function GET() {
   })
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })

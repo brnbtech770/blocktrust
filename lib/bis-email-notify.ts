@@ -5,6 +5,7 @@
 import * as React from 'react'
 import { prisma } from '@/app/lib/db'
 import { redactEmailRecipient, sendEmail } from '@/lib/email'
+import { hashAuditEmail } from '@/lib/security-audit'
 import {
   BisNotificationEmail,
   buildBisNotificationSubject,
@@ -47,6 +48,18 @@ export function resolveBisSenderDisplayName(
   return local.charAt(0).toUpperCase() + local.slice(1)
 }
 
+export function bisNotificationAuditNewValue(params: {
+  signatureId: string
+  recipientEmail: string
+  success: boolean
+}): { recipientEmailHash: string; bisId: string; success: boolean } {
+  return {
+    recipientEmailHash: hashAuditEmail(params.recipientEmail),
+    bisId: params.signatureId,
+    success: params.success,
+  }
+}
+
 async function logBisNotificationAudit(params: {
   signatureId: string
   senderUserId: string
@@ -60,11 +73,7 @@ async function logBisNotificationAudit(params: {
         resource: 'interaction_signature',
         resourceId: params.signatureId,
         userId: params.senderUserId,
-        newValue: {
-          recipientEmail: params.recipientEmail,
-          bisId: params.signatureId,
-          success: params.success,
-        },
+        newValue: bisNotificationAuditNewValue(params),
       },
     })
     .catch(() => null)

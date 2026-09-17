@@ -12,6 +12,7 @@ import {
   requireOrgMember,
 } from '@/lib/org-vault-server'
 import { countOrgVaultEntries, countOrgVaults, getVaultQuota } from '@/lib/vault-utils'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const createBody = z.object({
   name: z.string().min(1).max(120),
@@ -64,6 +65,9 @@ export async function POST(
   req: Request,
   ctx: { params: Promise<{ orgRef: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

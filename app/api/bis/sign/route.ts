@@ -35,6 +35,7 @@ import {
 import { checkRateLimitExtensionAsync } from '@/lib/rate-limit-extension'
 import { btErrorDevDetails } from '@/lib/prodLog'
 import { assertDashboardMutationAllowed } from '@/lib/require-email-verified'
+import { assertSameOriginMutation } from '@/lib/csrf-origin-guard'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -127,6 +128,13 @@ export async function OPTIONS(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!extractExtensionApiKey(req)) {
+      const originGuard = assertSameOriginMutation(req)
+      if (!originGuard.ok) {
+        return bisJson(req, { error: originGuard.message }, originGuard.status)
+      }
+    }
+
     let actor: BisSignActor | null
     try {
       actor = await resolveBisSignActor(req)

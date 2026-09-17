@@ -16,6 +16,7 @@ import { extensionJsonResponse, extensionOptionsResponse } from "@/lib/extension
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
 import { assertDashboardMutationAllowed } from "@/lib/require-email-verified";
 import { writeSecurityAuditLogFireAndForget } from "@/lib/security-audit";
+import { sameOriginMutationResponse } from "@/lib/csrf-origin-guard";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -130,6 +131,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const csrf = sameOriginMutationResponse(req);
+  if (csrf) return csrf;
+
   const session = await auth();
   if (!session?.user?.id) {
     return extensionJsonResponse(req, { error: "unauthorized", message: "Connexion requise." }, 401);

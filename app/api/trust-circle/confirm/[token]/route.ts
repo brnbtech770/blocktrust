@@ -5,11 +5,15 @@ import { prisma } from '@/app/lib/db'
 import { canPromoteToMutual, promoteToMutual } from '@/lib/trust-circle-mutual'
 import { persistUserTrustScore } from '@/lib/trustscore'
 import { userCanAcceptInvite } from '@/lib/trust-circle-invites'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })

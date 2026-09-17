@@ -11,6 +11,7 @@ import {
   validateCertifiedContactArraysPartial,
 } from "@/lib/certified-contact";
 import { assertSafeDisplayText } from "@/lib/sanitize-display-text";
+import { sameOriginMutationResponse } from "@/lib/csrf-origin-guard";
 
 const patchEntitySchema = z
   .object({
@@ -61,6 +62,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req);
+  if (csrf) return csrf;
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });

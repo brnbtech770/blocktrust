@@ -23,6 +23,7 @@ import { verifyTurnstileForRegister } from "@/lib/turnstile";
 import { clearLoginLockout } from "@/lib/login-lockout";
 import { sendVerificationEmailForUser } from "@/lib/email-verification";
 import { LEGAL_DOC_VERSION } from "@/lib/legal";
+import { sameOriginMutationResponse } from "@/lib/csrf-origin-guard";
 
 const MIN_FORM_MS = 3000;
 
@@ -68,6 +69,9 @@ function generic400() {
 
 export async function POST(req: NextRequest) {
   try {
+    const csrf = sameOriginMutationResponse(req);
+    if (csrf) return csrf;
+
     const parsed = registerSchema.safeParse(await req.json());
     if (!parsed.success) {
       const err = parsed.error as { issues?: Array<{ message?: string }> };

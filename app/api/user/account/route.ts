@@ -84,7 +84,12 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   }
 }
 
-export async function PATCH(): Promise<NextResponse> {
+export async function PATCH(req: NextRequest): Promise<NextResponse> {
+  const originGuard = assertSameOriginMutation(req);
+  if (!originGuard.ok) {
+    return NextResponse.json({ error: originGuard.message }, { status: originGuard.status });
+  }
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });

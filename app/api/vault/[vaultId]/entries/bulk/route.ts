@@ -16,6 +16,7 @@ import {
 } from '@/lib/vault-entry-value'
 import { vaultRateLimitResponse } from '@/lib/vault-api-utils'
 import { auditVaultAction } from '@/lib/vault-audit'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const bulkBody = z.object({
   entries: z.array(vaultEntryCreateSchema).min(1).max(500),
@@ -25,6 +26,9 @@ export async function POST(
   req: Request,
   ctx: { params: Promise<{ vaultId: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

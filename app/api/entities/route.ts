@@ -21,6 +21,7 @@ import { assertSafeDisplayText } from '@/lib/sanitize-display-text';
 import { assertDashboardMutationAllowed } from '@/lib/require-email-verified';
 import { isUserOwnProfileEntity } from '@/lib/entity-contacts';
 import { addContactToTrustNetwork } from '@/lib/add-contact-trust-network';
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard';
 
 // ─────────────────────────────────────────────
 // Schémas de validation
@@ -71,6 +72,9 @@ const createEntitySchema = z.discriminatedUnion('entityType', [
 // POST — Créer une entité
 // ─────────────────────────────────────────────
 export async function POST(req: NextRequest) {
+  const csrf = sameOriginMutationResponse(req);
+  if (csrf) return csrf;
+
   let requestPurpose: 'contact' | 'badge' | undefined;
 
   try {

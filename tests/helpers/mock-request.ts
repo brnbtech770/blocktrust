@@ -1,5 +1,18 @@
 import { NextRequest } from 'next/server'
 
+function testAppOrigin(): string {
+  try {
+    return new URL(
+      process.env.NEXTAUTH_URL ??
+        process.env.AUTH_URL ??
+        process.env.NEXT_PUBLIC_APP_URL ??
+        'https://blocktrust.tech',
+    ).origin
+  } catch {
+    return 'https://blocktrust.tech'
+  }
+}
+
 export function mockGetRequest(
   path: string,
   headers: Record<string, string> = {},
@@ -19,6 +32,7 @@ export function mockPostRequest(
     method: 'POST',
     headers: new Headers({
       'content-type': 'application/json',
+      origin: testAppOrigin(),
       ...headers,
     }),
     body,

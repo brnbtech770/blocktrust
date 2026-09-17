@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getAuthUser } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/db'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const deleteBodySchema = z
   .object({
@@ -18,6 +19,9 @@ interface RouteParams {
 }
 
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   try {
     const { id } = await params
     const user = await getAuthUser(req)

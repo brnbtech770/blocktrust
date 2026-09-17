@@ -13,6 +13,7 @@ import {
   slugifyOrgName,
 } from '@/lib/vault-utils'
 import { randomBytes } from 'node:crypto'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const createBody = z.object({
   name: z.string().min(2).max(120),
@@ -66,6 +67,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

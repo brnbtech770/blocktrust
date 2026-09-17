@@ -9,11 +9,15 @@ import { loadVaultForUser } from '@/lib/org-vault-server'
 import { readVaultEntryPlaintext } from '@/lib/vault-entry-value'
 import { vaultRateLimitResponse, orgRoleCanRevealVaultValues } from '@/lib/vault-api-utils'
 import { auditVaultAction } from '@/lib/vault-audit'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 export async function POST(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ vaultId: string; entryId: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

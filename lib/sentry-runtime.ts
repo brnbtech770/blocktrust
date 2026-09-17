@@ -18,3 +18,30 @@ export const SENTRY_CLIENT_IGNORE_ERRORS: Array<string | RegExp> = [
   /Loading CSS chunk [\d]+ failed/,
   "Échec du chargement",
 ];
+
+const SENTRY_PII_KEY = /e-?mail|recipientEmail/i;
+
+function scrubSentryRecord(data: Record<string, unknown> | undefined): void {
+  if (!data) return;
+  for (const key of Object.keys(data)) {
+    if (SENTRY_PII_KEY.test(key)) {
+      data[key] = "[redacted]";
+    }
+  }
+}
+
+/** sendDefaultPii: false + filet si un breadcrumb/extra contient un email. */
+export function scrubSentryEvent<
+  T extends {
+    extra?: Record<string, unknown>;
+    breadcrumbs?: Array<{ data?: Record<string, unknown> }>;
+  },
+>(event: T): T {
+  if (event.extra) scrubSentryRecord(event.extra);
+  if (event.breadcrumbs) {
+    for (const crumb of event.breadcrumbs) {
+      if (crumb.data) scrubSentryRecord(crumb.data);
+    }
+  }
+  return event;
+}

@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { deleteUserContact } from '@/lib/delete-contact'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

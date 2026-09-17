@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/nextjs";
 import {
   isSentryRuntimeEnabled,
   SENTRY_CLIENT_IGNORE_ERRORS,
+  scrubSentryEvent,
 } from "@/lib/sentry-runtime";
 
 Sentry.init({
@@ -15,6 +16,9 @@ Sentry.init({
   replaysSessionSampleRate: 0.01,
   ignoreErrors: SENTRY_CLIENT_IGNORE_ERRORS,
   sendDefaultPii: false,
+  beforeSend(event) {
+    return scrubSentryEvent(event);
+  },
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

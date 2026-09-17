@@ -22,6 +22,7 @@ import {
 } from '@/lib/pricing'
 import { assertEmailVerifiedForFeature } from '@/lib/require-email-verified'
 import { LEGAL_DOC_VERSION } from '@/lib/legal'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 type CheckoutQuantities = { quantity?: number; addonQuantity?: number }
 
@@ -236,6 +237,9 @@ const postCheckoutSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    const csrf = sameOriginMutationResponse(req)
+    if (csrf) return csrf
+
     const session = await auth()
 
     if (!session?.user?.email) {

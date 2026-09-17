@@ -6,6 +6,7 @@ import { checkPlanRateLimit } from '@/lib/rate-limit-plan'
 import { resolveEffectivePlan, planAllowsTrustCircle } from '@/lib/plan-features'
 import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const schema = z.object({
   email:      z.string().email(),
@@ -15,6 +16,9 @@ const schema = z.object({
 })
 
 export async function POST(req: NextRequest) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

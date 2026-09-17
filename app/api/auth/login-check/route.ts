@@ -9,7 +9,7 @@ import {
   getLoginCheckHourLimiter,
   tryRedisLimit,
 } from "@/lib/rate-limit-redis";
-import { validateAuthJsCsrf } from "@/lib/csrf-origin-guard";
+import { validateAuthJsCsrf, sameOriginMutationResponse } from "@/lib/csrf-origin-guard";
 
 const bodySchema = z.object({
   email: z.string().email(),
@@ -33,6 +33,9 @@ async function isRateLimited(identifier: string, limiter: ReturnType<typeof getL
 
 export async function POST(req: NextRequest) {
   try {
+    const csrfOrigin = sameOriginMutationResponse(req);
+    if (csrfOrigin) return csrfOrigin;
+
     const ip = clientIp(req);
 
     if (await isRateLimited(ip, getLoginCheckHourLimiter())) {

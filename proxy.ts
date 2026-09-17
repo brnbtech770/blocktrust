@@ -9,6 +9,11 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { isDashboardAdmin } from '@/app/lib/admin'
+import {
+  assertSameOriginMutation,
+  isNextAuthInternalPath,
+  shouldEnforceCsrfOrigin,
+} from '@/lib/csrf-origin-guard'
 
 function inferSecureCookie(req: NextRequest): boolean {
   const proto = (req.headers.get('x-forwarded-proto') ?? '')
@@ -144,8 +149,9 @@ function apiPathMatchesPrefix(pathname: string, prefix: string): boolean {
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
-  // Auth.js : /api/auth/* hors proxy (CSRF, OAuth, magic link) — ne pas modifier les requêtes.
-  if (pathname.startsWith('/api/auth')) {
+  // Auth.js interne hors proxy (CSRF Auth.js, OAuth, magic link) — ne pas modifier les requêtes.
+  // Les routes custom (/register, /login-check, …) restent filtrées (Origin).
+  if (isNextAuthInternalPath(pathname)) {
     return NextResponse.next()
   }
 
@@ -174,6 +180,18 @@ export async function proxy(request: NextRequest) {
       const url = request.nextUrl.clone()
       url.hostname = canonicalHost
       return NextResponse.redirect(url, 308)
+    }
+  }
+
+  // CSRF Origin/Referer — mutations cookie-auth. Exempt : MCP, Stripe webhooks,
+  // crons QStash/Vercel, extension (clé API), verify public.
+  if (shouldEnforceCsrfOrigin(pathname, request.method, request.headers)) {
+    const originGuard = assertSameOriginMutation(request)
+    if (!originGuard.ok) {
+      return NextResponse.json(
+        { error: originGuard.message },
+        { status: originGuard.status },
+      )
     }
   }
 
@@ -284,7 +302,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // /api/auth/* volontairement absent du matcher (MissingCSRF si intercepté / cookies altérés).
+  // Auth.js [...nextauth] volontairement absent (MissingCSRF si intercepté).
+  // Chemins exacts + :path* : Next ne match pas toujours /api/foo via /api/foo/:path*.
   matcher: [
     '/',
     '/dashboard',
@@ -296,26 +315,45 @@ export const config = {
     '/checkout',
     '/checkout/:path*',
     '/api/debug-auth',
+    '/api/certificates',
     '/api/certificates/:path*',
+    '/api/contacts',
     '/api/contacts/:path*',
+    '/api/entities',
     '/api/entities/:path*',
+    '/api/organization',
     '/api/organization/:path*',
+    '/api/vault',
     '/api/vault/:path*',
+    '/api/kyc',
     '/api/kyc/:path*',
+    '/api/trust-circle',
     '/api/trust-circle/:path*',
     '/api/upload',
+    '/api/whitelabel',
     '/api/whitelabel/:path*',
+    '/api/user',
     '/api/user/:path*',
+    '/api/quota',
     '/api/quota/:path*',
     '/api/qr/generate/:path*',
     '/api/qr/settings/:path*',
     '/api/verify/:path*',
+    '/api/bis/sign',
     '/api/bis/my-signatures',
     '/api/bis/received',
     '/api/extension/api-key',
+    '/api/extension/add-contact',
+    '/api/stripe',
     '/api/stripe/:path*',
     '/api/stats',
     '/api/activity',
+    '/api/admin',
     '/api/admin/:path*',
+    '/api/auth/register',
+    '/api/auth/forgot-password',
+    '/api/auth/reset-password',
+    '/api/auth/resend-verification',
+    '/api/auth/login-check',
   ],
 }

@@ -7,6 +7,7 @@ import { auth } from '@/app/lib/auth-server'
 import { z } from 'zod'
 import { checkVaultMatchForUserContacts } from '@/lib/vault-utils'
 import { vaultRateLimitResponse } from '@/lib/vault-api-utils'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const bodySchema = z.object({
   emails: z.array(z.string()).optional(),
@@ -14,6 +15,9 @@ const bodySchema = z.object({
 })
 
 export async function POST(req: Request) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

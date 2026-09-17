@@ -11,6 +11,7 @@ import { generateUniqueApiKeyPair, maskApiKey } from '@/lib/api-key'
 import { userHasWhiteLabelAccess } from '@/lib/whitelabel-access'
 import { isPublicWebhookUrl } from '@/lib/ssrf-guard'
 import { randomBytes } from 'node:crypto'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -128,6 +129,9 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'unauthenticated' }, { status: 401 })

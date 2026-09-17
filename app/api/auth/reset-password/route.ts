@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 import { validatePassword } from "@/lib/password-policy";
 import { invalidateUserSessions } from "@/lib/session-invalidation";
 import { writeSecurityAuditLogFireAndForget } from "@/lib/security-audit";
+import { sameOriginMutationResponse } from "@/lib/csrf-origin-guard";
 
 const tokenSchema = z.string().min(32);
 
@@ -48,6 +49,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const csrf = sameOriginMutationResponse(req);
+    if (csrf) return csrf;
+
     const body = await req.json();
 
     const parsedBody = resetBodySchema.safeParse(body);

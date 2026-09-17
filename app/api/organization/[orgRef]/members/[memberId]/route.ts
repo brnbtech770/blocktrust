@@ -12,6 +12,7 @@ import {
   requireOrgMember,
 } from '@/lib/org-vault-server'
 import { revokeOrganizationMemberAccess } from '@/lib/org-member-revocation'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const patchBody = z.object({
   role: z.enum(['ADMIN', 'MANAGER', 'MEMBER', 'VIEWER']),
@@ -21,6 +22,9 @@ export async function PATCH(
   req: Request,
   ctx: { params: Promise<{ orgRef: string; memberId: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
@@ -73,9 +77,12 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _req: Request,
+  req: Request,
   ctx: { params: Promise<{ orgRef: string; memberId: string }> },
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   const session = await auth()
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })

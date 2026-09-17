@@ -4,6 +4,7 @@ import { auth } from "@/app/lib/auth-server";
 import { prisma } from "@/app/lib/db";
 import { verifySiret } from "@/lib/insee";
 import { checkKycSiretRateLimit } from "@/lib/rate-limit-cost";
+import { sameOriginMutationResponse } from "@/lib/csrf-origin-guard";
 
 function tooManySiret() {
   return NextResponse.json(
@@ -31,6 +32,9 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const csrf = sameOriginMutationResponse(req);
+  if (csrf) return csrf;
+
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });

@@ -45,9 +45,21 @@ import { clearLoginLockout } from "@/lib/login-lockout";
 import { findUserByNormalizedEmail } from "@/lib/email-utils";
 
 function registerRequest(body: Record<string, unknown>) {
+  const origin = (() => {
+    try {
+      return new URL(
+        process.env.NEXTAUTH_URL ??
+          process.env.AUTH_URL ??
+          process.env.NEXT_PUBLIC_APP_URL ??
+          "https://blocktrust.tech",
+      ).origin;
+    } catch {
+      return "https://blocktrust.tech";
+    }
+  })();
   return new NextRequest("http://localhost/api/auth/register", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", origin },
     body: JSON.stringify(body),
   });
 }

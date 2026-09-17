@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/app/lib/auth-server";
 import { prisma } from "@/app/lib/db";
+import { sameOriginMutationResponse } from "@/lib/csrf-origin-guard";
 
 const bodySchema = z
   .object({
@@ -14,6 +15,9 @@ const bodySchema = z
   .strict();
 
 export async function PATCH(req: NextRequest) {
+  const csrf = sameOriginMutationResponse(req);
+  if (csrf) return csrf;
+
   let json: unknown;
   try {
     json = await req.json();

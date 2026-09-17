@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { generateQrDynamicToken } from '@/lib/qr-dynamic-token'
+import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://blocktrust.tech'
 
@@ -14,6 +15,9 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ certId: string }> }
 ) {
+  const csrf = sameOriginMutationResponse(req)
+  if (csrf) return csrf
+
   try {
     const session = await auth()
     if (!session?.user?.id) {
