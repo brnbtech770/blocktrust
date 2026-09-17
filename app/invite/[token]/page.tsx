@@ -67,7 +67,7 @@ export default async function InvitePage({
           {fromName} vous fait confiance sur BLOCKTRUST™
         </h1>
         <p className="text-[15px] mb-6" style={{ color: 'var(--bt-muted)' }}>
-          {fromName} a certifié son identité numérique et vous invite à rejoindre son cercle de confiance.
+          {fromName} a certifié son identité numérique et vous invite à rejoindre son Trust Circle.
         </p>
 
         <div className="h-px w-full mb-6" style={{ background: 'var(--bt-border)' }} />

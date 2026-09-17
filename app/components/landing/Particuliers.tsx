@@ -5,33 +5,28 @@ import { Briefcase, ShoppingBag, User, ShieldAlert, type LucideIcon } from "luci
 import { LANDING_CTA_B2C_LABEL } from "@/lib/pricing";
 import Reveal from "./Reveal";
 
-type UseCase = { icon: LucideIcon; title: string; text: string; example: string };
+type UseCase = { icon: LucideIcon; title: string; text: string };
 
 const cases: UseCase[] = [
   {
     icon: Briefcase,
     title: "Freelances & consultants",
     text: "Prouvez votre sérieux auprès de chacun de vos nouveaux clients.",
-    example: "Ex : votre nouveau client vérifie votre badge avant de signer un devis ou un contrat.",
   },
   {
     icon: ShoppingBag,
     title: "Vendeurs en ligne",
     text: "Rassurez vos acheteurs sur votre existence et votre identité.",
-    example:
-      "Ex : votre acheteur LeBonCoin scanne votre QR code avant d'effectuer son virement.",
   },
   {
     icon: User,
     title: "Particuliers actifs",
     text: "Protégez vos échanges : location, covoiturage, petites annonces.",
-    example: "Ex : le propriétaire d'un bien vérifie votre identité avant d'effectuer une visite.",
   },
   {
     icon: ShieldAlert,
-    title: "Protégez-vous des menaces par mail",
-    text: "Certifiez vos contacts principaux : banque, mutuelle, sécurité sociale, médecin, employeur — toute tentative d'usurpation déclenche une alerte immédiate.",
-    example: "Ex : vous recevez un email de \"votre banque\" — BLOCKTRUST signale instantanément qu'il n'est pas certifié.",
+    title: "Menaces par mail",
+    text: "Certifiez vos contacts principaux — toute usurpation déclenche une alerte.",
   },
 ];
 
@@ -72,20 +67,23 @@ export default function Particuliers() {
                 {c.title}
               </h3>
               <p className="text-sm leading-relaxed text-white/70">{c.text}</p>
-              <p className="mt-3 text-xs leading-relaxed text-white/50 sm:text-sm">
-                {c.example}
-              </p>
             </Reveal>
           );
         })}
       </div>
 
-      <Reveal delay={300} className="mt-10 flex justify-center">
+      <Reveal delay={300} className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
         <Link
           href="/pricing"
           className="inline-flex min-h-[52px] w-full max-w-sm cursor-pointer items-center justify-center rounded-xl bg-bt-cyan px-8 py-3.5 text-sm font-bold text-navy transition-all hover:scale-[1.04] hover:bg-[#21dfff] sm:w-auto sm:text-base"
         >
           {LANDING_CTA_B2C_LABEL}
+        </Link>
+        <Link
+          href="/how-to#exemples"
+          className="text-sm font-semibold text-bt-cyan hover:underline"
+        >
+          Voir des exemples concrets
         </Link>
       </Reveal>
     </section>

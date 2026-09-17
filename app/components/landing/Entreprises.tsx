@@ -31,7 +31,7 @@ const cases: UseCase[] = [
   {
     icon: Network,
     title: "Votre réseau de partenaires",
-    text: "Fournisseurs, clients, sous-traitants — constituez votre écosystème de confiance certifié. Ex : votre partenaire certifié se fait usurper son identité — BLOCKTRUST le détecte immédiatement et vous alerte.",
+    text: "Fournisseurs, clients, sous-traitants — un écosystème de confiance certifié.",
   },
 ];
 
@@ -74,12 +74,18 @@ export default function Entreprises() {
         })}
       </div>
 
-      <Reveal delay={300} className="mt-10 flex justify-center">
+      <Reveal delay={300} className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
         <Link
           href="/pricing?tab=entreprises"
           className="inline-flex min-h-[52px] w-full max-w-sm cursor-pointer items-center justify-center rounded-xl border border-gold/60 bg-gold/10 px-8 py-3.5 text-sm font-bold text-gold transition-all hover:scale-[1.04] hover:bg-gold/20 sm:w-auto sm:text-base"
         >
           {LANDING_CTA_B2B_LABEL}
+        </Link>
+        <Link
+          href="/how-to#exemples"
+          className="text-sm font-semibold text-gold hover:underline"
+        >
+          Voir des exemples concrets
         </Link>
       </Reveal>
     </section>

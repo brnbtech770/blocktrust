@@ -31,6 +31,8 @@ export type PlanCardProps = {
   altBillingNote?: string;
   extraControl?: ReactNode;
   footerNote?: ReactNode;
+  /** Mention sous le CTA (mensuel vs annuel). */
+  commitmentNote?: string;
 };
 
 function featureLabel(feature: PlanCardFeature): string {
@@ -59,6 +61,7 @@ export default function PlanCard({
   altBillingNote,
   extraControl,
   footerNote,
+  commitmentNote = "Sans engagement · Résiliable à tout moment",
 }: PlanCardProps) {
   return (
     <div
@@ -185,7 +188,7 @@ export default function PlanCard({
       )}
 
       <p className="mt-3 text-center text-xs text-white/30">
-        Sans engagement · Résiliable à tout moment
+        {commitmentNote}
       </p>
     </div>
   );

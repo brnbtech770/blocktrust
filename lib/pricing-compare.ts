@@ -7,6 +7,7 @@ import {
   formatPriceFr,
   getPlanPerMonthAmount,
   FAMILLE_INCLUDED_PROFILES,
+  FAMILLE_MAX_PROFILES,
   TEAM_SEATS_MIN,
   TEAM_SEATS_MAX,
   type PlanB2C,
@@ -104,7 +105,7 @@ export function getB2CCompareTable(): CompareTableData {
         DISCOVERY: "5",
         ESSENTIEL: "20",
         PREMIUM: "100",
-        FAMILLE: "200 + 50/profil",
+        FAMILLE: "200 partagés + 50 / profil",
       },
     ),
     row(
@@ -140,7 +141,7 @@ export function getB2CCompareTable(): CompareTableData {
         DISCOVERY: "1",
         ESSENTIEL: "1",
         PREMIUM: "1",
-        FAMILLE: `Jusqu'à ${FAMILLE_INCLUDED_PROFILES} (+add-on)`,
+        FAMILLE: `${FAMILLE_INCLUDED_PROFILES} inclus (jusqu'à ${FAMILLE_MAX_PROFILES})`,
       },
     ),
     row(
@@ -180,7 +181,7 @@ export function getB2BCompareTable(): CompareTableData {
       {
         STARTER: "1",
         TEAM: `${TEAM_SEATS_MIN}-${TEAM_SEATS_MAX}`,
-        ENTERPRISE: "51+",
+        ENTERPRISE: `${TEAM_SEATS_MAX + 1}+`,
       },
     ),
     row(
@@ -191,7 +192,7 @@ export function getB2BCompareTable(): CompareTableData {
       "Contacts",
       {
         STARTER: "100",
-        TEAM: "Vault illimité",
+        TEAM: "Vault Illimité + 100 contacts de confiance / utilisateur",
         ENTERPRISE: "Illimité",
       },
     ),

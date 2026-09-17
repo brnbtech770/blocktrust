@@ -51,7 +51,7 @@ export function TrustCircleExternalInviteEmail({
   return (
     <Html>
       <Head />
-      <Preview>{inviterName} a certifié son identité numérique et vous invite à rejoindre son cercle de confiance.</Preview>
+      <Preview>{inviterName} a certifié son identité numérique et vous invite à rejoindre son Trust Circle.</Preview>
       <Body style={{ margin: 0, fontFamily: 'Inter, sans-serif' }}>
         <Container style={{ maxWidth: 560, margin: '0 auto' }}>
           <Section style={headerSection}>
@@ -61,8 +61,8 @@ export function TrustCircleExternalInviteEmail({
           <Section style={bodySection}>
             <Text style={titleStyle}>{inviterName} vous fait confiance</Text>
             <Text style={textStyle}>
-              {inviterName} a certifié son identité numérique et vous invite à rejoindre son cercle
-              de confiance.
+              {inviterName} a certifié son identité numérique et vous invite à rejoindre son Trust
+              Circle.
             </Text>
             <Text style={textStyle}>Avec BLOCKTRUST™ vous bénéficiez de :</Text>
             {benefits.map((b, i) => (

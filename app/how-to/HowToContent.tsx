@@ -153,6 +153,13 @@ export default function HowToContent() {
           De la création de votre badge à la protection de vos échanges — tout se fait en
           quelques minutes.
         </p>
+        <p className="mt-4 text-sm text-white/55">
+          Une question ?{" "}
+          <Link href="/faq" className="font-semibold text-bt-cyan hover:underline">
+            Consultez la FAQ
+          </Link>
+          .
+        </p>
       </header>
 
       {/* Section 2 — En 4 étapes */}
@@ -168,6 +175,53 @@ export default function HowToContent() {
             <StepCard key={step.title} {...step} />
           ))}
         </div>
+      </section>
+
+      {/* Exemples d'usage — détaillés (landing = version courte) */}
+      <section id="exemples" className="mt-16 scroll-mt-24" aria-labelledby="examples-heading">
+        <h2
+          id="examples-heading"
+          className="font-syne text-balance mx-auto mb-10 max-w-3xl text-center text-xl font-bold text-white sm:text-2xl"
+        >
+          Exemples concrets
+        </h2>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <h3 className="font-syne text-base font-bold text-bt-cyan">Particuliers & indépendants</h3>
+            <ul className="mt-4 space-y-3 text-sm leading-relaxed text-white/65">
+              <li>
+                Votre nouveau client vérifie votre badge avant de signer un devis ou un contrat.
+              </li>
+              <li>
+                Un acheteur LeBonCoin scanne votre QR code avant d&apos;effectuer un virement.
+              </li>
+              <li>
+                Un propriétaire vérifie votre identité avant une visite.
+              </li>
+              <li>
+                Un email de « votre banque » : BLOCKTRUST signale qu&apos;il n&apos;est pas certifié.
+              </li>
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+            <h3 className="font-syne text-base font-bold text-gold">Entreprises</h3>
+            <ul className="mt-4 space-y-3 text-sm leading-relaxed text-white/65">
+              <li>Mandats authentifiés et agents vérifiés en agence immobilière.</li>
+              <li>Due diligence simplifiée pour startups et investisseurs.</li>
+              <li>Vérification d&apos;identité renforcée en finance.</li>
+              <li>
+                Un partenaire certifié se fait usurper : BLOCKTRUST le détecte et vous alerte.
+              </li>
+            </ul>
+          </div>
+        </div>
+        <p className="mt-6 text-center text-sm text-white/55">
+          Plus de détails dans la{" "}
+          <Link href="/faq" className="font-semibold text-bt-cyan hover:underline">
+            FAQ
+          </Link>
+          .
+        </p>
       </section>
 
       {/* Section 3 — Ce qui vous protège */}
@@ -261,7 +315,10 @@ export default function HowToContent() {
           Commencer gratuitement
         </Link>
         <p className="mt-4 text-sm text-white/50">
-          Plan Découverte gratuit, sans carte bancaire.
+          Plan Découverte gratuit, sans carte bancaire.{" "}
+          <Link href="/faq" className="font-semibold text-bt-cyan hover:underline">
+            FAQ
+          </Link>
         </p>
       </section>
     </div>

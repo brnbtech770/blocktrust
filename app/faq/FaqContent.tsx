@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Minus, Plus } from "lucide-react";
 import PricingToggle from "@/app/components/pricing/PricingToggle";
 import {
   formatPriceFr,
   getPlanB2BById,
   getPlanB2CById,
   getPlanPerMonthAmount,
+  TEAM_SEATS_MAX,
 } from "@/lib/pricing";
 
 type FaqMode = "B2C" | "B2B";
@@ -35,6 +36,26 @@ function buildB2CSections(): FaqSection[] {
               BLOCKTRUST™ certifie votre identité numérique et protège vos échanges contre
               l&apos;usurpation et le phishing. Vous prouvez qui vous êtes, et vous vérifiez à qui
               vous avez affaire.
+            </p>
+          ),
+        },
+        {
+          id: "b2c-general-badge",
+          q: "Qu'est-ce qu'un badge BLOCKTRUST™ ?",
+          a: (
+            <p>
+              Le badge BLOCKTRUST correspond à votre identité sécurisée. Un seul badge permet
+              d&apos;accéder à votre compte sur tous vos appareils compatibles.
+            </p>
+          ),
+        },
+        {
+          id: "b2c-general-badges-count",
+          q: "Dois-je utiliser plusieurs badges ?",
+          a: (
+            <p>
+              Non. Un seul badge suffit pour accéder à vos services sur l&apos;ensemble de vos
+              appareils.
             </p>
           ),
         },
@@ -132,7 +153,7 @@ function buildB2CSections(): FaqSection[] {
           a: (
             <p>
               Découverte (gratuit) = badge d&apos;identité basique. Essentiel = badge ancré
-              blockchain. Premium = cercle de confiance + signatures BIS. Famille = jusqu&apos;à 5
+              blockchain. Premium = Trust Circle + signatures BIS. Famille = jusqu&apos;à 5
               profils protégés.{" "}
               <Link href="/pricing" className="text-bt-cyan hover:underline">
                 Voir le détail sur la page tarifs
@@ -292,7 +313,7 @@ function buildB2BSections(): FaqSection[] {
           a: (
             <p>
               Starter : {starterMonthly}&nbsp;€ HT/mois/utilisateur. Team : {teamMonthly}&nbsp;€
-              HT/mois/utilisateur (2-10 utilisateurs). Entreprise : sur devis (51+ utilisateurs,
+              HT/mois/utilisateur (2-10 utilisateurs). Entreprise : sur devis ({TEAM_SEATS_MAX + 1}+ utilisateurs,
               SSO/SAML, API, marque blanche).{" "}
               <Link href="/pricing?tab=entreprises" className="text-bt-cyan hover:underline">
                 Voir le détail sur la page tarifs
@@ -385,8 +406,15 @@ function FaqAccordion({
                     aria-expanded={isOpen}
                     className="flex w-full cursor-pointer items-center justify-between gap-4 px-5 py-4 text-left"
                   >
-                    <span className="font-syne text-balance text-sm font-semibold text-white sm:text-base">
-                      {item.q}
+                    <span className="flex min-w-0 items-start gap-3">
+                      {isOpen ? (
+                        <Minus className="mt-0.5 h-4 w-4 shrink-0 text-bt-cyan" aria-hidden />
+                      ) : (
+                        <Plus className="mt-0.5 h-4 w-4 shrink-0 text-bt-cyan" aria-hidden />
+                      )}
+                      <span className="font-syne text-balance text-sm font-semibold text-white sm:text-base">
+                        {item.q}
+                      </span>
                     </span>
                     <ChevronDown
                       className={`h-4 w-4 shrink-0 text-bt-cyan transition-transform ${

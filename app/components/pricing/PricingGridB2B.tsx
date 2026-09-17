@@ -138,6 +138,9 @@ export default function PricingGridB2B({
             priceUnit={isEnterprise ? undefined : perSeat ? '/mois/utilisateur' : '/mois'}
             billedNote={billedNote}
             altBillingNote={altBillingNote}
+            commitmentNote={
+              isYearly ? "Facturation annuelle" : "Sans engagement · Résiliable à tout moment"
+            }
             features={benefits}
             extraControl={
               perSeat && perUnit != null ? (

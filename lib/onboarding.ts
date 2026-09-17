@@ -272,7 +272,7 @@ export const ONBOARDING_STEP_CONTENT: Record<OnboardingStepId, OnboardingStep> =
   },
   "trust-circle": {
     id: "trust-circle",
-    title: "Votre cercle de confiance",
+    title: "Votre Trust Circle",
     body: "Le Trust Circle est votre réseau fermé de contacts vérifiés. Contrairement aux contacts simples, le Trust Circle établit des relations de confiance cryptographiquement prouvées.",
     bullets: [
       {

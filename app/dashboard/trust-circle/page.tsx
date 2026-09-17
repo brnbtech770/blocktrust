@@ -364,7 +364,7 @@ export default function TrustCirclePage() {
           <div className="rounded-xl border border-white/10 bg-white/5 p-12 text-center backdrop-blur-lg transition-all hover:border-gold/30">
             <Link2 className="mx-auto mb-4 h-12 w-12 text-white/20" aria-hidden />
             <h3 className="font-syne mb-2 text-xl font-bold tracking-tight text-white">Aucun contact</h3>
-            <p className="mb-6 text-white/60">Ajoutez des contacts à votre cercle de confiance</p>
+            <p className="mb-6 text-white/60">Ajoutez des contacts à votre Trust Circle</p>
             <button
               onClick={() => setShowInviteModal(true)}
               disabled={!quotaAllowed}

@@ -62,6 +62,7 @@ export default function PricingGridB2C({
               key={plan.id}
               name={plan.name}
               price="Gratuit"
+              commitmentNote="Sans engagement · Résiliable à tout moment"
               features={benefits}
               cta={isCurrent ? 'Plan actuel' : 'Commencer gratuitement'}
               ctaStyle={CTA_STYLES[plan.id] ?? { background: 'var(--bt-gold)', color: '#0a1628' }}
@@ -96,6 +97,9 @@ export default function PricingGridB2C({
             priceUnit="/mois"
             billedNote={billedNote}
             altBillingNote={altBillingNote}
+            commitmentNote={
+              isYearly ? "Facturation annuelle" : "Sans engagement · Résiliable à tout moment"
+            }
             features={benefits}
             cta={isCurrent ? 'Plan actuel' : 'Choisir ce plan'}
             ctaStyle={CTA_STYLES[plan.id] ?? { background: '#00d4ff', color: '#0a1628' }}
