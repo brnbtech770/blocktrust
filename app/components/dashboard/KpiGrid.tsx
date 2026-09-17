@@ -13,7 +13,6 @@ export interface KpiGridProps {
   verifications: number
   blockchainStatus: DashboardStats['blockchainStatus']
   fraudAlerts: number
-  polygonExplorerUrl?: string | null
 }
 
 const statusLabel: Record<DashboardStats['blockchainStatus'], string> = {
@@ -29,7 +28,6 @@ export default function KpiGrid({
   verifications,
   blockchainStatus,
   fraudAlerts,
-  polygonExplorerUrl,
 }: KpiGridProps) {
   const blockchainValue: ReactNode =
     blockchainStatus === 'connected' ? (
@@ -67,21 +65,9 @@ export default function KpiGrid({
       <KpiCard
         label="Blockchain"
         value={blockchainValue}
-        sub="Polygon"
+        sub="Ancrage"
         icon={<Link2 className="h-5 w-5 shrink-0 text-bt-cyan" />}
         accent={blockchainStatus === 'connected' ? 'success' : 'brand'}
-        footer={
-          blockchainStatus === 'connected' && polygonExplorerUrl ? (
-            <a
-              href={polygonExplorerUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-2 inline-flex min-h-[44px] items-center font-mono text-xs text-bt-cyan hover:underline"
-            >
-              Voir sur PolygonScan ↗
-            </a>
-          ) : null
-        }
       />
       <KpiCard
         label="Alertes fraude"
@@ -100,14 +86,12 @@ function KpiCard({
   sub,
   icon,
   accent,
-  footer,
 }: {
   label: string
   value: ReactNode
   sub: string
   icon: ReactNode
   accent: 'brand' | 'success' | 'warn' | 'muted'
-  footer?: ReactNode
 }) {
   const topBorder =
     accent === 'brand'
@@ -127,7 +111,6 @@ function KpiCard({
           </p>
           <p className="font-mono text-3xl font-bold tabular-nums tracking-tight text-white">{value}</p>
           <p className="mt-1 truncate font-mono text-xs text-white/50">{sub}</p>
-          {footer}
         </div>
         <div className="shrink-0">{icon}</div>
       </div>

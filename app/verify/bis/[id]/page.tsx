@@ -6,7 +6,6 @@ import Link from 'next/link'
 import {
   AlertTriangle,
   Clock,
-  ExternalLink,
   FileSignature,
   ShieldCheck,
   ShieldX,
@@ -121,7 +120,6 @@ export default async function BisVerifyPage({ params }: PageProps) {
   const levelLabel = getBisLevelLabel(bisLevel)
   const senderName =
     record.sender.name ?? record.senderCert.entity.user.name ?? record.senderEmail
-  const polygonUrl = record.senderCert.polygonExplorerUrl
   const polygonAnchored = Boolean(
     record.polygonTxHash ?? record.senderCert.polygonTxHash,
   )
@@ -219,17 +217,11 @@ export default async function BisVerifyPage({ params }: PageProps) {
             />
           ) : null}
 
-          {polygonAnchored && polygonUrl ? (
+          {polygonAnchored ? (
             <DetailCard title="Ancrage blockchain">
-              <a
-                href={polygonUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-sm text-bt-cyan hover:underline"
-              >
-                Voir sur PolygonScan
-                <ExternalLink className="h-4 w-4" aria-hidden />
-              </a>
+              <p className="text-sm font-semibold text-[#10b981]">
+                ✓ Intégrité vérifiée par ancrage blockchain
+              </p>
             </DetailCard>
           ) : null}
 

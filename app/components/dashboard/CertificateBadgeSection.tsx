@@ -332,13 +332,13 @@ export default function CertificateBadgeSection({
             </div>
             <div className="mt-1 w-full max-w-full shrink-0 px-4 sm:px-8">
               <div className="mx-auto w-full" style={{ maxWidth: dims.w }}>
-                <VerifyBadgeButton certId={badgeId} behavior="copy" />
+                <VerifyBadgeButton certId={certificateId} behavior="copy" />
               </div>
             </div>
           </div>
           <p className="mt-4 text-center text-sm text-gray-400">
-            Aperçu du badge tel qu’affiché sur votre site. Utilisez le bouton pour copier le lien public de
-            vérification (identique au flux sans compte).
+            Aperçu du badge tel qu’affiché sur votre site. Le bouton copie un lien de vérification
+            temporaire (rotatif).
           </p>
         </div>
       </div>

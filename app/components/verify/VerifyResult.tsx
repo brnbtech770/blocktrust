@@ -77,6 +77,7 @@ export function ValidWowView({
   contactAddState,
   contactAddMessage,
   onAddContact,
+  anchored = false,
 }: {
   displayName: string;
   holderEmail: string | null;
@@ -95,6 +96,7 @@ export function ValidWowView({
   contactAddState: "idle" | "loading" | "done" | "error";
   contactAddMessage: string | null;
   onAddContact: () => void;
+  anchored?: boolean;
 }) {
   const isAuthenticated = Boolean(sessionUser);
   const signals = mainTrustSignals(trustEngine);
@@ -188,6 +190,17 @@ export function ValidWowView({
           Cette identité a été <strong>déclarée par son titulaire</strong> mais n&apos;a pas été
           vérifiée par contrôle d&apos;identité. Le nom affiché n&apos;est pas une
           identité certifiée par BLOCKTRUST™.
+        </div>
+      ) : null}
+
+      {anchored ? (
+        <div
+          className="w-full animate-fade-up rounded-xl border border-[#10b981]/30 bg-[#10b981]/10 px-4 py-3 text-center opacity-0"
+          style={{ animationDelay: "220ms" }}
+        >
+          <p className="text-sm font-semibold text-[#10b981]">
+            ✓ Intégrité vérifiée par ancrage blockchain
+          </p>
         </div>
       ) : null}
 

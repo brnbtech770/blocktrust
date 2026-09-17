@@ -172,9 +172,15 @@ describe('/verify public flow (GET /api/public/certificate/:id)', () => {
     expect(data.authenticated).toBe(false)
     // Anonyme : score de confiance masqué (defense-in-depth serveur)
     expect(data.trustEngine).toBeUndefined()
-    // Ancrage Polygon : réservé dashboard — pas exposé sur /verify public
-    expect(data.polygonAnchored).toBe(false)
+    expect(data.anchored).toBe(true)
+    expect(data.anchoredAt).toBe('2026-01-01T00:00:00.000Z')
+    expect(data.polygonAnchored).toBeUndefined()
     expect(data.polygonExplorerUrl).toBeUndefined()
+    expect(data.txHash).toBeUndefined()
+    expect(data.polygonTxHash).toBeUndefined()
+    expect(data.contractAddress).toBeUndefined()
+    expect(data.blockNumber).toBeUndefined()
+    expect(data.polygonScanUrl).toBeUndefined()
   })
 
   it('expose le score complet pour un utilisateur connecté', async () => {
@@ -238,8 +244,10 @@ describe('/verify public flow (GET /api/public/certificate/:id)', () => {
     expect(res.status).toBe(200)
     // Un badge Découverte légitime ne doit pas être qualifié de frauduleux/invalide.
     expect(data.verdict).toBe('VALID')
-    // Honnêteté : pas d'ancrage blockchain annoncé pour un badge preview gratuit.
-    expect(data.polygonAnchored).toBe(false)
+    expect(data.anchored).toBe(false)
+    expect(data.anchoredAt).toBeNull()
+    expect(data.polygonAnchored).toBeUndefined()
+    expect(data.txHash).toBeUndefined()
     // Anonyme : score détaillé toujours masqué.
     expect(data.trustEngine).toBeUndefined()
   })
@@ -302,6 +310,12 @@ describe('GET /api/public/verify/:id (White Label)', () => {
     expect(res.status).toBe(200)
     expect(data.verdict).toBe('VALID')
     expect(data.valid).toBe(true)
+    expect(data.blockchain).toEqual({
+      anchored: true,
+      anchoredAt: '2026-01-01T00:00:00.000Z',
+    })
+    expect(data.blockchain.txHash).toBeUndefined()
+    expect(data.blockchain.network).toBeUndefined()
   })
 
   it('retourne REVOKED pour un certificat révoqué', async () => {

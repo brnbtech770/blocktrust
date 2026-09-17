@@ -177,10 +177,6 @@ export default async function Dashboard({
       { anchored: 0, pending: 0, failed: 0 }
     );
 
-    const lastAnchored = certsForPolygonKpi.find(
-      (c) => isAnchoredOnChain(c) && c.polygonExplorerUrl
-    );
-
     const showSuccessMessage = resolvedSearchParams?.success === "true" || resolvedSearchParams?.certificateCreated === "true";
 
     const certificateTableItems: CertificateTableItem[] = certificates.map((c) => ({
@@ -394,7 +390,6 @@ export default async function Dashboard({
             <div className="mb-4 flex items-center justify-between gap-2">
               <h2 className="font-syne text-xl font-semibold tracking-tight sm:text-2xl">
                 <span className="text-gold">Blockchain</span>
-                <span className="text-white/70"> (Polygon)</span>
               </h2>
               <span className="font-mono text-xs uppercase tracking-widest text-white/40">
                 Ancrage on-chain
@@ -428,16 +423,6 @@ export default async function Dashboard({
                 )}
               </div>
             </div>
-            {lastAnchored?.polygonExplorerUrl && (
-              <a
-                href={lastAnchored.polygonExplorerUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-flex items-center gap-2 text-sm text-bt-cyan hover:underline"
-              >
-                Dernier ancrage sur PolygonScan ↗
-              </a>
-            )}
           </div>
         )}
 

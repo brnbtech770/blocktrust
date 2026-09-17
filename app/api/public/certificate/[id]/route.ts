@@ -20,6 +20,7 @@ import {
   isPrismaUnreachableError,
   withPrismaRetry,
 } from "@/lib/prisma-unreachable";
+import { publicAnchorPayload } from "@/lib/public-anchor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -351,9 +352,7 @@ export async function GET(
   // Le badge gratuit Découverte n'est PAS KYC → on n'affiche jamais « certifiée ».
   const identityVerified = verdict === "VALID" && owner?.kycStatus === "VERIFIED";
 
-  // Ancrage Polygon : réservé au dashboard admin / utilisateur — pas exposé sur /verify public.
-  const polygonAnchored = false;
-  const polygonExplorerUrl = null;
+  const { anchored, anchoredAt } = publicAnchorPayload(certificate);
 
   // Score de confiance détaillé (TrustEngine) : réservé aux utilisateurs CONNECTÉS.
   // Anonyme → badge visible ; score/sous-scores/signaux masqués (defense-in-depth serveur).
@@ -375,8 +374,8 @@ export async function GET(
     certificateStatus: status,
     authenticated,
     identityVerified,
-    polygonAnchored,
-    ...(polygonExplorerUrl ? { polygonExplorerUrl } : {}),
+    anchored,
+    anchoredAt,
     ...(trustEngine ? { trustEngine } : {}),
     ...(showWalletPublic
       ? {

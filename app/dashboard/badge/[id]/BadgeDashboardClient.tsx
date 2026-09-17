@@ -15,6 +15,7 @@ import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 import { isNotAnchored } from '@/lib/plan-features'
 import { BlockchainUpgradePrompt } from '@/app/components/ui/BlockchainUpgradePrompt'
 import { Copy, Download, ExternalLink, Check, Clock, Lock, QrCode, Link2, Lightbulb, ChevronDown } from 'lucide-react'
+import { adminAnchorDetails, isCertificateAnchored } from '@/lib/public-anchor'
 import { TTL_PRESETS, type VerifyTokenListItem } from '@/lib/certificate-verify-token-constants'
 
 interface BadgeData {
@@ -26,6 +27,7 @@ interface BadgeData {
   polygonTxHash?: string | null
   polygonBlock?: number | null
   polygonExplorerUrl?: string | null
+  polygonAnchoredAt?: string | null
   entity: {
     id: string
     entityType: string
@@ -44,7 +46,7 @@ interface BadgeData {
   lastVerifiedAt: string | null
 }
 
-type CopyTarget = 'embed' | 'script' | 'secure' | 'link' | 'permanent' | 'email'
+type CopyTarget = 'embed' | 'script' | 'secure' | 'link' | 'email'
 
 type RotatingLink = {
   url: string
@@ -66,7 +68,6 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
   const [embedCopied, setEmbedCopied] = useState(false)
   const [scriptCopied, setScriptCopied] = useState(false)
   const [secureLinkCopied, setSecureLinkCopied] = useState(false)
-  const [permanentLinkCopied, setPermanentLinkCopied] = useState(false)
   const [emailSnippetCopied, setEmailSnippetCopied] = useState(false)
   const [verifyLink, setVerifyLink] = useState<RotatingLink | null>(null)
   const [generating, setGenerating] = useState(false)
@@ -246,9 +247,6 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
     } else if (target === 'secure') {
       setSecureLinkCopied(true)
       setTimeout(() => setSecureLinkCopied(false), 2000)
-    } else if (target === 'permanent') {
-      setPermanentLinkCopied(true)
-      setTimeout(() => setPermanentLinkCopied(false), 2000)
     } else if (target === 'email') {
       setEmailSnippetCopied(true)
       setTimeout(() => setEmailSnippetCopied(false), 2000)
@@ -360,6 +358,8 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
   const verifyIdLabel = truncateVerificationPublicId(badgeData.publicId)
   const publicVerifyHref = buildPublicVerifyUrl(badgeId)
   const notAnchored = isNotAnchored(badgeData.blockchainStatus)
+  const anchored = isCertificateAnchored(badgeData)
+  const adminDetails = isAdmin ? adminAnchorDetails(badgeData) : null
   const rotatingQrSrc = verifyLink
     ? `/api/verify/link-qr?url=${encodeURIComponent(verifyLink.url)}`
     : null
@@ -440,7 +440,7 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
                   : 'border-[#10b981]/30 bg-[#10b981]/10 text-[#10b981]'
               }`}
             >
-              {notAnchored ? 'Non ancré' : 'Ancré sur Polygon'}
+              {notAnchored ? 'Non ancré' : '✓ Ancré sur blockchain'}
             </span>
           </div>
           {badgeData.trustScore ? (
@@ -577,28 +577,6 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
         ) : null}
 
         <details className="mt-5 rounded-lg border border-white/10 bg-black/20">
-          <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-white/70">
-            Lien permanent (pour signature email, site web)
-            <ChevronDown className="h-4 w-4 shrink-0 text-white/35" aria-hidden />
-          </summary>
-          <div className="space-y-3 border-t border-white/10 px-4 py-3">
-            <p className="text-sm leading-relaxed text-white/55">
-              Le lien permanent ne change jamais. Il est adapté pour votre signature email ou votre
-              site web, mais un tiers pourrait le copier. Préférez le lien temporaire pour les
-              échanges ponctuels.
-            </p>
-            <code className="block break-all font-mono text-xs text-white/45">{publicVerifyHref}</code>
-            <button
-              type="button"
-              onClick={() => void handleCopy(publicVerifyHref, 'permanent')}
-              className="inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-lg border border-white/15 px-4 text-sm text-white/80 transition hover:bg-white/5"
-            >
-              {permanentLinkCopied ? 'Lien permanent copié' : 'Copier le lien permanent'}
-            </button>
-          </div>
-        </details>
-
-        <details className="mt-3 rounded-lg border border-white/10 bg-black/20">
           <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-white/70">
             Historique de mes liens
             <ChevronDown className="h-4 w-4 shrink-0 text-white/35" aria-hidden />
@@ -768,13 +746,13 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
           <ChevronDown className="h-5 w-5 shrink-0 text-white/35" aria-hidden />
         </summary>
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <p className="mb-1 text-xs font-medium uppercase tracking-wider text-white/40">ID certificat</p>
-            <p className="break-all font-mono text-sm text-white/70">{verifyIdLabel}</p>
-            {isAdmin ? (
+          {isAdmin ? (
+            <div>
+              <p className="mb-1 text-xs font-medium uppercase tracking-wider text-white/40">ID certificat</p>
+              <p className="break-all font-mono text-sm text-white/70">{verifyIdLabel}</p>
               <p className="mt-1 break-all font-mono text-[10px] text-white/25">{badgeData.id}</p>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
           <div>
             <p className="mb-1 text-xs font-medium uppercase tracking-wider text-white/40">Date de création</p>
             <p className="text-sm text-white">{issuedAtLabel}</p>
@@ -783,23 +761,55 @@ export default function BadgeDashboardClient({ isAdmin, planExpired = false }: B
             <p className="mb-1 text-xs font-medium uppercase tracking-wider text-white/40">Algorithme</p>
             <p className="font-mono text-sm text-white/70">ES256</p>
           </div>
-          <div>
-            <p className="mb-1 text-xs font-medium uppercase tracking-wider text-white/40">Ancrage Polygon</p>
-            {badgeData.polygonExplorerUrl ? (
-              <a
-                href={badgeData.polygonExplorerUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-bt-cyan hover:underline"
-              >
-                Voir sur PolygonScan
-                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-              </a>
+          <div className="sm:col-span-2">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wider text-white/40">Ancrage</p>
+            {anchored ? (
+              <>
+                <p className="text-sm font-semibold text-[#10b981]">✓ Ancré sur blockchain</p>
+                <p className="mt-1 text-sm leading-relaxed text-white/50">
+                  L&apos;intégrité de votre badge est vérifiée par un ancrage cryptographique horodaté.
+                </p>
+              </>
             ) : (
-              <p className="text-sm text-white/45">{notAnchored ? 'Non ancré' : 'Ancré sur Polygon'}</p>
+              <p className="text-sm text-white/45">Non ancré</p>
             )}
-            {badgeData.polygonTxHash ? (
-              <p className="mt-1 break-all font-mono text-[10px] text-white/30">{badgeData.polygonTxHash}</p>
+            {isAdmin && adminDetails ? (
+              <div className="mt-3 space-y-2 rounded-lg border border-white/10 bg-black/25 p-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-white/35">
+                  Détails techniques (admin)
+                </p>
+                {adminDetails.contractAddress ? (
+                  <p className="break-all font-mono text-[10px] text-white/45">
+                    Contrat : {adminDetails.contractAddress}
+                  </p>
+                ) : null}
+                {adminDetails.txHash ? (
+                  <p className="break-all font-mono text-[10px] text-white/45">
+                    Tx : {adminDetails.txHash}
+                  </p>
+                ) : null}
+                {adminDetails.blockNumber != null ? (
+                  <p className="font-mono text-[10px] text-white/45">
+                    Bloc : {adminDetails.blockNumber.toLocaleString('fr-FR')}
+                  </p>
+                ) : null}
+                {adminDetails.anchoredAt ? (
+                  <p className="font-mono text-[10px] text-white/45">
+                    Ancré le : {new Date(adminDetails.anchoredAt).toLocaleString('fr-FR')}
+                  </p>
+                ) : null}
+                {adminDetails.explorerUrl ? (
+                  <a
+                    href={adminDetails.explorerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-bt-cyan hover:underline"
+                  >
+                    PolygonScan
+                    <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                  </a>
+                ) : null}
+              </div>
             ) : null}
           </div>
         </div>

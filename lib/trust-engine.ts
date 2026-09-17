@@ -168,12 +168,9 @@ export async function computeTrustEngineScore(
     identityScore += 10;
     signals.push({
       type: "BLOCKCHAIN_ANCHORED",
-      label: "Ancré sur Polygon",
+      label: "Ancrage blockchain",
       impact: "positive",
       weight: 10,
-      detail: cert.polygonTxHash
-        ? `TX: ${cert.polygonTxHash.slice(0, 10)}...`
-        : undefined,
     });
   }
 

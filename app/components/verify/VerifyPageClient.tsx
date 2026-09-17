@@ -43,6 +43,7 @@ function applyVerifyApiPayload(
     setCertifiedPhones: (v: string[]) => void;
     setTrustEngine: (v: TrustEngineResult | null) => void;
     setIdentityVerified: (v: boolean) => void;
+    setAnchored: (v: boolean) => void;
   },
 ) {
   setters.setVerdict((data.verdict as Verdict) ?? "ERROR");
@@ -62,6 +63,7 @@ function applyVerifyApiPayload(
   setters.setCertifiedPhones(Array.isArray(data.certifiedPhones) ? data.certifiedPhones : []);
   setters.setTrustEngine(data.trustEngine ?? null);
   setters.setIdentityVerified(Boolean(data.identityVerified));
+  setters.setAnchored(Boolean(data.anchored));
 }
 
 function VerifyContent({
@@ -106,6 +108,7 @@ function VerifyContent({
   } | null>(null);
   const [trustEngine, setTrustEngine] = useState<TrustEngineResult | null>(null);
   const [identityVerified, setIdentityVerified] = useState(false);
+  const [anchored, setAnchored] = useState(Boolean(initialCertData?.anchored));
   const [contactAddState, setContactAddState] = useState<
     "idle" | "loading" | "done" | "error"
   >("idle");
@@ -123,6 +126,7 @@ function VerifyContent({
     setVaultMatchBanner(null);
     setTrustEngine(null);
     setIdentityVerified(false);
+    setAnchored(false);
     setContactAddState("idle");
     setContactAddMessage(null);
 
@@ -188,6 +192,7 @@ function VerifyContent({
       setCertifiedPhones,
       setTrustEngine,
       setIdentityVerified,
+      setAnchored,
     });
     if (initialCertId) {
       setManualIdInput(initialCertId);
@@ -307,6 +312,7 @@ function VerifyContent({
     setVerdict(null);
     setVerifyErrorMessage(null);
     setIdentityVerified(false);
+    setAnchored(false);
     setEntityName(null);
     setHolderEmail(null);
     setCertifiedAt(null);
@@ -334,27 +340,20 @@ function VerifyContent({
         clearTimeout(timeoutId);
         const data = (await res.json()) as VerifyApiSuccess;
         if (cancelled) return;
-        setVerdict((data.verdict as Verdict) ?? "ERROR");
-        setEntityName(data.entityName ?? null);
-        setHolderEmail(data.holderEmail ?? null);
-        setCertifiedAt(data.certifiedAt ?? null);
-        setWalletAddress(data.walletAddress?.trim() ? data.walletAddress : null);
-        setWalletNetworkDisplay(
-          data.walletNetworkDisplay?.trim()
-            ? data.walletNetworkDisplay
-            : data.walletNetwork?.trim()
-              ? data.walletNetwork
-              : null,
-        );
-        setCertifiedDomains(
-          Array.isArray(data.certifiedDomains) ? data.certifiedDomains : [],
-        );
-        setCertifiedEmails(
-          Array.isArray(data.certifiedEmails) ? data.certifiedEmails : [],
-        );
-        setCertifiedPhones(
-          Array.isArray(data.certifiedPhones) ? data.certifiedPhones : [],
-        );
+        applyVerifyApiPayload(data, {
+          setVerdict,
+          setEntityName,
+          setHolderEmail,
+          setCertifiedAt,
+          setWalletAddress,
+          setWalletNetworkDisplay,
+          setCertifiedDomains,
+          setCertifiedEmails,
+          setCertifiedPhones,
+          setTrustEngine,
+          setIdentityVerified,
+          setAnchored,
+        });
       } catch (e: unknown) {
         clearTimeout(timeoutId);
         if (cancelled) return;
@@ -389,6 +388,7 @@ function VerifyContent({
     setVerdict(null);
     setVerifyErrorMessage(null);
     setIdentityVerified(false);
+    setAnchored(false);
     setEntityName(null);
     setHolderEmail(null);
     setCertifiedAt(null);
@@ -413,29 +413,20 @@ function VerifyContent({
         clearTimeout(timeoutId);
         const data = (await res.json()) as VerifyApiSuccess;
         if (cancelled) return;
-        setVerdict((data.verdict as Verdict) ?? "ERROR");
-        setEntityName(data.entityName ?? null);
-        setHolderEmail(data.holderEmail ?? null);
-        setCertifiedAt(data.certifiedAt ?? null);
-        setWalletAddress(data.walletAddress?.trim() ? data.walletAddress : null);
-        setWalletNetworkDisplay(
-          data.walletNetworkDisplay?.trim()
-            ? data.walletNetworkDisplay
-            : data.walletNetwork?.trim()
-              ? data.walletNetwork
-              : null,
-        );
-        setCertifiedDomains(
-          Array.isArray(data.certifiedDomains) ? data.certifiedDomains : [],
-        );
-        setCertifiedEmails(
-          Array.isArray(data.certifiedEmails) ? data.certifiedEmails : [],
-        );
-        setCertifiedPhones(
-          Array.isArray(data.certifiedPhones) ? data.certifiedPhones : [],
-        );
-        setTrustEngine(data.trustEngine ?? null);
-        setIdentityVerified(Boolean(data.identityVerified));
+        applyVerifyApiPayload(data, {
+          setVerdict,
+          setEntityName,
+          setHolderEmail,
+          setCertifiedAt,
+          setWalletAddress,
+          setWalletNetworkDisplay,
+          setCertifiedDomains,
+          setCertifiedEmails,
+          setCertifiedPhones,
+          setTrustEngine,
+          setIdentityVerified,
+          setAnchored,
+        });
       } catch (e: unknown) {
         clearTimeout(timeoutId);
         if (cancelled) return;
@@ -533,6 +524,7 @@ function VerifyContent({
     setCertifiedPhones([]);
     setTrustEngine(null);
     setIdentityVerified(false);
+    setAnchored(false);
     setContactAddState("idle");
     setContactAddMessage(null);
     setToken("");
@@ -592,6 +584,7 @@ function VerifyContent({
             rotatingExpiresAt={vtExpiresAt}
             trustEngine={trustEngine}
             identityVerified={identityVerified}
+            anchored={anchored}
             walletAddress={walletAddress}
             walletNetworkDisplay={walletNetworkDisplay}
             certifiedDomains={certifiedDomains}

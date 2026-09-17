@@ -255,33 +255,27 @@ export default async function CertificateDetailPage({
               <h2 className="text-xl font-bold text-white mb-4">Informations du certificat</h2>
               <div className="space-y-3">
                 <div>
-                  <p className="text-white/40 text-xs uppercase tracking-widest mb-1">ID de vérification</p>
-                  <p className="font-mono text-white/70 text-sm">
-                    {certificate.publicId ? `${certificate.publicId.substring(0, 8)}...` : "—"}
+                  <p className="text-white/40 text-xs uppercase tracking-widest mb-1">Statut du badge</p>
+                  <p className="text-white/70 text-sm">
+                    Partagez un lien temporaire depuis « Copier le lien sécurisé ».
                   </p>
-                  <p className="text-white/30 text-xs mt-0.5">Partagez cet ID pour permettre la vérification</p>
                 </div>
                 <div>
-                  <span className="text-gray-400 text-sm">Polygon</span>
-                  <p className={`text-sm font-semibold ${isPolygonAnchored ? "text-bt-cyan" : "text-amber-300"}`}>
+                  <span className="text-gray-400 text-sm">Ancrage</span>
+                  <p className={`text-sm font-semibold ${isPolygonAnchored ? "text-[#10b981]" : "text-amber-300"}`}>
                     {isPolygonAnchored ? (
                       <span className="inline-flex items-center gap-1">
-                        Ancré
+                        ✓ Ancré sur blockchain
                         <Check className="h-3.5 w-3.5 text-emerald-400" aria-hidden />
                       </span>
                     ) : (
                       "En attente"
                     )}
                   </p>
-                  {isPolygonAnchored && certificate.polygonExplorerUrl ? (
-                    <a
-                      href={certificate.polygonExplorerUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1 inline-block text-xs text-bt-cyan hover:underline"
-                    >
-                      Ouvrir sur PolygonScan ↗
-                    </a>
+                  {isPolygonAnchored ? (
+                    <p className="mt-1 text-xs leading-relaxed text-white/45">
+                      L&apos;intégrité de votre badge est vérifiée par un ancrage cryptographique horodaté.
+                    </p>
                   ) : null}
                 </div>
                 <div>
@@ -330,7 +324,7 @@ export default async function CertificateDetailPage({
                   </div>
                 </div>
                 <VerifyBadgeButton
-                  certId={certificate.publicId || certificate.id}
+                  certId={certificate.id}
                   behavior="copy"
                 />
               </div>

@@ -25,6 +25,7 @@ import {
 import { runEventualAnomalyCheck } from '@/lib/agents/eventual-anomaly-check'
 import { persistUserTrustScore } from '@/lib/trustscore'
 import { isActiveBillingStatus, resolveEffectivePlan } from '@/lib/plan-features'
+import { adminAnchorDetails, publicAnchorPayload } from '@/lib/public-anchor'
 
 function quotaJson(remaining: number, limit: number) {
   const unlimited = limit === Number.POSITIVE_INFINITY
@@ -501,14 +502,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         validationLevel: certificate.entity.validationLevel,
         kycStatus: certificate.entity.kycStatus,
       },
-      blockchain: certificate.txHash
-        ? {
-            anchored: true,
-            txHash: certificate.txHash,
-            blockNumber: certificate.blockNumber,
-            anchoredAt: certificate.anchoredAt,
-          }
-        : { anchored: false },
+      blockchain: isAdmin(session?.user?.email)
+        ? { ...publicAnchorPayload(certificate), ...adminAnchorDetails(certificate) }
+        : publicAnchorPayload(certificate),
       signature: signatureVerification,
       verifiedAt: new Date().toISOString(),
       ...(responseStatus === 'SUSPICIOUS_VOLUME' && anomalyMeta

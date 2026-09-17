@@ -689,7 +689,7 @@ function attachBadgeTooltip(badge, result) {
     { label: "Vérification d'identité", ok: Boolean(signals.kycVerified) },
     ...(signals.inContact ? [{ label: "Contact vérifié", ok: true }] : []),
     ...(signals.inNetwork ? [{ label: "Dans votre réseau", ok: true }] : []),
-    { label: "Ancré Polygon", ok: Boolean(signals.polygonAnchored) },
+    { label: "Ancré blockchain ✓", ok: Boolean(signals.polygonAnchored) },
   ];
   const entityLine =
     result.entityName && String(result.entityName).trim()

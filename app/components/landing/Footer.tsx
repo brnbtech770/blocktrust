@@ -47,7 +47,7 @@ export default function Footer() {
               style={{ borderColor: "var(--bt-cyan-border)" }}
             >
               <Network className="h-3.5 w-3.5 text-bt-cyan" />
-              Ancré sur Polygon Blockchain
+              Ancré sur blockchain
             </div>
           </div>
 

@@ -14,7 +14,7 @@
 //     verdict: "VALID" | "FRAUD_ALERT" | "REVOKED" | "NOT_FOUND" | "EXPIRED",
 //     entity: { name, type, trustScore, kycVerified },
 //     certificate: { id, issuedAt, expiresAt },
-//     blockchain: { network, status },
+//     blockchain: { anchored, anchoredAt },
 //     poweredBy: "BLOCKTRUST"
 //   }
 //
@@ -26,6 +26,7 @@ import { prisma } from '@/app/lib/db'
 import { hashApiKey, isValidApiKeyShape, timingSafeEqualString } from '@/lib/api-key'
 import { checkRateLimitApiAsync } from '@/lib/rate-limit-api'
 import { sendWebhook } from '@/lib/webhooks'
+import { publicAnchorPayload } from '@/lib/public-anchor'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -166,11 +167,7 @@ export async function GET(
       ? `${entity.firstName ?? ''} ${entity.lastName ?? ''}`.trim() || entity.email
       : entity.legalName || entity.tradeName || entity.email
 
-  const blockchainStatus = certificate.txHash
-    ? 'anchored'
-    : certificate.status === 'PENDING'
-      ? 'pending'
-      : 'pending'
+  const blockchainAnchor = publicAnchorPayload(certificate)
 
   const responseBody = {
     valid: verdict === 'VALID',
@@ -186,11 +183,7 @@ export async function GET(
       issuedAt: certificate.issuedAt.toISOString(),
       expiresAt: certificate.expiresAt ? certificate.expiresAt.toISOString() : null,
     },
-    blockchain: {
-      network: 'Polygon',
-      status: blockchainStatus,
-      txHash: certificate.txHash ?? null,
-    },
+    blockchain: blockchainAnchor,
     poweredBy: 'BLOCKTRUST',
   }
 

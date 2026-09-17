@@ -4,13 +4,10 @@ import { useState } from 'react'
 import { Check, Copy, ScanLine } from 'lucide-react'
 import { copyToClipboard } from '@/lib/copy-to-clipboard'
 
-/** Lien public de partage (même valeur que les QR statiques partagés). */
-const SHARE_VERIFY_ORIGIN = 'https://blocktrust.tech'
-
 type VerifyBadgeButtonProps = {
   certId: string
   /**
-   * `copy` : dashboard — le titulaire copie le lien pour ses interlocuteurs.
+   * `copy` : dashboard — génère un lien rotatif (`?vt=`) pour le titulaire.
    * `open` : page publique / visiteur — ouverture de la vérification dans un nouvel onglet.
    */
   behavior?: 'copy' | 'open'
@@ -24,38 +21,64 @@ export default function VerifyBadgeButton({
   href,
 }: VerifyBadgeButtonProps) {
   const [copied, setCopied] = useState(false)
+  const [generating, setGenerating] = useState(false)
 
   if (behavior === 'copy') {
     return (
       <>
         <button
           type="button"
+          disabled={generating}
           onClick={() => {
             void (async () => {
-              const url = `${SHARE_VERIFY_ORIGIN}/verify?certId=${encodeURIComponent(certId)}`
-              const ok = await copyToClipboard(url)
-              if (!ok) return
-              setCopied(true)
-              setTimeout(() => setCopied(false), 2000)
+              setGenerating(true)
+              try {
+                const res = await fetch('/api/verify/generate-link', {
+                  method: 'POST',
+                  credentials: 'include',
+                  headers: { 'content-type': 'application/json' },
+                  body: JSON.stringify({ certificateId: certId, ttlHours: 24 }),
+                })
+                const data = (await res.json()) as {
+                  verifyUrl?: string
+                  message?: string
+                }
+                if (!res.ok || !data.verifyUrl) {
+                  alert(
+                    typeof data.message === 'string'
+                      ? data.message
+                      : 'Impossible de générer le lien sécurisé.',
+                  )
+                  return
+                }
+                const ok = await copyToClipboard(data.verifyUrl)
+                if (!ok) return
+                setCopied(true)
+                setTimeout(() => setCopied(false), 2000)
+              } catch {
+                alert('Erreur réseau.')
+              } finally {
+                setGenerating(false)
+              }
             })()
           }}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#00d4ff]/30 bg-[#00d4ff]/10 py-3 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/20"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#00d4ff]/30 bg-[#00d4ff]/10 py-3 text-sm font-semibold text-[#00d4ff] transition hover:bg-[#00d4ff]/20 disabled:opacity-50"
         >
           {copied ? (
             <>
               <Check className="h-4 w-4 shrink-0" aria-hidden />
-              Lien copié !
+              Lien sécurisé copié
             </>
           ) : (
             <>
               <Copy className="h-4 w-4 shrink-0" aria-hidden />
-              Copier le lien de vérification
+              {generating ? 'Génération…' : 'Copier le lien sécurisé'}
             </>
           )}
         </button>
         <p className="mt-2 text-center text-xs leading-relaxed text-white/30">
-          Partagez ce lien — vos interlocuteurs vérifient votre identité en 1 clic, sans compte
-          BLOCKTRUST.
+          Un lien temporaire est généré à chaque copie. Vos interlocuteurs vérifient votre identité
+          en 1 clic, sans compte BLOCKTRUST.
         </p>
       </>
     )

@@ -47,8 +47,6 @@ export async function getDashboardStats(
           blockchainStatus: true,
           polygonTxHash: true,
           txHash: true,
-          polygonExplorerUrl: true,
-          polygonAnchoredAt: true,
         },
       }),
     ]);
@@ -57,7 +55,6 @@ export async function getDashboardStats(
     c.blockchainStatus === "ANCHORED" || Boolean(c.polygonTxHash || c.txHash);
 
   let blockchainStatus: DashboardStats["blockchainStatus"] = "pending";
-  let polygonExplorerUrl: string | null = null;
 
   if (userChainCerts.length === 0) {
     blockchainStatus = "pending";
@@ -71,14 +68,6 @@ export async function getDashboardStats(
 
     if (anyAnchored) {
       blockchainStatus = "connected";
-      const withLink = [...userChainCerts]
-        .filter((c) => isAnchoredOnChain(c) && c.polygonExplorerUrl)
-        .sort(
-          (a, b) =>
-            (b.polygonAnchoredAt?.getTime() ?? 0) -
-            (a.polygonAnchoredAt?.getTime() ?? 0),
-        );
-      polygonExplorerUrl = withLink[0]?.polygonExplorerUrl ?? null;
     } else if (allFailed) {
       blockchainStatus = "unavailable";
     } else {
@@ -92,6 +81,6 @@ export async function getDashboardStats(
     verifications7d,
     blockchainStatus,
     fraudAlerts: fraudAlertsCount,
-    polygonExplorerUrl,
+    polygonExplorerUrl: null,
   };
 }

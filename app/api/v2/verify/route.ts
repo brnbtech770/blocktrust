@@ -17,6 +17,7 @@ import { persistUserTrustScore } from "@/lib/trustscore";
 import { btLog } from "@/lib/prodLog";
 import { checkPublicVerifyIpRateLimit, PUBLIC_RATE_LIMIT_503_BODY } from "@/lib/rate-limit-public-failclosed";
 import { checkV2VerifyJti } from "@/lib/rate-limit-cost";
+import { publicAnchorPayload } from "@/lib/public-anchor";
 
 function getIp(req: NextRequest) {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -148,6 +149,8 @@ export async function POST(req: NextRequest) {
 
     let entityName: string | undefined;
     let certifiedAt: string | undefined;
+    let anchored = false;
+    let anchoredAt: string | null = null;
 
     if (verdict === "VALID") {
       const cert = await prisma.certificate.findUnique({
@@ -157,6 +160,9 @@ export async function POST(req: NextRequest) {
       if (cert?.entity) {
         entityName = entityDisplayName(cert.entity);
         certifiedAt = cert.issuedAt.toISOString();
+        const anchor = publicAnchorPayload(cert);
+        anchored = anchor.anchored;
+        anchoredAt = anchor.anchoredAt;
       }
     }
 
@@ -200,6 +206,8 @@ export async function POST(req: NextRequest) {
       ...(authenticated ? { entityId, certificateId, jti } : {}),
       ...(entityName ? { entityName } : {}),
       ...(certifiedAt ? { certifiedAt } : {}),
+      anchored,
+      anchoredAt,
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "verify_failed";

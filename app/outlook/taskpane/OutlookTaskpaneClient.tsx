@@ -180,7 +180,7 @@ function SignalsList({
     { label: "Identité vérifiée", ok: signals.kycVerified },
     { label: "Contact vérifié", ok: signals.inContact },
     { label: "Réseau de confiance", ok: signals.inNetwork },
-    { label: "Ancrage Polygon", ok: signals.polygonAnchored },
+    { label: "Ancré blockchain ✓", ok: signals.polygonAnchored },
     { label: "Domaine vérifié", ok: isDomainVerified(payload, senderEmail) },
   ];
 

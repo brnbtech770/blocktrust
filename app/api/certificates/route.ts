@@ -75,6 +75,7 @@ export async function GET() {
     })
 
     // Formater les données pour correspondre à l'interface de la page
+    const admin = isAdmin(session.user.email)
     const formatted = certificates.map((cert) => ({
       id: cert.id,
       publicId: cert.publicId,
@@ -87,9 +88,14 @@ export async function GET() {
       revocationReason: cert.revocationReason || null,
       verificationCount: cert.verificationCount || 0,
       lastVerifiedAt: cert.verifications[0]?.verifiedAt.toISOString() || null,
-      polygonTxHash: cert.polygonTxHash,
-      polygonBlock: cert.polygonBlock,
-      polygonExplorerUrl: cert.polygonExplorerUrl,
+      ...(admin
+        ? {
+            polygonTxHash: cert.polygonTxHash,
+            polygonBlock: cert.polygonBlock,
+            polygonExplorerUrl: cert.polygonExplorerUrl,
+            polygonAnchoredAt: cert.polygonAnchoredAt?.toISOString() ?? null,
+          }
+        : {}),
       entity: {
         id: cert.entity.id,
         entityType: cert.entity.entityType,

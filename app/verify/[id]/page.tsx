@@ -36,6 +36,7 @@ import { formatPriceFr, ESSENTIEL_MONTHLY_EUR } from '@/lib/pricing'
 import { getValidationLevelLabel } from '@/lib/validationLevelDisplay'
 import { formatCertificateLabel } from '@/lib/format-certificate-label'
 import { isActiveBillingStatus, resolveEffectivePlan } from '@/lib/plan-features'
+import { isCertificateAnchored } from '@/lib/public-anchor'
 
 export const dynamic = 'force-dynamic'
 
@@ -888,6 +889,14 @@ function ValidView({
                 <p className="break-all font-mono text-xs text-white/70">{entity.walletAddress.trim()}</p>
                 <p className="mt-1 text-xs text-white/35">
                   Réseau : {walletNetworkLabelFr(entity.walletNetwork.trim())}
+                </p>
+              </div>
+            ) : null}
+
+            {isCertificateAnchored(certificate) ? (
+              <div className="rounded-lg border border-[#10b981]/25 bg-[#10b981]/10 px-4 py-3">
+                <p className="text-sm font-semibold text-[#10b981]">
+                  ✓ Intégrité vérifiée par ancrage blockchain
                 </p>
               </div>
             ) : null}

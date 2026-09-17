@@ -7,9 +7,12 @@ import { requireAdminPage } from '@/app/lib/require-admin-page'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import CertificateActions from '@/app/components/admin/CertificateActions'
+import AdminCopyField from '@/app/components/admin/AdminCopyField'
 import { getCertificateLevelDisplayLabel } from '@/lib/validationLevelDisplay'
 import { resolveEffectivePlan } from '@/lib/plan-features'
 import { formatCertificateLabel } from '@/lib/format-certificate-label'
+import { adminAnchorDetails, isCertificateAnchored } from '@/lib/public-anchor'
+import { buildPublicVerifyUrl } from '@/lib/public-verify-url'
 
 export default async function AdminCertificateDetailPage({
   params,
@@ -81,6 +84,9 @@ export default async function AdminCertificateDetailPage({
     entity: certificate.entity,
     displayName: getEntityName(),
   })
+  const anchorDetails = adminAnchorDetails(certificate)
+  const anchored = isCertificateAnchored(certificate)
+  const permanentUrl = buildPublicVerifyUrl(certificate.publicId ?? certificate.id)
 
   return (
     <div>
@@ -130,8 +136,71 @@ export default async function AdminCertificateDetailPage({
             {certificate.revokedAt && <div><p className={labelCls} style={labelStyle}>Date de révocation</p><p className="text-white">{new Date(certificate.revokedAt).toLocaleDateString('fr-FR')}</p></div>}
             {certificate.revocationReason && <div><p className={labelCls} style={labelStyle}>Raison de révocation</p><p className="text-white">{certificate.revocationReason}</p></div>}
             <div><p className={labelCls} style={labelStyle}>Vérifications</p><p className="text-white">{certificate.verificationCount}</p></div>
+            <div><p className={labelCls} style={labelStyle}>certId</p><p className="break-all font-mono text-xs text-white/80">{certificate.id}</p></div>
           </div>
         </div>
+      </div>
+
+      <div className={`${cardCls} mb-6`}>
+        <h2 className="font-syne mb-4 text-xl font-bold tracking-tight text-white">Lien permanent</h2>
+        <p className="mb-3 text-sm text-white/50">
+          Réservé admin — intégration API, widget, debug. Les utilisateurs voient uniquement des liens rotatifs.
+        </p>
+        <AdminCopyField
+          label="URL permanente"
+          value={permanentUrl}
+        />
+      </div>
+
+      <div className={`${cardCls} mb-6`}>
+        <h2 className="font-syne mb-4 text-xl font-bold tracking-tight text-white">Ancrage blockchain</h2>
+        {anchored ? (
+          <div className="space-y-3">
+                  <div>
+                    <p className={labelCls} style={labelStyle}>Statut</p>
+                    <p className="text-[#10b981]">Ancré</p>
+                  </div>
+                  {anchorDetails.anchoredAt ? (
+                    <div>
+                      <p className={labelCls} style={labelStyle}>Date d&apos;ancrage</p>
+                      <p className="font-mono text-sm text-white">
+                        {new Date(anchorDetails.anchoredAt).toLocaleString('fr-FR')}
+                      </p>
+                    </div>
+                  ) : null}
+                  {anchorDetails.contractAddress ? (
+                    <div>
+                      <p className={labelCls} style={labelStyle}>Adresse contrat</p>
+                      <p className="break-all font-mono text-xs text-white/80">{anchorDetails.contractAddress}</p>
+                    </div>
+                  ) : null}
+                  {anchorDetails.txHash ? (
+                    <div>
+                      <p className={labelCls} style={labelStyle}>Hash de transaction</p>
+                      <p className="break-all font-mono text-xs text-white/80">{anchorDetails.txHash}</p>
+                      {anchorDetails.explorerUrl ? (
+                        <a
+                          href={anchorDetails.explorerUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 inline-block text-sm hover:underline"
+                          style={{ color: 'var(--bt-cyan)' }}
+                        >
+                          Ouvrir sur PolygonScan
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {anchorDetails.blockNumber != null ? (
+                    <div>
+                      <p className={labelCls} style={labelStyle}>Numéro de bloc</p>
+                      <p className="font-mono text-white">{anchorDetails.blockNumber.toLocaleString('fr-FR')}</p>
+                    </div>
+                  ) : null}
+          </div>
+        ) : (
+          <p className="text-white/50">Non ancré</p>
+        )}
       </div>
 
       <div className={cardCls}>

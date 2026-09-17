@@ -8,7 +8,10 @@ import {
   normalizeSenderEmail,
 } from "@/lib/extension-verify-sender-service";
 import { mcpJsonResult } from "@/lib/mcp/sanitize-output";
+import { mcpAnchorResponse } from "@/lib/mcp/anchor-fields";
 import type { McpToolContext } from "@/lib/mcp/types";
+import { prisma } from "@/app/lib/db";
+import { isDashboardAdmin } from "@/lib/admin-utils";
 
 export async function handleVerifyIdentity(
   ctx: McpToolContext,
@@ -28,6 +31,28 @@ export async function handleVerifyIdentity(
 
   const emailNorm = normalizeSenderEmail(email);
   const bisCapable = payload.status === "CERTIFIED";
+  let anchorCert: Parameters<typeof mcpAnchorResponse>[1] = {
+    blockchainStatus: payload.anchoredOnChain ? "ANCHORED" : "PENDING",
+    polygonAnchoredAt: payload.anchoredAt,
+  };
+  if (isDashboardAdmin(ctx.userEmail) && payload.anchoredOnChain) {
+    const entity = await prisma.entity.findFirst({
+      where: {
+        OR: [{ email: emailNorm }, { certifiedEmails: { has: emailNorm } }],
+      },
+      include: {
+        certificates: {
+          where: { status: { in: ["ACTIVE", "ANCHORED"] } },
+          orderBy: { issuedAt: "desc" },
+          take: 1,
+        },
+      },
+    });
+    if (entity?.certificates[0]) {
+      anchorCert = entity.certificates[0];
+    }
+  }
+  const anchor = mcpAnchorResponse(ctx, anchorCert);
 
   if (payload.status === "CERTIFIED" && payload.verified) {
     return mcpJsonResult({
@@ -41,7 +66,7 @@ export async function handleVerifyIdentity(
       officialAccount: payload.officialAccount === true,
       trustLevel: "TRUST",
       kycStatus: payload.signals.kycVerified ? "VERIFIED" : "PENDING",
-      anchored: payload.anchoredOnChain,
+      ...anchor,
       signals: [
         { name: "Identité vérifiée", status: payload.signals.kycVerified },
         { name: "Ancrage blockchain", status: payload.signals.polygonAnchored },
@@ -66,6 +91,6 @@ export async function handleVerifyIdentity(
     entityName: payload.entityName,
     message: payload.message,
     bisCapable: false,
-    anchored: payload.anchoredOnChain,
+    ...anchor,
   });
 }

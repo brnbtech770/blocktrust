@@ -6,6 +6,7 @@ import { prisma } from "@/app/lib/db";
 import { computeTrustEngineScore } from "@/lib/trust-engine";
 import { normalizeSenderEmail } from "@/lib/extension-verify-sender";
 import { mcpJsonResult } from "@/lib/mcp/sanitize-output";
+import { mcpAnchorResponse } from "@/lib/mcp/anchor-fields";
 import type { McpToolContext } from "@/lib/mcp/types";
 
 export async function handleGetTrustScore(
@@ -80,5 +81,6 @@ export async function handleGetTrustScore(
     },
     signals: engine.signals.slice(0, 8),
     bisActivity: { sent: bisSent, verified: bisVerified },
+    ...mcpAnchorResponse(ctx, cert),
   });
 }

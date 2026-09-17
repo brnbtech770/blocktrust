@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import { UpgradePrompt } from "@/app/components/ui/UpgradePrompt";
 import { buildUpgradePromptProps } from "@/lib/upgradePromptProps";
-import { truncateVerificationPublicId } from "@/lib/truncate-public-id";
 import DeleteRevokedCertificateButton from "@/app/components/dashboard/DeleteRevokedCertificateButton";
 
 type CertificateStatus = "PENDING" | "ACTIVE" | "ANCHORED" | "SUSPENDED" | "REVOKED" | "EXPIRED";
@@ -304,15 +303,10 @@ export default function CertificatesPage() {
                       </p>
                     )}
                     <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wider text-white/40">
-                          ID de vérification
-                        </p>
-                        <p className="mt-0.5 font-mono text-xs text-gray-300">
-                          {truncateVerificationPublicId(certificate.publicId)}
-                        </p>
-                        <span className="text-xs text-white/30">À partager pour la vérification</span>
-                      </div>
+                      <p className="text-xs leading-relaxed text-white/40">
+                        Partagez un lien temporaire depuis la page du badge — pas d&apos;identifiant
+                        permanent à copier.
+                      </p>
                     </div>
                     <p className="mt-2 font-sans text-sm text-white/60">
                       Créé le {new Date(certificate.issuedAt).toLocaleDateString("fr-FR", {

@@ -27,7 +27,7 @@ Principe : **l'envoi ne doit jamais être bloqué** — le BIS est un bonus.
 ## Régressions à vérifier
 
 - **Composeur jamais scanné** : pas de chip « ? Non vérifié » dans le corps d'un brouillon
-- **Tooltip** : min 5 s, mouseleave 800 ms, auto-dismiss 15 s, liens cliquables
+- **Tooltip** : min 5 s, mouseleave 800 ms, auto-dismiss 15 s, liens cliquables ; ancrage affiché « Ancré blockchain ✓ » (pas de hash / PolygonScan)
 - **Bouton BIS inline** : compact (~24 px), pas de chevauchement avec Envoyer
 - **Bouton BIS** : jamais dupliqué dans la barre d'outils
 

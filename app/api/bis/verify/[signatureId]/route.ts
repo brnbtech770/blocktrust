@@ -15,6 +15,7 @@ import {
   PUBLIC_RATE_LIMIT_503_BODY,
 } from '@/lib/rate-limit-public-failclosed'
 import { btErrorDevDetails } from '@/lib/prodLog'
+import { publicAnchorPayload } from '@/lib/public-anchor'
 
 type RouteContext = { params: Promise<{ signatureId: string }> }
 
@@ -111,6 +112,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
       senderKycVerified: senderUser.kycStatus === 'VERIFIED',
     })
 
+    const anchor = publicAnchorPayload(record.senderCert)
+
     return NextResponse.json({
       valid: cryptoResult.valid,
       bisLevel,
@@ -127,8 +130,8 @@ export async function GET(req: NextRequest, context: RouteContext) {
       signedAt: record.createdAt.toISOString(),
       expiresAt: record.expiresAt.toISOString(),
       certificateStatus,
-      polygonAnchored: Boolean(record.polygonTxHash ?? record.senderCert.polygonTxHash),
-      polygonExplorerUrl: record.senderCert.polygonExplorerUrl,
+      anchored: anchor.anchored,
+      anchoredAt: anchor.anchoredAt,
       verified: cryptoResult.valid || record.verified,
       verifiedAt: record.verifiedAt?.toISOString() ?? null,
       reason: cryptoResult.valid ? undefined : cryptoResult.reason,

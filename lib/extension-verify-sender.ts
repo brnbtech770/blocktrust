@@ -9,6 +9,7 @@ import {
   isOfficialRootOfTrustEmail,
   OFFICIAL_TRUST_SCORE,
 } from "@/lib/official-trust";
+import { publicAnchorPayload } from "@/lib/public-anchor";
 
 type CertStatus = "PENDING" | "ACTIVE" | "REVOKED" | "EXPIRED" | "ANCHORED" | "SUSPENDED";
 
@@ -47,6 +48,8 @@ export type ExtensionVerifyPayload = {
   certifiedEmails: string[];
   signals: ExtensionVerifySignals;
   anchoredOnChain: boolean;
+  /** Date ISO d'ancrage, sans hash ni contrat. */
+  anchoredAt: string | null;
   message: string;
   /** Lien BIS détecté dans le corps de l'email (Phase 2a). */
   bisSignatureDetected: boolean;
@@ -280,17 +283,19 @@ function finalizePayload(
     ExtensionVerifyPayload,
     | "verdict"
     | "anchoredOnChain"
+    | "anchoredAt"
     | "bisSignatureDetected"
     | "bisVerification"
     | "senderUsuallySignsBis"
     | "bisMissingAlert"
     | "bisMissingAlertMessage"
-  >,
+  > & { anchoredAt?: string | null },
 ): ExtensionVerifyPayload {
   return {
     ...partial,
     verdict: partial.status,
     anchoredOnChain: partial.signals.polygonAnchored,
+    anchoredAt: partial.anchoredAt ?? null,
     bisSignatureDetected: false,
     bisVerification: null,
     senderUsuallySignsBis: false,
@@ -424,6 +429,7 @@ export function buildExtensionVerifyResult(
       certifiedEmails,
       signals,
       message: certifiedMessage(signals),
+      anchoredAt: publicAnchorPayload(bestCert).anchoredAt,
     });
   }
 

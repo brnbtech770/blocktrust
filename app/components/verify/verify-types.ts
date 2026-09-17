@@ -41,6 +41,8 @@ export type VerifyApiSuccess = {
   certifiedPhones?: string[];
   trustEngine?: TrustEngineResult | null;
   identityVerified?: boolean;
+  anchored?: boolean;
+  anchoredAt?: string | null;
 };
 
 export function isAbortError(e: unknown): boolean {
