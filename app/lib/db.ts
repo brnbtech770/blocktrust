@@ -1,3 +1,4 @@
+import "server-only";
 import "@/lib/db-env-shim";
 import { PrismaClient } from "@prisma/client";
 import {

@@ -44,7 +44,7 @@
     "jose": "^6.2.2",
     "lucide-react": "^0.577.0",
     "nanoid": "^3.3.12",
-    "next": "^16.2.4",
+    "next": "^16.3.5",
     "next-auth": "^5.0.0-beta.32",
     "qrcode": "^1.5.4",
     "react": "19.2.5",
@@ -54,6 +54,7 @@
     "recharts": "^3.8.1",
     "resend": "^6.12.0",
     "rss-parser": "^3.13.0",
+    "server-only": "^0.0.1",
     "stripe": "^20.4.1",
     "zod": "^4.3.6"
   },

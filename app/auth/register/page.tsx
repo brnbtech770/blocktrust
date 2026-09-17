@@ -8,7 +8,7 @@ import AuthMinimalHeader from "@/app/components/AuthMinimalHeader";
 import PasswordStrengthIndicator from "@/app/components/auth/PasswordStrengthIndicator";
 import TurnstileWidget from "@/app/components/auth/TurnstileWidget";
 import { validatePassword } from "@/lib/password-policy";
-import { normalizeEmail } from "@/lib/email-utils";
+import { normalizeEmail } from "@/lib/email-normalize";
 
 const cardClass =
   "mx-auto w-full max-w-sm rounded-xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm sm:p-6";

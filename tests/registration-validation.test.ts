@@ -6,7 +6,7 @@ import {
   latinTokenPhoneticFail,
   validateRegistrationNames,
 } from "@/lib/registration-validation";
-import { emailsCanonicallyEqual, normalizeEmail } from "@/lib/email-utils";
+import { emailsCanonicallyEqual, normalizeEmail } from "@/lib/email-normalize";
 
 describe("validateRegistrationNames", () => {
   it("accepte les noms latins légitimes", () => {
