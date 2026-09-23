@@ -103,8 +103,57 @@
 
   const SUBJECT_SELECTORS = ['input[name="subjectbox"]', 'input[name="subject"]'];
 
-  const SHIELD_SVG =
-    '<svg class="bt-bis-btn-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>';
+  /**
+   * Ancre juste après Envoyer (cellule de la flèche « plus d'options », sinon le bouton lui-même).
+   * @param {Element} root
+   * @returns {HTMLElement | null}
+   */
+  function findSendAnchor(root) {
+    const buttons = [...root.querySelectorAll('div[role="button"]')].filter(
+      (el) => el instanceof HTMLElement && !el.classList.contains("bt-bis-btn"),
+    );
+    const sendBtn = buttons.find((el) => {
+      const text = (el.textContent || "").replace(/\s+/g, " ").trim();
+      const label = `${el.getAttribute("aria-label") || ""} ${el.getAttribute("data-tooltip") || ""}`;
+      if (/schedule|planifier|option/i.test(label)) return false;
+      return /^(send|envoyer)$/i.test(text) || /\b(send|envoyer)\b/i.test(label);
+    });
+    const optionsBtn = buttons.find((el) => {
+      const label = `${el.getAttribute("aria-label") || ""} ${el.getAttribute("data-tooltip") || ""}`;
+      return /more send options|plus d'options d'envoi|options d'envoi/i.test(label);
+    });
+    const anchorBtn = optionsBtn || sendBtn;
+    if (!(anchorBtn instanceof HTMLElement)) return null;
+    const cell = anchorBtn.closest("td");
+    if (cell instanceof HTMLElement) return cell;
+    return anchorBtn.parentElement instanceof HTMLElement
+      ? anchorBtn.parentElement
+      : anchorBtn;
+  }
+
+  /**
+   * Un seul bouton, dans la rangée Envoyer — pas dans la barre d'icônes.
+   * @param {Element} root
+   * @param {HTMLElement} button
+   * @returns {boolean}
+   */
+  function placeBisButton(root, button) {
+    root.querySelectorAll(`[${ATTR_BIS_BTN}], .bt-bis-btn, .bt-bis-cell`).forEach((el) => {
+      el.remove();
+    });
+    const anchor = findSendAnchor(root);
+    if (!anchor) return false;
+    if (anchor.tagName === "TD") {
+      const td = document.createElement("td");
+      td.className = "bt-bis-cell";
+      td.setAttribute(BT_UI_MARKER, "1");
+      td.appendChild(button);
+      anchor.insertAdjacentElement("afterend", td);
+      return true;
+    }
+    anchor.insertAdjacentElement("afterend", button);
+    return true;
+  }
 
   /**
    * @param {number} ms
@@ -502,7 +551,10 @@
       hideBisUnavailable(root);
       root.setAttribute(ATTR_SENDER_CERT, "1");
       if (currentMode !== BIS_MODES.SELECTIVE) return;
-      if (!root.querySelector(`[${ATTR_BIS_BTN}]`)) {
+      const existing = root.querySelector(`[${ATTR_BIS_BTN}]`);
+      const placed = existing?.closest(".bt-bis-cell");
+      if (!existing || !placed) {
+        existing?.remove();
         root.removeAttribute(ATTR_BIS_READY);
         initializedComposers.delete(root);
         await injectSelectiveButton(root);
@@ -523,14 +575,6 @@
    */
   function isPopupCompose(root) {
     return Boolean(root.closest('div[role="dialog"]'));
-  }
-
-  /**
-   * @param {Element} root
-   * @returns {boolean}
-   */
-  function isInlineCompose(root) {
-    return !isPopupCompose(root);
   }
 
   /**
@@ -561,24 +605,6 @@
     root.removeAttribute(ATTR_BIS_UNAVAILABLE);
     root.removeAttribute(ATTR_SENDER_CERT);
     root.querySelectorAll(`[${ATTR_BIS_UNAVAIL_MSG}]`).forEach((el) => el.remove());
-  }
-
-  /**
-   * @param {Element} root
-   * @param {HTMLElement} toolbar
-   * @param {HTMLElement} button
-   */
-  function applyComposeButtonLayout(root, toolbar, button) {
-    if (isInlineCompose(root)) {
-      button.classList.add("bt-bis-btn--inline");
-      const composeWidth = root.getBoundingClientRect().width || toolbar.clientWidth;
-      if (composeWidth > 0 && composeWidth < 520) {
-        button.classList.add("bt-bis-btn--compact");
-        button.title = "Signer avec BLOCKTRUST BIS";
-      }
-    } else {
-      button.classList.remove("bt-bis-btn--inline", "bt-bis-btn--compact");
-    }
   }
 
   /**
@@ -954,21 +980,22 @@
     );
     button.setAttribute("aria-disabled", state === "signed" ? "true" : "false");
 
+    const label = '<span class="bt-bis-btn-label">BIS</span>';
     if (state === "ready") {
       button.classList.add("bt-bis-btn--ready");
-      button.innerHTML = `${SHIELD_SVG}<span class="bt-bis-btn-label">✓ BIS</span>`;
+      button.innerHTML = label;
       button.title = "Signer avec BLOCKTRUST BIS";
     } else if (state === "signed") {
       button.classList.add("bt-bis-btn--signed");
-      button.innerHTML = `${SHIELD_SVG}<span class="bt-bis-btn-label">✓ Signé</span>`;
+      button.innerHTML = label;
       button.title = "Email signé avec BIS";
     } else if (state === "signing") {
       button.classList.add("bt-bis-btn--signing");
-      button.innerHTML = `<span class="bt-bis-btn-label">…</span>`;
+      button.innerHTML = label;
       button.title = "Signature en cours…";
     } else {
       button.classList.add("bt-bis-btn--disabled");
-      button.innerHTML = `${SHIELD_SVG}<span class="bt-bis-btn-label">✓ BIS</span>`;
+      button.innerHTML = label;
       button.title = "Configurez votre clé API dans les options de l'extension";
     }
   }
@@ -1097,7 +1124,6 @@
 
     const apiKey = await deps.getApiKey();
     setButtonState(button, apiKey ? "ready" : "disabled");
-    applyComposeButtonLayout(root, toolbar, button);
 
     const onActivate = (e) => {
       e.preventDefault();
@@ -1112,7 +1138,7 @@
       if (e.key === "Enter" || e.key === " ") onActivate(e);
     });
 
-    toolbar.appendChild(button);
+    if (!placeBisButton(root, button)) return;
     root.setAttribute(ATTR_BIS_READY, "1");
     initializedComposers.add(root);
     composeState.set(root, { signed: false, signing: false });

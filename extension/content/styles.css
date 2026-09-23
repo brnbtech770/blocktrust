@@ -2,108 +2,79 @@
  * BLOCKTRUST™ — styles composeur Gmail (Phase 3 BIS — 3 modes)
  */
 
+.bt-bis-cell {
+  vertical-align: middle !important;
+  padding: 0 0 0 8px !important;
+  width: 28px !important;
+}
+
 .bt-bis-btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 4px !important;
-  min-width: 56px !important;
-  height: 28px !important;
+  width: 28px !important;
+  height: 36px !important;
+  min-width: 28px !important;
   margin: 0 !important;
-  padding: 0 10px !important;
-  border-radius: 4px !important;
-  border: 1px solid transparent !important;
-  background: transparent !important;
-  color: #64748b !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background: #bda76b !important;
+  color: #0a1628 !important;
   font-family: Inter, Arial, sans-serif !important;
   font-size: 11px !important;
   font-weight: 700 !important;
-  letter-spacing: 0.02em !important;
+  line-height: 1 !important;
   cursor: pointer !important;
-  vertical-align: middle !important;
   box-sizing: border-box !important;
   user-select: none !important;
   flex-shrink: 0 !important;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
-}
-
-.bt-bis-btn--inline {
-  height: 24px !important;
-  min-width: auto !important;
-  padding: 0 4px !important;
-  font-size: 11px !important;
-  margin: 0 0 0 4px !important;
-}
-
-.bt-bis-btn--compact {
-  min-width: 24px !important;
-  padding: 0 4px !important;
-}
-
-.bt-bis-btn--compact .bt-bis-btn-label {
-  display: none !important;
 }
 
 .bt-bis-unavailable-msg {
   display: block !important;
-  margin: 2px 0 0 0 !important;
-  padding: 0 8px 4px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 4px 0 0 0 !important;
+  padding: 0 12px 6px !important;
   font-family: Inter, Arial, sans-serif !important;
-  font-size: 10px !important;
+  font-size: 11px !important;
   line-height: 1.35 !important;
-  color: #94a3b8 !important;
+  color: #64748b !important;
+  white-space: normal !important;
   pointer-events: none !important;
   user-select: none !important;
 }
 
-.bt-bis-btn-icon {
-  flex-shrink: 0 !important;
-}
-
 .bt-bis-btn-label {
+  writing-mode: vertical-rl !important;
+  text-orientation: upright !important;
+  letter-spacing: 0.18em !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
   line-height: 1 !important;
 }
 
-.bt-bis-btn--ready {
-  border-color: #00d4ff !important;
-  color: #0099bb !important;
-}
-
 .bt-bis-btn--ready:hover {
-  background: rgba(0, 212, 255, 0.12) !important;
-  color: #007a99 !important;
+  background: #d4bc84 !important;
 }
 
 .bt-bis-btn--signed {
-  border-color: rgba(16, 185, 129, 0.65) !important;
-  background: rgba(16, 185, 129, 0.15) !important;
-  color: #059669 !important;
+  background: #10b981 !important;
+  color: #ffffff !important;
   cursor: default !important;
-  animation: bt-bis-signed-pulse 0.45s ease !important;
 }
 
 .bt-bis-btn--disabled {
-  opacity: 0.55 !important;
-  border-color: rgba(100, 116, 139, 0.35) !important;
+  background: #e7e0d2 !important;
+  color: #6b6456 !important;
   cursor: not-allowed !important;
 }
 
 .bt-bis-btn--signing {
-  border-color: rgba(0, 212, 255, 0.35) !important;
-  color: #00a3cc !important;
+  background: #bda76b !important;
+  opacity: 0.65 !important;
   cursor: wait !important;
-}
-
-@keyframes bt-bis-signed-pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
 }
 
 .bt-bis-auto-badge {

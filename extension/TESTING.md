@@ -33,8 +33,7 @@ Principe : **l'envoi ne doit jamais être bloqué** — le BIS est un bonus.
 - **Révocation** : le cache serveur verify-sender est invalidé immédiatement. Le cache local Gmail (5 min) peut encore afficher l'ancien verdict jusqu'à 5 minutes. Un compte officiel révoqué ou expiré ne doit pas afficher « Certifié » une fois le cache local expiré.
 - **BIS composeur** : la disponibilité dépend du compte de la clé API (`/api/extension/me`), pas de l'adresse Gmail. Un badge sur un autre email du même compte affiche le bouton BIS. La signature indique l'email du badge. La lecture des emails reçus reste sur l'email exact.
 - **Tooltip** : min 5 s, mouseleave 800 ms, auto-dismiss 15 s, liens cliquables ; ancrage affiché « Ancré blockchain ✓ » (pas de hash / PolygonScan)
-- **Bouton BIS inline** : compact (~24 px), pas de chevauchement avec Envoyer
-- **Bouton BIS** : jamais dupliqué dans la barre d'outils
+- **Bouton BIS** : un seul, or, lettres BIS à la verticale, collé à droite du bouton Envoyer (après la flèche). Pas dans la barre d'icônes, pas de doublon.
 
 ## Build zip
 
