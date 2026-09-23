@@ -20,7 +20,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
   {
     name: "verify_domain",
     description:
-      "Vérifie si un domaine est associé à des entités certifiées BLOCKTRUST (âge, TrustScore, typosquatting).",
+      "Signale si des emails certifiés utilisent ce domaine. Un domaine ou un site déclaré n'est pas une preuve de contrôle.",
     inputSchema: {
       type: "object",
       properties: { domain: { type: "string", description: "Nom de domaine" } },
@@ -31,7 +31,7 @@ export const MCP_TOOL_DEFINITIONS: McpToolDefinition[] = [
   {
     name: "verify_website",
     description:
-      "Vérifie si un site web appartient à une entité certifiée. Détecte phishing et typosquatting.",
+      "Ne traite pas un site déclaré comme légitime. Signale les emails certifiés sur le domaine et le typosquatting.",
     inputSchema: {
       type: "object",
       properties: { url: { type: "string", description: "URL ou domaine du site" } },

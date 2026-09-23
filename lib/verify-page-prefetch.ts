@@ -5,6 +5,7 @@ import { auth } from "@/app/lib/auth-server";
 import { prisma } from "@/app/lib/db";
 import { getTrustEngineResultForApi } from "@/lib/trust-engine-cache";
 import type { VerifyApiSuccess } from "@/app/components/verify/verify-types";
+import { certificateDisplayedVerdict } from "@/lib/certificate-validity";
 import {
   DATABASE_UNAVAILABLE_VERIFY_PAYLOAD,
   isPrismaUnreachableError,
@@ -62,22 +63,9 @@ async function loadVerifyCertPayload(lookupKey: string): Promise<VerifyApiSucces
     },
   });
 
-  let verdict: VerifyApiSuccess["verdict"] = "VALID";
-  const status = certificate.status;
-
-  if (status === "REVOKED") {
-    verdict = "REVOKED";
-  } else if (status === "EXPIRED") {
-    verdict = "EXPIRED";
-  } else if (certificate.expiresAt && certificate.expiresAt.getTime() < Date.now()) {
-    verdict = "EXPIRED";
-  } else if (status === "ACTIVE" || status === "ANCHORED") {
-    verdict = "VALID";
-  } else if (certificate.blockchainStatus === "NOT_ANCHORED") {
-    verdict = "VALID";
-  } else {
-    verdict = "INVALID";
-  }
+  const displayed = certificateDisplayedVerdict(certificate);
+  const verdict: VerifyApiSuccess["verdict"] =
+    displayed === "INVALID" ? "INVALID" : displayed;
 
   const session = await auth().catch(() => null);
   const authenticated = Boolean(session?.user?.id);

@@ -9,6 +9,7 @@ import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import { redactEmailRecipient, sendEmail } from '@/lib/email'
 import { invalidateTrustEngineCacheForCertificate } from '@/lib/trust-engine-cache'
+import { invalidateExtensionVerifyCacheForEmail } from '@/lib/extension-verify-cache'
 import { CertificateRevokedEmail, subject as certificateRevokedSubject } from '@/emails/CertificateRevokedEmail'
 import { writeSecurityAuditLogFireAndForget } from '@/lib/security-audit'
 import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard'
@@ -110,6 +111,7 @@ export async function POST(
       certificateId,
       certificate.publicId,
     )
+    void invalidateExtensionVerifyCacheForEmail(certificate.entity.email)
 
     // Email transactionnel : certificat révoqué
     const entityName = certificate.entity.entityType === 'INDIVIDUAL'

@@ -12,6 +12,8 @@ import {
   entityMatchesSender,
   normalizeSenderDomain,
   normalizeSenderEmail,
+  officialCertificatesAllowCertified,
+  trustRelationGrantsInNetwork,
   type ExtensionVerifyContext,
   type ExtensionVerifyPayload,
 } from "@/lib/extension-verify-sender";
@@ -77,17 +79,30 @@ export async function runExtensionVerifySender(params: {
   const domainNorm = normalizeSenderDomain(domainRaw);
 
   if (emailNorm && isOfficialEmail(emailNorm)) {
-    const userEmail = await prisma.user
-      .findUnique({ where: { id: params.userId }, select: { email: true } })
-      .then((u) => u?.email ?? null)
-      .catch(() => null);
-
-    return enrichExtensionPayloadWithBis({
-      payload: buildOfficialExtensionVerifyPayload(emailRaw, baseUrl),
-      bisId: bisIdRaw || null,
-      recipientEmail: userEmail,
-      senderEmail: emailRaw,
+    const officialEntities = await prisma.entity.findMany({
+      where: { email: { equals: emailNorm, mode: "insensitive" } },
+      select: {
+        certificates: {
+          select: { status: true, revokedAt: true, expiresAt: true },
+        },
+      },
+      take: 20,
     });
+    const officialCerts = officialEntities.flatMap((entity) => entity.certificates);
+    const officialGate = officialCertificatesAllowCertified(officialCerts);
+    if (officialGate !== "deny") {
+      const userEmail = await prisma.user
+        .findUnique({ where: { id: params.userId }, select: { email: true } })
+        .then((u) => u?.email ?? null)
+        .catch(() => null);
+
+      return enrichExtensionPayloadWithBis({
+        payload: buildOfficialExtensionVerifyPayload(emailRaw, baseUrl),
+        bisId: bisIdRaw || null,
+        recipientEmail: userEmail,
+        senderEmail: emailRaw,
+      });
+    }
   }
 
   const userEmail = await prisma.user
@@ -101,11 +116,8 @@ export async function runExtensionVerifySender(params: {
       select: { certifiedEmails: true, certifiedDomains: true },
     }),
     prisma.userTrustRelation.findMany({
-      where: {
-        fromUserId: params.userId,
-        status: { in: ["CONFIRMED", "PENDING"] },
-      },
-      select: { toUserId: true, toEmail: true },
+      where: { fromUserId: params.userId },
+      select: { toUserId: true, toEmail: true, status: true },
     }),
     prisma.entity.findMany({
       where: { userId: params.userId },
@@ -121,6 +133,7 @@ export async function runExtensionVerifySender(params: {
     userCertifiedEmails: userProfile?.certifiedEmails ?? [],
     userCertifiedDomains: userProfile?.certifiedDomains ?? [],
     trustRelationEmails: trustRelations
+      .filter((r) => trustRelationGrantsInNetwork(r.status))
       .map((r) => r.toEmail)
       .filter((e): e is string => Boolean(e?.trim())),
     contactEntityEmails: contactKeys.emails,

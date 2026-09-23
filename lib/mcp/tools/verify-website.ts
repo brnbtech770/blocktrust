@@ -36,12 +36,10 @@ export async function handleVerifyWebsite(
 
   const entities = await prisma.entity.findMany({
     where: {
-      OR: [
-        { certifiedDomains: { has: host } },
-        { website: { contains: host, mode: "insensitive" } },
-        { email: { endsWith: `@${host}`, mode: "insensitive" } },
-      ],
-      certificates: { some: { status: { in: ["ACTIVE", "ANCHORED"] } } },
+      email: { endsWith: `@${host}`, mode: "insensitive" },
+      certificates: {
+        some: { status: { in: ["ACTIVE", "ANCHORED"] }, revokedAt: null },
+      },
     },
     include: {
       certificates: true,
@@ -57,15 +55,17 @@ export async function handleVerifyWebsite(
 
   if (certified.length > 0) {
     return mcpJsonResult({
-      legitimate: true,
+      legitimate: false,
       url: urlRaw,
       domain: host,
       owner,
-      certified: true,
+      certified: false,
+      emailDomainSignal: true,
       trustScore: certified[0]?.trustScore?.score ?? null,
-      phishingRisk: "LOW",
-      typosquatting: { detected: false },
-      message: "Site web associé à une entité certifiée BLOCKTRUST.",
+      phishingRisk: typosquat.detected ? "HIGH" : "MEDIUM",
+      typosquatting: typosquat,
+      message:
+        "Des emails certifiés existent sur ce domaine. Cela n'atteste pas que le site est contrôlé par ces identités.",
     });
   }
 

@@ -11,6 +11,8 @@ import { deleteRevokedCertificate, deleteRevokedCertificateAsAdmin } from '@/lib
 import { isDashboardAdmin } from '@/lib/admin-utils';
 import { z } from 'zod';
 import { sameOriginMutationResponse } from '@/lib/csrf-origin-guard';
+import { invalidateExtensionVerifyCacheForEmail } from '@/lib/extension-verify-cache';
+import { invalidateTrustEngineCacheForCertificate } from '@/lib/trust-engine-cache';
 
 const actionSchema = z
   .object({
@@ -186,6 +188,11 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         },
       },
     });
+
+    if (action === 'revoke') {
+      void invalidateTrustEngineCacheForCertificate(id, updatedCertificate.publicId);
+      void invalidateExtensionVerifyCacheForEmail(updatedCertificate.entity.email);
+    }
 
     return NextResponse.json({
       success: true,

@@ -8,6 +8,7 @@
 
 import { after, NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/app/lib/db'
+import { isCertificateCurrentlyValid } from '@/lib/certificate-validity'
 import { hashIp } from '@/app/lib/auth'
 import { auth } from '@/app/lib/auth-server'
 import { isAdmin } from '@/app/lib/admin'
@@ -221,7 +222,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       )
     }
 
-    if (certificate.status === 'REVOKED') {
+    if (certificate.status === 'REVOKED' || certificate.revokedAt) {
       await prisma.verification.create({
         data: {
           certificateId: certificate.id,
@@ -263,6 +264,23 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           quota: quotaForResponse,
         },
         { status: 403, headers: rateHeaders }
+      )
+    }
+
+    if (
+      certificate.status === 'EXPIRED' ||
+      (certificate.expiresAt &&
+        certificate.expiresAt.getTime() < Date.now() &&
+        !isCertificateCurrentlyValid(certificate))
+    ) {
+      return NextResponse.json(
+        {
+          status: 'EXPIRED',
+          message: 'Ce certificat a expiré',
+          code: 'CERTIFICATE_EXPIRED',
+          quota: quotaForResponse,
+        },
+        { status: 410, headers: rateHeaders }
       )
     }
 

@@ -4,6 +4,8 @@ import {
   buildOfficialExtensionVerifyPayload,
   entityMatchesSender,
   isOfficialSenderEmail,
+  officialCertificatesAllowCertified,
+  trustRelationGrantsInNetwork,
   type ExtensionVerifyContext,
 } from '@/lib/extension-verify-sender'
 import { isDisposableEmail } from '@/lib/signals/disposable-email'
@@ -277,5 +279,64 @@ describe('Extension verify-sender', () => {
     expect(result.status).toBe('UNKNOWN')
     expect(result.verified).toBe(false)
     expect(result.status).not.toBe('CERTIFIED')
+  })
+
+  it('compte officiel révoqué → jamais CERTIFIED', () => {
+    expect(
+      officialCertificatesAllowCertified([
+        { status: 'REVOKED', revokedAt: new Date(), expiresAt: null },
+      ]),
+    ).toBe('deny')
+    const entity = makeEntity('brnbtech@gmail.com', 'REVOKED', 100)
+    const result = buildExtensionVerifyResult(
+      [entity],
+      'brnbtech@gmail.com',
+      '',
+      BASE_URL,
+      emptyCtx,
+    )
+    expect(result.status).not.toBe('CERTIFIED')
+    expect(result.verified).toBe(false)
+  })
+
+  it('compte officiel expiré → jamais CERTIFIED', () => {
+    const past = new Date(Date.now() - 60_000)
+    expect(
+      officialCertificatesAllowCertified([
+        { status: 'ACTIVE', revokedAt: null, expiresAt: past },
+      ]),
+    ).toBe('deny')
+    const entity = makeEntity('brnbtech@gmail.com', 'ACTIVE', 100)
+    entity.certificates[0].expiresAt = past
+    const result = buildExtensionVerifyResult(
+      [entity],
+      'brnbtech@gmail.com',
+      '',
+      BASE_URL,
+      emptyCtx,
+    )
+    expect(result.status).not.toBe('CERTIFIED')
+    expect(result.verified).toBe(false)
+  })
+
+  it('Trust Circle PENDING → inNetwork false, CONFIRMED → true', () => {
+    expect(trustRelationGrantsInNetwork('PENDING')).toBe(false)
+    expect(trustRelationGrantsInNetwork('CONFIRMED')).toBe(true)
+    const pending = buildExtensionVerifyResult(
+      [],
+      'partner@corp.io',
+      '',
+      BASE_URL,
+      { ...emptyCtx, trustRelationEmails: [] },
+    )
+    const confirmed = buildExtensionVerifyResult(
+      [],
+      'partner@corp.io',
+      '',
+      BASE_URL,
+      { ...emptyCtx, trustRelationEmails: ['partner@corp.io'] },
+    )
+    expect(pending.signals.inNetwork).toBe(false)
+    expect(confirmed.signals.inNetwork).toBe(true)
   })
 })

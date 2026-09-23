@@ -34,7 +34,7 @@ export async function handleCheckDomainReputation(
     riskFactors.push("Domaine très récent");
   }
   if (typosquatting.detected) {
-    riskFactors.push("Typosquatting d'un domaine certifié");
+    riskFactors.push("Typosquatting proche du domaine d'un email certifié");
   }
   if (!authRecords.spf && !authRecords.dkim && !authRecords.dmarc) {
     riskFactors.push("Pas de SPF/DKIM/DMARC détectés");
@@ -57,7 +57,8 @@ export async function handleCheckDomainReputation(
 
   return mcpJsonResult({
     domain,
-    certified: certifiedDomains.includes(domain),
+    certified: false,
+    emailDomainSignal: certifiedDomains.includes(domain),
     domainAge: formatDomainAge(domainAge.agedays),
     domainAgeDays: domainAge.agedays,
     disposable,

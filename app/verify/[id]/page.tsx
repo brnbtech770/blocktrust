@@ -38,6 +38,7 @@ import { formatCertificateLabel } from '@/lib/format-certificate-label'
 import { isActiveBillingStatus, resolveEffectivePlan } from '@/lib/plan-features'
 import { isCertificateAnchored } from '@/lib/public-anchor'
 import { computeTrustEngineScore } from '@/lib/trust-engine'
+import { certificateDisplayedVerdict } from '@/lib/certificate-validity'
 
 export const dynamic = 'force-dynamic'
 
@@ -270,7 +271,14 @@ export default async function VerifyPublicPage({
   const cert = signature.certificate
   const entity = cert.entity
 
-  if (String(cert.status) === 'REVOKED') {
+  const displayedCert = certificateDisplayedVerdict({
+    status: String(cert.status),
+    revokedAt: cert.revokedAt,
+    expiresAt: cert.expiresAt,
+    blockchainStatus: cert.blockchainStatus,
+  })
+
+  if (displayedCert === 'REVOKED') {
     await prisma.verification.create({
       data: {
         certificateId: cert.id,
@@ -289,16 +297,16 @@ export default async function VerifyPublicPage({
     return <RevokedView revokedAt={cert.revokedAt} />
   }
 
-  if (String(cert.status) === 'EXPIRED') {
+  if (displayedCert === 'EXPIRED' || displayedCert === 'INVALID') {
     await prisma.verification.create({
       data: {
         certificateId: cert.id,
         ipHash: hashedIp,
         userAgent: userAgent.slice(0, 500),
         referer,
-        result: 'EXPIRED',
+        result: displayedCert === 'EXPIRED' ? 'EXPIRED' : 'NOT_FOUND',
         signatureJti: signature.jti,
-        metadata: { timestamp: new Date().toISOString() },
+        metadata: { timestamp: new Date().toISOString(), verdict: displayedCert },
       },
     })
     return <NotFoundView />

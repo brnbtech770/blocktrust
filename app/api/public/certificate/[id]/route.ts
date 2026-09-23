@@ -21,6 +21,7 @@ import {
   withPrismaRetry,
 } from "@/lib/prisma-unreachable";
 import { publicAnchorPayload } from "@/lib/public-anchor";
+import { certificateDisplayedVerdict } from "@/lib/certificate-validity";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -269,22 +270,15 @@ export async function GET(
   let verificationResult: "VALID" | "REVOKED" | "EXPIRED" | "NOT_FOUND" = "VALID";
 
   const status = certificate.status;
+  const displayed = certificateDisplayedVerdict(certificate);
 
-  if (status === "REVOKED") {
+  if (displayed === "REVOKED") {
     verdict = "REVOKED";
     verificationResult = "REVOKED";
-  } else if (status === "EXPIRED") {
+  } else if (displayed === "EXPIRED") {
     verdict = "EXPIRED";
     verificationResult = "EXPIRED";
-  } else if (certificate.expiresAt && certificate.expiresAt.getTime() < Date.now()) {
-    verdict = "EXPIRED";
-    verificationResult = "EXPIRED";
-  } else if (status === "ACTIVE" || status === "ANCHORED") {
-    // VALIDE (valeur par défaut)
-  } else if (certificate.blockchainStatus === "NOT_ANCHORED") {
-    // Badge Découverte légitime : signé (ES256) mais NON ancré et NON KYC.
-    // → VALIDE mais NON VÉRIFIÉ (identityVerified=false ci-dessous gère le wording
-    //   orange « Identité déclarée — non vérifiée »). Ne JAMAIS afficher « invalide ».
+  } else if (displayed === "VALID") {
     verdict = "VALID";
     verificationResult = "VALID";
   } else {

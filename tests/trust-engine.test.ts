@@ -213,6 +213,40 @@ describe('Trust Engine scoring', () => {
     expect(result.recommendation).toBe('DANGER')
   })
 
+  it('compte officiel expiré → 0 (pas de score officiel)', async () => {
+    prismaMock.certificate.findFirst.mockResolvedValue({
+      id: 'cert-expired-official',
+      publicId: 'bt-expired-official',
+      status: 'ACTIVE' as const,
+      revokedAt: null,
+      expiresAt: new Date(Date.now() - 60_000),
+      blockchainStatus: 'ANCHORED' as const,
+      polygonTxHash: null,
+      entity: {
+        email: 'brnbtech@gmail.com',
+        certifiedEmails: [],
+        certifiedDomains: [],
+        user: {
+          id: 'user-official',
+          email: 'brnbtech@gmail.com',
+          kycStatus: 'VERIFIED',
+          createdAt: new Date(),
+          trustScore: 100,
+          certifiedEmails: [],
+          certifiedDomains: [],
+          subscription: { status: 'active' },
+          _count: { userTrustFrom: 0 },
+        },
+      },
+    })
+
+    const result = await computeTrustEngineScore('bt-expired-official')
+
+    expect(result.globalScore).toBe(0)
+    expect(result.isOfficialAccount).not.toBe(true)
+    expect(result.recommendation).toBe('DANGER')
+  })
+
   it('entité test owned par interne → calcul standard (pas 100)', async () => {
     prismaMock.certificate.findFirst.mockResolvedValue({
       id: 'cert-test',

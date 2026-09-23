@@ -3,6 +3,7 @@
  * Accès BIS — gate plan + certificat ancré.
  */
 import { isInternalAccount } from '@/lib/admin-utils'
+import { isCertificateCurrentlyValid } from '@/lib/certificate-validity'
 import {
   isActiveBillingStatus,
   isDiscoveryExpired,
@@ -47,15 +48,15 @@ export function canCreateBisSignature(params: {
   return isActiveBillingStatus(params.subscriptionStatus)
 }
 
-/** Certificat éligible BIS : ACTIVE ou ANCHORED (ancrage Polygon = enrichissement, pas prérequis). */
+/** Certificat éligible BIS : valide maintenant (ACTIVE/ANCHORED, non révoqué, non expiré). L'ancrage Polygon n'est pas un prérequis. */
 export function isCertificateBisEligible(cert: {
   status: string
   blockchainStatus?: string | null
   polygonTxHash?: string | null
   revokedAt?: Date | null
+  expiresAt?: Date | null
 }): boolean {
-  if (cert.revokedAt) return false
-  return cert.status === 'ACTIVE' || cert.status === 'ANCHORED'
+  return isCertificateCurrentlyValid(cert)
 }
 
 export function getBisLevelLabel(level: number): string {

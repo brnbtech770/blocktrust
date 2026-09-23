@@ -18,6 +18,7 @@ import { btLog } from "@/lib/prodLog";
 import { checkPublicVerifyIpRateLimit, PUBLIC_RATE_LIMIT_503_BODY } from "@/lib/rate-limit-public-failclosed";
 import { checkV2VerifyJti } from "@/lib/rate-limit-cost";
 import { publicAnchorPayload } from "@/lib/public-anchor";
+import { certificateDisplayedVerdict } from "@/lib/certificate-validity";
 
 function getIp(req: NextRequest) {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
@@ -114,7 +115,20 @@ export async function POST(req: NextRequest) {
     const canonical = canonicalizeEmailContext(context);
     const computedHash = sha256Hex(canonical);
 
-    const sig = await prisma.signature.findUnique({ where: { jti } });
+    const sig = await prisma.signature.findUnique({
+      where: { jti },
+      include: {
+        certificate: {
+          select: {
+            id: true,
+            status: true,
+            revokedAt: true,
+            expiresAt: true,
+            blockchainStatus: true,
+          },
+        },
+      },
+    });
     if (!sig) {
       return NextResponse.json({ verdict: "INVALID", reason: "unknown_jti" }, { status: 404 });
     }
@@ -131,6 +145,12 @@ export async function POST(req: NextRequest) {
     if (computedHash !== expectedHash || computedHash !== sig.contextHash) {
       verdict = "TAMPERED";
       reason = "context_hash_mismatch";
+    } else if (sig.certificate) {
+      const displayed = certificateDisplayedVerdict(sig.certificate);
+      if (displayed !== "VALID") {
+        verdict = displayed;
+        reason = "certificate_not_currently_valid";
+      }
     }
 
     const ua = req.headers.get("user-agent") || "unknown";
@@ -142,7 +162,15 @@ export async function POST(req: NextRequest) {
         ipHash,
         userAgent: ua.slice(0, 500),
         result:
-          verdict === "VALID" || verdict === "VALID_WITH_WARNING" ? "VALID" : "FRAUD_ALERT",
+          verdict === "VALID" || verdict === "VALID_WITH_WARNING"
+            ? "VALID"
+            : verdict === "REVOKED"
+              ? "REVOKED"
+              : verdict === "EXPIRED"
+                ? "EXPIRED"
+                : verdict === "INVALID"
+                  ? "NOT_FOUND"
+                  : "FRAUD_ALERT",
         signatureJti: jti,
       },
     });

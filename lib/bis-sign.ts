@@ -491,11 +491,13 @@ export async function resolveSenderBisCertificate(userId: string): Promise<{
   polygonTxHash: string | null
   polygonExplorerUrl: string | null
 } | null> {
+  const now = new Date()
   return prisma.certificate.findFirst({
     where: {
       entity: { userId },
       status: { in: ['ACTIVE', 'ANCHORED'] },
       revokedAt: null,
+      OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
     },
     orderBy: { issuedAt: 'desc' },
     select: {

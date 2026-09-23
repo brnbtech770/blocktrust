@@ -11,7 +11,12 @@ const TOOLTIP_MOUSELEAVE_MS = 800;
 const TOOLTIP_MIN_VISIBLE_MS = 5000;
 const GMAIL_SCAN_DEBOUNCE_MS = 300;
 
-/** Cache résultats pour éviter re-appels (5 min). */
+/**
+ * Cache local 5 minutes.
+ * La révocation invalide le cache serveur tout de suite (génération Redis).
+ * Ce cache navigateur ne peut pas être purgé à distance : un verdict déjà
+ * reçu peut rester affiché jusqu'à 5 minutes après la révocation.
+ */
 const verifyCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000;
 

@@ -7,6 +7,7 @@ import { computeTrustEngineScore } from "@/lib/trust-engine";
 import { normalizeSenderEmail } from "@/lib/extension-verify-sender";
 import { mcpJsonResult } from "@/lib/mcp/sanitize-output";
 import { mcpAnchorResponse } from "@/lib/mcp/anchor-fields";
+import { isCertificateCurrentlyValid } from "@/lib/certificate-validity";
 import type { McpToolContext } from "@/lib/mcp/types";
 
 export async function handleGetTrustScore(
@@ -28,9 +29,12 @@ export async function handleGetTrustScore(
     },
     include: {
       certificates: {
-        where: { status: { in: ["ACTIVE", "ANCHORED"] } },
+        where: {
+          status: { in: ["ACTIVE", "ANCHORED"] },
+          revokedAt: null,
+        },
         orderBy: { issuedAt: "desc" },
-        take: 1,
+        take: 5,
       },
     },
   });
@@ -46,7 +50,7 @@ export async function handleGetTrustScore(
     });
   }
 
-  const cert = entity.certificates[0];
+  const cert = entity.certificates.find((row) => isCertificateCurrentlyValid(row));
   const certId = cert?.id ?? cert?.publicId;
   if (!certId || !cert) {
     return mcpJsonResult({

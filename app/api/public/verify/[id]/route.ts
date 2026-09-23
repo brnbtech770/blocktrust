@@ -27,6 +27,7 @@ import { hashApiKey, isValidApiKeyShape, timingSafeEqualString } from '@/lib/api
 import { checkRateLimitApiAsync } from '@/lib/rate-limit-api'
 import { sendWebhook } from '@/lib/webhooks'
 import { publicAnchorPayload } from '@/lib/public-anchor'
+import { certificateDisplayedVerdict } from '@/lib/certificate-validity'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -152,14 +153,11 @@ export async function GET(
     )
   }
 
+  const displayed = certificateDisplayedVerdict(certificate)
   let verdict: Verdict = 'VALID'
-  if (certificate.status === 'REVOKED') verdict = 'REVOKED'
-  else if (certificate.status === 'EXPIRED') verdict = 'EXPIRED'
-  else if (
-    certificate.expiresAt &&
-    certificate.expiresAt.getTime() < Date.now()
-  )
-    verdict = 'EXPIRED'
+  if (displayed === 'REVOKED') verdict = 'REVOKED'
+  else if (displayed === 'EXPIRED') verdict = 'EXPIRED'
+  else if (displayed === 'INVALID') verdict = 'NOT_FOUND'
 
   const entity = certificate.entity
   const entityName =

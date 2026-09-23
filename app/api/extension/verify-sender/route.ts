@@ -12,6 +12,11 @@ import {
   EXTENSION_UNAUTHORIZED_BODY,
 } from "@/lib/extension-auth";
 import { normalizeSenderDomain, normalizeSenderEmail } from "@/lib/extension-verify-sender";
+import {
+  EXTENSION_VERIFY_CACHE_TTL_SECONDS,
+  extensionVerifyCacheKey,
+  readExtensionVerifyGeneration,
+} from "@/lib/extension-verify-cache";
 import { runExtensionVerifySender } from "@/lib/extension-verify-sender-service";
 import { extensionJsonResponse, extensionOptionsResponse } from "@/lib/extension-cors";
 import { checkPlanRateLimit } from "@/lib/rate-limit-plan";
@@ -73,9 +78,16 @@ export async function GET(req: NextRequest) {
 
   const emailNorm = normalizeSenderEmail(emailRaw);
   const domainNorm = normalizeSenderDomain(domainRaw);
+  const generation = await readExtensionVerifyGeneration(emailNorm);
   const cacheKey =
     emailNorm || domainNorm
-      ? `bt:ext:verify:v8:${userId}:${emailNorm}:${domainNorm}:${bisIdRaw || "-"}`
+      ? extensionVerifyCacheKey({
+          userId,
+          emailNorm,
+          domainNorm,
+          bisId: bisIdRaw || "-",
+          generation,
+        })
       : null;
 
   const redis = getRedis();
@@ -100,7 +112,9 @@ export async function GET(req: NextRequest) {
 
   if (redis && cacheKey) {
     try {
-      await redis.set(cacheKey, JSON.stringify(payload), { ex: 300 });
+      await redis.set(cacheKey, JSON.stringify(payload), {
+        ex: EXTENSION_VERIFY_CACHE_TTL_SECONDS,
+      });
     } catch {
       /* fail-soft */
     }

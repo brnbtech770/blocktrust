@@ -30,12 +30,10 @@ export async function handleVerifyDomain(
 
   const entities = await prisma.entity.findMany({
     where: {
-      OR: [
-        { certifiedDomains: { has: domain } },
-        { email: { endsWith: `@${domain}`, mode: "insensitive" } },
-        { website: { contains: domain, mode: "insensitive" } },
-      ],
-      certificates: { some: { status: { in: ["ACTIVE", "ANCHORED"] } } },
+      email: { endsWith: `@${domain}`, mode: "insensitive" },
+      certificates: {
+        some: { status: { in: ["ACTIVE", "ANCHORED"] }, revokedAt: null },
+      },
     },
     include: {
       certificates: { orderBy: { issuedAt: "desc" } },
@@ -50,22 +48,20 @@ export async function handleVerifyDomain(
   const certifiedDomains = await collectCertifiedDomainsGlobal();
   const typosquat = detectTyposquatting(domain, certifiedDomains);
 
-  const website =
-    certifiedEntities.find((e) => e.website)?.website ??
-    (certifiedEntities.length > 0 ? `https://${domain}` : null);
-
   if (certifiedEntities.length === 0) {
     const similar = findSimilarCertifiedDomains(domain, certifiedDomains);
     return mcpJsonResult({
       certified: false,
+      emailDomainSignal: false,
+      websiteCertified: false,
       domain,
       entityCount: 0,
       domainAge: formatDomainAge(domainAge.agedays),
       disposable,
       typosquatting: typosquat,
       warning: similar[0]
-        ? `Ce domaine n'est associé à aucune entité certifiée. Le domaine certifié le plus proche est ${similar[0]}.`
-        : "Ce domaine n'est associé à aucune entité certifiée BLOCKTRUST.",
+        ? `Aucune preuve de contrôle de ce domaine. Le domaine d'email certifié le plus proche est ${similar[0]}.`
+        : "Aucune preuve de contrôle BLOCKTRUST pour ce domaine.",
       similarCertifiedDomains: similar,
     });
   }
@@ -83,7 +79,8 @@ export async function handleVerifyDomain(
   );
 
   return mcpJsonResult({
-    certified: true,
+    certified: false,
+    emailDomainSignal: true,
     domain,
     entityCount: certifiedEntities.length,
     entities: certifiedEntities.map((e) => ({
@@ -100,8 +97,10 @@ export async function handleVerifyDomain(
     disposable,
     trustScoreAvg,
     anchored,
-    website,
-    websiteCertified: Boolean(website),
+    website: null,
+    websiteCertified: false,
     typosquatting: typosquat,
+    message:
+      "Des emails certifiés utilisent ce domaine. Cela n'atteste pas le contrôle du domaine ni du site.",
   });
 }

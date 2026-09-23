@@ -17,6 +17,8 @@ import {
   notifyAnchorSuccess,
 } from '@/lib/polygon'
 import { ensureBadgeSignature } from '@/lib/admin-bootstrap'
+import { invalidateExtensionVerifyCacheForEmail } from '@/lib/extension-verify-cache'
+import { invalidateTrustEngineCacheForCertificate } from '@/lib/trust-engine-cache'
 
 const actionSchema = z
   .object({
@@ -163,6 +165,12 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
         })
       }
     } else if (action === 'revoke' || action === 'reject') {
+      const revokedEntity = await prisma.entity.findUnique({
+        where: { id: certificate.entityId },
+        select: { email: true },
+      })
+      void invalidateTrustEngineCacheForCertificate(id, updatedCertificate.publicId)
+      void invalidateExtensionVerifyCacheForEmail(revokedEntity?.email)
       await createAdminAlert({
         type: 'CERT_REVOKED',
         title: 'Certificat révoqué',

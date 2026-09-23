@@ -18,6 +18,7 @@ import {
   buildRevokedOfficialTrustEngineResult,
   isOfficialEntity,
 } from "@/lib/official-trust";
+import { isCertificateCurrentlyValid } from "@/lib/certificate-validity";
 
 export interface TrustEngineOptions {
   /** IP du contexte de vérification (optionnel — AbuseIPDB) */
@@ -145,11 +146,19 @@ export async function computeTrustEngineScore(
 
   const user = cert.entity.user;
 
-  if (cert.status === "REVOKED") {
-    if (isOfficialEntity(cert.entity.email)) {
+  if (!isCertificateCurrentlyValid(cert)) {
+    const revoked = cert.status === "REVOKED" || Boolean(cert.revokedAt);
+    const expired =
+      cert.status === "EXPIRED" ||
+      Boolean(cert.expiresAt && cert.expiresAt.getTime() < Date.now());
+    if (isOfficialEntity(cert.entity.email) && revoked) {
       return buildRevokedOfficialTrustEngineResult();
     }
-    return defaultResult(0, "DANGER", "Certificat révoqué");
+    return defaultResult(
+      0,
+      "DANGER",
+      revoked ? "Certificat révoqué" : expired ? "Certificat expiré" : "Certificat inactif",
+    );
   }
 
   if (isOfficialEntity(cert.entity.email)) {

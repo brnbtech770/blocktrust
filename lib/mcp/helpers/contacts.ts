@@ -6,6 +6,7 @@ import type { Certificate, Entity } from "@prisma/client";
 import { prisma } from "@/app/lib/db";
 import { sanitizeDisplayText } from "@/lib/sanitize-display-text";
 import { normalizeSenderDomain } from "@/lib/extension-verify-sender";
+import { isCertificateCurrentlyValid } from "@/lib/certificate-validity";
 
 type EntityWithMeta = Entity & {
   certificates: Certificate[];
@@ -32,13 +33,8 @@ export function entityDomain(e: Entity): string | null {
   return null;
 }
 
-export function entityIsCertified(e: EntityWithMeta): boolean {
-  const now = new Date();
-  return e.certificates.some(
-    (c) =>
-      (c.status === "ACTIVE" || c.status === "ANCHORED") &&
-      (!c.expiresAt || c.expiresAt >= now),
-  );
+export function entityIsCertified(e: { certificates: Array<{ status: string; revokedAt?: Date | null; expiresAt?: Date | null }> }): boolean {
+  return e.certificates.some((c) => isCertificateCurrentlyValid(c));
 }
 
 export async function loadUserTrustCircleMap(userId: string): Promise<
@@ -106,26 +102,31 @@ export function mapEntityToContact(
   };
 }
 
+/**
+ * Domaines d'email d'entités dont le certificat est actuellement valide.
+ * website et certifiedDomains sont déclaratifs : ils n'entrent pas dans cette liste
+ * et ne prouvent pas le contrôle du domaine.
+ */
 export async function collectCertifiedDomainsGlobal(): Promise<string[]> {
   const rows = await prisma.entity.findMany({
     where: {
-      certificates: { some: { status: { in: ["ACTIVE", "ANCHORED"] } } },
+      certificates: {
+        some: { status: { in: ["ACTIVE", "ANCHORED"] }, revokedAt: null },
+      },
     },
-    select: { certifiedDomains: true, website: true, email: true },
+    select: {
+      email: true,
+      certificates: { select: { status: true, revokedAt: true, expiresAt: true } },
+    },
     take: 5000,
   });
   const domains = new Set<string>();
   for (const row of rows) {
-    for (const d of row.certifiedDomains) {
-      const n = normalizeSenderDomain(d);
-      if (n) domains.add(n);
-    }
+    if (!entityIsCertified(row)) continue;
     const fromEmail = row.email.split("@")[1];
-    if (fromEmail) domains.add(normalizeSenderDomain(fromEmail));
-    if (row.website) {
-      const h = normalizeSenderDomain(row.website);
-      if (h) domains.add(h);
-    }
+    if (!fromEmail) continue;
+    const host = normalizeSenderDomain(fromEmail);
+    if (host) domains.add(host);
   }
   return [...domains];
 }

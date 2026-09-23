@@ -3,6 +3,7 @@
 // ============================================================
 
 import { prisma } from '@/app/lib/db'
+import { invalidateExtensionVerifyCacheForEmail } from '@/lib/extension-verify-cache'
 
 export type OrgMemberRevocationResult = {
   revokedCertificates: number
@@ -31,7 +32,11 @@ export async function revokeOrganizationMemberAccess(params: {
     const orgEntities = await prisma.entity
       .findMany({
         where: { organizationId, userId: targetUserId },
-        select: { id: true, certificates: { select: { id: true, status: true } } },
+        select: {
+          id: true,
+          email: true,
+          certificates: { select: { id: true, status: true } },
+        },
       })
       .catch(() => [])
 
@@ -53,6 +58,15 @@ export async function revokeOrganizationMemberAccess(params: {
         })
         .catch(() => ({ count: 0 }))
       revokedCertificates = updated.count
+      await Promise.all(
+        orgEntities
+          .filter((entity) =>
+            entity.certificates.some((cert) =>
+              ['ACTIVE', 'PENDING', 'ANCHORED'].includes(cert.status),
+            ),
+          )
+          .map((entity) => invalidateExtensionVerifyCacheForEmail(entity.email)),
+      )
     }
 
     if (orgUserIds.length > 0) {

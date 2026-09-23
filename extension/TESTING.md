@@ -29,6 +29,7 @@ Principe : **l'envoi ne doit jamais être bloqué** — le BIS est un bonus.
 ## Régressions à vérifier
 
 - **Composeur jamais scanné** : pas de chip « ? Non vérifié » dans le corps d'un brouillon
+- **Révocation** : le cache serveur verify-sender est invalidé immédiatement. Le cache local Gmail (5 min) peut encore afficher l'ancien verdict jusqu'à 5 minutes. Un compte officiel révoqué ou expiré ne doit pas afficher « Certifié » une fois le cache local expiré.
 - **Tooltip** : min 5 s, mouseleave 800 ms, auto-dismiss 15 s, liens cliquables ; ancrage affiché « Ancré blockchain ✓ » (pas de hash / PolygonScan)
 - **Bouton BIS inline** : compact (~24 px), pas de chevauchement avec Envoyer
 - **Bouton BIS** : jamais dupliqué dans la barre d'outils

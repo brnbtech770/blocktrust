@@ -10,6 +10,7 @@ import {
   OFFICIAL_TRUST_SCORE,
 } from "@/lib/official-trust";
 import { publicAnchorPayload } from "@/lib/public-anchor";
+import { isCertificateCurrentlyValid } from "@/lib/certificate-validity";
 
 type CertStatus = "PENDING" | "ACTIVE" | "REVOKED" | "EXPIRED" | "ANCHORED" | "SUSPENDED";
 
@@ -98,7 +99,25 @@ export function isOfficialSenderEmail(email: string | null | undefined): boolean
   return isOfficialRootOfTrustEmail(email);
 }
 
-/** Payload CERTIFIED pour un expéditeur Root of Trust (sans lookup entité). */
+/**
+ * Root of Trust ≠ immunité.
+ * allow : au moins un certificat actuellement valide, ou aucun certificat en base.
+ * deny : des certificats existent et aucun n'est actuellement valide (révoqué, expiré, inactif).
+ */
+export function officialCertificatesAllowCertified(
+  certs: Array<{ status: string; revokedAt?: Date | null; expiresAt?: Date | null }>,
+): "allow" | "deny" | "absent" {
+  if (certs.length === 0) return "absent";
+  if (certs.some((cert) => isCertificateCurrentlyValid(cert))) return "allow";
+  return "deny";
+}
+
+/** Une invitation non acceptée n'est pas « dans votre réseau ». */
+export function trustRelationGrantsInNetwork(status: string): boolean {
+  return status === "CONFIRMED";
+}
+
+/** Payload CERTIFIED pour un expéditeur Root of Trust dont le certificat le permet. */
 export function buildOfficialExtensionVerifyPayload(
   emailRaw: string,
   _baseUrl: string,
@@ -178,10 +197,7 @@ function pickBestCert(certs: Certificate[]): Certificate | null {
 }
 
 function certIsFullyActive(c: Certificate, now: Date): boolean {
-  if (c.status === "REVOKED" || c.status === "SUSPENDED") return false;
-  if (c.status === "EXPIRED") return false;
-  if (c.expiresAt && c.expiresAt < now) return false;
-  return c.status === "ACTIVE" || c.status === "ANCHORED";
+  return isCertificateCurrentlyValid(c, now);
 }
 
 function senderMatchesUserCertified(
@@ -332,6 +348,8 @@ function inContactsFallbackPayload(
 }
 
 function certIsFraudish(c: Certificate, now: Date): boolean {
+  if (isCertificateCurrentlyValid(c, now)) return false;
+  if (c.revokedAt) return true;
   if (c.status === "REVOKED" || c.status === "SUSPENDED" || c.status === "EXPIRED") return true;
   if (c.expiresAt && c.expiresAt < now) return true;
   return false;
