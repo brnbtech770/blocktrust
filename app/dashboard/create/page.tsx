@@ -388,33 +388,24 @@ export default function CreateCertificate() {
     setError("");
 
     try {
-      const websiteInd = normalizeWebsite(individualData.website);
-      const websiteBus = normalizeWebsite(businessData.website);
-
       const body =
         entityType === "INDIVIDUAL"
           ? {
               walletAddress: walletAddress.trim() || null,
               walletNetwork: walletNetwork.trim() || null,
               phone: individualData.phone?.trim() || null,
-              website: websiteInd,
               description: individualData.description?.trim() || null,
               firstName: individualData.firstName?.trim(),
               lastName: individualData.lastName?.trim(),
-              certifiedDomains,
-              certifiedEmails,
               certifiedPhones,
             }
           : {
               walletAddress: walletAddress.trim() || null,
               walletNetwork: walletNetwork.trim() || null,
               phone: businessData.phone?.trim() || null,
-              website: websiteBus,
               description: businessData.description?.trim() || null,
               legalName: businessData.legalName?.trim(),
               tradeName: businessData.tradeName?.trim() || null,
-              certifiedDomains,
-              certifiedEmails,
               certifiedPhones,
             };
 
@@ -814,13 +805,22 @@ export default function CreateCertificate() {
                   </label>
                   <input
                     type="text"
+                    readOnly={!!editEntityId}
+                    aria-readonly={editEntityId ? true : undefined}
                     value={individualData.website || ""}
                     onChange={(e) =>
                       setIndividualData({ ...individualData, website: e.target.value })
                     }
                     placeholder="www.linkedin.com/in/jeandupont ou www.monsite.fr"
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
+                    className={`w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none ${
+                      editEntityId ? "cursor-not-allowed opacity-80" : ""
+                    }`}
                   />
+                  {editEntityId ? (
+                    <p className="mt-1 text-xs text-white/40">
+                      Lecture seule. Une preuve de contrôle sera requise pour modifier ce champ.
+                    </p>
+                  ) : null}
                 </div>
 
                 <div>
@@ -944,16 +944,22 @@ export default function CreateCertificate() {
                   </label>
                   <input
                     type="text"
-                    required
+                    required={!editEntityId}
+                    readOnly={!!editEntityId}
+                    aria-readonly={editEntityId ? true : undefined}
                     value={businessData.website || ""}
                     onChange={(e) =>
                       setBusinessData({ ...businessData, website: e.target.value })
                     }
                     placeholder="www.votresite.fr"
-                    className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none"
+                    className={`w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-bt-cyan focus:outline-none ${
+                      editEntityId ? "cursor-not-allowed opacity-80" : ""
+                    }`}
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    L&apos;URL sera automatiquement complétée avec https:// si nécessaire
+                    {editEntityId
+                      ? "Lecture seule. Une preuve de contrôle sera requise pour modifier ce champ."
+                      : "L'URL sera automatiquement complétée avec https:// si nécessaire"}
                   </p>
                 </div>
 
@@ -1021,12 +1027,15 @@ export default function CreateCertificate() {
                   Domaines officiels (optionnel)
                 </label>
                 <p className="text-xs text-white/30">
-                  Ajoutez vos domaines officiels pour protéger vos contacts contre les sites miroirs. Ex.&nbsp;: monentreprise.fr
+                  {editEntityId
+                    ? "Lecture seule. Une preuve de contrôle du domaine sera requise pour modifier cette liste."
+                    : "Ajoutez vos domaines officiels pour protéger vos contacts contre les sites miroirs. Ex. : monentreprise.fr"}
                 </p>
                 <DomainTagInput
                   values={certifiedDomains}
                   onChange={setCertifiedDomains}
                   placeholder="mondomaine.fr"
+                  readOnly={!!editEntityId}
                 />
               </div>
 
@@ -1037,7 +1046,13 @@ export default function CreateCertificate() {
                 <CertifiedEmailsTagInput
                   values={certifiedEmails}
                   onChange={setCertifiedEmails}
+                  readOnly={!!editEntityId}
                 />
+                {editEntityId ? (
+                  <p className="text-xs text-white/30">
+                    Lecture seule. Une preuve de contrôle de l&apos;adresse sera requise pour modifier cette liste.
+                  </p>
+                ) : null}
               </div>
 
               <div className="space-y-2">

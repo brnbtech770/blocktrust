@@ -36,21 +36,10 @@ export async function findGlobalEntitiesMatchingSender(
   domainNorm: string,
   limit = 25,
 ): Promise<EntityWithCerts[]> {
-  if (!emailNorm && !domainNorm) return [];
-
-  const or: Prisma.EntityWhereInput[] = [];
-  if (emailNorm) {
-    or.push({ email: { equals: emailNorm, mode: "insensitive" } });
-    or.push({ certifiedEmails: { has: emailNorm } });
-  }
-  if (domainNorm) {
-    or.push({ certifiedDomains: { has: domainNorm } });
-    or.push({ website: { contains: domainNorm, mode: "insensitive" } });
-  }
-  if (or.length === 0) return [];
+  if (!emailNorm) return [];
 
   const candidates = await prisma.entity.findMany({
-    where: { OR: or },
+    where: { email: { equals: emailNorm, mode: "insensitive" } },
     include: entityInclude,
     take: limit,
     orderBy: { updatedAt: "desc" },

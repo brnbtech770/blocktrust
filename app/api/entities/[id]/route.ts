@@ -18,24 +18,16 @@ const patchEntitySchema = z
     walletAddress: z.string().max(200).optional().nullable(),
     walletNetwork: z.string().max(32).optional().nullable(),
     phone: z.string().max(80).optional().nullable(),
-    website: z.string().max(500).optional().nullable(),
     description: z.string().max(1000).optional().nullable(),
     firstName: z.string().max(100).optional().nullable(),
     lastName: z.string().max(100).optional().nullable(),
     legalName: z.string().max(255).optional().nullable(),
     tradeName: z.string().max(255).optional().nullable(),
-    certifiedDomains: z.array(z.string()).max(10).optional(),
-    certifiedEmails: z.array(z.string()).max(10).optional(),
+    // website, certifiedEmails, certifiedDomains : lecture seule.
+    // Réécriture uniquement après preuve de contrôle (DNS TXT / OTP email).
     certifiedPhones: z.array(z.string()).max(10).optional(),
   })
   .strict();
-
-function normalizeWebsite(raw: string | null | undefined): string | null {
-  if (raw == null || raw.trim() === "") return null;
-  const t = raw.trim();
-  if (t.startsWith("http://") || t.startsWith("https://")) return t;
-  return `https://${t}`;
-}
 
 export async function GET(
   _req: NextRequest,
@@ -97,10 +89,6 @@ export async function PATCH(
   const p = parsed.data;
   const rawBody = bodyJson as Record<string, unknown>;
   const certPartial: Record<string, unknown> = {};
-  if ("certifiedDomains" in rawBody)
-    certPartial.certifiedDomains = rawBody.certifiedDomains;
-  if ("certifiedEmails" in rawBody)
-    certPartial.certifiedEmails = rawBody.certifiedEmails;
   if ("certifiedPhones" in rawBody)
     certPartial.certifiedPhones = rawBody.certifiedPhones;
 
@@ -109,8 +97,6 @@ export async function PATCH(
   }
 
   let certifiedValue: Partial<{
-    domains: string[];
-    emails: string[];
     phones: string[];
   }> = {};
   if (Object.keys(certPartial).length > 0) {
@@ -164,21 +150,6 @@ export async function PATCH(
     }
   }
 
-  if (p.website !== undefined) {
-    if (p.website === null || p.website.trim() === "") {
-      updateData.website =
-        entity.entityType === "BUSINESS" ? entity.website : null;
-      if (entity.entityType === "BUSINESS" && !updateData.website) {
-        return NextResponse.json(
-          { error: "Le site web est obligatoire pour une entreprise." },
-          { status: 400 },
-        );
-      }
-    } else {
-      updateData.website = normalizeWebsite(p.website);
-    }
-  }
-
   if (entity.entityType === "INDIVIDUAL") {
     if (p.firstName !== undefined) {
       const check = assertSafeDisplayText(p.firstName ?? "", "Prénom");
@@ -211,12 +182,6 @@ export async function PATCH(
     }
   }
 
-  if (certifiedValue.domains !== undefined) {
-    updateData.certifiedDomains = certifiedValue.domains;
-  }
-  if (certifiedValue.emails !== undefined) {
-    updateData.certifiedEmails = certifiedValue.emails;
-  }
   if (certifiedValue.phones !== undefined) {
     updateData.certifiedPhones = certifiedValue.phones;
   }

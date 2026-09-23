@@ -70,8 +70,7 @@ export async function handleVerifyIdentity(
       signals: [
         { name: "Identité vérifiée", status: payload.signals.kycVerified },
         { name: "Ancrage blockchain", status: payload.signals.polygonAnchored },
-        { name: "Domaine vérifié", status: payload.signals.inNetwork },
-        { name: "Réseau de confiance", status: payload.signals.inNetwork },
+        { name: "Dans votre réseau", status: payload.signals.inNetwork },
       ],
       bisCapable,
       senderUsuallySignsBis: payload.senderUsuallySignsBis,

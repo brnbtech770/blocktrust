@@ -25,6 +25,8 @@ interface TagInputProps {
   normalizeForChip?: (trimmedRaw: string) => string;
   /** Plafond jetons (défaut : constante globale certifiée) */
   maxItems?: number;
+  /** Affiche les valeurs sans ajout ni retrait. */
+  readOnly?: boolean;
 }
 
 export function TagInput({
@@ -35,6 +37,7 @@ export function TagInput({
   Icon,
   normalizeForChip,
   maxItems: maxItemsProp,
+  readOnly = false,
 }: TagInputProps): JSX.Element {
   const maxItems = maxItemsProp ?? CERTIFIED_CONTACT_MAX_ITEMS;
   const [draft, setDraft] = useState("");
@@ -74,18 +77,20 @@ export function TagInput({
               <Icon className="size-3 shrink-0 text-cyan-400" aria-hidden />
             ) : null}
             {v}
-            <button
-              type="button"
-              aria-label={`Retirer ${v}`}
-              className="-mr-0.5 rounded p-0.5 text-white/50 hover:bg-white/10 hover:text-white"
-              onClick={() => remove(i)}
-            >
-              <X className="size-3.5" aria-hidden />
-            </button>
+            {readOnly ? null : (
+              <button
+                type="button"
+                aria-label={`Retirer ${v}`}
+                className="-mr-0.5 rounded p-0.5 text-white/50 hover:bg-white/10 hover:text-white"
+                onClick={() => remove(i)}
+              >
+                <X className="size-3.5" aria-hidden />
+              </button>
+            )}
           </span>
         ))}
       </div>
-      {!atCap ? (
+      {!atCap && !readOnly ? (
         <div className="flex gap-2">
           <input
             type="text"
@@ -116,6 +121,7 @@ interface DomainTagInputProps {
   onChange: (next: string[]) => void;
   placeholder?: string;
   maxItems?: number;
+  readOnly?: boolean;
 }
 
 export function DomainTagInput({
@@ -123,6 +129,7 @@ export function DomainTagInput({
   onChange,
   placeholder = "mondomaine.fr",
   maxItems,
+  readOnly,
 }: DomainTagInputProps): JSX.Element {
   return (
     <TagInput
@@ -133,6 +140,7 @@ export function DomainTagInput({
       normalizeForChip={normalizeCertifiedDomainInput}
       validate={(n) => n.length > 0 && isValidCertifiedDomain(n)}
       maxItems={maxItems}
+      readOnly={readOnly}
     />
   );
 }
@@ -142,6 +150,7 @@ interface CertifiedEmailsTagInputProps {
   onChange: (next: string[]) => void;
   placeholder?: string;
   maxItems?: number;
+  readOnly?: boolean;
 }
 
 export function CertifiedEmailsTagInput({
@@ -149,6 +158,7 @@ export function CertifiedEmailsTagInput({
   onChange,
   placeholder = "contact@mondomaine.fr",
   maxItems,
+  readOnly,
 }: CertifiedEmailsTagInputProps): JSX.Element {
   return (
     <TagInput
@@ -159,6 +169,7 @@ export function CertifiedEmailsTagInput({
       normalizeForChip={normalizeCertifiedEmailInput}
       validate={(n) => n.length > 0 && isValidCertifiedEmail(n)}
       maxItems={maxItems}
+      readOnly={readOnly}
     />
   );
 }

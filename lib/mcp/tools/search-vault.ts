@@ -12,6 +12,7 @@ import {
   maskVaultEntryValue,
   normalizeVaultCompareValue,
   readVaultEntryPlaintext,
+  vaultValuesMatch,
 } from "@/lib/vault-entry-value";
 import { auditVaultAction } from "@/lib/vault-audit";
 
@@ -95,16 +96,29 @@ export async function handleSearchVault(
     ? createHash("sha256").update(normalizeVaultCompareValue(compareValue)).digest("hex").slice(0, 12)
     : null;
 
+  auditVaultAction({
+    action: "VAULT_MCP_SEARCH",
+    userId: ctx.userId,
+    vaultId: vault.vaultId,
+    valueForHash: compareValue,
+    metadata: {
+      source: "mcp",
+      entryCount: filtered.length,
+      compared: Boolean(compareValue),
+    },
+  });
+
   return mcpJsonResult({
     total: filtered.length,
     entries: filtered.map((e) => {
       const plain = readVaultEntryPlaintext(e);
+      const isMatch = compareValue ? vaultValuesMatch(plain, compareValue) : null;
       return {
         id: e.id,
         label: e.name,
         type: e.type,
-        valuePreview: compareValue ? undefined : maskVaultEntryValue(e.type, plain),
-        storedValue: compareValue ? plain : undefined,
+        valuePreview: maskVaultEntryValue(e.type, plain),
+        match: isMatch,
         description: e.description,
         storedAt: e.createdAt.toISOString(),
       };

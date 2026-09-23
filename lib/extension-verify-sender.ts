@@ -151,15 +151,12 @@ function entityDisplayName(e: EntityWithCerts): string {
 export function entityMatchesSender(
   e: EntityWithCerts,
   emailNorm: string,
-  domainNorm: string,
+  _domainNorm: string,
 ): boolean {
+  // Uniquement l'email principal de l'entité.
+  // certifiedEmails, certifiedDomains et website ne prouvent pas le contrôle
+  // du domaine ou de l'adresse — ils ne doivent pas produire un verdict CERTIFIED.
   if (emailNorm && e.email.toLowerCase() === emailNorm) return true;
-  if (emailNorm && e.certifiedEmails.some((x) => x.toLowerCase() === emailNorm)) return true;
-  if (domainNorm) {
-    if (e.certifiedDomains.some((d) => normalizeSenderDomain(d) === domainNorm)) return true;
-    const host = entityHostFromWebsite(e.website);
-    if (host === domainNorm) return true;
-  }
   return false;
 }
 

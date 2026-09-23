@@ -10,7 +10,8 @@ export type VaultAuditAction =
   | "VAULT_ENTRY_UPDATED"
   | "VAULT_ENTRY_DELETED"
   | "VAULT_ENTRY_REVEALED"
-  | "VAULT_COMPARE";
+  | "VAULT_COMPARE"
+  | "VAULT_MCP_SEARCH";
 
 export function auditVaultAction(params: {
   action: VaultAuditAction;

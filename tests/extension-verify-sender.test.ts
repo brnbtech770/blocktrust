@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   buildExtensionVerifyResult,
   buildOfficialExtensionVerifyPayload,
+  entityMatchesSender,
   isOfficialSenderEmail,
   type ExtensionVerifyContext,
 } from '@/lib/extension-verify-sender'
@@ -246,5 +247,35 @@ describe('Extension verify-sender', () => {
 
     expect(result.status).toBe('IN_CONTACTS')
     expect(result.verified).toBe(false)
+  })
+
+  it('domaine ou email déclaré sans preuve ne matche pas l’expéditeur', () => {
+    const entity = makeEntity('attacker@evil.test')
+    entity.certifiedDomains = ['gmail.com', 'cible.fr']
+    entity.certifiedEmails = ['direction@cible.fr']
+    entity.website = 'https://cible.fr'
+
+    expect(entityMatchesSender(entity, 'direction@cible.fr', 'cible.fr')).toBe(false)
+    expect(entityMatchesSender(entity, 'anyone@gmail.com', 'gmail.com')).toBe(false)
+    expect(entityMatchesSender(entity, 'attacker@evil.test', 'evil.test')).toBe(true)
+  })
+
+  it('certificat actif + domaine déclaré ne produit pas CERTIFIED', () => {
+    const entity = makeEntity('attacker@evil.test', 'ACTIVE', 90)
+    entity.certifiedDomains = ['cible.fr']
+    entity.certifiedEmails = ['direction@cible.fr']
+    entity.website = 'https://www.cible.fr'
+
+    const result = buildExtensionVerifyResult(
+      [entity],
+      'direction@cible.fr',
+      'cible.fr',
+      BASE_URL,
+      emptyCtx,
+    )
+
+    expect(result.status).toBe('UNKNOWN')
+    expect(result.verified).toBe(false)
+    expect(result.status).not.toBe('CERTIFIED')
   })
 })
