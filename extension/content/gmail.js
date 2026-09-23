@@ -253,9 +253,10 @@ async function verifySender(email, domain, bisId) {
     if (bisId) url.searchParams.set("bisId", bisId);
 
     const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Bearer ${apiKey.trim()}`,
-      },
+        headers: {
+          Authorization: `Bearer ${apiKey.trim()}`,
+          "X-BT-Client": "extension",
+        },
     });
     const data = await response.json().catch(() => ({}));
     console.log("[BLOCKTRUST] Status API:", response.status);
@@ -848,6 +849,7 @@ function createVerifyBadge(result) {
       align-items: flex-start !important;
       padding: 3px 8px !important;
     `;
+    // Score objectif persisté (User.trustScore). Le bonus réseau viewer n'est pas affiché.
     const score =
       typeof result.trustScore === "number" && Number.isFinite(result.trustScore)
         ? Math.round(result.trustScore)

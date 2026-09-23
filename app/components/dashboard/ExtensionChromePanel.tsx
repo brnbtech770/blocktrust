@@ -200,6 +200,10 @@ export default function ExtensionChromePanel({ extensionKeyInitial }: Props) {
               Cette clé lie les extensions Chrome et Outlook à votre compte BLOCKTRUST™. Tous les
               forfaits, y compris Découverte.
             </p>
+            <p className="mt-3 text-sm text-amber-200/90 [text-wrap:balance]">
+              Votre clé API donne accès à l&apos;extension Chrome et aux outils d&apos;intégration.
+              Ne la partagez jamais. En cas de doute, régénérez-la immédiatement.
+            </p>
           </div>
           <span
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${

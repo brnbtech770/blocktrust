@@ -751,6 +751,10 @@ model ThreatArticle {
 // TRUST CIRCLE
 // ============================================================
 
+/// @deprecated LEGACY — graphe entité↔entité. Ne pas supprimer (données historiques).
+/// Le Trust Engine (networkScore) et le Trust Circle actif utilisent UserTrustRelation.
+/// Encore lu pour le nettoyage : DELETE /api/trust-circle/[id]
+/// et le score entité app/lib/trust-score.ts (calculateTrustScore, non branché au moteur).
 model TrustRelation {
   id String @id @default(cuid())
 

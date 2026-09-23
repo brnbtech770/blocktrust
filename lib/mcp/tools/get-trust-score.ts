@@ -70,6 +70,7 @@ export async function handleGetTrustScore(
   return mcpJsonResult({
     email,
     trustScore: engine.globalScore,
+    ...(ctx.userId ? { networkBonus: engine.contextualBonus } : {}),
     recommendation: engine.recommendation,
     contextLabel: engine.contextLabel,
     officialAccount: engine.isOfficialAccount === true,

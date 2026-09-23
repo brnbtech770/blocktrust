@@ -63,6 +63,13 @@ export default function ExtensionMcpPanel() {
             Utilisez votre <strong className="font-medium text-white">clé API</strong> (la même
             que pour les extensions Chrome et Outlook) dans l&apos;en-tête{" "}
             <code className="font-mono text-xs text-bt-cyan">Authorization: Bearer bt_ext_…</code>
+            . Ajoutez aussi{" "}
+            <code className="font-mono text-xs text-bt-cyan">X-BT-Client: mcp</code> pour
+            l&apos;observabilité (ce header n&apos;accorde aucun droit).
+          </p>
+          <p className="mt-2 text-amber-200/90 [text-wrap:balance]">
+            Votre clé API donne accès à l&apos;extension Chrome et aux outils d&apos;intégration.
+            Ne la partagez jamais. En cas de doute, régénérez-la immédiatement.
           </p>
         </div>
       </dl>

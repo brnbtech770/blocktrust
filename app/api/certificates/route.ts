@@ -12,7 +12,7 @@ import { auth } from '@/app/lib/auth-server'
 import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
 import QRCode from 'qrcode'
-import { checkCertificateQuota } from '@/lib/checkQuota'
+import { checkCertificateQuota, getMaxCertificates } from '@/lib/checkQuota'
 import { sendEmailFireAndForget } from '@/lib/email'
 import { CertificateCreatedEmail, subject as certificateCreatedSubject } from '@/emails/CertificateCreatedEmail'
 import { createAdminAlert } from '@/lib/admin-alerts'
@@ -248,26 +248,7 @@ export async function POST(req: NextRequest) {
       email: session.user.email,
       planType: userWithPlan?.plan?.type ?? null,
     })
-
-    let maxCertificates = 1
-    if (userWithPlan?.plan) {
-      maxCertificates = userWithPlan.plan.maxCertificates
-    } else {
-      const planLimits: Record<string, number> = {
-        ESSENTIEL: 1,
-        PREMIUM: 5,
-        FAMILLE: 10,
-        FAMILLE_PLUS: 999999,
-        SOLO_PRO: 100,
-        STARTER: 10,
-        TEAM: 50,
-        BUSINESS: 999999,
-        ENTERPRISE: 999999,
-        B2B_ENTERPRISE: 999999,
-      }
-      const limitsKey = effectivePlan.replace(/^B2[BC]_/, '')
-      maxCertificates = planLimits[effectivePlan] ?? planLimits[limitsKey] ?? 1
-    }
+    const maxCertificates = getMaxCertificates(effectivePlan)
 
     // Plan effectif (statut Stripe inclus) — décide l'ancrage Polygon (jamais pour DISCOVERY).
     const isDiscovery = isDiscoveryPlan(effectivePlan)

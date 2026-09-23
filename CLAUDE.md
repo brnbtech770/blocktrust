@@ -226,6 +226,15 @@ Mais BIS ne doit pas empêcher techniquement l'utilisateur d'envoyer son email.
 
 En cas de timeout ou d'erreur lors de la signature BIS : l'email part SANS BIS (timeout strict 2,5s, circuit breaker après 2 échecs).
 
+BIS V1 : à la réception, l'extension lie l'expéditeur et le destinataire à la signature (sender + recipient binding). La comparaison du contentHash du corps n'est pas implémentée : la normalisation HTML de Gmail (signatures, pixels, mise en forme) rend une comparaison de hash fiable irréaliste. V2 : étudier une canonicalisation HTML avant toute comparaison de hash.
+
+```
+// BIS V1 : sender + recipient binding at reception.
+// contentHash binding not implemented — Gmail HTML
+// normalization makes reliable hash comparison infeasible.
+// V2: study HTML canonicalization before hash comparison.
+```
+
 # 10. LIENS DE VÉRIFICATION
 
 Le comportement par défaut est : LIEN ROTATIF (et non lien permanent).

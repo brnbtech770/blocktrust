@@ -10,6 +10,9 @@ import type Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 import { adminUserDetailSelect } from '@/lib/prisma-admin-user'
 import { formatCertificateLabel } from '@/lib/format-certificate-label'
+import { resolveEffectivePlan } from '@/lib/plan-features'
+import { getMaxCertificates } from '@/lib/checkQuota'
+import { getMaxContacts } from '@/lib/pricing'
 
 export default async function AdminUserDetailPage({
   params,
@@ -58,6 +61,23 @@ export default async function AdminUserDetailPage({
     (sum, entity) => sum + entity.certificates.length,
     0
   )
+
+  const dbSubscription = await prisma.subscription.findUnique({
+    where: { userId: user.id },
+    select: {
+      plan: true,
+      status: true,
+      stripeSubscriptionId: true,
+      currentPeriodEnd: true,
+    },
+  })
+  const effectivePlan = resolveEffectivePlan({
+    subscription: dbSubscription,
+    email: user.email,
+    planType: user.plan?.type ?? null,
+  })
+  const quotaEntities = getMaxContacts(effectivePlan)
+  const quotaCertificates = getMaxCertificates(effectivePlan)
 
   const cardCls =
     'rounded-xl border border-white/10 bg-white/5 p-6 transition-all hover:border-gold/30'
@@ -109,8 +129,8 @@ export default async function AdminUserDetailPage({
       <div className={cardCls}>
         <h2 className="font-syne mb-4 text-xl font-bold tracking-tight text-white">Usage</h2>
         <div className="grid grid-cols-3 gap-4">
-          <div><p className="text-sm" style={labelStyle}>Entités</p><p className="text-2xl font-bold text-white">{user.entities.length}{user.plan && ` / ${user.plan.maxEntities}`}</p></div>
-          <div><p className="text-sm" style={labelStyle}>Certificats</p><p className="text-2xl font-bold text-white">{totalCertificates}{user.plan && ` / ${user.plan.maxCertificates}`}</p></div>
+          <div><p className="text-sm" style={labelStyle}>Entités</p><p className="text-2xl font-bold text-white">{user.entities.length} / {quotaEntities}</p></div>
+          <div><p className="text-sm" style={labelStyle}>Certificats</p><p className="text-2xl font-bold text-white">{totalCertificates} / {quotaCertificates}</p></div>
           <div><p className="text-sm" style={labelStyle}>Vérifications totales</p><p className="text-2xl font-bold text-white">{user.entities.reduce((sum, entity) => sum + entity.certificates.reduce((certSum, cert) => certSum + (cert.verificationCount || 0), 0), 0)}</p></div>
         </div>
       </div>

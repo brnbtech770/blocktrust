@@ -6,7 +6,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUser } from '@/app/lib/auth'
 import { prisma } from '@/app/lib/db'
 import { stripe } from '@/lib/stripe'
-import { getPlanDisplayLabel, planAllowsTrustCircle, resolveEffectivePlan } from '@/lib/plan-features'
+import { getPlanDisplayLabel, planAllowsPolygonAnchoring, planAllowsTrustCircle, resolveEffectivePlan } from '@/lib/plan-features'
+import { getMaxCertificates } from '@/lib/checkQuota'
+import { getMaxContacts } from '@/lib/pricing'
 import { btErrorDevDetails } from '@/lib/prodLog'
 
 export async function GET(req: NextRequest) {
@@ -60,41 +62,11 @@ export async function GET(req: NextRequest) {
     })
     const planLabel = getPlanDisplayLabel(planCode, { email: userWithPlan.email })
 
-    // Définir les limites selon le plan
-    // Si le plan existe (nouveau modèle), utiliser ses propriétés
-    // Sinon, fallback sur l'ancien système avec planLimits
-    let limits: { maxEntities: number; maxCertificates: number; trustCircleEnabled: boolean; blockchainAnchor: boolean }
-    
-    if (userWithPlan.plan) {
-      limits = {
-        maxEntities: userWithPlan.plan.maxEntities,
-        maxCertificates: userWithPlan.plan.maxCertificates,
-        trustCircleEnabled: planAllowsTrustCircle(planCode),
-        blockchainAnchor: userWithPlan.plan.blockchainAnchor,
-      }
-    } else {
-      // Fallback: ancien système avec planLimits (clé = plan effectif résolu)
-      const planLimits: Record<string, { maxEntities: number; maxCertificates: number; trustCircleEnabled: boolean; blockchainAnchor: boolean }> = {
-        // trustCircleEnabled / blockchainAnchor alignés sur lib/pricing.ts :
-        // Trust Circle à partir de Premium ; ancrage Polygon sur tout plan payant.
-        ESSENTIEL: { maxEntities: 1, maxCertificates: 1, trustCircleEnabled: false, blockchainAnchor: true },
-        PREMIUM: { maxEntities: 5, maxCertificates: 5, trustCircleEnabled: true, blockchainAnchor: true },
-        FAMILLE: { maxEntities: 10, maxCertificates: 10, trustCircleEnabled: true, blockchainAnchor: true },
-        "FAMILLE_PLUS": { maxEntities: 999999, maxCertificates: 999999, trustCircleEnabled: true, blockchainAnchor: true },
-        SOLO_PRO: { maxEntities: 100, maxCertificates: 100, trustCircleEnabled: true, blockchainAnchor: true },
-        STARTER: { maxEntities: 10, maxCertificates: 10, trustCircleEnabled: true, blockchainAnchor: true },
-        TEAM: { maxEntities: 50, maxCertificates: 50, trustCircleEnabled: true, blockchainAnchor: true },
-        BUSINESS: { maxEntities: 999999, maxCertificates: 999999, trustCircleEnabled: true, blockchainAnchor: true },
-        ENTERPRISE: { maxEntities: 999999, maxCertificates: 999999, trustCircleEnabled: true, blockchainAnchor: true },
-        B2B_ENTERPRISE: { maxEntities: 999999, maxCertificates: 999999, trustCircleEnabled: true, blockchainAnchor: true },
-      }
-
-      const limitsKey = planCode.replace(/^B2[BC]_/, '')
-      limits = planLimits[planCode] ?? planLimits[limitsKey] ?? planLimits.ESSENTIEL
-      limits = {
-        ...limits,
-        trustCircleEnabled: planAllowsTrustCircle(planCode),
-      }
+    const limits = {
+      maxEntities: getMaxContacts(planCode),
+      maxCertificates: getMaxCertificates(planCode),
+      trustCircleEnabled: planAllowsTrustCircle(planCode),
+      blockchainAnchor: planAllowsPolygonAnchoring(planCode),
     }
 
     // Si pas de stripeCustomerId, pas d'abonnement

@@ -109,6 +109,14 @@ async function resolveBisSignActor(req: NextRequest): Promise<BisSignActor | nul
     throw new BisSignError('Trop de requêtes. Réessayez plus tard.', 429)
   }
 
+  const { auditApiKeyChannel } = await import('@/lib/api-key-channel-audit')
+  auditApiKeyChannel({
+    userId,
+    keyHash: hashApiKey(apiKey),
+    route: 'extension',
+    clientHeader: req.headers.get('x-bt-client'),
+  })
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { email: true, name: true },

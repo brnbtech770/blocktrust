@@ -37,6 +37,7 @@ import { getValidationLevelLabel } from '@/lib/validationLevelDisplay'
 import { formatCertificateLabel } from '@/lib/format-certificate-label'
 import { isActiveBillingStatus, resolveEffectivePlan } from '@/lib/plan-features'
 import { isCertificateAnchored } from '@/lib/public-anchor'
+import { computeTrustEngineScore } from '@/lib/trust-engine'
 
 export const dynamic = 'force-dynamic'
 
@@ -490,13 +491,17 @@ export default async function VerifyPublicPage({
 
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  const verificationsLast30Days = await prisma.verification.count({
-    where: {
-      certificateId: cert.id,
-      verifiedAt: { gte: thirtyDaysAgo },
-      result: { in: ['VALID', 'SUSPICIOUS_VOLUME'] },
-    },
-  })
+  const [verificationsLast30Days, viewerEngine] = await Promise.all([
+    prisma.verification.count({
+      where: {
+        certificateId: cert.id,
+        verifiedAt: { gte: thirtyDaysAgo },
+        result: { in: ['VALID', 'SUSPICIOUS_VOLUME'] },
+      },
+    }),
+    computeTrustEngineScore(cert.id, viewerUserId).catch(() => null),
+  ])
+  const contextualBonus = viewerEngine?.contextualBonus ?? 0
 
   const trustedCircleUncertDomainWarn =
     trustUi === 'in_network' &&
@@ -517,6 +522,7 @@ export default async function VerifyPublicPage({
       trustCircleCas1Banner={trustUi === 'cas1'}
       trustCircleInNetworkBadge={trustUi === 'in_network'}
       trustedCircleUncertDomainWarn={trustedCircleUncertDomainWarn}
+      contextualBonus={contextualBonus}
     />
   )
 }
@@ -761,6 +767,7 @@ function ValidView({
   trustCircleCas1Banner = false,
   trustCircleInNetworkBadge = false,
   trustedCircleUncertDomainWarn = false,
+  contextualBonus = 0,
 }: {
   entity: Prisma.EntityGetPayload<{ include: { user: { select: { trustScore: true } } } }>
   certificate: {
@@ -782,6 +789,7 @@ function ValidView({
   trustCircleCas1Banner?: boolean
   trustCircleInNetworkBadge?: boolean
   trustedCircleUncertDomainWarn?: boolean
+  contextualBonus?: number
 }) {
   const name = entityDisplayName(entity)
   const certRef = formatCertificateLabel({
@@ -849,7 +857,7 @@ function ValidView({
           ) : null}
 
           <div className="mb-6 rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-center">
-            <p className="text-xs uppercase tracking-wider text-white/50">TrustScore (titulaire)</p>
+            <p className="text-xs uppercase tracking-wider text-white/50">Score de confiance</p>
             <p
               className="font-mono text-xl font-semibold"
               style={{ color: holderColor }}
@@ -857,6 +865,11 @@ function ValidView({
               {holderTrustScore}/100{' '}
               <span className="text-sm text-white/70">({holderLabel})</span>
             </p>
+            {contextualBonus > 0 ? (
+              <p className="mt-1 text-sm text-[#00d4ff]">
+                Dans votre réseau : +{contextualBonus}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-6">

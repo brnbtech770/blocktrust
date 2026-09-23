@@ -4,7 +4,7 @@
 
 import { prisma } from '@/app/lib/db'
 import { resolveEffectivePlan } from '@/lib/plan-features'
-import { getMaxContacts } from '@/lib/pricing'
+import { getMaxContacts, normalizePlanQuotaKey } from '@/lib/pricing'
 import { personalContactEntitiesWhere } from '@/lib/entity-contacts'
 
 export type QuotaCheckResult = {
@@ -36,9 +36,7 @@ export async function checkEntityQuota(userId: string): Promise<QuotaCheckResult
     email: user.email,
     planType: user.plan?.type,
   })
-  const fromPlanRow = user.plan?.maxEntities
-  const maxEntities =
-    fromPlanRow != null && fromPlanRow > 0 ? fromPlanRow : getMaxEntities(plan)
+  const maxEntities = getMaxEntities(plan)
 
   // Compter uniquement les contacts tiers (hors badge personnel).
   const currentEntities = await prisma.entity.count({
@@ -137,8 +135,7 @@ export async function getEntityQuotaSnapshot(userId: string): Promise<{
     email: user.email,
     planType: user.plan?.type,
   })
-  const fromPlanRow = user.plan?.maxEntities
-  const max = fromPlanRow != null && fromPlanRow > 0 ? fromPlanRow : getMaxEntities(planStr)
+  const max = getMaxEntities(planStr)
 
   const current = await prisma.entity.count({
     where: personalContactEntitiesWhere(userId, user.email),
@@ -148,18 +145,29 @@ export async function getEntityQuotaSnapshot(userId: string): Promise<{
 }
 
 /**
- * Retourne le nombre maximum de certificats selon le plan
+ * Nombre maximum de certificats selon le plan effectif.
+ * Ne lit jamais Plan.maxCertificates (ligne SQL désynchronisable).
+ * Clé normalisée (B2B_ENTERPRISE → ENTERPRISE). Plan inconnu → 1.
+ * 0 explicite conservé (Découverte expirée).
  */
-function getMaxCertificates(plan: string): number {
+export function getMaxCertificates(plan: string): number {
   const limits: Record<string, number> = {
     DISCOVERY: 1,
     DISCOVERY_EXPIRED: 0,
     ESSENTIEL: 1,
     PREMIUM: 5,
     FAMILLE: 10,
-    FAMILLE_PLUS: 999999, // Illimité
+    FAMILLE_PLUS: 999999,
+    SOLO_PRO: 100,
+    STARTER: 10,
+    TEAM: 50,
+    BUSINESS: 999999,
+    ENTERPRISE: 999999,
   }
 
-  // ?? (et non ||) pour respecter une limite explicite à 0 (Découverte expirée).
-  return limits[plan] ?? 1
+  const key = normalizePlanQuotaKey(plan)
+  if (Object.prototype.hasOwnProperty.call(limits, key)) {
+    return limits[key]!
+  }
+  return 1
 }

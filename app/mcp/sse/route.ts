@@ -106,6 +106,14 @@ async function handleMcpPost(req: NextRequest, parsedBody: unknown): Promise<Res
     return unauthorizedResponse(auth.message);
   }
 
+  const { auditApiKeyChannel } = await import("@/lib/api-key-channel-audit");
+  auditApiKeyChannel({
+    userId: auth.userId,
+    keyHash: auth.keyHash,
+    route: "mcp",
+    clientHeader: req.headers.get("x-bt-client"),
+  });
+
   const rate = await checkMcpRateLimit(auth.keyHash);
   if (!rate.ok) {
     return rateLimitedResponse(rate.retryAfter);

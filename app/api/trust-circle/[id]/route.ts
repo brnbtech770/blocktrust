@@ -76,8 +76,9 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Legacy: Entity-based. La SUPPRESSION d'une relation reste toujours autorisée
-    // (nettoyage possible même après passage à un plan sans Trust Circle).
+    // LEGACY — migrate to UserTrustRelation
+    // Entity-based TrustRelation : suppression historique uniquement.
+    // La suppression d'une relation reste autorisée même sans plan Trust Circle.
     const userEntities = await prisma.entity.findMany({
       where: { userId: user.id },
       select: { id: true },

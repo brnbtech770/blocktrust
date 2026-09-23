@@ -517,7 +517,10 @@
       const url = new URL(`${deps.apiBase}/api/extension/verify-sender`);
       url.searchParams.set("email", email);
       const response = await fetch(url.toString(), {
-        headers: { Authorization: `Bearer ${apiKey.trim()}` },
+        headers: {
+          Authorization: `Bearer ${apiKey.trim()}`,
+          "X-BT-Client": "extension",
+        },
       });
       const data = await response.json().catch(() => ({}));
       if (response.ok && data?.status === "CERTIFIED") {
@@ -804,6 +807,7 @@
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey.trim()}`,
+          "X-BT-Client": "extension",
         },
         body: JSON.stringify({
           recipientEmail,

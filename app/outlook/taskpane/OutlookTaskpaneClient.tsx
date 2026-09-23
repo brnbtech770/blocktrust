@@ -103,7 +103,10 @@ async function fetchVerifyResult(
 
   const res = await fetch(url.toString(), {
     method: "GET",
-    headers: { Authorization: `Bearer ${apiKey}` },
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "X-BT-Client": "extension",
+    },
   });
 
   if (!res.ok) {

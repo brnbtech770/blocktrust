@@ -5,6 +5,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/app/lib/db";
 import { hashApiKey } from "@/lib/api-key";
+import { auditApiKeyChannel } from "@/lib/api-key-channel-audit";
 import {
   findUserIdByExtensionApiKey,
   extractExtensionApiKey,
@@ -37,6 +38,12 @@ export async function GET(req: NextRequest) {
   }
 
   const keyHash = hashApiKey(apiKey);
+  auditApiKeyChannel({
+    userId,
+    keyHash,
+    route: "extension",
+    clientHeader: req.headers.get("x-bt-client"),
+  });
   const sub = await prisma.subscription
     .findUnique({ where: { userId }, select: { plan: true, status: true } })
     .catch(() => null);

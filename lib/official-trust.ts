@@ -66,6 +66,7 @@ export function buildOfficialTrustEngineResult(): TrustEngineResult {
     recommendation: "TRUST",
     contextLabel: "Compte officiel BLOCKTRUST™",
     isOfficialAccount: true,
+    contextualBonus: 0,
   };
 }
 
@@ -87,6 +88,7 @@ export function buildRevokedOfficialTrustEngineResult(): TrustEngineResult {
     recommendation: "DANGER",
     contextLabel: "Certificat révoqué",
     isOfficialAccount: false,
+    contextualBonus: 0,
   };
 }
 

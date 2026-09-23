@@ -167,6 +167,7 @@ function looksLikeExtensionKey(key) {
 function extensionAuthHeaders(apiKey) {
   return {
     Authorization: `Bearer ${apiKey.trim()}`,
+    "X-BT-Client": "extension",
   };
 }
 

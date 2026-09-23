@@ -1,5 +1,8 @@
 // lib/mcp/auth.ts
 // Authentification MCP — clé API extension bt_ext_…
+// SECURITY NOTE: bt_ext_ key grants both extension and MCP access.
+// Scope separation (bt_ext_ vs bt_mcp_) planned for V2.
+// Risk: stolen extension key = full MCP access (sign, vault, contacts)
 // ============================================================
 
 import type { NextRequest } from "next/server";

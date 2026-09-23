@@ -68,6 +68,9 @@ export default function McpDocumentationPage() {
               <dd className="mt-1 font-mono text-sm">
                 Authorization: Bearer bt_ext_…
               </dd>
+              <dd className="mt-1 text-white/60">
+                Header observabilité (sans effet sur les droits) : X-BT-Client: mcp
+              </dd>
             </div>
             <div>
               <dt className="text-white/50">Clé API</dt>

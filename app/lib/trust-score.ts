@@ -1,5 +1,7 @@
 // app/lib/trust-score.ts
-// Calcul et gestion du TrustScore
+// LEGACY — migrate to UserTrustRelation
+// Score entité historique. Le Trust Engine (lib/trust-engine.ts) ne lit pas ce module :
+// son networkScore compte uniquement UserTrustRelation.
 // ============================================================
 
 import { prisma } from './db'
@@ -71,6 +73,7 @@ export async function calculateTrustScore(entityId: string): Promise<{
   // ─────────────────────────────────────────────
   // Interaction Score (0-20)
   // ─────────────────────────────────────────────
+  // LEGACY — migrate to UserTrustRelation (score entité historique, hors Trust Engine).
   const trustRelations = await prisma.trustRelation.count({
     where: {
       OR: [
@@ -99,7 +102,7 @@ export async function calculateTrustScore(entityId: string): Promise<{
   // Network Score (0-15)
   // ─────────────────────────────────────────────
   let networkScore = 0
-  // Points pour relations avec entités de confiance
+  // LEGACY — migrate to UserTrustRelation
   const trustedRelations = await prisma.trustRelation.findMany({
     where: {
       OR: [

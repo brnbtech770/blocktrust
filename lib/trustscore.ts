@@ -65,6 +65,10 @@ export async function computeTrustScore(userId: string): Promise<number> {
   return Math.max(0, Math.min(100, score))
 }
 
+/**
+ * Score persisté objectif : computeTrustScore ne prend pas de viewer.
+ * Le bonus réseau contextuel (Trust Engine contextualBonus) n'est jamais stocké ici.
+ */
 export async function persistUserTrustScore(userId: string): Promise<number> {
   const score = await computeTrustScore(userId)
   await prisma.user.update({

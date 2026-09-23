@@ -109,7 +109,7 @@ describe('Trust Engine — signaux enrichis', () => {
     expect(result.technicalScore).toBeLessThanOrEqual(70)
   })
 
-  it('propagation indirecte → NetworkScore +10', async () => {
+  it('propagation indirecte → contextualBonus +10, score objectif inchangé', async () => {
     prismaMock.certificate.findFirst.mockResolvedValue(
       baseCert({ mutualCount: 2, kycStatus: 'VERIFIED' }),
     )
@@ -124,7 +124,10 @@ describe('Trust Engine — signaux enrichis', () => {
     const withIndirect = await computeTrustEngineScore('bt-enriched', 'viewer-1')
 
     expect(withIndirect.signals.some((s) => s.type === 'INDIRECT_NETWORK')).toBe(true)
-    expect(withIndirect.networkScore).toBe(withoutViewer.networkScore + 10)
+    expect(withIndirect.contextualBonus).toBe(10)
+    expect(withoutViewer.contextualBonus).toBe(0)
+    expect(withIndirect.networkScore).toBe(withoutViewer.networkScore)
+    expect(withIndirect.globalScore).toBe(withoutViewer.globalScore)
   })
 
   it('score global avec tous les signaux positifs', async () => {

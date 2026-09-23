@@ -45,6 +45,11 @@ export interface TrustEngineResult {
   contextLabel: string;
   /** Compte Root of Trust BLOCKTRUST (score fixe 100). */
   isOfficialAccount?: boolean;
+  /**
+   * Bonus réseau dépendant du viewer (+20 direct, +10 indirect).
+   * N'entre pas dans globalScore. 0 si pas de viewer ou pas de lien.
+   */
+  contextualBonus: number;
 }
 
 function defaultResult(
@@ -61,6 +66,7 @@ function defaultResult(
     signals: [],
     recommendation: rec,
     contextLabel: label,
+    contextualBonus: 0,
   };
 }
 
@@ -265,6 +271,8 @@ export async function computeTrustEngineScore(
     });
   }
 
+  let contextualBonus = 0;
+
   if (viewerUserId && viewerUserId !== user.id) {
     const inNetwork = await prisma.userTrustRelation
       .findFirst({
@@ -277,7 +285,7 @@ export async function computeTrustEngineScore(
       .catch(() => null);
 
     if (inNetwork) {
-      networkScore = Math.min(100, networkScore + 20);
+      contextualBonus = 20;
       signals.push({
         type: "IN_YOUR_NETWORK",
         label: "Dans votre réseau de confiance",
@@ -303,7 +311,7 @@ export async function computeTrustEngineScore(
         .catch(() => null);
 
       if (indirectConnection) {
-        networkScore = Math.min(100, networkScore + 10);
+        contextualBonus = 10;
         signals.push({
           type: "INDIRECT_NETWORK",
           label: "Connexion indirecte dans votre réseau",
@@ -524,5 +532,6 @@ export async function computeTrustEngineScore(
     signals: signals.slice(0, 10),
     recommendation,
     contextLabel,
+    contextualBonus,
   };
 }
