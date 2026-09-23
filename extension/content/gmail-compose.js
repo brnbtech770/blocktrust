@@ -70,6 +70,7 @@
   let bisAccountInflight = null;
 
   let autoSendHookInstalled = false;
+  let sendMenuHookInstalled = false;
   let composeObserver = null;
   let autoBadgeEl = null;
 
@@ -106,11 +107,79 @@
   const SEND_OPTIONS_MENU_RE =
     /schedule send|planifier l['’]envoi|programmer l['’]envoi/i;
 
-  /** Retire les pastilles BIS posées dans la barre Envoyer. */
-  function purgeToolbarBis() {
-    document
-      .querySelectorAll(".bt-bis-btn, .bt-bis-cell, .bt-bis-unavailable-msg")
-      .forEach((el) => el.remove());
+  /** Bandeaux legacy (ne plus injecter). */
+  function removeAllUnavailableBanners() {
+    document.querySelectorAll(".bt-bis-unavailable-msg").forEach((el) => el.remove());
+  }
+
+  /**
+   * Retire les boutons BIS mal placés (barre d'icônes), pas la cellule Envoyer.
+   * @param {Element} root
+   */
+  function removeMisplacedBisControls(root) {
+    root.querySelectorAll(`[${ATTR_BIS_BTN}], .bt-bis-btn`).forEach((el) => {
+      if (!el.closest(".bt-bis-cell")) el.remove();
+    });
+    root.querySelectorAll(".bt-bis-cell").forEach((cell) => {
+      if (!cell.querySelector(`[${ATTR_BIS_BTN}]`)) cell.remove();
+    });
+  }
+
+  /**
+   * @param {Element} root
+   * @returns {HTMLElement | null}
+   */
+  function findSendAnchor(root) {
+    const buttons = [...root.querySelectorAll('div[role="button"]')].filter(
+      (el) => el instanceof HTMLElement && !el.classList.contains("bt-bis-btn"),
+    );
+    const optionsBtn = buttons.find((el) => {
+      const label = `${el.getAttribute("aria-label") || ""} ${el.getAttribute("data-tooltip") || ""}`;
+      return /more send options|plus d'options d'envoi|options d'envoi/i.test(label);
+    });
+    const sendBtn = buttons.find((el) => {
+      const text = (el.textContent || "").replace(/\s+/g, " ").trim();
+      const label = `${el.getAttribute("aria-label") || ""} ${el.getAttribute("data-tooltip") || ""}`;
+      if (/schedule|planifier|programmer|option/i.test(label)) return false;
+      return /^(send|envoyer)$/i.test(text) || /\b(send|envoyer)\b/i.test(label);
+    });
+    const anchorBtn = optionsBtn || sendBtn;
+    if (!(anchorBtn instanceof HTMLElement)) return null;
+    const cell = anchorBtn.closest("td");
+    if (cell instanceof HTMLElement) return cell;
+    return anchorBtn.parentElement instanceof HTMLElement
+      ? anchorBtn.parentElement
+      : anchorBtn;
+  }
+
+  /**
+   * @param {Element} root
+   * @param {HTMLElement} button
+   * @returns {boolean}
+   */
+  function placeBisButton(root, button) {
+    removeMisplacedBisControls(root);
+    const anchor = findSendAnchor(root);
+    if (!anchor) return false;
+    root.querySelectorAll(".bt-bis-cell").forEach((cell) => cell.remove());
+    if (anchor.tagName === "TD") {
+      const td = document.createElement("td");
+      td.className = "bt-bis-cell";
+      td.setAttribute(BT_UI_MARKER, "1");
+      td.appendChild(button);
+      anchor.insertAdjacentElement("afterend", td);
+      return true;
+    }
+    anchor.insertAdjacentElement("afterend", button);
+    return true;
+  }
+
+  /**
+   * @param {Element} root
+   * @returns {boolean}
+   */
+  function hasSendRowBisButton(root) {
+    return Boolean(root.querySelector(".bt-bis-cell [data-bt-bis-btn]"));
   }
 
   /**
@@ -220,6 +289,8 @@
     if (node.hasAttribute(BIS_BLOCK_MARKER)) return true;
     if (node.id === "bt-compose-toast" || node.id === "bt-bis-auto-badge") return true;
     if (node.classList?.contains("bt-bis-btn")) return true;
+    if (node.classList?.contains("bt-bis-cell")) return true;
+    if (node.classList?.contains("bt-bis-menu-item")) return true;
     if (node.classList?.contains("bt-bis-unavailable-msg")) return true;
     if (node.closest(`[${BT_UI_MARKER}]`)) return true;
     if (node.closest(`[${BIS_BLOCK_MARKER}]`)) return true;
@@ -576,19 +647,24 @@
    * @param {Element} root
    */
   async function refreshComposeSenderCert(root) {
-    purgeToolbarBis();
+    removeAllUnavailableBanners();
+    removeMisplacedBisControls(root);
+
     const available = await accountHasActiveBisCertificate();
     if (available === null) return;
 
-    if (available) {
+    if (available === true) {
       hideBisUnavailable(root);
       root.setAttribute(ATTR_SENDER_CERT, "1");
+      if (currentMode === BIS_MODES.SELECTIVE) {
+        await ensureSendRowBisButton(root);
+      }
       return;
     }
 
+    root.querySelectorAll(".bt-bis-cell, .bt-bis-btn").forEach((el) => el.remove());
     hideBisUnavailable(root);
     root.setAttribute(ATTR_SENDER_CERT, "0");
-    root.setAttribute(ATTR_BIS_UNAVAILABLE, "1");
   }
 
   /**
@@ -603,10 +679,9 @@
    * @param {Element} root
    */
   function showBisUnavailable(root) {
-    purgeToolbarBis();
-    hideBisUnavailable(root);
-    root.setAttribute(ATTR_BIS_UNAVAILABLE, "1");
+    removeAllUnavailableBanners();
     root.setAttribute(ATTR_SENDER_CERT, "0");
+    root.removeAttribute(ATTR_BIS_UNAVAILABLE);
   }
 
   /**
@@ -636,11 +711,11 @@
    */
   function hasAttachments(root) {
     return Boolean(
-      root.querySelector('[aria-label*="Pièce jointe"]') ||
-        root.querySelector('[aria-label*="Attachment"]') ||
-        root.querySelector(".aZo") ||
-        root.querySelector('[data-tooltip*="Pièce jointe"]') ||
-        root.querySelector('[data-tooltip*="Attachment"]'),
+      root.querySelector(".aZo") ||
+        root.querySelector('[aria-label*="Remove attachment"]') ||
+        root.querySelector('[aria-label*="Supprimer la pièce jointe"]') ||
+        root.querySelector('[data-tooltip*="Remove attachment"]') ||
+        root.querySelector('[data-tooltip*="Supprimer la pièce jointe"]'),
     );
   }
 
@@ -1084,8 +1159,67 @@
     setButtonState(button, "ready");
   }
 
+  /**
+   * Bouton or à côté d'Envoyer (réinjecté si Gmail reconstruit la barre, ex. PJ).
+   * @param {Element} root
+   */
+  async function ensureSendRowBisButton(root) {
+    if (!deps || currentMode !== BIS_MODES.SELECTIVE) return;
+
+    const available = await accountHasActiveBisCertificate();
+    if (available !== true) return;
+
+    if (hasSendRowBisButton(root)) {
+      const btn = root.querySelector(`.bt-bis-cell [${ATTR_BIS_BTN}]`);
+      const bodyEl = findComposeBody(root);
+      if (btn instanceof HTMLElement && bodyEl && hasBisBlock(bodyEl)) {
+        composeState.set(root, { signed: true, signing: false });
+        setButtonState(btn, "signed");
+      }
+      bindBodyInvalidation(root);
+      return;
+    }
+
+    const button = document.createElement("div");
+    button.className = "bt-bis-btn bt-bis-btn--ready";
+    button.setAttribute("role", "button");
+    button.setAttribute("tabindex", "0");
+    button.setAttribute("aria-label", "Signer avec BLOCKTRUST BIS");
+    button.setAttribute(BT_UI_MARKER, "1");
+    button.setAttribute(ATTR_BIS_BTN, "1");
+
+    const apiKey = await deps.getApiKey();
+    setButtonState(button, apiKey ? "ready" : "disabled");
+
+    const onActivate = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (button.classList.contains("bt-bis-btn--signed")) return;
+      if (button.classList.contains("bt-bis-btn--signing")) return;
+      void handleSelectiveSignClick(root, button);
+    };
+    button.addEventListener("click", onActivate);
+    button.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") onActivate(e);
+    });
+
+    if (!placeBisButton(root, button)) return;
+
+    root.setAttribute(ATTR_BIS_READY, "1");
+    composeState.set(root, { signed: false, signing: false });
+    bindBodyInvalidation(root);
+
+    const bodyEl = findComposeBody(root);
+    if (bodyEl && hasBisBlock(bodyEl)) {
+      composeState.set(root, { signed: true, signing: false });
+      setButtonState(button, "signed");
+    }
+  }
+
   function removeAllComposeButtons() {
+    document.querySelectorAll(".bt-bis-cell").forEach((el) => el.remove());
     document.querySelectorAll(`[${ATTR_BIS_BTN}]`).forEach((btn) => btn.remove());
+    removeAllUnavailableBanners();
     document.querySelectorAll(`[${ATTR_BIS_UNAVAIL_MSG}]`).forEach((el) => el.remove());
     document.querySelectorAll(`[${ATTR_BIS_UNAVAILABLE}]`).forEach((root) => {
       root.removeAttribute(ATTR_BIS_UNAVAILABLE);
@@ -1242,6 +1376,21 @@
     autoSendHookInstalled = false;
   }
 
+  function installSendMenuHook() {
+    if (sendMenuHookInstalled) return;
+    document.addEventListener(
+      "click",
+      () => {
+        if (currentMode !== BIS_MODES.SELECTIVE) return;
+        window.setTimeout(() => {
+          void ensureBisSendMenuItem();
+        }, 60);
+      },
+      true,
+    );
+    sendMenuHookInstalled = true;
+  }
+
   function scanComposeWindows() {
     if (!deps || isGmailMobile()) return;
 
@@ -1253,10 +1402,10 @@
     }
 
     if (currentMode === BIS_MODES.SELECTIVE) {
+      installSendMenuHook();
       findComposeRoots().forEach((root) => {
         void refreshComposeSenderCert(root);
       });
-      void ensureBisSendMenuItem();
     } else {
       removeAllComposeButtons();
     }
@@ -1331,7 +1480,8 @@
       }
     });
 
-    console.log("[BLOCKTRUST] Compose BIS v1.1.3 — mode:", currentMode);
+    removeAllUnavailableBanners();
+    console.log("[BLOCKTRUST] Compose BIS v1.1.4 — mode:", currentMode);
 
     if (composeObserver) composeObserver.disconnect();
     composeObserver = new MutationObserver((mutations) => {

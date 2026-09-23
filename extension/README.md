@@ -23,14 +23,14 @@ Extension Manifest V3 pour vérifier les expéditeurs Gmail via l’API BLOCKTRU
 
 ## Signer un email (BIS)
 
-Le BIS n’est pas un bouton dans la barre d’icônes.
+Deux accès (mode **Sélectif**, défaut) :
 
-1. Ouvrez un nouveau message dans Gmail.
-2. Cliquez la **flèche** à droite du bouton bleu **Envoyer** (le menu qui contient « Schedule send » / « Programmer l’envoi »).
-3. Choisissez **Signer avec BIS**.
-4. Envoyez le message. Le lien de vérification est ajouté dans le corps.
+1. **Bouton or « BIS »** à droite du bouton bleu **Envoyer** (après la petite flèche).
+2. **Menu d’envoi** : flèche à côté d’Envoyer → **Signer avec BIS**.
 
-S’il n’y a aucun certificat actif sur le compte de la clé API, la ligne affiche **BIS indisponible**. L’envoi du mail reste possible.
+Cliquez BIS avant d’envoyer. Le lien de vérification est ajouté dans le corps. Les pièces jointes ne sont pas incluses dans le hash (seul le texte du message est signé) ; le bouton reste visible après ajout d’une PJ.
+
+Sans certificat actif sur le compte de la clé API, le bouton n’apparaît pas. L’envoi du mail reste possible.
 
 ## Test sur Gmail
 
