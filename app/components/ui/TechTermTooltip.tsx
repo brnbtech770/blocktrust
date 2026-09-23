@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 export const TECH_TERM_DEFINITIONS = {
   blockchain:
-    "Un registre numérique public et infalsifiable. Une fois qu'une information y est inscrite, personne ne peut la modifier — pas même BLOCKTRUST™. C'est ce qui garantit l'intégrité de votre badge.",
+    "Un registre numérique public. Une fois qu'une information y est inscrite, la modifier devient très difficile — y compris pour BLOCKTRUST™. C'est ce qui rend l'intégrité de votre badge vérifiable et traçable.",
   polygon:
     "Polygon est le réseau blockchain utilisé par BLOCKTRUST™ pour inscrire la preuve de votre certification. C'est rapide, peu coûteux et vérifiable par n'importe qui.",
   es256:

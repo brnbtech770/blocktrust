@@ -61,14 +61,14 @@ const categories: Category[] = [
     tagline: "Prouve qui vous êtes aux autres",
     bullets: [
       { ok: true, text: "Certification cryptographique de votre identité" },
-      { ok: true, text: "Tous vos documents signés et infalsifiables" },
+      { ok: true, text: "Tous vos documents signés, vérifiables et traçables" },
       { ok: true, text: "Vérifiable par n'importe qui en 1 scan QR" },
       {
         ok: true,
         text: (
           <>
             Ancré sur <TechTermTooltip term="blockchain">blockchain</TechTermTooltip>{" "}
-            <TechTermTooltip term="polygon">Polygon</TechTermTooltip> — preuve permanente
+            <TechTermTooltip term="polygon">Polygon</TechTermTooltip> — ancrage vérifiable
           </>
         ),
       },

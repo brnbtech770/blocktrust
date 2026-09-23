@@ -33,7 +33,7 @@ export default function Hero() {
           >
             <span><span aria-hidden>✦</span> Certifié</span>
             <span><span aria-hidden>✦</span> Protégé</span>
-            <span><span aria-hidden>✦</span> Infalsifiable</span>
+            <span><span aria-hidden>✦</span> Vérifiable et traçable</span>
           </div>
 
           {/* H1 — mobile : 2 lignes propres · desktop lg+ : 1 ligne */}
@@ -55,10 +55,9 @@ export default function Hero() {
             Certifiez ce que vous envoyez. Vérifiez ce que vous recevez.
             <span className="hidden sm:inline">
               {" "}
-              Faux RIB, faux conseiller, faux fournisseur — détectés en 1 scan avant que le mal soit
-              fait.
+              Faux RIB, faux conseiller, faux fournisseur — détectables avant d&apos;agir.
             </span>
-            <span className="sm:hidden"> Détectés en 1 scan.</span>
+            <span className="sm:hidden"> Détectables avant d&apos;agir.</span>
           </p>
 
           {/* CTAs + micro-copy */}
@@ -119,7 +118,7 @@ export default function Hero() {
                   Ancré <TechTermTooltip term="blockchain">blockchain</TechTermTooltip>
                 </div>
                 <div className="text-xs text-white/60">
-                  Preuve immuable <TechTermTooltip term="polygon">Polygon</TechTermTooltip>
+                  Ancrage vérifiable <TechTermTooltip term="polygon">Polygon</TechTermTooltip>
                 </div>
               </div>
             </li>

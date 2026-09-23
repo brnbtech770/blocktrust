@@ -15,7 +15,7 @@ const layers: Layer[] = [
     icon: Fingerprint,
     title: "Identité vérifiable",
     question: "Qui êtes-vous réellement ?",
-    text: "Emails, téléphones, domaines — certifiés et ancrés sur la blockchain. Infalsifiables.",
+    text: "Emails, téléphones, domaines — certifiés et ancrés sur la blockchain. Vérifiables et traçables.",
   },
   {
     icon: Clock,

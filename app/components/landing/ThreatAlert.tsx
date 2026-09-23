@@ -98,8 +98,8 @@ export default function ThreatAlert() {
             </p>
           </div>
           <p className="mx-auto max-w-lg text-balance text-sm leading-relaxed text-white/70 sm:text-base">
-            BLOCKTRUST certifie votre identité et celle de vos interlocuteurs — toute tentative
-            d&apos;usurpation est détectée immédiatement avant que le mal soit fait.
+            BLOCKTRUST renforce la vérification de votre identité et de celle de vos interlocuteurs —
+            une usurpation devient détectable avant d&apos;agir.
           </p>
         </div>
       </div>

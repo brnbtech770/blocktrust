@@ -24,7 +24,7 @@ const steps: Step[] = [
     ringColor: "rgba(189,167,107,0.4)",
     step: "Étape 2",
     title: "Obtenez votre badge certifié blockchain",
-    text: "Un QR rotatif unique, ancré sur Polygon, impossible à copier ou falsifier.",
+    text: "Un QR rotatif unique, ancré sur Polygon, très difficile à reproduire.",
   },
   {
     icon: CheckCircle2,
