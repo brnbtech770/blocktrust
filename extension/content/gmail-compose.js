@@ -103,56 +103,89 @@
 
   const SUBJECT_SELECTORS = ['input[name="subjectbox"]', 'input[name="subject"]'];
 
-  /**
-   * Ancre juste après Envoyer (cellule de la flèche « plus d'options », sinon le bouton lui-même).
-   * @param {Element} root
-   * @returns {HTMLElement | null}
-   */
-  function findSendAnchor(root) {
-    const buttons = [...root.querySelectorAll('div[role="button"]')].filter(
-      (el) => el instanceof HTMLElement && !el.classList.contains("bt-bis-btn"),
-    );
-    const sendBtn = buttons.find((el) => {
-      const text = (el.textContent || "").replace(/\s+/g, " ").trim();
-      const label = `${el.getAttribute("aria-label") || ""} ${el.getAttribute("data-tooltip") || ""}`;
-      if (/schedule|planifier|option/i.test(label)) return false;
-      return /^(send|envoyer)$/i.test(text) || /\b(send|envoyer)\b/i.test(label);
-    });
-    const optionsBtn = buttons.find((el) => {
-      const label = `${el.getAttribute("aria-label") || ""} ${el.getAttribute("data-tooltip") || ""}`;
-      return /more send options|plus d'options d'envoi|options d'envoi/i.test(label);
-    });
-    const anchorBtn = optionsBtn || sendBtn;
-    if (!(anchorBtn instanceof HTMLElement)) return null;
-    const cell = anchorBtn.closest("td");
-    if (cell instanceof HTMLElement) return cell;
-    return anchorBtn.parentElement instanceof HTMLElement
-      ? anchorBtn.parentElement
-      : anchorBtn;
+  const SEND_OPTIONS_MENU_RE =
+    /schedule send|planifier l['’]envoi|programmer l['’]envoi/i;
+
+  /** Retire les pastilles BIS posées dans la barre Envoyer. */
+  function purgeToolbarBis() {
+    document
+      .querySelectorAll(".bt-bis-btn, .bt-bis-cell, .bt-bis-unavailable-msg")
+      .forEach((el) => el.remove());
   }
 
   /**
-   * Un seul bouton, dans la rangée Envoyer — pas dans la barre d'icônes.
-   * @param {Element} root
-   * @param {HTMLElement} button
-   * @returns {boolean}
+   * Composeur dont le menu d'options d'envoi est ouvert.
+   * @returns {Element | null}
    */
-  function placeBisButton(root, button) {
-    root.querySelectorAll(`[${ATTR_BIS_BTN}], .bt-bis-btn, .bt-bis-cell`).forEach((el) => {
-      el.remove();
-    });
-    const anchor = findSendAnchor(root);
-    if (!anchor) return false;
-    if (anchor.tagName === "TD") {
-      const td = document.createElement("td");
-      td.className = "bt-bis-cell";
-      td.setAttribute(BT_UI_MARKER, "1");
-      td.appendChild(button);
-      anchor.insertAdjacentElement("afterend", td);
-      return true;
+  function activeComposeRoot() {
+    const roots = findComposeRoots();
+    const opened = roots.find((root) =>
+      root.querySelector('[aria-expanded="true"]'),
+    );
+    if (opened) return opened;
+    return roots.find((root) => isPopupCompose(root)) || roots[0] || null;
+  }
+
+  /**
+   * Une ligne dans le menu de la flèche à côté d'Envoyer.
+   * @returns {Promise<void>}
+   */
+  async function ensureBisSendMenuItem() {
+    if (!deps || currentMode !== BIS_MODES.SELECTIVE) return;
+
+    const menu = [...document.querySelectorAll('[role="menu"]')].find(
+      (node) =>
+        node instanceof HTMLElement &&
+        node.getClientRects().length > 0 &&
+        SEND_OPTIONS_MENU_RE.test(node.innerText || ""),
+    );
+    if (!(menu instanceof HTMLElement) || menu.querySelector(".bt-bis-menu-item")) {
+      return;
     }
-    anchor.insertAdjacentElement("afterend", button);
-    return true;
+
+    const available = await accountHasActiveBisCertificate();
+    if (!menu.isConnected || menu.querySelector(".bt-bis-menu-item")) return;
+
+    const sample = menu.querySelector('[role="menuitem"]');
+    const item = document.createElement("div");
+    item.className = `${sample?.className || ""} bt-bis-menu-item`.trim();
+    item.setAttribute("role", "menuitem");
+    item.setAttribute(BT_UI_MARKER, "1");
+    item.setAttribute(ATTR_BIS_BTN, "1");
+    item.setAttribute("tabindex", "-1");
+
+    const inner = document.createElement("div");
+    if (sample?.firstElementChild?.className) {
+      inner.className = sample.firstElementChild.className;
+    }
+    const label = document.createElement("span");
+    label.className = "bt-bis-menu-label";
+    const enabled = available === true;
+    label.textContent = enabled ? "Signer avec BIS" : "BIS indisponible";
+    item.setAttribute("aria-disabled", enabled ? "false" : "true");
+    if (!enabled) item.classList.add("bt-bis-menu-item--off");
+    item.title = enabled
+      ? "Ajoute la signature BLOCKTRUST à cet email"
+      : BIS_UNAVAILABLE_MESSAGE;
+    inner.appendChild(label);
+    item.appendChild(inner);
+
+    const host = sample?.parentElement || menu;
+    host.insertBefore(item, sample || null);
+
+    if (!enabled) return;
+
+    const activate = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const root = activeComposeRoot();
+      if (!root) return;
+      const popup = item.closest('[role="menu"]');
+      if (popup instanceof HTMLElement) popup.style.display = "none";
+      void handleSelectiveSignClick(root, item);
+    };
+    item.addEventListener("mousedown", activate);
+    item.addEventListener("click", activate);
   }
 
   /**
@@ -539,34 +572,23 @@
   }
 
   /**
-   * Affiche le BIS si le compte authentifié a un badge, quelle que soit l'adresse Gmail.
-   * Gmail reconstruit la barre d'envoi : si le bouton a disparu, on le remet.
+   * Mémorise si le compte peut signer. Le choix BIS est dans le menu d'Envoyer.
    * @param {Element} root
    */
   async function refreshComposeSenderCert(root) {
+    purgeToolbarBis();
     const available = await accountHasActiveBisCertificate();
     if (available === null) return;
 
     if (available) {
       hideBisUnavailable(root);
       root.setAttribute(ATTR_SENDER_CERT, "1");
-      if (currentMode !== BIS_MODES.SELECTIVE) return;
-      const existing = root.querySelector(`[${ATTR_BIS_BTN}]`);
-      const placed = existing?.closest(".bt-bis-cell");
-      if (!existing || !placed) {
-        existing?.remove();
-        root.removeAttribute(ATTR_BIS_READY);
-        initializedComposers.delete(root);
-        await injectSelectiveButton(root);
-      }
       return;
     }
 
-    if (root.querySelector(`[${ATTR_BIS_UNAVAIL_MSG}]`)) return;
-    root.querySelector(`[${ATTR_BIS_BTN}]`)?.remove();
-    showBisUnavailable(root);
-    root.setAttribute(ATTR_BIS_READY, "1");
-    initializedComposers.add(root);
+    hideBisUnavailable(root);
+    root.setAttribute(ATTR_SENDER_CERT, "0");
+    root.setAttribute(ATTR_BIS_UNAVAILABLE, "1");
   }
 
   /**
@@ -581,19 +603,8 @@
    * @param {Element} root
    */
   function showBisUnavailable(root) {
+    purgeToolbarBis();
     hideBisUnavailable(root);
-
-    const toolbar = findComposeToolbar(root);
-    if (!toolbar) return;
-
-    const msg = document.createElement("div");
-    msg.className = "bt-bis-unavailable-msg";
-    msg.setAttribute(BT_UI_MARKER, "1");
-    msg.setAttribute(ATTR_BIS_UNAVAIL_MSG, "1");
-    msg.textContent = BIS_UNAVAILABLE_MESSAGE;
-
-    const host = toolbar.closest(".btC") || toolbar.parentElement || toolbar;
-    host.insertAdjacentElement("afterend", msg);
     root.setAttribute(ATTR_BIS_UNAVAILABLE, "1");
     root.setAttribute(ATTR_SENDER_CERT, "0");
   }
@@ -972,6 +983,17 @@
    * @param {"ready"|"signing"|"signed"|"disabled"} state
    */
   function setButtonState(button, state) {
+    if (button.classList.contains("bt-bis-menu-item")) {
+      const label = button.querySelector(".bt-bis-menu-label");
+      if (label) {
+        if (state === "signing") label.textContent = "Signature…";
+        else if (state === "signed") label.textContent = "Signé avec BIS";
+        else if (state === "disabled") label.textContent = "BIS indisponible";
+        else label.textContent = "Signer avec BIS";
+      }
+      return;
+    }
+
     button.classList.remove(
       "bt-bis-btn--ready",
       "bt-bis-btn--signed",
@@ -1076,79 +1098,6 @@
     bisSignatureByRoot.clear();
     bisWarmDebounceByRoot.forEach((id) => window.clearTimeout(id));
     bisWarmDebounceByRoot.clear();
-  }
-
-  /**
-   * @param {Element} root
-   */
-  async function injectSelectiveButton(root) {
-    if (!deps || currentMode !== BIS_MODES.SELECTIVE) return;
-    if (initializedComposers.has(root)) return;
-    if (root.getAttribute(ATTR_BIS_READY) === "1") return;
-
-    const available = await accountHasActiveBisCertificate();
-    if (available !== true) {
-      if (available === false) {
-        clearComposeBisUi(root);
-        showBisUnavailable(root);
-        root.setAttribute(ATTR_BIS_READY, "1");
-        initializedComposers.add(root);
-      }
-      return;
-    }
-
-    hideBisUnavailable(root);
-    root.setAttribute(ATTR_SENDER_CERT, "1");
-
-    if (root.querySelector(`[${ATTR_BIS_BTN}]`)) {
-      root.setAttribute(ATTR_BIS_READY, "1");
-      initializedComposers.add(root);
-      return;
-    }
-
-    const toolbar = findComposeToolbar(root);
-    if (!toolbar) return;
-    if (toolbar.querySelector(`[${ATTR_BIS_BTN}]`)) {
-      root.setAttribute(ATTR_BIS_READY, "1");
-      initializedComposers.add(root);
-      return;
-    }
-
-    const button = document.createElement("div");
-    button.className = "bt-bis-btn";
-    button.setAttribute("role", "button");
-    button.setAttribute("tabindex", "0");
-    button.setAttribute("aria-label", "Signer avec BLOCKTRUST BIS");
-    button.setAttribute(BT_UI_MARKER, "1");
-    button.setAttribute(ATTR_BIS_BTN, "1");
-
-    const apiKey = await deps.getApiKey();
-    setButtonState(button, apiKey ? "ready" : "disabled");
-
-    const onActivate = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (button.classList.contains("bt-bis-btn--signed")) return;
-      if (button.classList.contains("bt-bis-btn--signing")) return;
-      void handleSelectiveSignClick(root, button);
-    };
-
-    button.addEventListener("click", onActivate);
-    button.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") onActivate(e);
-    });
-
-    if (!placeBisButton(root, button)) return;
-    root.setAttribute(ATTR_BIS_READY, "1");
-    initializedComposers.add(root);
-    composeState.set(root, { signed: false, signing: false });
-    bindBodyInvalidation(root);
-
-    const bodyEl = findComposeBody(root);
-    if (bodyEl && hasBisBlock(bodyEl)) {
-      composeState.set(root, { signed: true, signing: false });
-      setButtonState(button, "signed");
-    }
   }
 
   function updateAutoBadge() {
@@ -1307,6 +1256,7 @@
       findComposeRoots().forEach((root) => {
         void refreshComposeSenderCert(root);
       });
+      void ensureBisSendMenuItem();
     } else {
       removeAllComposeButtons();
     }
@@ -1381,7 +1331,7 @@
       }
     });
 
-    console.log("[BLOCKTRUST] Compose BIS v1.1.2 — mode:", currentMode);
+    console.log("[BLOCKTRUST] Compose BIS v1.1.3 — mode:", currentMode);
 
     if (composeObserver) composeObserver.disconnect();
     composeObserver = new MutationObserver((mutations) => {

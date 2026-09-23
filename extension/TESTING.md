@@ -18,12 +18,12 @@ Principe : **l'envoi ne doit jamais être bloqué** — le BIS est un bonus.
 | 3 | AUTO + API down | Couper réseau, envoyer 2× | Emails partent ; après 2 échecs → **BIS AUTO ⚠︎ pause** |
 | 4 | Brouillon rouvert | Rouvrir brouillon avec ancien bloc BIS | **Un seul** bloc après envoi |
 | 5 | Double-clic Envoyer | Clics frénétiques sur Envoyer | **Un seul** envoi, pas de doublon |
-| 6 | Sélectif | Signer (✓ BIS) puis Envoyer ; ou Envoyer sans signer | Les deux cas OK, **pas d'interception** Envoyer |
-| 7 | 2 composeurs | Répondre + nouveau message en parallèle | **Un seul** bouton ✓ BIS par composeur |
+| 6 | Sélectif | Flèche à droite d’Envoyer → **Signer avec BIS**, puis Envoyer ; ou Envoyer sans signer | Les deux cas OK, **pas d'interception** Envoyer. Rien dans la barre d’icônes |
+| 7 | 2 composeurs | Répondre + nouveau message en parallèle | **Une seule** ligne « Signer avec BIS » dans le menu du composeur ouvert |
 | 8 | Officiels certifiés | Ouvrir email de `brnbtech@gmail.com` | Badge **✓ Compte officiel BLOCKTRUST™** pour **tous** les viewers |
 | 9 | Intégrité hash BIS | Pré-signature warm-up, puis taper du texte, Envoyer | Email part ; `/verify/bis/[id]` valide le **contenu final** (ou envoi sans BIS si timeout) |
-| 10 | Compte sans badge | Composer avec une clé API dont le compte n'a aucun certificat actif | Pas de bouton BIS ; message « BIS indisponible — aucun badge actif sur votre compte » ; l'envoi reste possible |
-| 10b | Badge sur un autre email | Composer depuis une adresse Gmail sans badge, alors que le compte a un certificat actif sur un autre email | Bouton BIS affiché ; la signature indique l'email du badge, pas l'adresse Gmail |
+| 10 | Compte sans badge | Composer avec une clé API dont le compte n'a aucun certificat actif | Menu d’Envoyer : ligne « BIS indisponible ». Pas de texte sous le bouton Envoyer. L'envoi reste possible |
+| 10b | Badge sur un autre email | Composer depuis une adresse Gmail sans badge, alors que le compte a un certificat actif sur un autre email | Menu d’Envoyer : « Signer avec BIS ». La signature indique l'email du badge |
 | 11 | BIS rejoué (expéditeur différent) | Coller un lien `/verify/bis/{id}` valide dans un email dont le From n'est pas le signataire | Tooltip **avertissement** « expéditeur ne correspond pas » ; **pas** « Signature BIS valide » ; l'email reste lisible |
 | 14 | BIS replay cross-email | 1. Envoyer un email avec BIS depuis un compte A. 2. Copier le lien `/verify/bis/{id}` dans un autre email envoyé depuis un compte B. 3. Ouvrir cet email dans Gmail avec l'extension. | L'extension affiche « ⚠ Expéditeur différent du signataire ». « Signature BIS valide ✓ » n'apparaît pas. L'email reste lisible. |
 
@@ -33,7 +33,7 @@ Principe : **l'envoi ne doit jamais être bloqué** — le BIS est un bonus.
 - **Révocation** : le cache serveur verify-sender est invalidé immédiatement. Le cache local Gmail (5 min) peut encore afficher l'ancien verdict jusqu'à 5 minutes. Un compte officiel révoqué ou expiré ne doit pas afficher « Certifié » une fois le cache local expiré.
 - **BIS composeur** : la disponibilité dépend du compte de la clé API (`/api/extension/me`), pas de l'adresse Gmail. Un badge sur un autre email du même compte affiche le bouton BIS. La signature indique l'email du badge. La lecture des emails reçus reste sur l'email exact.
 - **Tooltip** : min 5 s, mouseleave 800 ms, auto-dismiss 15 s, liens cliquables ; ancrage affiché « Ancré blockchain ✓ » (pas de hash / PolygonScan)
-- **Bouton BIS** : un seul, or, lettres BIS à la verticale, collé à droite du bouton Envoyer (après la flèche). Pas dans la barre d'icônes, pas de doublon.
+- **BIS** : flèche à droite d’Envoyer, ligne « Signer avec BIS ». Jamais de pastille dans la barre d’icônes, jamais de texte sous Envoyer.
 
 ## Build zip
 

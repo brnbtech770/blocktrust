@@ -2,79 +2,17 @@
  * BLOCKTRUST™ — styles composeur Gmail (Phase 3 BIS — 3 modes)
  */
 
-.bt-bis-cell {
-  vertical-align: middle !important;
-  padding: 0 0 0 8px !important;
-  width: 28px !important;
-}
-
-.bt-bis-btn {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 28px !important;
-  height: 36px !important;
-  min-width: 28px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-  border-radius: 8px !important;
-  background: #bda76b !important;
-  color: #0a1628 !important;
-  font-family: Inter, Arial, sans-serif !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  line-height: 1 !important;
+.bt-bis-menu-item {
   cursor: pointer !important;
-  box-sizing: border-box !important;
-  user-select: none !important;
-  flex-shrink: 0 !important;
 }
 
-.bt-bis-unavailable-msg {
-  display: block !important;
-  width: 100% !important;
-  box-sizing: border-box !important;
-  margin: 4px 0 0 0 !important;
-  padding: 0 12px 6px !important;
-  font-family: Inter, Arial, sans-serif !important;
-  font-size: 11px !important;
-  line-height: 1.35 !important;
-  color: #64748b !important;
-  white-space: normal !important;
-  pointer-events: none !important;
-  user-select: none !important;
-}
-
-.bt-bis-btn-label {
-  writing-mode: vertical-rl !important;
-  text-orientation: upright !important;
-  letter-spacing: 0.18em !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  line-height: 1 !important;
-}
-
-.bt-bis-btn--ready:hover {
-  background: #d4bc84 !important;
-}
-
-.bt-bis-btn--signed {
-  background: #10b981 !important;
-  color: #ffffff !important;
+.bt-bis-menu-item--off {
   cursor: default !important;
+  opacity: 0.55 !important;
 }
 
-.bt-bis-btn--disabled {
-  background: #e7e0d2 !important;
-  color: #6b6456 !important;
-  cursor: not-allowed !important;
-}
-
-.bt-bis-btn--signing {
-  background: #bda76b !important;
-  opacity: 0.65 !important;
-  cursor: wait !important;
+.bt-bis-menu-label {
+  font-weight: 600 !important;
 }
 
 .bt-bis-auto-badge {
