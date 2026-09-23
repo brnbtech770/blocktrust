@@ -75,7 +75,7 @@ export async function handleSignInteraction(
     const result = await createBisSignature({
       senderId: ctx.userId,
       senderCertId: senderCert.id,
-      senderEmail: ctx.userEmail,
+      senderEmail: senderCert.entityEmail,
       recipientEmail: normalizeEmail(recipientEmail),
       interactionType: interactionType as BisInteractionType,
       contextLabel: safeContext,

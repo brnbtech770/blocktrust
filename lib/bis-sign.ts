@@ -19,6 +19,7 @@ import {
 } from '@/lib/bis-access'
 import { resolveEffectivePlan } from '@/lib/plan-features'
 import { isInternalAccount } from '@/lib/admin-utils'
+import { isCertificateCurrentlyValid } from '@/lib/certificate-validity'
 
 const BIS_ISSUER = 'blocktrust.tech'
 
@@ -160,6 +161,7 @@ async function assertSenderCanSign(
       blockchainStatus: true,
       polygonTxHash: true,
       revokedAt: true,
+      expiresAt: true,
       polygonExplorerUrl: true,
     },
   })
@@ -485,14 +487,18 @@ export async function verifyBisSignature(
   }
 }
 
-/** Résout le certificat actif de l'utilisateur pour signature BIS. */
+/**
+ * Certificat BIS du compte authentifié.
+ * L'email retenu est celui de l'entité du badge, pas l'adresse du composeur.
+ */
 export async function resolveSenderBisCertificate(userId: string): Promise<{
   id: string
   polygonTxHash: string | null
   polygonExplorerUrl: string | null
+  entityEmail: string
 } | null> {
   const now = new Date()
-  return prisma.certificate.findFirst({
+  const rows = await prisma.certificate.findMany({
     where: {
       entity: { userId },
       status: { in: ['ACTIVE', 'ANCHORED'] },
@@ -500,10 +506,27 @@ export async function resolveSenderBisCertificate(userId: string): Promise<{
       OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
     },
     orderBy: { issuedAt: 'desc' },
+    take: 8,
     select: {
       id: true,
+      status: true,
+      revokedAt: true,
+      expiresAt: true,
       polygonTxHash: true,
       polygonExplorerUrl: true,
+      entity: { select: { email: true } },
     },
   })
+
+  const cert = rows.find(
+    (row) => isCertificateCurrentlyValid(row, now) && Boolean(row.entity.email?.trim()),
+  )
+  if (!cert?.entity.email) return null
+
+  return {
+    id: cert.id,
+    polygonTxHash: cert.polygonTxHash,
+    polygonExplorerUrl: cert.polygonExplorerUrl,
+    entityEmail: normalizeEmail(cert.entity.email),
+  }
 }

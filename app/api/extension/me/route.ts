@@ -9,6 +9,7 @@ import { findUserIdByExtensionApiKey, extractExtensionApiKey, EXTENSION_UNAUTHOR
 import { extensionJsonResponse, extensionOptionsResponse } from "@/lib/extension-cors";
 import { checkRateLimitExtensionAsync } from "@/lib/rate-limit-extension";
 import { getEntityQuotaSnapshot } from "@/lib/checkQuota";
+import { resolveSenderBisCertificate } from "@/lib/bis-sign";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,7 +42,10 @@ export async function GET(req: NextRequest) {
     return extensionJsonResponse(req, EXTENSION_UNAUTHORIZED_BODY, 401);
   }
 
-  const snap = await getEntityQuotaSnapshot(userId);
+  const [snap, bisCert] = await Promise.all([
+    getEntityQuotaSnapshot(userId),
+    resolveSenderBisCertificate(userId),
+  ]);
 
   return extensionJsonResponse(req, {
     name: user.name ?? "",
@@ -49,5 +53,7 @@ export async function GET(req: NextRequest) {
     trustScore: user.trustScore,
     contactsCount: snap?.current ?? 0,
     contactsLimit: snap?.max ?? 20,
+    hasBisCertificate: Boolean(bisCert),
+    bisCertificateEmail: bisCert?.entityEmail ?? null,
   });
 }

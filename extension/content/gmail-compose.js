@@ -16,6 +16,8 @@
   const COMPOSE_SCAN_DEBOUNCE_MS = 300;
   const BIS_WARM_DEBOUNCE_MS = 1200;
   const TOAST_DURATION_MS = 2000;
+  // Cache local 5 min. Le serveur est invalidé à la révocation.
+  // Ce cache navigateur peut conserver l'ancien verdict jusqu'à 5 minutes.
   const SENDER_VERIFY_CACHE_TTL = 5 * 60 * 1000;
 
   const BIS_BLOCK_MARKER = "data-bt-bis-block";
@@ -62,11 +64,8 @@
   /** @type {WeakSet<Element>} */
   const bodyInvalidationBound = new WeakSet();
 
-  /** @type {Map<string, { certified: boolean, timestamp: number }>} */
-  const senderVerifyCache = new Map();
-
-  /** @type {Map<Element, string>} */
-  const lastSenderEmailByRoot = new Map();
+  /** Disponibilité BIS du compte authentifié (pas de l'adresse Gmail). */
+  let bisAccountCache = null;
 
   let autoSendHookInstalled = false;
   let composeObserver = null;
@@ -101,14 +100,6 @@
   ];
 
   const SUBJECT_SELECTORS = ['input[name="subjectbox"]', 'input[name="subject"]'];
-
-  const FROM_SELECTORS = [
-    "span[email].afV",
-    ".afV span[email]",
-    'input[name="from"]',
-    ".wO span[email]",
-    "span[email].go",
-  ];
 
   const SHIELD_SVG =
     '<svg class="bt-bis-btn-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>';
@@ -454,57 +445,19 @@
     };
   }
 
-  /**
-   * @param {Element} root
-   * @returns {string | null}
-   */
-  function extractSenderEmail(root) {
-    const toArea =
-      root.querySelector('[aria-label="À"], [aria-label="To"], [name="to"]')?.closest("tr, div") ||
-      null;
-
-    for (const selector of FROM_SELECTORS) {
-      const nodes = root.querySelectorAll(selector);
-      for (const node of nodes) {
-        if (!(node instanceof HTMLElement)) continue;
-        if (toArea?.contains(node)) continue;
-        const email = normalizeEmail(
-          node.getAttribute("email") ||
-            node.getAttribute("data-hovercard-id") ||
-            node.getAttribute("data-email") ||
-            node.value ||
-            node.textContent ||
-            "",
-        );
-        if (email) return email;
-      }
-    }
-
-    const candidates = root.querySelectorAll('span[email], [data-hovercard-id*="@"]');
-    for (const node of candidates) {
-      if (!(node instanceof HTMLElement)) continue;
-      if (toArea?.contains(node)) continue;
-      const email = normalizeEmail(
-        node.getAttribute("email") ||
-          node.getAttribute("data-hovercard-id") ||
-          node.textContent ||
-          "",
-      );
-      if (email) return email;
-    }
-
-    return null;
-  }
+  const BIS_UNAVAILABLE_MESSAGE = "BIS indisponible — aucun badge actif sur votre compte";
 
   /**
-   * @param {string} email
+   * Le composeur ne compare pas l'adresse Gmail.
+   * GET /api/extension/me : le compte de la clé API a-t-il un certificat valide ?
    * @returns {Promise<boolean>}
    */
-  async function fetchSenderCertified(email) {
-    const cacheKey = `${email.toLowerCase()}:-`;
-    const cached = senderVerifyCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < SENDER_VERIFY_CACHE_TTL) {
-      return cached.certified;
+  async function accountHasActiveBisCertificate() {
+    if (
+      bisAccountCache &&
+      Date.now() - bisAccountCache.timestamp < SENDER_VERIFY_CACHE_TTL
+    ) {
+      return bisAccountCache.available;
     }
 
     if (!deps) return false;
@@ -512,60 +465,37 @@
     const apiKey = await deps.getApiKey();
     if (!apiKey) return false;
 
-    let certified = false;
     try {
-      const url = new URL(`${deps.apiBase}/api/extension/verify-sender`);
-      url.searchParams.set("email", email);
-      const response = await fetch(url.toString(), {
+      const response = await fetch(`${deps.apiBase}/api/extension/me`, {
         headers: {
           Authorization: `Bearer ${apiKey.trim()}`,
           "X-BT-Client": "extension",
         },
       });
       const data = await response.json().catch(() => ({}));
-      if (response.ok && data?.status === "CERTIFIED") {
-        certified = true;
-      }
+      if (!response.ok) return false;
+      const available = data?.hasBisCertificate === true;
+      bisAccountCache = { available, timestamp: Date.now() };
+      return available;
     } catch {
-      certified = false;
+      return false;
     }
-
-    senderVerifyCache.set(cacheKey, { certified, timestamp: Date.now() });
-    return certified;
   }
 
   /**
-   * @param {Element} root
+   * @param {Element} _root
    * @returns {Promise<boolean>}
    */
-  async function isSenderCertifiedForRoot(root) {
-    const senderEmail = extractSenderEmail(root);
-    if (!senderEmail) return false;
-    return fetchSenderCertified(senderEmail);
+  async function isSenderCertifiedForRoot(_root) {
+    return accountHasActiveBisCertificate();
   }
 
   /**
-   * Re-vérifie si l'email expéditeur a changé (alias Gmail, compte « envoyer en tant que »).
+   * Affiche le BIS si le compte authentifié a un badge, quelle que soit l'adresse Gmail.
    * @param {Element} root
    */
   async function refreshComposeSenderCert(root) {
-    const senderEmail = extractSenderEmail(root) || "";
-    const previous = lastSenderEmailByRoot.get(root) ?? "";
-    if (senderEmail === previous && root.getAttribute(ATTR_BIS_READY) === "1") {
-      return;
-    }
-
-    lastSenderEmailByRoot.set(root, senderEmail);
-
-    if (!senderEmail) {
-      clearComposeBisUi(root);
-      showBisUnavailable(root);
-      return;
-    }
-
-    root.removeAttribute(ATTR_BIS_READY);
-    initializedComposers.delete(root);
-    clearComposeBisUi(root);
+    if (root.getAttribute(ATTR_BIS_READY) === "1") return;
 
     const certified = await isSenderCertifiedForRoot(root);
     if (!certified) {
@@ -576,6 +506,7 @@
     }
 
     hideBisUnavailable(root);
+    root.setAttribute(ATTR_SENDER_CERT, "1");
 
     if (currentMode === BIS_MODES.SELECTIVE) {
       await injectSelectiveButton(root);
@@ -611,7 +542,7 @@
     msg.className = "bt-bis-unavailable-msg";
     msg.setAttribute(BT_UI_MARKER, "1");
     msg.setAttribute(ATTR_BIS_UNAVAIL_MSG, "1");
-    msg.textContent = "BIS indisponible — aucun badge actif sur cet email";
+    msg.textContent = BIS_UNAVAILABLE_MESSAGE;
 
     const host = toolbar.closest(".btC") || toolbar.parentElement || toolbar;
     host.insertAdjacentElement("afterend", msg);
@@ -1046,7 +977,7 @@
 
     if (!(await isSenderCertifiedForRoot(root))) {
       showBisUnavailable(root);
-      showToast("BIS indisponible — aucun badge actif sur cet email", "error");
+      showToast(BIS_UNAVAILABLE_MESSAGE, "error");
       return;
     }
 

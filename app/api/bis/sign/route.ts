@@ -225,7 +225,7 @@ export async function POST(req: NextRequest) {
     const result = await createBisSignature({
       senderId: actor.userId,
       senderCertId: senderCert.id,
-      senderEmail: actor.userEmail,
+      senderEmail: senderCert.entityEmail,
       recipientEmail: normalizeEmail(recipientEmail),
       interactionType,
       contextLabel: safeContextLabel,
@@ -242,9 +242,9 @@ export async function POST(req: NextRequest) {
         recipientEmail: normalizedRecipient,
         senderDisplayName: resolveBisSenderDisplayName(
           actor.userName,
-          actor.userEmail,
+          senderCert.entityEmail,
         ),
-        senderEmail: actor.userEmail,
+        senderEmail: senderCert.entityEmail,
         interactionType,
         contextLabel: safeContextLabel ?? null,
         contentHash: contentHash.toLowerCase(),
