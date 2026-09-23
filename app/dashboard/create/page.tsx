@@ -609,7 +609,7 @@ export default function CreateCertificate() {
                 </div>
 
                 <div>
-                  <span className="text-gray-400 text-sm font-medium">Domaines certifiés :</span>
+                  <span className="text-gray-400 text-sm font-medium">Domaines déclarés :</span>
                   <p className="break-all font-mono text-xs text-white/85">{summary.certifiedDomains}</p>
                 </div>
                 <div>
@@ -1024,12 +1024,12 @@ export default function CreateCertificate() {
 
               <div className="space-y-2">
                 <label className="text-xs font-medium uppercase tracking-widest text-white/60">
-                  Domaines officiels (optionnel)
+                  Domaines déclarés (optionnel)
                 </label>
                 <p className="text-xs text-white/30">
                   {editEntityId
                     ? "Lecture seule. Une preuve de contrôle du domaine sera requise pour modifier cette liste."
-                    : "Ajoutez vos domaines officiels pour protéger vos contacts contre les sites miroirs. Ex. : monentreprise.fr"}
+                    : "Ajoutez les domaines que vous déclarez. Ils ne prouvent pas le contrôle du site."}
                 </p>
                 <DomainTagInput
                   values={certifiedDomains}

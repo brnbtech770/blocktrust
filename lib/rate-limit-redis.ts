@@ -169,6 +169,12 @@ export const getExtensionPlanPaidLimiter = () => getLimiter("bt:plan:ext:paid", 
 export const getContactsPlanDiscoveryLimiter = () => getLimiter("bt:plan:contacts:disc", 5, "1 m");
 export const getContactsPlanPaidLimiter = () => getLimiter("bt:plan:contacts:paid", 30, "1 m");
 
+// Invitations Trust Circle — plafond anti-Sybil (en plus de la limite à la minute).
+export const getTrustCircleInviteDayLimiter = () =>
+  getLimiter("bt:trustcircle:invite:d", 10, "1 d");
+export const getTrustCircleInviteWeekLimiter = () =>
+  getLimiter("bt:trustcircle:invite:w", 30, "7 d");
+
 export type RedisLimitResult = {
   success: boolean;
   remaining: number;

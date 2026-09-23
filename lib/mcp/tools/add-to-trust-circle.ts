@@ -4,7 +4,7 @@
 
 import { prisma } from "@/app/lib/db";
 import { checkTrustCircleQuota } from "@/lib/checkTrustCircleQuota";
-import { checkPlanRateLimit } from "@/lib/rate-limit-plan";
+import { checkPlanRateLimit, checkTrustCircleInviteRateLimit } from "@/lib/rate-limit-plan";
 import { tryPromoteMutualOnAdd } from "@/lib/trust-circle-mutual";
 import { runExtensionVerifySender } from "@/lib/extension-verify-sender-service";
 import { mcpPlanAllowsTrustCircle } from "@/lib/mcp/helpers/plan-gates";
@@ -32,6 +32,14 @@ export async function handleAddToTrustCircle(
   const rate = await checkPlanRateLimit("contacts", ctx.plan, ctx.userId);
   if (!rate.ok) {
     return mcpErrorResult("Trop d'ajouts de contacts.", { retryAfter: rate.retryAfter });
+  }
+
+  const inviteRate = await checkTrustCircleInviteRateLimit(ctx.userId);
+  if (!inviteRate.ok) {
+    return mcpErrorResult(
+      "Limite d'invitations Trust Circle atteinte (10 par jour, 30 par semaine).",
+      { retryAfter: inviteRate.retryAfter },
+    );
   }
 
   const quota = await checkTrustCircleQuota(ctx.userId, ctx.plan);

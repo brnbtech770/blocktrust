@@ -613,34 +613,48 @@ function bisTooltipSectionHtml(result) {
   const bis = result.bisVerification;
   if (!result.bisSignatureDetected || !bis) return "";
 
-  if (bis.valid) {
+  if (!bis.valid) {
     return `
       <div class="bt-tooltip-section">
-        <span class="bt-tooltip-title">Interaction signée</span>
-        <div class="bt-tooltip-row"><span>Niveau BIS : ${bis.bisLevel}</span></div>
-        <div class="bt-tooltip-row"><span>Type : ${safeFormatInteractionType(bis.interactionType)}</span></div>
-        ${
-          bis.contextLabel
-            ? `<div class="bt-tooltip-row"><span>Contexte : ${escapeHtml(String(bis.contextLabel).trim())}</span></div>`
-            : ""
-        }
-        <div class="bt-tooltip-row"><span>Signé le : ${formatDateFr(bis.signedAt)}</span></div>
-        <div class="bt-tooltip-row"><span>Expire le : ${formatDateFr(bis.expiresAt)}</span></div>
-        <div class="bt-tooltip-row bt-tooltip-ok" style="margin-top:6px !important;font-weight:700 !important;">
-          Signature valide ✓
+        <span class="bt-tooltip-title" style="color:#f59e0b !important;">Signature BIS</span>
+        <div class="bt-tooltip-row bt-tooltip-warn">
+          Signature BIS expirée
+          ${bis.reason ? `<br><span style="font-size:10px !important;">${escapeHtml(bis.reason)}</span>` : ""}
         </div>
       </div>`;
   }
 
-  const invalidLabel =
-    result.status === "CERTIFIED" ? "BIS expiré ou invalide" : "Signature BIS non vérifiable";
+  if (bis.senderMatch === false) {
+    const warning =
+      bis.bindingWarning ||
+      "Expéditeur différent du signataire";
+    return `
+      <div class="bt-tooltip-section">
+        <span class="bt-tooltip-title" style="color:#f59e0b !important;">Signature BIS</span>
+        <div class="bt-tooltip-row bt-tooltip-warn">${escapeHtml(warning)}</div>
+      </div>`;
+  }
+
+  const recipientNote =
+    bis.recipientMatch === false && bis.recipientEmail
+      ? `<div class="bt-tooltip-row bt-tooltip-warn">Destiné à ${escapeHtml(String(bis.recipientEmail))}</div>`
+      : "";
 
   return `
     <div class="bt-tooltip-section">
-      <span class="bt-tooltip-title" style="color:#f59e0b !important;">Signature BIS</span>
-      <div class="bt-tooltip-row bt-tooltip-warn">
-        ${escapeHtml(invalidLabel)}
-        ${bis.reason ? `<br><span style="font-size:10px !important;">${escapeHtml(bis.reason)}</span>` : ""}
+      <span class="bt-tooltip-title">Interaction signée</span>
+      <div class="bt-tooltip-row"><span>Niveau BIS : ${bis.bisLevel}</span></div>
+      <div class="bt-tooltip-row"><span>Type : ${safeFormatInteractionType(bis.interactionType)}</span></div>
+      ${
+        bis.contextLabel
+          ? `<div class="bt-tooltip-row"><span>Contexte : ${escapeHtml(String(bis.contextLabel).trim())}</span></div>`
+          : ""
+      }
+      <div class="bt-tooltip-row"><span>Signé le : ${formatDateFr(bis.signedAt)}</span></div>
+      <div class="bt-tooltip-row"><span>Expire le : ${formatDateFr(bis.expiresAt)}</span></div>
+      ${recipientNote}
+      <div class="bt-tooltip-row bt-tooltip-ok" style="margin-top:6px !important;font-weight:700 !important;">
+        Signature BIS valide ✓
       </div>
     </div>`;
 }
@@ -852,7 +866,9 @@ function createVerifyBadge(result) {
             ? `<span class="bt-bis-sub">Contact vérifié</span>`
             : "";
     let bisLine = "";
-    if (hasValidBis) {
+    if (hasValidBis && bis.senderMatch === false) {
+      bisLine = `<span class="bt-bis-sub" style="color:#fef3c7 !important;">Expéditeur différent du signataire</span>`;
+    } else if (hasValidBis) {
       bisLine = `<span class="bt-bis-sub">${fileCheckIconSvg(10)} BIS Niveau ${bis.bisLevel} — Signé</span>`;
     } else if (hasInvalidBis || hasUnverifiableBis) {
       bisLine = `<span class="bt-bis-sub" style="color:#fef3c7 !important;">BIS expiré</span>`;

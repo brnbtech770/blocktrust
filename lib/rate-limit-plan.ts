@@ -19,6 +19,8 @@ import {
   getExtensionPlanPaidLimiter,
   getContactsPlanDiscoveryLimiter,
   getContactsPlanPaidLimiter,
+  getTrustCircleInviteDayLimiter,
+  getTrustCircleInviteWeekLimiter,
 } from "@/lib/rate-limit-redis";
 import { isDiscoveryExpired, isDiscoveryPlan } from "@/lib/plan-features";
 
@@ -137,4 +139,51 @@ export async function checkPlanRateLimit(
   }
 
   return checkMemory(`${action}:${tier}:${identifier}`, def);
+}
+
+const INVITE_DAY: LimitDef = { limit: 10, windowMs: 24 * 60 * 60 * 1000 };
+const INVITE_WEEK: LimitDef = { limit: 30, windowMs: 7 * 24 * 60 * 60 * 1000 };
+
+/**
+ * Plafond d'invitations Trust Circle : 10 / jour et 30 / semaine par utilisateur.
+ * Complète la limite à la minute des ajouts de contacts. Fail-soft si Redis est KO.
+ */
+export async function checkTrustCircleInviteRateLimit(
+  userId: string,
+): Promise<PlanRateLimitResult> {
+  const dayRedis = await tryRedisLimit(getTrustCircleInviteDayLimiter(), userId);
+  const weekRedis = await tryRedisLimit(getTrustCircleInviteWeekLimiter(), userId);
+  if (dayRedis && weekRedis) {
+    if (!dayRedis.success) {
+      return {
+        ok: false,
+        retryAfter: Math.max(1, Math.ceil((dayRedis.reset - Date.now()) / 1000)),
+        remaining: 0,
+        limit: INVITE_DAY.limit,
+      };
+    }
+    if (!weekRedis.success) {
+      return {
+        ok: false,
+        retryAfter: Math.max(1, Math.ceil((weekRedis.reset - Date.now()) / 1000)),
+        remaining: 0,
+        limit: INVITE_WEEK.limit,
+      };
+    }
+    return {
+      ok: true,
+      remaining: Math.min(dayRedis.remaining, weekRedis.remaining),
+      limit: INVITE_DAY.limit,
+    };
+  }
+
+  const day = checkMemory(`tc-invite:d:${userId}`, INVITE_DAY);
+  if (!day.ok) return day;
+  const week = checkMemory(`tc-invite:w:${userId}`, INVITE_WEEK);
+  if (!week.ok) return week;
+  return {
+    ok: true,
+    remaining: Math.min(day.remaining, week.remaining),
+    limit: INVITE_DAY.limit,
+  };
 }

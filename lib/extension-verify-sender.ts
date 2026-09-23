@@ -34,6 +34,16 @@ export type ExtensionBisVerification = {
   signedAt: string;
   expiresAt: string;
   reason?: string;
+  /** Email du signataire BIS (métadonnée de la signature). */
+  senderEmail?: string | null;
+  /** Destinataire déclaré dans la signature BIS. */
+  recipientEmail?: string | null;
+  /** From Gmail vs signataire. null si l'un des deux emails manque. */
+  senderMatch?: boolean | null;
+  /** Compte viewer vs destinataire BIS. null si comparaison impossible. */
+  recipientMatch?: boolean | null;
+  /** Avertissement informatif. N'empêche jamais la lecture de l'email. */
+  bindingWarning?: string | null;
 };
 
 export type ExtensionVerifyPayload = {

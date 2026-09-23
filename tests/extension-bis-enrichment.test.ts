@@ -124,4 +124,32 @@ describe('Extension BIS enrichment', () => {
     expect(result.bisVerification?.reason).toBe('Signature expirée')
     expect(result.bisMissingAlert).toBe(false)
   })
+
+  it('senderEmail mismatch → avertissement dans le payload, validité crypto conservée', async () => {
+    vi.mocked(getPublicBisVerification).mockResolvedValue({
+      valid: true,
+      bisLevel: 3,
+      interactionType: 'EMAIL',
+      contextLabel: null,
+      signedAt: '2026-06-01T10:00:00.000Z',
+      expiresAt: '2026-06-08T10:00:00.000Z',
+      senderEmail: 'signer@acme.fr',
+      recipientEmail: 'me@corp.io',
+    })
+    vi.mocked(prisma.interactionSignature.count).mockResolvedValue(0)
+
+    const result = await enrichExtensionPayloadWithBis({
+      payload: certifiedPayload(),
+      bisId: 'sig-replay',
+      recipientEmail: 'me@corp.io',
+      senderEmail: 'attacker@evil.test',
+    })
+
+    expect(result.bisVerification?.valid).toBe(true)
+    expect(result.bisVerification?.senderMatch).toBe(false)
+    expect(result.bisVerification?.bindingWarning).toMatch(/expéditeur ne correspond pas/i)
+    expect(result.bisVerification?.bindingWarning).toContain('signer@acme.fr')
+    expect(result.bisVerification?.bindingWarning).toContain('attacker@evil.test')
+    expect(result.bisVerification?.recipientMatch).toBe(true)
+  })
 })

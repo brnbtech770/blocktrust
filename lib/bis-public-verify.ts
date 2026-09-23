@@ -14,6 +14,8 @@ export type PublicBisVerification = {
   signedAt: string
   expiresAt: string
   reason?: string
+  senderEmail?: string | null
+  recipientEmail?: string | null
 }
 
 export async function getPublicBisVerification(
@@ -50,6 +52,8 @@ export async function getPublicBisVerification(
       signedAt: new Date(0).toISOString(),
       expiresAt: new Date(0).toISOString(),
       reason: 'Signature introuvable',
+      senderEmail: null,
+      recipientEmail: null,
     }
   }
 
@@ -82,5 +86,7 @@ export async function getPublicBisVerification(
     signedAt: record.createdAt.toISOString(),
     expiresAt: record.expiresAt.toISOString(),
     reason: cryptoResult.valid ? undefined : cryptoResult.reason,
+    senderEmail: record.senderEmail,
+    recipientEmail: record.recipientEmail,
   }
 }

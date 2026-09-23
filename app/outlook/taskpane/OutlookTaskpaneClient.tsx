@@ -56,19 +56,6 @@ function formatInteractionType(type: string): string {
   return map[type] ?? type ?? "—";
 }
 
-function senderDomain(email: string): string {
-  const at = email.indexOf("@");
-  return at >= 0 ? email.slice(at + 1).toLowerCase() : "";
-}
-
-function isDomainVerified(payload: ExtensionVerifyPayload, email: string): boolean {
-  const domain = senderDomain(email);
-  if (!domain || payload.certifiedDomains.length === 0) return false;
-  return payload.certifiedDomains.some(
-    (d) => d.replace(/^www\./, "").toLowerCase() === domain.replace(/^www\./, ""),
-  );
-}
-
 function waitForOfficeReady(): Promise<void> {
   return new Promise((resolve, reject) => {
     const start = Date.now();
@@ -169,8 +156,6 @@ function SignalRow({ label, ok }: { label: string; ok: boolean }) {
 
 function SignalsList({
   signals,
-  payload,
-  senderEmail,
 }: {
   signals: ExtensionVerifySignals;
   payload: ExtensionVerifyPayload;
@@ -181,7 +166,6 @@ function SignalsList({
     { label: "Contact vérifié", ok: signals.inContact },
     { label: "Réseau de confiance", ok: signals.inNetwork },
     { label: "Ancré blockchain ✓", ok: signals.polygonAnchored },
-    { label: "Domaine vérifié", ok: isDomainVerified(payload, senderEmail) },
   ];
 
   return (

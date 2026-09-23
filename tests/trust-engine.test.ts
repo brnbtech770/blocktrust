@@ -12,6 +12,7 @@ const prismaMock = vi.hoisted(() => ({
   },
   userTrustRelation: {
     findFirst: vi.fn(),
+    findMany: vi.fn(),
   },
 }))
 
@@ -76,6 +77,7 @@ describe('Trust Engine scoring', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     prismaMock.userTrustRelation.findFirst.mockResolvedValue(null)
+    prismaMock.userTrustRelation.findMany.mockResolvedValue([])
     prismaMock.interactionSignature.count.mockResolvedValue(0)
   })
 
@@ -135,6 +137,11 @@ describe('Trust Engine scoring', () => {
       }),
     )
     prismaMock.verification.count.mockResolvedValue(0)
+    prismaMock.userTrustRelation.findMany.mockResolvedValue(
+      Array.from({ length: 50 }, (_, i) => ({
+        createdAt: new Date(Date.now() - (8 + i * 7) * 24 * 60 * 60 * 1000),
+      })),
+    )
 
     const result = await computeTrustEngineScore('bt-trust-test')
 

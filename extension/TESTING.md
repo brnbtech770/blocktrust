@@ -23,6 +23,7 @@ Principe : **l'envoi ne doit jamais être bloqué** — le BIS est un bonus.
 | 8 | Officiels certifiés | Ouvrir email de `brnbtech@gmail.com` | Badge **✓ Compte officiel BLOCKTRUST™** pour **tous** les viewers |
 | 9 | Intégrité hash BIS | Pré-signature warm-up, puis taper du texte, Envoyer | Email part ; `/verify/bis/[id]` valide le **contenu final** (ou envoi sans BIS si timeout) |
 | 10 | Sans badge expéditeur | Composer depuis email **sans** badge ACTIVE | Pas de bouton BIS ; message « BIS indisponible — aucun badge actif sur cet email » |
+| 11 | BIS rejoué (expéditeur différent) | Coller un lien `/verify/bis/{id}` valide dans un email dont le From n'est pas le signataire | Tooltip **avertissement** « expéditeur ne correspond pas » ; **pas** « Signature BIS valide » ; l'email reste lisible |
 
 ## Régressions à vérifier
 

@@ -393,7 +393,7 @@ export const ONBOARDING_STEP_CONTENT: Record<OnboardingStepId, OnboardingStep> =
       "Votre domaine est automatiquement lié à votre certificat",
       "Via l'extension Chrome : les domaines suspects sont signalés",
       "Via le MCP : les agents IA vérifient les domaines automatiquement",
-      "Via le dashboard : section contacts → domaines vérifiés",
+      "Via le dashboard : section contacts → domaines déclarés",
     ],
     tools: [
       "verify_domain : vérifie si un domaine est certifié BLOCKTRUST",

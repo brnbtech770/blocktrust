@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/app/lib/auth-server'
 import { assertDashboardMutationAllowed } from '@/lib/require-email-verified'
 import { addContactToTrustNetwork } from '@/lib/add-contact-trust-network'
-import { checkPlanRateLimit } from '@/lib/rate-limit-plan'
+import { checkPlanRateLimit, checkTrustCircleInviteRateLimit } from '@/lib/rate-limit-plan'
 import { resolveEffectivePlan, planAllowsTrustCircle } from '@/lib/plan-features'
 import { prisma } from '@/app/lib/db'
 import { z } from 'zod'
@@ -71,6 +71,22 @@ export async function POST(req: NextRequest) {
       {
         status: 429,
         headers: rate.retryAfter ? { 'Retry-After': String(rate.retryAfter) } : undefined,
+      },
+    )
+  }
+
+  const inviteRate = await checkTrustCircleInviteRateLimit(userId)
+  if (!inviteRate.ok) {
+    return NextResponse.json(
+      {
+        error: 'RATE_LIMITED',
+        message: 'Limite d’invitations Trust Circle atteinte (10 par jour, 30 par semaine).',
+      },
+      {
+        status: 429,
+        headers: inviteRate.retryAfter
+          ? { 'Retry-After': String(inviteRate.retryAfter) }
+          : undefined,
       },
     )
   }

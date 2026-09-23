@@ -363,7 +363,7 @@ export function ValidWowView({
 
           {certifiedDomains.length > 0 ? (
             <div className="mb-3">
-              <p className="mb-1 text-xs text-white/40">Domaines officiels</p>
+              <p className="mb-1 text-xs text-white/40">Domaines déclarés</p>
               {certifiedDomains.map((d) => (
                 <p
                   key={d}

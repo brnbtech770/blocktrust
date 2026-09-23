@@ -154,12 +154,10 @@ function ProCertifiedSection({
         <div className="mb-6 space-y-3">
           <label className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-white/60">
             <Globe className="h-3 w-3 shrink-0" aria-hidden />
-            Domaines officiels
+            Domaines déclarés
           </label>
           <p className="text-xs text-white/30">
-            Ajouter un domaine permet de certifier que ce site web vous appartient. La vérification se fait par DNS
-            (ajout d&apos;un enregistrement TXT) ou par fichier (upload d&apos;un fichier de vérification sur votre
-            serveur). Vous ne pouvez certifier que les domaines que vous possédez réellement.
+            Domaines déclarés. Ils n&apos;établissent pas une preuve de contrôle du site.
           </p>
           <DomainTagInput
             values={certifiedDomains}

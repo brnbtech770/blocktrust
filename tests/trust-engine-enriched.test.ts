@@ -7,7 +7,7 @@ const prismaMock = vi.hoisted(() => ({
   certificate: { findFirst: vi.fn() },
   verification: { count: vi.fn() },
   interactionSignature: { count: vi.fn() },
-  userTrustRelation: { findFirst: vi.fn() },
+  userTrustRelation: { findFirst: vi.fn(), findMany: vi.fn() },
 }))
 
 vi.mock('@/app/lib/db', () => ({ prisma: prismaMock }))
@@ -73,6 +73,7 @@ describe('Trust Engine — signaux enrichis', () => {
     vi.mocked(isDisposableEmail).mockReturnValue(false)
     vi.mocked(checkIpReputation).mockResolvedValue({ score: 0, abusive: false, isp: '' })
     prismaMock.userTrustRelation.findFirst.mockResolvedValue(null)
+    prismaMock.userTrustRelation.findMany.mockResolvedValue([])
   })
 
   it('domain age suspect → TechnicalScore réduit', async () => {
@@ -138,6 +139,11 @@ describe('Trust Engine — signaux enrichis', () => {
       }),
     )
     prismaMock.userTrustRelation.findFirst.mockResolvedValue({ id: 'direct-rel' })
+    prismaMock.userTrustRelation.findMany.mockResolvedValue(
+      Array.from({ length: 50 }, (_, i) => ({
+        createdAt: new Date(Date.now() - (8 + i * 7) * 24 * 60 * 60 * 1000),
+      })),
+    )
 
     const result = await computeTrustEngineScore('bt-enriched', 'viewer-1', {
       contextIp: '8.8.8.8',

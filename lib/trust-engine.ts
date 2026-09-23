@@ -68,6 +68,37 @@ function clampScore(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
+/** Une relation mutuelle ne compte dans le score qu'après ce délai. */
+export const NETWORK_MUTUAL_MIN_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+/** Fenêtre de plafonnement des nouvelles relations mutuelles. */
+export const NETWORK_MUTUAL_BUCKET_MS = 7 * 24 * 60 * 60 * 1000;
+/** Maximum de relations mutuelles comptées par fenêtre de 7 jours. */
+export const NETWORK_MUTUAL_MAX_PER_BUCKET = 3;
+
+/**
+ * Compte les relations MUTUAL éligibles au networkScore.
+ * Unilatéral CONFIRMED ignoré. Moins de 7 jours ignoré.
+ * Au plus 3 relations par fenêtre de 7 jours (anti-Sybil).
+ */
+export function countScoreEligibleMutuals(
+  createdAts: Array<Date | string | number>,
+  now: Date = new Date(),
+): number {
+  const cutoff = now.getTime() - NETWORK_MUTUAL_MIN_AGE_MS;
+  const buckets = new Map<number, number>();
+  for (const raw of createdAts) {
+    const t = new Date(raw).getTime();
+    if (!Number.isFinite(t) || t >= cutoff) continue;
+    const bucket = Math.floor(t / NETWORK_MUTUAL_BUCKET_MS);
+    buckets.set(bucket, (buckets.get(bucket) ?? 0) + 1);
+  }
+  let total = 0;
+  for (const n of buckets.values()) {
+    total += Math.min(NETWORK_MUTUAL_MAX_PER_BUCKET, n);
+  }
+  return total;
+}
+
 /**
  * Calcule le Trust Engine V2 pour un certificat (publicId ou id interne).
  * @param certificateLookupId — publicId ou id du certificat
@@ -94,15 +125,6 @@ export async function computeTrustEngineScore(
             user: {
               include: {
                 subscription: true,
-                _count: {
-                  select: {
-                    userTrustFrom: {
-                      where: {
-                        OR: [{ isMutual: true }, { status: "CONFIRMED" }],
-                      },
-                    },
-                  },
-                },
               },
             },
           },
@@ -205,8 +227,21 @@ export async function computeTrustEngineScore(
   identityScore = Math.min(100, identityScore);
 
   // ─── NETWORK SCORE ────────────────────────
+  // Uniquement MUTUAL, âgées d'au moins 7 jours, max 3 par fenêtre de 7 jours.
   let networkScore = 0;
-  const mutualCount = user._count.userTrustFrom;
+  const mutualRows = await prisma.userTrustRelation
+    .findMany({
+      where: {
+        fromUserId: user.id,
+        isMutual: true,
+        createdAt: { lt: new Date(Date.now() - NETWORK_MUTUAL_MIN_AGE_MS) },
+      },
+      select: { createdAt: true },
+    })
+    .catch(() => []);
+  const mutualCount = countScoreEligibleMutuals(
+    Array.isArray(mutualRows) ? mutualRows.map((row) => row.createdAt) : [],
+  );
 
   if (mutualCount >= 50) networkScore = 80;
   else if (mutualCount >= 20) networkScore = 60;
@@ -236,7 +271,7 @@ export async function computeTrustEngineScore(
         where: {
           fromUserId: viewerUserId,
           toUserId: user.id,
-          OR: [{ isMutual: true }, { status: "CONFIRMED" }],
+          isMutual: true,
         },
       })
       .catch(() => null);
@@ -254,12 +289,12 @@ export async function computeTrustEngineScore(
         .findFirst({
           where: {
             fromUserId: viewerUserId,
-            status: "CONFIRMED",
+            isMutual: true,
             toUser: {
               userTrustFrom: {
                 some: {
                   toUserId: user.id,
-                  status: "CONFIRMED",
+                  isMutual: true,
                 },
               },
             },
