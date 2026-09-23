@@ -66,6 +66,8 @@
 
   /** Disponibilité BIS du compte authentifié (pas de l'adresse Gmail). */
   let bisAccountCache = null;
+  /** @type {Promise<boolean | null> | null} */
+  let bisAccountInflight = null;
 
   let autoSendHookInstalled = false;
   let composeObserver = null;
@@ -147,14 +149,10 @@
    * @returns {boolean}
    */
   function isIgnorableMutation(mutation) {
-    if (nodeIsBtUi(mutation.target)) return true;
-    for (const node of mutation.addedNodes) {
-      if (nodeIsBtUi(node)) return true;
-    }
-    for (const node of mutation.removedNodes) {
-      if (nodeIsBtUi(node)) return true;
-    }
-    return false;
+    if ([...mutation.removedNodes].some((node) => nodeIsBtUi(node))) return false;
+    const nodes = [...mutation.addedNodes, ...mutation.removedNodes];
+    if (nodes.length === 0) return nodeIsBtUi(mutation.target);
+    return nodes.every((node) => nodeIsBtUi(node));
   }
 
   /**
@@ -450,67 +448,73 @@
   /**
    * Le composeur ne compare pas l'adresse Gmail.
    * GET /api/extension/me : le compte de la clé API a-t-il un certificat valide ?
-   * @returns {Promise<boolean>}
+   * true = badge, false = refus explicite, null = inconnu (réseau, 5xx) — ne pas verrouiller.
+   * @returns {Promise<boolean | null>}
    */
   async function accountHasActiveBisCertificate() {
-    if (
-      bisAccountCache &&
-      Date.now() - bisAccountCache.timestamp < SENDER_VERIFY_CACHE_TTL
-    ) {
-      return bisAccountCache.available;
+    const now = Date.now();
+    if (bisAccountCache) {
+      const ttl = bisAccountCache.available
+        ? SENDER_VERIFY_CACHE_TTL
+        : 20 * 1000;
+      if (now - bisAccountCache.timestamp < ttl) return bisAccountCache.available;
     }
 
-    if (!deps) return false;
+    if (bisAccountInflight) return bisAccountInflight;
+    if (!deps) return null;
 
-    const apiKey = await deps.getApiKey();
-    if (!apiKey) return false;
+    bisAccountInflight = (async () => {
+      const apiKey = await deps.getApiKey();
+      if (!apiKey) return false;
 
-    try {
-      const response = await fetch(`${deps.apiBase}/api/extension/me`, {
-        headers: {
-          Authorization: `Bearer ${apiKey.trim()}`,
-          "X-BT-Client": "extension",
-        },
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) return false;
-      const available = data?.hasBisCertificate === true;
-      bisAccountCache = { available, timestamp: Date.now() };
-      return available;
-    } catch {
-      return false;
-    }
-  }
+      try {
+        const response = await fetch(`${deps.apiBase}/api/extension/me`, {
+          headers: {
+            Authorization: `Bearer ${apiKey.trim()}`,
+            "X-BT-Client": "extension",
+          },
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) return null;
+        const available = data?.hasBisCertificate === true;
+        bisAccountCache = { available, timestamp: Date.now() };
+        return available;
+      } catch {
+        return null;
+      } finally {
+        bisAccountInflight = null;
+      }
+    })();
 
-  /**
-   * @param {Element} _root
-   * @returns {Promise<boolean>}
-   */
-  async function isSenderCertifiedForRoot(_root) {
-    return accountHasActiveBisCertificate();
+    return bisAccountInflight;
   }
 
   /**
    * Affiche le BIS si le compte authentifié a un badge, quelle que soit l'adresse Gmail.
+   * Gmail reconstruit la barre d'envoi : si le bouton a disparu, on le remet.
    * @param {Element} root
    */
   async function refreshComposeSenderCert(root) {
-    if (root.getAttribute(ATTR_BIS_READY) === "1") return;
+    const available = await accountHasActiveBisCertificate();
+    if (available === null) return;
 
-    const certified = await isSenderCertifiedForRoot(root);
-    if (!certified) {
-      showBisUnavailable(root);
-      root.setAttribute(ATTR_BIS_READY, "1");
-      initializedComposers.add(root);
+    if (available) {
+      hideBisUnavailable(root);
+      root.setAttribute(ATTR_SENDER_CERT, "1");
+      if (currentMode !== BIS_MODES.SELECTIVE) return;
+      if (!root.querySelector(`[${ATTR_BIS_BTN}]`)) {
+        root.removeAttribute(ATTR_BIS_READY);
+        initializedComposers.delete(root);
+        await injectSelectiveButton(root);
+      }
       return;
     }
 
-    hideBisUnavailable(root);
-    root.setAttribute(ATTR_SENDER_CERT, "1");
-
-    if (currentMode === BIS_MODES.SELECTIVE) {
-      await injectSelectiveButton(root);
-    }
+    if (root.querySelector(`[${ATTR_BIS_UNAVAIL_MSG}]`)) return;
+    root.querySelector(`[${ATTR_BIS_BTN}]`)?.remove();
+    showBisUnavailable(root);
+    root.setAttribute(ATTR_BIS_READY, "1");
+    initializedComposers.add(root);
   }
 
   /**
@@ -795,9 +799,9 @@
       if (!root.isConnected) return;
 
       void (async () => {
-        const certified = await isSenderCertifiedForRoot(root);
-        if (!certified) {
-          showBisUnavailable(root);
+        const available = await accountHasActiveBisCertificate();
+        if (available !== true) {
+          if (available === false) showBisUnavailable(root);
           return;
         }
         hideBisUnavailable(root);
@@ -836,8 +840,9 @@
    */
   async function signBisForSend(root, options = {}) {
     if (!deps) return { ok: false, reason: "not_initialized" };
-    if (!(await isSenderCertifiedForRoot(root))) {
-      showBisUnavailable(root);
+    const availableForSend = await accountHasActiveBisCertificate();
+    if (availableForSend !== true) {
+      if (availableForSend === false) showBisUnavailable(root);
       return { ok: false, reason: "sender_not_certified" };
     }
     if (root.getAttribute(ATTR_BIS_DONE) === "1") {
@@ -900,8 +905,9 @@
    */
   async function signBisSelective(root) {
     if (!deps) return { ok: false, reason: "not_initialized" };
-    if (!(await isSenderCertifiedForRoot(root))) {
-      showBisUnavailable(root);
+    const availableSelective = await accountHasActiveBisCertificate();
+    if (availableSelective !== true) {
+      if (availableSelective === false) showBisUnavailable(root);
       return { ok: false, reason: "sender_not_certified" };
     }
 
@@ -975,9 +981,12 @@
     const state = composeState.get(root);
     if (state?.signed || state?.signing) return;
 
-    if (!(await isSenderCertifiedForRoot(root))) {
-      showBisUnavailable(root);
-      showToast(BIS_UNAVAILABLE_MESSAGE, "error");
+    const availableClick = await accountHasActiveBisCertificate();
+    if (availableClick !== true) {
+      if (availableClick === false) {
+        showBisUnavailable(root);
+        showToast(BIS_UNAVAILABLE_MESSAGE, "error");
+      }
       return;
     }
 
@@ -1050,12 +1059,14 @@
     if (initializedComposers.has(root)) return;
     if (root.getAttribute(ATTR_BIS_READY) === "1") return;
 
-    const certified = await isSenderCertifiedForRoot(root);
-    if (!certified) {
-      clearComposeBisUi(root);
-      showBisUnavailable(root);
-      root.setAttribute(ATTR_BIS_READY, "1");
-      initializedComposers.add(root);
+    const available = await accountHasActiveBisCertificate();
+    if (available !== true) {
+      if (available === false) {
+        clearComposeBisUi(root);
+        showBisUnavailable(root);
+        root.setAttribute(ATTR_BIS_READY, "1");
+        initializedComposers.add(root);
+      }
       return;
     }
 
@@ -1200,9 +1211,9 @@
 
     if (root.getAttribute(ATTR_BIS_PENDING) === "1") return;
 
-    const senderCertified = await isSenderCertifiedForRoot(root);
-    if (!senderCertified) {
-      showBisUnavailable(root);
+    const available = await accountHasActiveBisCertificate();
+    if (available !== true) {
+      if (available === false) showBisUnavailable(root);
       return;
     }
 
@@ -1344,7 +1355,7 @@
       }
     });
 
-    console.log("[BLOCKTRUST] Compose BIS v1.1.1 — mode:", currentMode);
+    console.log("[BLOCKTRUST] Compose BIS v1.1.2 — mode:", currentMode);
 
     if (composeObserver) composeObserver.disconnect();
     composeObserver = new MutationObserver((mutations) => {
